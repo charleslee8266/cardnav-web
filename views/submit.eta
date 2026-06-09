@@ -1,0 +1,150 @@
+<% /*
+文件说明: 负责渲染站点提交页面，并处理提交表单的前端校验与反馈展示。
+*/ %>
+<%
+  const pageTitleValue = typeof pageTitle === 'string' ? pageTitle : '商家入驻 - 卡网大全';
+  const descriptionValue = typeof description === 'string' ? description : '商家可提交站点 URL 入驻卡网大全，也可通过 Telegram 联系合作，获得更多曝光入口。';
+  const canonicalUrlValue = typeof canonicalUrl === 'string' ? canonicalUrl : 'https://cardnav.xyz/submit';
+  const robotsValue = typeof robots === 'string' ? robots : 'index,follow';
+  const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : canonicalUrlValue;
+  const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
+  const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'WebPage' };
+  const telegramGroupUrlValue = typeof telegramGroupUrl === 'string' ? telegramGroupUrl : 'https://t.me/cardnav_xyz_group';
+  layout('layouts/public-page.eta', {
+    activeNav: 'submit',
+    pageTitle: pageTitleValue,
+    description: descriptionValue,
+    canonicalUrl: canonicalUrlValue,
+    robots: robotsValue,
+    ogUrl: ogUrlValue,
+    ogImageUrl: ogImageUrlValue,
+    jsonLd: jsonLdValue,
+    telegramGroupUrl: telegramGroupUrlValue,
+  });
+%>
+<% block('content', function(){ %>
+  <section class="rounded border bg-white p-5">
+    <h2 class="text-lg font-semibold">商家入驻</h2>
+    <p class="mt-2 text-sm text-slate-600">提交商家的站点 URL 后我们会尽快处理，请勿重复提交。</p>
+    <div class="mt-4 rounded border border-blue-200 bg-blue-50 p-4">
+      <h3 class="text-sm font-semibold text-slate-900">合作曝光</h3>
+      <p class="mt-2 text-sm leading-6 text-slate-700">如果商家愿意合作，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
+      <a href="<%= telegramGroupUrlValue %>" target="_blank" rel="noopener noreferrer" class="primary-button mt-3 inline-flex">
+        Telegram 联系
+      </a>
+    </div>
+    <form id="submitForm" class="mt-4 space-y-3" method="post" action="/submit">
+      <label for="urlInput" class="block text-sm font-medium text-slate-700">URL</label>
+      <input
+        id="urlInput"
+        name="url"
+        type="url"
+        required
+        value="<%= url %>"
+        class="control-input"
+        placeholder="https://example.com"
+        autocomplete="url"
+      />
+      <p id="clientError" class="hidden text-sm text-red-600">请输入有效的 URL</p>
+      <p id="submitError" class="hidden text-sm text-red-600"></p>
+      <p id="submitSuccess" class="hidden text-sm text-emerald-700"></p>
+      <button type="submit" data-umami-event="submit-click" data-umami-event-url="<%= url %>" class="primary-button">
+        提交
+      </button>
+    </form>
+  </section>
+<% }) %>
+
+<% block('scripts', function(){ %>
+  <script>
+    const form = document.querySelector('#submitForm');
+    const input = document.querySelector('#urlInput');
+    const clientError = document.querySelector('#clientError');
+    const submitError = document.querySelector('#submitError');
+    const submitSuccess = document.querySelector('#submitSuccess');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    function syncSubmitEventUrl() {
+      submitButton.dataset.umamiEventUrl = input.value.trim();
+    }
+
+    function isValidUrl(value) {
+      try {
+        const url = new URL(value.trim());
+        return url.protocol === 'http:' || url.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    }
+
+    function hideServerMessages() {
+      submitError.classList.add('hidden');
+      submitSuccess.classList.add('hidden');
+      submitError.textContent = '';
+      submitSuccess.textContent = '';
+    }
+
+    function showError(message) {
+      submitSuccess.classList.add('hidden');
+      submitSuccess.textContent = '';
+      submitError.textContent = message;
+      submitError.classList.remove('hidden');
+    }
+
+    function showSuccess(message) {
+      submitError.classList.add('hidden');
+      submitError.textContent = '';
+      submitSuccess.textContent = message;
+      submitSuccess.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', event => {
+      syncSubmitEventUrl();
+      hideServerMessages();
+      if (!isValidUrl(input.value)) {
+        event.preventDefault();
+        clientError.classList.remove('hidden');
+        input.focus();
+        return;
+      }
+
+      event.preventDefault();
+      clientError.classList.add('hidden');
+      submitButton.disabled = true;
+
+      const formData = new FormData(form);
+      fetch(form.action, {
+        method: 'POST',
+        body: new URLSearchParams(formData),
+        headers: {
+          accept: 'application/json',
+          'x-requested-with': 'fetch',
+        },
+      })
+        .then(async response => {
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload || payload.ok !== true) {
+            showError(payload && payload.message ? payload.message : '提交失败，请稍后重试');
+            return;
+          }
+          input.value = '';
+          syncSubmitEventUrl();
+          showSuccess(payload.message || '提交成功');
+        })
+        .catch(() => {
+          showError('提交失败，请稍后重试');
+        })
+        .finally(() => {
+          submitButton.disabled = false;
+        });
+    });
+
+    input.addEventListener('input', () => {
+      syncSubmitEventUrl();
+      clientError.classList.add('hidden');
+      hideServerMessages();
+    });
+
+    syncSubmitEventUrl();
+  </script>
+<% }) %>

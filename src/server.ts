@@ -108,28 +108,15 @@ export function createApp() {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const url = typeof body.url === 'string' ? body.url : '';
     const result = await submitSiteUrl(url);
-    const seo = buildSeoContext({
-      baseUrl: publicSiteUrl,
-      pathname: '/submit',
-      title: '商家入驻',
-      description: '商家可提交站点 URL 入驻卡网大全，也可通过 Telegram 联系合作，获得更多曝光入口。',
-      imagePath: '/og-cardnav.svg',
-      type: 'webpage',
-      noindex: true,
-    });
     if (!result.ok) {
-      return reply.status(400).view('submit.eta', {
-        ...seo,
-        url,
-        error: result.message,
-        success: '',
+      return reply.status(400).header('cache-control', 'no-store').send({
+        ok: false,
+        message: result.message,
       });
     }
-    return reply.view('submit.eta', {
-      ...seo,
-      url: '',
-      error: '',
-      success: '提交成功',
+    return reply.header('cache-control', 'no-store').send({
+      ok: true,
+      message: '提交成功',
     });
   });
 
