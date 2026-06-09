@@ -12,6 +12,9 @@ let flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'))
 const emptyState = document.querySelector('#emptyState');
 const rowContainer = document.querySelector('#merchantRows');
 const flatProductRowsContainer = document.querySelector('#flatProductRows');
+const flatProductProgressiveLoad = document.querySelector('#flatProductProgressiveLoad');
+const flatProductLoadSummary = document.querySelector('#flatProductLoadSummary');
+const flatProductLoadMoreButton = document.querySelector('#flatProductLoadMoreButton');
 const merchantGroupedView = document.querySelector('#merchantGroupedView');
 const flatProductView = document.querySelector('#flatProductView');
 const flatSortButtons = Array.from(document.querySelectorAll('.flat-sort-button'));
@@ -21,11 +24,14 @@ let merchantRows = [];
 const flatRows = [];
 const favoriteSiteStorageKey = 'cardnav.favoriteSites';
 const favoriteProductStorageKey = 'cardnav.favoriteProducts';
+const DEFAULT_FLAT_PRODUCT_LIMIT = 100;
+const FLAT_PRODUCT_LOAD_MORE_STEP = 100;
 let currentFlatSort = null;
 let currentFlatRows = flatRows;
 let merchantRowsRendered = false;
 let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
+let currentFlatVisibleLimit = Number(dashboardData.initialProductLimit) > 0 ? Number(dashboardData.initialProductLimit) : DEFAULT_FLAT_PRODUCT_LIMIT;
 let quickSearchTags = quickTagFilters
   ? Array.from(quickTagFilters.querySelectorAll('button[data-tag-key]')).map(button => toQuickSearchTag(button.textContent || ''))
   : [];
@@ -71,9 +77,20 @@ function matchesEveryTermAcrossProductAndSite(rowEntry, terms) {
 
 function searchMatchedFlatRows() {
   const terms = searchTerms(searchFilter.value);
-  if (terms.length === 0) return flatRows.slice();
+  const matchedRows = flatRows.filter(rowEntry => {
+    const showSoldOut = showSoldOutFilter.checked;
+    const priceMinValue = priceMin.value.trim();
+    const priceMaxValue = priceMax.value.trim();
+    const minPrice = parseBound(priceMinValue);
+    const maxPrice = parseBound(priceMaxValue);
+    const stockMatched = showSoldOut || rowEntry.inStock === 1;
+    const priceMatched = matchesPriceRange(rowEntry.priceText, minPrice, maxPrice);
+    const queryMatched = terms.length === 0 || matchesEveryTermAcrossProductAndSite(rowEntry, terms);
+    return stockMatched && priceMatched && queryMatched;
+  });
+  if (terms.length === 0) return matchedRows;
 
-  return flatRows.slice().sort((left, right) => {
+  return matchedRows.slice().sort((left, right) => {
     const productMatchDiff = matchTermCount(right.productTitle, terms) - matchTermCount(left.productTitle, terms);
     return productMatchDiff || left.originalIndex - right.originalIndex;
   });
@@ -264,6 +281,7 @@ function matchesPriceRange(priceText, min, max) {
 
 function syncFiltersFromUrl() {
   const params = new URLSearchParams(window.location.search);
+  showSoldOutFilter.checked = params.get('showSoldOut') === '1';
   if (params.has('priceMin')) {
     priceMin.value = params.get('priceMin') || '';
   }
@@ -330,6 +348,10 @@ function reportEmptyResultIfNeeded(visibleCount) {
 function scheduleApplyFilters() {
   clearTimeout(applyFiltersTimer);
   applyFiltersTimer = setTimeout(applyFilters, 180);
+}
+
+function resetFlatVisibleLimit() {
+  currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
 }
 
 function createFavoriteButton(favoriteKind, key, label) {
@@ -432,6 +454,26 @@ function renderFlatProductRowsFromData() {
 
   flatProductRowsContainer.replaceChildren(fragment);
   flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
+}
+
+function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
+  if (!flatProductLoadSummary || !flatProductLoadMoreButton || !flatProductProgressiveLoad) return;
+  if (groupByMerchantFilter.checked || visibleCount === 0) {
+    flatProductProgressiveLoad.classList.add('hidden');
+    flatProductLoadSummary.classList.add('hidden');
+    flatProductLoadMoreButton.classList.add('hidden');
+    return;
+  }
+
+  flatProductProgressiveLoad.classList.remove('hidden');
+  flatProductLoadSummary.classList.remove('hidden');
+  flatProductLoadSummary.textContent = `当前显示 ${renderedCount} / ${visibleCount} 个匹配商品`;
+
+  if (renderedCount < visibleCount) {
+    flatProductLoadMoreButton.classList.remove('hidden');
+  } else {
+    flatProductLoadMoreButton.classList.add('hidden');
+  }
 }
 
 function createProductChip(item) {
@@ -583,34 +625,29 @@ function applyFilters() {
 
     visibleMerchantCount = sortRows();
   } else {
-    flatRows.forEach(rowEntry => {
-      const row = rowEntry.element;
-      const productMatchCount = matchTermCount(rowEntry.productTitle, terms);
-      const productMatched = productMatchCount > 0;
-      const stockMatched = showSoldOut || rowEntry.inStock === 1;
-      const priceMatched = matchesPriceRange(rowEntry.priceText, minPrice, maxPrice);
-      const queryMatched = terms.length === 0 || matchesEveryTermAcrossProductAndSite(rowEntry, terms);
-      const visible = queryMatched && stockMatched && priceMatched;
-      row.dataset.productMatched = productMatched ? '1' : '0';
-      row.classList.toggle('hidden', !visible);
-      if (visible) visibleFlatProductCount += 1;
-    });
-
     if (currentFlatSort) {
       sortFlatProductRows();
     } else {
       currentFlatRows = searchMatchedFlatRows();
       appendCurrentFlatRows();
-      updateFlatProductIndexes();
     }
+
+    visibleFlatProductCount = currentFlatRows.length;
+    const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
+    currentFlatRows.forEach(({ element: row }, index) => {
+      row.classList.toggle('hidden', index >= renderedFlatCount);
+    });
+    updateFlatProductIndexes();
+    updateFlatProgressiveLoadSummary(visibleFlatProductCount, renderedFlatCount);
   }
 
   const visibleCount = groupByMerchant ? visibleMerchantCount : visibleFlatProductCount;
   emptyState.classList.toggle('hidden', visibleCount > 0);
+  if (groupByMerchant) updateFlatProgressiveLoadSummary(0, 0);
   reportEmptyResultIfNeeded(visibleCount);
   const params = new URLSearchParams();
   if (searchQuery) params.set('q', searchQuery);
-  if (!showSoldOut) params.set('showSoldOut', '0');
+  if (showSoldOut) params.set('showSoldOut', '1');
   if (groupByMerchant) params.set('groupByMerchant', '1');
   if (priceMinValue) params.set('priceMin', priceMinValue);
   if (priceMaxValue) params.set('priceMax', priceMaxValue);
@@ -675,9 +712,12 @@ function updateFlatProductIndexes() {
 }
 
 function appendCurrentFlatRows() {
+  if (!flatProductRowsContainer) return;
+  const fragment = document.createDocumentFragment();
   currentFlatRows.forEach(({ element: row }) => {
-    flatProductRowsContainer?.appendChild(row);
+    fragment.appendChild(row);
   });
+  flatProductRowsContainer.replaceChildren(fragment);
 }
 
 function sortFlatProductRows(button) {
@@ -703,7 +743,12 @@ function sortFlatProductRows(button) {
 
   currentFlatRows = sortedRows;
   appendCurrentFlatRows();
+  const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
+  currentFlatRows.forEach(({ element: row }, index) => {
+    row.classList.toggle('hidden', index >= renderedFlatCount);
+  });
   updateFlatProductIndexes();
+  updateFlatProgressiveLoadSummary(currentFlatRows.length, renderedFlatCount);
   updateFlatSortButtons();
 }
 
@@ -725,6 +770,7 @@ function replaceDashboardData(nextDashboardData) {
   if (!nextDashboardData || !Array.isArray(nextDashboardData.rows)) return;
 
   dashboardData = nextDashboardData;
+  currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
   merchantRowsRendered = false;
   merchantRows = [];
   rows = [];
@@ -749,11 +795,13 @@ async function loadDashboardDataFromApi() {
 }
 
 searchFilter.addEventListener('input', () => {
+  resetFlatVisibleLimit();
   scheduleSearchReport();
   scheduleFilterTrack('query');
   scheduleApplyFilters();
 });
 showSoldOutFilter.addEventListener('change', () => {
+  resetFlatVisibleLimit();
   trackUmamiEvent('filter-toggle-click', {
     name: 'showSoldOut',
     value: showSoldOutFilter.checked ? '1' : '0',
@@ -768,10 +816,12 @@ groupByMerchantFilter.addEventListener('change', () => {
   applyFilters();
 });
 priceMin.addEventListener('input', () => {
+  resetFlatVisibleLimit();
   scheduleFilterTrack('priceMin');
   scheduleApplyFilters();
 });
 priceMax.addEventListener('input', () => {
+  resetFlatVisibleLimit();
   scheduleFilterTrack('priceMax');
   scheduleApplyFilters();
 });
@@ -782,7 +832,12 @@ quickTagFilters?.addEventListener('click', event => {
   const tag = quickSearchTags.find(item => item.key === tagKey);
   if (!tag) return;
   searchFilter.value = tag.label;
+  resetFlatVisibleLimit();
   reportSearchTerm(tag.label, 'tag');
+  applyFilters();
+});
+flatProductLoadMoreButton?.addEventListener('click', () => {
+  currentFlatVisibleLimit += FLAT_PRODUCT_LOAD_MORE_STEP;
   applyFilters();
 });
 flatSortButtons.forEach(button => {

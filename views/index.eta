@@ -33,7 +33,7 @@
     };
   });
   const latestRefreshTimeValue = typeof latestRefreshTime !== 'undefined' ? latestRefreshTime : null;
-  const initialProductLimitValue = typeof initialProductLimit !== 'undefined' ? initialProductLimit : null;
+  const initialProductLimitValue = 100;
   const productStockLabel = function(product) {
     return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? '有货' : '缺货');
   };
@@ -129,8 +129,10 @@
       </thead>
 
       <tbody id="flatProductRows">
-      <% renderedRows.forEach(function(entry, siteIndex){ %>
-        <% entry.products.forEach(function(item, productIndex){ %>
+      <% let renderedFlatCount = 0; %>
+      <% renderedRows.forEach(function(entry){ %>
+        <% entry.products.forEach(function(item){ %>
+          <% if (renderedFlatCount >= initialProductLimitValue) { return; } %>
           <% const productTitle = `${item.categoryName}-${item.name}`; %>
           <% const productFavoriteKey = `${entry.site.name}#${productTitle}`; %>
           <% const siteFavoriteKey = entry.site.id || entry.site.name; %>
@@ -166,11 +168,17 @@
               </div>
             </td>
           </tr>
+          <% renderedFlatCount += 1; %>
         <% }) %>
       <% }) %>
       </tbody>
     </table>
   </section>
+
+  <div id="flatProductProgressiveLoad" class="progressive-load-panel">
+    <p id="flatProductLoadSummary" class="progressive-load-summary hidden"></p>
+    <button id="flatProductLoadMoreButton" type="button" class="secondary-button hidden">加载更多商品</button>
+  </div>
 
   <section id="merchantGroupedView" class="product-table" hidden>
     <div class="merchant-table-head">

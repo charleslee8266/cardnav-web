@@ -29,6 +29,14 @@
     @apply px-4 py-10 text-center text-sm text-slate-500;
   }
 
+  .progressive-load-panel {
+    @apply mt-3 flex flex-col items-center gap-3;
+  }
+
+  .progressive-load-summary {
+    @apply text-sm text-slate-600;
+  }
+
   .control-input {
     @apply w-full rounded border border-slate-300 px-3 py-2;
   }
