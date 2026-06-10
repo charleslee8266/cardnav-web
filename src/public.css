@@ -2,6 +2,12 @@
 
 @source "../views/layouts/public-page.eta";
 @source "../views/index.eta";
+@source "../views/knowledge.eta";
+@source "../views/knowledge-article.eta";
+@source "../views/tools.eta";
+@source "../views/session-converter.eta";
+@source "../views/disclaimer.eta";
+@source "../views/privacy.eta";
 @source "../views/sites.eta";
 @source "../views/submit.eta";
 @source "../../../public/assets/*.js";
@@ -27,7 +33,7 @@
 
 @layer components {
   .content-panel {
-    @apply mb-4 rounded border bg-white p-4;
+    @apply rounded border bg-white p-4;
   }
 
   .table-shell {
@@ -39,7 +45,7 @@
   }
 
   .progressive-load-panel {
-    @apply mt-3 flex flex-col items-center gap-3;
+    @apply flex flex-col items-center gap-3;
   }
 
   .progressive-load-summary {
@@ -50,12 +56,20 @@
     @apply w-full rounded border border-slate-300 px-3 py-2;
   }
 
+  .control-select {
+    @apply rounded border border-slate-300 bg-white px-3 py-2 text-sm;
+  }
+
   .control-checkbox {
     @apply h-4 w-4 rounded border-slate-300;
   }
 
   .filter-checkbox-label {
     @apply flex cursor-pointer items-center gap-2 text-sm text-slate-700;
+  }
+
+  .filter-select-label {
+    @apply flex items-center gap-2;
   }
 
   .status-filter-label {
@@ -96,6 +110,58 @@
 
   .public-summary-value {
     @apply font-semibold text-red-600;
+  }
+
+  .knowledge-feature-link {
+    @apply flex flex-col gap-1 rounded border border-blue-200 bg-blue-50 px-4 py-3 transition hover:border-blue-300 hover:bg-blue-100;
+  }
+
+  .knowledge-card {
+    @apply rounded border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50;
+  }
+
+  .knowledge-article {
+    @apply rounded border bg-white px-4 py-5 text-slate-700 md:px-8 md:py-7;
+  }
+
+  .knowledge-article h1 {
+    @apply text-3xl font-bold tracking-normal text-slate-950;
+  }
+
+  .knowledge-article h2 {
+    @apply mt-8 text-xl font-bold tracking-normal text-slate-950;
+  }
+
+  .knowledge-article h3 {
+    @apply mt-6 text-lg font-semibold tracking-normal text-slate-950;
+  }
+
+  .knowledge-article p {
+    @apply mt-4 text-base leading-8;
+  }
+
+  .knowledge-article ul {
+    @apply mt-3 list-disc space-y-2 pl-6 text-base leading-7;
+  }
+
+  .knowledge-article a {
+    @apply font-semibold text-blue-700 hover:text-blue-900 hover:underline;
+  }
+
+  .knowledge-article code {
+    @apply rounded bg-slate-100 px-1 py-0.5 text-sm text-slate-800;
+  }
+
+  .policy-page h2 {
+    @apply text-2xl font-bold tracking-normal text-slate-950;
+  }
+
+  .policy-page h3 {
+    @apply mt-6 text-lg font-semibold tracking-normal text-slate-950;
+  }
+
+  .policy-page p {
+    @apply mt-4 text-base leading-8;
   }
 
   .table-link-primary {
@@ -179,7 +245,7 @@
   }
 
   .flat-product-table {
-    @apply min-w-[560px] w-full table-fixed border-collapse lg:min-w-[860px];
+    @apply min-w-[700px] w-full table-fixed border-collapse lg:min-w-[1020px];
   }
 
   .flat-product-head {
@@ -204,7 +270,7 @@
   }
 
   .flat-product-head th:nth-child(2) {
-    @apply w-[160px] lg:w-[34%];
+    @apply w-[160px] lg:w-[30%];
   }
 
   .flat-product-head th:nth-child(3) {
@@ -220,7 +286,11 @@
   }
 
   .flat-product-head th:nth-child(6) {
-    @apply w-[126px] lg:w-[24%];
+    @apply w-[126px] lg:w-[20%];
+  }
+
+  .flat-product-head th:nth-child(7) {
+    @apply w-[140px] lg:w-[160px];
   }
 
   .flat-sort-button {
@@ -263,6 +333,10 @@
     @apply table-cell px-2 py-2 lg:px-4 lg:py-3;
   }
 
+  .flat-refresh-cell {
+    @apply table-cell px-2 py-2 text-xs text-slate-500 lg:px-4 lg:py-3;
+  }
+
   .flat-product-row:last-child > * {
     @apply border-b-0;
   }
@@ -300,6 +374,120 @@
 
   .stock-badge-sold-out {
     @apply inline-flex rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500;
+  }
+
+  .tool-panel {
+    @apply overflow-hidden rounded border bg-white;
+  }
+
+  .tool-panel-head {
+    @apply border-b bg-slate-50 px-4 py-4;
+  }
+
+  .tool-panel-body {
+    @apply p-4;
+  }
+
+  .tool-json-textarea {
+    @apply block min-h-[26rem] w-full resize-y rounded border border-slate-300 bg-slate-50 px-3 py-3 font-mono text-sm leading-6 text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100;
+    white-space: pre;
+  }
+
+  .tool-json-textarea[readonly] {
+    @apply bg-slate-50;
+  }
+
+  .tool-code-output {
+    @apply block min-h-[26rem] w-full overflow-auto rounded border border-slate-300 bg-slate-50 px-3 py-3 font-mono text-sm leading-6 text-slate-900;
+    white-space: pre;
+  }
+
+  .tool-code-output code {
+    @apply block bg-transparent p-0;
+  }
+
+  .tool-code-output code:empty::before {
+    content: "转换后会显示 JSON。";
+    @apply font-sans text-sm text-slate-400;
+  }
+
+  .tool-status-line {
+    @apply mt-2 text-sm leading-6 text-slate-500;
+  }
+
+  .tool-status-line:empty {
+    @apply hidden;
+  }
+
+  .tool-status-line.is-ok {
+    @apply text-emerald-700;
+  }
+
+  .tool-status-line.is-error {
+    @apply text-red-600;
+  }
+
+  .tool-stat {
+    @apply rounded border border-slate-200 bg-slate-50 p-3;
+  }
+
+  .tool-stat-value {
+    @apply truncate font-mono text-xl font-bold text-slate-950;
+  }
+
+  .tool-stat-label {
+    @apply mt-1 text-xs font-medium text-slate-500;
+  }
+
+  .tool-format-select {
+    @apply block h-9 w-full rounded border border-slate-300 bg-white px-2 font-mono text-sm font-bold text-slate-950 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100;
+  }
+
+  @media (min-width: 80rem) {
+    .session-converter-grid {
+      height: clamp(460px, calc(100vh - 22rem), 620px);
+      min-height: 0;
+    }
+
+    .session-converter-grid .tool-panel {
+      display: flex;
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .session-converter-grid .tool-panel-head {
+      padding-block: calc(var(--spacing) * 3);
+    }
+
+    .session-converter-grid .tool-panel-body {
+      display: flex;
+      min-height: 0;
+      flex: 1 1 auto;
+      flex-direction: column;
+      padding-block: calc(var(--spacing) * 3);
+    }
+
+    .session-converter-textarea {
+      min-height: 0;
+      flex: 1 1 auto;
+      resize: none;
+    }
+
+    .session-account-table {
+      flex: 0 0 auto;
+    }
+
+    .session-account-table > div {
+      max-height: 8.75rem;
+    }
+  }
+
+  .tool-issues {
+    @apply mt-3 hidden rounded border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700;
+  }
+
+  .tool-issues.is-visible {
+    @apply block;
   }
 
   .merchant-table-head {

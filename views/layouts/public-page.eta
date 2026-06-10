@@ -5,6 +5,7 @@
   const robotsValue = typeof robots === 'string' ? robots : 'index,follow';
   const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : pageCanonicalUrlValue;
   const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
+  const ogTypeValue = typeof ogType === 'string' ? ogType : 'website';
   const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'WebSite' };
 %>
 <!DOCTYPE html>
@@ -16,7 +17,7 @@
   <meta name="robots" content="<%= robotsValue %>" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="canonical" href="<%= pageCanonicalUrlValue %>" />
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content="<%= ogTypeValue %>" />
   <meta property="og:title" content="<%= pageTitleValue %>" />
   <meta property="og:description" content="<%= descriptionValue %>" />
   <meta property="og:url" content="<%= ogUrlValue %>" />
@@ -26,6 +27,7 @@
   <meta name="twitter:description" content="<%= descriptionValue %>" />
   <meta name="twitter:image" content="<%= ogImageUrlValue %>" />
   <link rel="stylesheet" href="/assets/public.css" />
+  <%~ block('head') %>
   <title><%= pageTitleValue %></title>
   <script defer src="https://stats.cardnav.xyz/script.js" data-website-id="f708ee4d-be15-48e0-9eb8-344da355f150"></script>
   <% if (typeof headerAdTagEnabled === 'boolean' && headerAdTagEnabled) { %>
@@ -41,17 +43,22 @@
   const activeClass = 'rounded px-3 py-2 text-blue-700 bg-blue-50';
   const telegramGroupUrlValue = typeof telegramGroupUrl === 'string' ? telegramGroupUrl : 'https://t.me/cardnav_xyz_group';
   const githubRepoUrl = 'https://github.com/charleslee8266/cardnav-web';
-  const sponsorPackyApiUrl = 'https://www.packyapi.com/register?aff=Nulo';
-  const sponsorPrimaryUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=952';
-  const sponsorPlan2c2gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=953';
-  const sponsorPlan3c4gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=954';
-  const sponsorPlan6c6gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=955';
-  const sponsorPlan7c8gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=956';
+  const shouldShowSponsors = typeof showSponsors === 'boolean' ? showSponsors : true;
+  const shouldShowHero = activeItem === 'home';
 %>
 <header class="sticky top-0 z-40 border-b bg-white/95 backdrop-blur">
-  <nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 text-sm font-medium">
+  <nav class="flex w-full flex-wrap items-center gap-2 px-4 py-3 text-sm font-medium">
+    <a href="/" aria-label="返回首页" class="inline-flex shrink-0 items-center gap-2 rounded px-2 py-1 text-slate-950 hover:bg-slate-100">
+      <img src="/favicon.png" alt="卡网大全" width="28" height="28" class="h-7 w-7 rounded object-cover" />
+      <span class="flex flex-col justify-center leading-none">
+        <span class="text-base font-bold tracking-normal">CardNav</span>
+        <span class="text-xs font-semibold text-slate-500">卡网大全</span>
+      </span>
+    </a>
     <a href="/" class="<%= activeItem === 'home' ? activeClass : inactiveClass %>">首页</a>
-    <a href="/submit" class="<%= activeItem === 'submit' ? activeClass : inactiveClass %>">商家入驻</a>
+    <a href="/knowledge" class="<%= activeItem === 'knowledge' ? activeClass : inactiveClass %>">知识库</a>
+    <a href="/tools" class="<%= activeItem === 'tools' ? activeClass : inactiveClass %>">工具集</a>
+    <a href="/submit" class="<%= activeItem === 'submit' ? activeClass : inactiveClass %>">提交商家</a>
     <div class="ml-auto flex items-center gap-1">
       <a
         href="<%= telegramGroupUrlValue %>"
@@ -88,8 +95,9 @@
   </nav>
 </header>
 
-<main class="mx-auto flex-1 w-full max-w-7xl px-4 pb-6 pt-3">
-<section class="mx-auto mb-5 max-w-7xl overflow-hidden rounded border bg-white">
+<main class="grid w-full flex-1 content-start items-start gap-4 px-4 pb-6 pt-3">
+<% if (shouldShowHero) { %>
+<section class="overflow-hidden rounded border bg-white">
   <div class="px-5 py-5">
     <div>
       <div class="hero-title-row flex items-center gap-3">
@@ -134,51 +142,25 @@
     </div>
   </div>
 </section>
+<% } %>
 
-<section class="mx-auto mb-4 max-w-7xl rounded border border-slate-200 bg-white p-3 text-sm">
-  <div class="mb-2 flex items-center gap-3">
-    <h2 class="text-sm font-semibold text-slate-800">赞助商列表</h2>
-    <a href="<%= telegramGroupUrlValue %>" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-blue-700 hover:text-blue-800">成为赞助商</a>
-  </div>
-  <div class="flex flex-wrap gap-3">
-    <article class="sponsor-card flex w-full max-w-[344px] flex-col rounded border border-slate-200 bg-slate-50">
-      <a href="<%= sponsorPackyApiUrl %>" target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url="<%= sponsorPackyApiUrl %>" class="group flex flex-1 flex-col gap-2 p-3">
-        <span class="flex h-[100px] w-full items-center justify-center overflow-hidden rounded bg-white px-4">
-          <img src="https://www.packyapi.com/logo-full.svg" alt="PackyAPI AI API 聚合平台赞助商标志" width="320" height="73" loading="lazy" class="h-auto w-full max-w-[320px] object-contain text-slate-950" />
-        </span>
-        <span class="block text-center text-sm font-semibold leading-5 text-slate-900 underline-offset-2 group-hover:underline">
-          PackyAPI 老牌 AI API 中转站
-        </span>
-        <span class="block text-center text-xs leading-5 text-slate-600">一站式接入 Claude、GPT、Gemini 等主流 AI 服务，可提供发票。</span>
-      </a>
-    </article>
-    <article class="sponsor-card flex w-full max-w-[344px] flex-col rounded border border-slate-200 bg-slate-50">
-      <a href="<%= sponsorPrimaryUrl %>" target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url="<%= sponsorPrimaryUrl %>" class="group flex flex-col gap-2 p-3">
-        <span class="flex w-full items-center justify-center overflow-hidden rounded bg-white">
-          <img src="https://racknerd.com/banners/320x100.gif" alt="RackNerd 云主机赞助商横幅" width="320" height="100" loading="lazy" class="h-auto w-full max-w-[320px] object-contain" />
-        </span>
-        <span class="block text-center">
-          <span class="text-sm font-semibold text-slate-900">RackNerd云主机</span>
-          <span class="ml-1 text-sm font-semibold leading-5 text-red-600 underline-offset-2 group-hover:underline">1C1G 仅需 $21.99/年</span>
-        </span>
-      </a>
-      <div class="grid grid-cols-2 gap-y-1 text-sm leading-5 text-slate-600">
-        <a href="<%= sponsorPlan2c2gUrl %>" target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url="<%= sponsorPlan2c2gUrl %>" class="block px-3 py-0.5 text-center hover:text-red-700 hover:underline">2C2G $35.99/年</a>
-        <a href="<%= sponsorPlan3c4gUrl %>" target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url="<%= sponsorPlan3c4gUrl %>" class="block px-3 py-0.5 text-center hover:text-red-700 hover:underline">3C4G $59.99/年</a>
-        <a href="<%= sponsorPlan6c6gUrl %>" target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url="<%= sponsorPlan6c6gUrl %>" class="block px-3 py-0.5 text-center hover:text-red-700 hover:underline">6C6G $89.99/年</a>
-        <a href="<%= sponsorPlan7c8gUrl %>" target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url="<%= sponsorPlan7c8gUrl %>" class="block px-3 py-0.5 text-center hover:text-red-700 hover:underline">7C8G $119.99/年</a>
-      </div>
-    </article>
-  </div>
-</section>
-
+<% if (shouldShowSponsors && activeItem === 'home') { %>
+<%~ include('../partials/sponsors.eta') %>
+<% } %>
 <%~ block('content') %>
+<% if (shouldShowSponsors && activeItem !== 'home') { %>
+<%~ include('../partials/sponsors.eta') %>
+<% } %>
 </main>
 
 <footer class="border-t bg-white">
   <div class="mx-auto max-w-7xl px-4 py-4 text-center text-xs leading-5 text-slate-500">
     <p>价格数据仅供参考，实际价格以各平台为准。</p>
-    <p class="mt-1">免责声明：本站所有内容采集自网络，仅供参考，不构成购买建议。</p>
+    <p class="mt-1">
+      <a href="/disclaimer" class="font-medium text-slate-600 hover:text-blue-700 hover:underline">免责声明</a>
+      <span class="mx-2 text-slate-300">|</span>
+      <a href="/privacy" class="font-medium text-slate-600 hover:text-blue-700 hover:underline">隐私政策</a>
+    </p>
   </div>
 </footer>
 
