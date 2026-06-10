@@ -41,6 +41,7 @@ let merchantRowsRendered = false;
 let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
 let currentFlatVisibleLimit = Number(dashboardData.initialProductLimit) > 0 ? Number(dashboardData.initialProductLimit) : DEFAULT_FLAT_PRODUCT_LIMIT;
+let isDashboardDataLoading = Boolean(dashboardData.isPartial);
 let quickSearchTags = quickTagFilters
   ? Array.from(quickTagFilters.querySelectorAll('button[data-tag-key]')).map(button => toQuickSearchTag(button.textContent || ''))
   : [];
@@ -518,6 +519,12 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
 
   flatProductProgressiveLoad.classList.remove('hidden');
   flatProductLoadSummary.classList.remove('hidden');
+  if (isDashboardDataLoading) {
+    flatProductLoadSummary.textContent = '加载中';
+    flatProductLoadMoreButton.classList.add('hidden');
+    return;
+  }
+
   flatProductLoadSummary.textContent = `当前显示 ${renderedCount} / ${visibleCount} 个匹配商品`;
 
   if (renderedCount < visibleCount) {
@@ -875,6 +882,7 @@ function replaceDashboardData(nextDashboardData) {
   if (!nextDashboardData || !Array.isArray(nextDashboardData.products) || !Array.isArray(nextDashboardData.sites)) return;
 
   dashboardData = nextDashboardData;
+  isDashboardDataLoading = false;
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
   merchantRowsRendered = false;
   merchantRows = [];
@@ -892,9 +900,15 @@ function replaceDashboardData(nextDashboardData) {
 async function loadDashboardDataFromApi() {
   try {
     const response = await fetch('/api/dashboard', { headers: { accept: 'application/json' } });
-    if (!response.ok) return;
+    if (!response.ok) {
+      isDashboardDataLoading = false;
+      applyFilters();
+      return;
+    }
     replaceDashboardData(await response.json());
   } catch (_error) {
+    isDashboardDataLoading = false;
+    applyFilters();
     // SSR rows remain usable when the API request fails.
   }
 }
