@@ -26,6 +26,9 @@ import {
 
 const publicSiteUrl = process.env.SITE_URL || 'https://cardnav.xyz';
 const telegramGroupUrl = 'https://t.me/cardnav_xyz_group';
+const headerAdTagEnabled = ['1', 'true', 'yes', 'on'].includes(
+  String(process.env.HEADER_AD_TAG_ENABLED || '').trim().toLowerCase(),
+);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const runtimePublicRoot = path.join(rootDir, 'public');
 const runtimeViewRoot = path.join(rootDir, 'views');
@@ -48,6 +51,7 @@ export function createApp() {
     root: runtimeViewRoot,
     viewExt: 'eta',
     defaultContext: {
+      headerAdTagEnabled,
       telegramGroupUrl,
     },
   });

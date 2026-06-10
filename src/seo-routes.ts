@@ -132,9 +132,6 @@ export function buildRobotsTxt(baseUrlInput: string) {
     '# Model-training crawlers listed below are not authorized.',
     'User-agent: *',
     'Allow: /',
-    'Disallow: /refresh',
-    'Disallow: /refresh-force',
-    'Disallow: /admin',
     '',
     ...trainingCrawlerUserAgents.flatMap(userAgent => [
       `User-agent: ${userAgent}`,
