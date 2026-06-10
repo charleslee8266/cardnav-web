@@ -5,6 +5,7 @@
   const robotsValue = typeof robots === 'string' ? robots : 'index,follow';
   const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : canonicalUrlValue;
   const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
+  const ogTypeValue = typeof ogType === 'string' ? ogType : 'website';
   const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'WebSite' };
   const sourceSites = typeof initialSites !== 'undefined' && Array.isArray(initialSites) ? initialSites : sites;
   const sourceProducts = typeof initialProducts !== 'undefined' && Array.isArray(initialProducts) ? initialProducts : products;
@@ -26,6 +27,8 @@
       productUrl: product.productUrl,
       stock: product.stock,
       inStock: product.inStock,
+      refreshedAt: product.refreshedAt || null,
+      refreshTime: product.refreshTime || '',
       clickCount: product.clickCount || 0,
       siteId: product.siteId || '',
       siteName: product.siteName || '',
@@ -77,62 +80,82 @@
     robots: robotsValue,
     ogUrl: ogUrlValue,
     ogImageUrl: ogImageUrlValue,
+    ogType: ogTypeValue,
     jsonLd: jsonLdValue,
   });
 %>
 <% block('content', function(){ %>
-  <form id="filters" class="content-panel flex flex-col gap-3" method="get">
-    <% const summarySiteCount = totalSiteCountValue; %>
-    <% const summaryProductCount = totalProductCountValue; %>
-    <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-700">
-      <span>已收录商家：<span class="public-summary-value"><%= summarySiteCount %></span></span>
-      <span>商品：<span class="public-summary-value"><%= summaryProductCount %></span></span>
-      <% if (typeof latestRefreshTime !== 'undefined' && latestRefreshTime) { %>
-        <span>最近刷新：<%= latestRefreshTime %></span>
-      <% } %>
-    </div>
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-      <input id="searchFilter" name="q" value="<%= searchQueryValue %>" class="control-input" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
-    </div>
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-      <div class="flex flex-wrap items-center gap-3">
+  <section class="content-panel">
+    <form id="filters" class="flex flex-col gap-3" method="get">
+      <% const summarySiteCount = totalSiteCountValue; %>
+      <% const summaryProductCount = totalProductCountValue; %>
+      <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-700">
+        <span>已收录商家：<span class="public-summary-value"><%= summarySiteCount %></span></span>
+        <span>商品：<span class="public-summary-value"><%= summaryProductCount %></span></span>
+        <% if (typeof latestRefreshTime !== 'undefined' && latestRefreshTime) { %>
+          <span>最近刷新：<%= latestRefreshTime %></span>
+        <% } %>
+      </div>
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <input id="searchFilter" name="q" value="<%= searchQueryValue %>" class="control-input" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
+      </div>
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="filter-checkbox-label">
+            <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
+            匹配分类
+          </label>
+          <label class="filter-checkbox-label">
+            <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
+            匹配商家
+          </label>
+        </div>
         <label class="filter-checkbox-label">
-          <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
-          匹配分类
+          <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="control-checkbox cursor-pointer" <%= showSoldOut ? 'checked' : '' %> />
+          显示无货商品
         </label>
         <label class="filter-checkbox-label">
-          <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
-          匹配商家
+          <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
+          按商家分组
+        </label>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-sm text-slate-700">价格范围</span>
+          <div class="flex items-center gap-2">
+            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最小价格" autocomplete="off" />
+            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最大价格" autocomplete="off" />
+          </div>
+        </div>
+        <label class="filter-select-label">
+          <span class="text-sm text-slate-700">排序</span>
+          <select id="flatSortSelect" name="sort" class="control-select w-28" autocomplete="off">
+            <option value="default">综合排序</option>
+            <option value="price-asc">低价优先</option>
+            <option value="stock-desc">库存最多</option>
+            <option value="refresh-desc">最近刷新</option>
+            <option value="custom" hidden>表头排序</option>
+          </select>
         </label>
       </div>
-      <label class="filter-checkbox-label">
-        <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="control-checkbox cursor-pointer" <%= showSoldOut ? 'checked' : '' %> />
-        显示无货商品
-      </label>
-      <label class="filter-checkbox-label">
-        <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
-        按商家分组
-      </label>
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm text-slate-700">价格范围</span>
-        <div class="flex items-center gap-2">
-          <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最小价格" autocomplete="off" />
-          <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最大价格" autocomplete="off" />
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm font-medium text-slate-700">热门搜索</span>
+        <div id="quickTagFilters" class="flex flex-wrap gap-2" aria-label="热门搜索标签">
+          <% popularSearchTermsValue.forEach(function(term) { %>
+            <% const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-'); %>
+            <button type="button" class="quick-tag-filter" data-tag-key="<%= tagKey %>" data-umami-event="quick-search-click" data-umami-event-name="<%= term %>"><%= term %></button>
+          <% }) %>
         </div>
       </div>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm font-medium text-slate-700">热门搜索</span>
-      <div id="quickTagFilters" class="flex flex-wrap gap-2" aria-label="热门搜索标签">
-        <% popularSearchTermsValue.forEach(function(term) { %>
-          <% const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-'); %>
-          <button type="button" class="quick-tag-filter" data-tag-key="<%= tagKey %>" data-umami-event="quick-search-click" data-umami-event-name="<%= term %>"><%= term %></button>
-        <% }) %>
-      </div>
-    </div>
-  </form>
+    </form>
+  </section>
 
-  <div id="emptyState" class="table-shell table-empty-state hidden">没有匹配的商家或商品</div>
+  <section id="emptyState" class="table-shell table-empty-state hidden">没有匹配的商家或商品</section>
+
+  <section>
+    <a href="/knowledge/how-to-choose-reliable-merchant" class="knowledge-feature-link">
+      <span class="text-sm font-bold text-blue-950">购买前先看：怎么判断一个商家靠不靠谱</span>
+      <span class="text-sm text-blue-800">从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。</span>
+    </a>
+  </section>
 
   <section id="flatProductView" class="product-table">
     <div class="table-hint-bar">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
@@ -146,6 +169,7 @@
             <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
             <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
             <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="productRefreshedAt" data-sort-type="number"><span>最近刷新</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
           </tr>
         </thead>
 
@@ -187,6 +211,9 @@
                   <span class="merchant-text"><%= item.siteName %></span>
                 </div>
               </td>
+              <td class="flat-refresh-cell">
+                <%= item.refreshTime %>
+              </td>
             </tr>
             <% renderedFlatCount += 1; %>
         <% }) %>
@@ -195,10 +222,10 @@
     </div>
   </section>
 
-  <div id="flatProductProgressiveLoad" class="progressive-load-panel">
+  <section id="flatProductProgressiveLoad" class="progressive-load-panel">
     <p id="flatProductLoadSummary" class="progressive-load-summary hidden"></p>
     <button id="flatProductLoadMoreButton" type="button" class="secondary-button hidden">加载更多商品</button>
-  </div>
+  </section>
 
   <section id="merchantGroupedView" class="product-table" hidden>
     <div class="merchant-table-head">

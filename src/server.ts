@@ -1,3 +1,6 @@
+/**
+ * 文件说明: 创建 CardNav 公开站点服务，负责首页、知识库、提交入口和公开 API。
+ */
 import fastify from 'fastify';
 import fastifyFormbody from '@fastify/formbody';
 import fastifyStatic from '@fastify/static';
@@ -13,6 +16,13 @@ import {
   submitSiteUrl,
 } from './store.js';
 import { buildSeoContext } from './seo.js';
+import { getKnowledgeArticle, knowledgeArticles } from './knowledge.js';
+import {
+  buildLlmsTxt,
+  buildRobotsTxt,
+  buildSitemapTxt,
+  buildSitemapXml,
+} from './seo-routes.js';
 
 const publicSiteUrl = process.env.SITE_URL || 'https://cardnav.xyz';
 const telegramGroupUrl = 'https://t.me/cardnav_xyz_group';
@@ -106,15 +116,135 @@ export function createApp() {
     return reply.header('cache-control', 'no-store').send({ terms: snapshot.terms });
   });
 
+  app.get('/knowledge', (_req, reply) => {
+    const seo = buildSeoContext({
+      baseUrl: publicSiteUrl,
+      pathname: '/knowledge',
+      title: '知识库',
+      description: '卡网大全知识库整理 AI 账号购买、商家选择和虚拟商品下单前的判断方法。',
+      imagePath: '/og-cardnav.svg',
+      type: 'webpage',
+    });
+    return reply.view('knowledge.eta', {
+      ...seo,
+      articles: knowledgeArticles,
+    });
+  });
+
+  app.get('/knowledge/:slug', (req, reply) => {
+    const params = (req.params ?? {}) as { slug?: string };
+    const article = getKnowledgeArticle(typeof params.slug === 'string' ? params.slug : '');
+    if (!article) {
+      return reply.status(404).send('Not Found');
+    }
+    const seo = buildSeoContext({
+      baseUrl: publicSiteUrl,
+      pathname: `/knowledge/${article.slug}`,
+      title: article.title,
+      description: article.description,
+      imagePath: '/og-cardnav.svg',
+      type: 'article',
+      datePublished: article.datePublished,
+      dateModified: article.dateModified,
+    });
+    return reply.view('knowledge-article.eta', {
+      ...seo,
+      article,
+    });
+  });
+
+  app.get('/tools', (_req, reply) => {
+    const seo = buildSeoContext({
+      baseUrl: publicSiteUrl,
+      pathname: '/tools',
+      title: '工具集',
+      description: '卡网大全工具提供和 AI 账号、订阅、导入格式相关的小工具，帮助用户在浏览器本地完成常用转换。',
+      imagePath: '/og-cardnav.svg',
+      type: 'webpage',
+    });
+    return reply.view('tools.eta', {
+      ...seo,
+    });
+  });
+
+  app.get('/tools/session-converter', (_req, reply) => {
+    const seo = buildSeoContext({
+      baseUrl: publicSiteUrl,
+      pathname: '/tools/session-converter',
+      title: 'Session 转换工具',
+      description: '把 ChatGPT Web session、Codex auth.json、9Router OAuth JSON 等本地转换为 CPA、Sub2API、Cockpit、9Router、Codex、AxonHub 或 Codex-Manager 可导入 JSON。',
+      imagePath: '/og-cardnav.svg',
+      type: 'webpage',
+    });
+    return reply.view('session-converter.eta', {
+      ...seo,
+    });
+  });
+
+  app.get('/disclaimer', (_req, reply) => {
+    const seo = buildSeoContext({
+      baseUrl: publicSiteUrl,
+      pathname: '/disclaimer',
+      title: '免责声明',
+      description: '卡网大全免责声明说明第三方商家信息、价格库存、购买入口、合作展示和交易责任边界。',
+      imagePath: '/og-cardnav.svg',
+      type: 'webpage',
+    });
+    return reply.view('disclaimer.eta', {
+      ...seo,
+    });
+  });
+
+  app.get('/privacy', (_req, reply) => {
+    const seo = buildSeoContext({
+      baseUrl: publicSiteUrl,
+      pathname: '/privacy',
+      title: '隐私政策',
+      description: '卡网大全隐私政策说明访问统计、提交信息、第三方链接、联系方式和数据使用方式。',
+      imagePath: '/og-cardnav.svg',
+      type: 'webpage',
+    });
+    return reply.view('privacy.eta', {
+      ...seo,
+    });
+  });
+
+  app.get('/robots.txt', (_req, reply) => {
+    return reply
+      .type('text/plain; charset=utf-8')
+      .header('cache-control', 'public, max-age=3600')
+      .send(buildRobotsTxt(publicSiteUrl));
+  });
+
+  app.get('/sitemap.xml', (_req, reply) => {
+    return reply
+      .type('application/xml; charset=utf-8')
+      .header('cache-control', 'public, max-age=3600')
+      .send(buildSitemapXml(publicSiteUrl));
+  });
+
+  app.get('/sitemap.txt', (_req, reply) => {
+    return reply
+      .type('text/plain; charset=utf-8')
+      .header('cache-control', 'public, max-age=3600')
+      .send(buildSitemapTxt(publicSiteUrl));
+  });
+
+  app.get('/llms.txt', (_req, reply) => {
+    return reply
+      .type('text/plain; charset=utf-8')
+      .header('cache-control', 'public, max-age=3600')
+      .send(buildLlmsTxt(publicSiteUrl));
+  });
+
   app.get('/submit', (_req, reply) => {
     const seo = buildSeoContext({
       baseUrl: publicSiteUrl,
       pathname: '/submit',
-      title: '商家入驻',
+      title: '提交商家',
       description: '商家可提交站点 URL 入驻卡网大全，也可通过 Telegram 联系合作，获得更多曝光入口。',
       imagePath: '/og-cardnav.svg',
       type: 'webpage',
-      noindex: true,
     });
     return reply.view('submit.eta', {
       ...seo,

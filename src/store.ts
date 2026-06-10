@@ -21,6 +21,8 @@ export type PublicProductRow = {
   productUrl?: string;
   stock?: number;
   inStock: boolean;
+  refreshedAt: string | null;
+  refreshTime: string;
   siteId: string;
   siteName: string;
   siteLatestProductRefreshedAt: string | null;
@@ -107,6 +109,7 @@ export async function loadDashboardData() {
   }));
 
   const products: PublicProductRow[] = productsResult.rows.map(row => {
+    const refreshedAt = row.refreshed_at ? String(row.refreshed_at) : null;
     const siteLatestProductRefreshedAt = row.site_latest_product_refreshed_at ? String(row.site_latest_product_refreshed_at) : null;
     return {
       categoryName: String(row.category_name),
@@ -117,6 +120,8 @@ export async function loadDashboardData() {
       ...(row.product_url ? { productUrl: String(row.product_url) } : {}),
       ...(typeof row.stock === 'number' ? { stock: row.stock } : {}),
       inStock: Boolean(row.in_stock),
+      refreshedAt,
+      refreshTime: formatBeijingRefreshTime(refreshedAt),
       clickCount: Number(row.click_count) || 0,
       siteId: String(row.site_id),
       siteName: String(row.site_name),
