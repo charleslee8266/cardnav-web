@@ -224,7 +224,7 @@ export async function recordProductClick(input: ProductClickInput) {
     `,
     [siteId, productUrl, categoryName, name],
   );
-  return { recorded: result.rows.length > 0 as const };
+  return { recorded: result.rows.length > 0 };
 }
 
 export async function loadPopularSearchTerms(limit = 10) {
