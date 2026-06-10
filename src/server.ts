@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   loadDashboardData,
   loadPopularSearchTerms,
+  recordProductClick,
   recordSearchTerm,
   submitSiteUrl,
 } from './store.js';
@@ -70,13 +71,31 @@ export function createApp() {
   });
 
   app.post('/api/search-terms', async (req, reply) => {
-    const body = (req.body ?? {}) as { term?: unknown; source?: unknown };
-    const source = body.source === 'query' || body.source === 'tag' || body.source === 'empty' ? body.source : null;
+    const body = (req.body ?? {}) as { term?: unknown; resultCount?: unknown };
     const term = typeof body.term === 'string' ? body.term : '';
-    if (!source || !term.trim()) {
+    const resultCount = typeof body.resultCount === 'number'
+      ? body.resultCount
+      : (typeof body.resultCount === 'string' ? Number(body.resultCount) : 0);
+    if (!term.trim()) {
       return reply.status(400).header('cache-control', 'no-store').send({ ok: false });
     }
-    const result = await recordSearchTerm(term, source);
+    const result = await recordSearchTerm(term, Number.isFinite(resultCount) ? resultCount : 0);
+    return reply.status(result.recorded ? 202 : 204).header('cache-control', 'no-store').send(result.recorded ? { ok: true } : undefined);
+  });
+
+  app.post('/api/product-clicks', async (req, reply) => {
+    const body = (req.body ?? {}) as {
+      siteId?: unknown;
+      productUrl?: unknown;
+      categoryName?: unknown;
+      name?: unknown;
+    };
+    const result = await recordProductClick({
+      siteId: typeof body.siteId === 'string' ? body.siteId : '',
+      productUrl: typeof body.productUrl === 'string' ? body.productUrl : undefined,
+      categoryName: typeof body.categoryName === 'string' ? body.categoryName : undefined,
+      name: typeof body.name === 'string' ? body.name : undefined,
+    });
     return reply.status(result.recorded ? 202 : 204).header('cache-control', 'no-store').send(result.recorded ? { ok: true } : undefined);
   });
 

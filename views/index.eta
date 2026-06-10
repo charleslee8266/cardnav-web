@@ -26,6 +26,7 @@
       productUrl: product.productUrl,
       stock: product.stock,
       inStock: product.inStock,
+      clickCount: product.clickCount || 0,
       siteId: product.siteId || '',
       siteName: product.siteName || '',
       siteLatestProductRefreshedAt: product.siteLatestProductRefreshedAt || null,
@@ -162,7 +163,7 @@
                   <span aria-hidden="true">♡</span>
                 </button>
                 <% if (item.productUrl) { %>
-                  <a href="<%= item.productUrl %>" target="_blank" rel="noopener noreferrer" class="product-link" data-umami-event="product-click" data-umami-event-url="<%= item.productUrl %>" data-umami-event-name="<%= productTitle %>"><%= item.name %></a>
+                  <a href="<%= item.productUrl %>" target="_blank" rel="noopener noreferrer" class="product-link" data-umami-event="product-click" data-umami-event-url="<%= item.productUrl %>" data-umami-event-name="<%= productTitle %>" data-product-click-site-id="<%= item.siteId %>" data-product-click-url="<%= item.productUrl %>" data-product-click-category="<%= item.categoryName %>" data-product-click-name="<%= item.name %>"><%= item.name %></a>
                 <% } else { %>
                   <span class="product-text"><%= item.name %></span>
                 <% } %>

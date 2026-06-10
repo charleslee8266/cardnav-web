@@ -41,9 +41,10 @@ let applyFiltersTimer = null;
 let searchReportTimer = null;
 let umamiFilterReportTimer = null;
 const SEARCH_REPORT_DELAY_MS = 5000;
+const SEARCH_REPORT_DEDUP_WINDOW_MS = 2 * 60 * 1000;
 let lastReportedQuery = '';
-let lastReportedEmptyKey = '';
 let lastReportedUmamiFilterKey = '';
+const recentSearchReports = new Map();
 
 function trackUmamiEvent(eventName, eventData = {}) {
   if (typeof window.umami?.track !== 'function') return;
@@ -97,12 +98,7 @@ function searchMatchedFlatRows() {
     const queryMatched = terms.length === 0 || matchesEveryTermAcrossEnabledFields(rowEntry, terms);
     return stockMatched && priceMatched && queryMatched;
   });
-  if (terms.length === 0) return prioritizeFavoriteFlatRows(matchedRows);
-
-  return prioritizeFavoriteFlatRows(matchedRows.slice().sort((left, right) => {
-    const productMatchDiff = matchTermCount(right.productTitle, terms) - matchTermCount(left.productTitle, terms);
-    return productMatchDiff || left.originalIndex - right.originalIndex;
-  }));
+  return prioritizeFavoriteFlatRows(matchedRows);
 }
 
 function loadFavoriteKeys(storageKey) {
@@ -313,15 +309,42 @@ function syncFiltersFromUrl() {
   matchMerchantFilter.checked = params.get('matchMerchant') === '1';
 }
 
-function reportSearchTerm(term, source) {
+function reportSearchTerm(term, resultCount) {
   const normalizedTerm = normalize(term);
+  const safeResultCount = Number.isFinite(resultCount) ? Math.max(0, Math.floor(resultCount)) : 0;
   if (!normalizedTerm || normalizedTerm.length < 2) return;
   if (/^https?:\/\//i.test(normalizedTerm) || /\/shop\//i.test(normalizedTerm) || /[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(normalizedTerm)) return;
+  const dedupKey = normalizedTerm;
+  const now = Date.now();
+  const lastReportedAt = recentSearchReports.get(dedupKey) || 0;
+  if (now - lastReportedAt < SEARCH_REPORT_DEDUP_WINDOW_MS) return;
+  recentSearchReports.set(dedupKey, now);
 
   fetch('/api/search-terms', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ term: normalizedTerm, source }),
+    body: JSON.stringify({ term: normalizedTerm, resultCount: safeResultCount }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+function reportProductClick(payload) {
+  const siteId = normalize(payload.siteId);
+  const productUrl = text(payload.productUrl).trim();
+  const categoryName = text(payload.categoryName).trim();
+  const name = text(payload.name).trim();
+  if (!siteId) return;
+  if (!productUrl && (!categoryName || !name)) return;
+
+  fetch('/api/product-clicks', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      siteId,
+      productUrl,
+      categoryName,
+      name,
+    }),
     keepalive: true,
   }).catch(() => {});
 }
@@ -332,7 +355,7 @@ function scheduleSearchReport() {
   if (query.length < 2 || query === lastReportedQuery) return;
   searchReportTimer = setTimeout(() => {
     lastReportedQuery = query;
-    reportSearchTerm(query, 'query');
+    reportSearchTerm(query, filteredFlatRows().length);
   }, SEARCH_REPORT_DELAY_MS);
 }
 
@@ -358,15 +381,6 @@ function scheduleFilterTrack(reason) {
     lastReportedUmamiFilterKey = eventKey;
     trackUmamiEvent('filter-change', eventData);
   }, 700);
-}
-
-function reportEmptyResultIfNeeded(visibleCount) {
-  const query = searchFilter.value.trim();
-  const term = query.trim();
-  const reportKey = `${term}|${priceMin.value.trim()}|${priceMax.value.trim()}|${showSoldOutFilter.checked ? '1' : '0'}`;
-  if (visibleCount > 0 || term.length < 2 || reportKey === lastReportedEmptyKey) return;
-  lastReportedEmptyKey = reportKey;
-  reportSearchTerm(term, 'empty');
 }
 
 function scheduleApplyFilters() {
@@ -424,7 +438,12 @@ function createFlatProductRow(item) {
   productInline.className = 'cell-inline';
   productInline.appendChild(createFavoriteButton('product', productFavoriteKey, `收藏 ${productTitle}`));
   if (item.productUrl) {
-    productInline.appendChild(createTrackedProductLink(item.productUrl, 'product-link', productName, productTitle));
+    const productLink = createTrackedProductLink(item.productUrl, 'product-link', productName, productTitle);
+    productLink.dataset.productClickSiteId = siteId;
+    productLink.dataset.productClickUrl = item.productUrl;
+    productLink.dataset.productClickCategory = categoryName;
+    productLink.dataset.productClickName = productName;
+    productInline.appendChild(productLink);
   } else {
     appendTextElement(productInline, 'span', 'product-text', productName);
   }
@@ -522,6 +541,10 @@ function createProductChip(item) {
     chip.dataset.umamiEvent = 'product-click';
     chip.dataset.umamiEventUrl = item.productUrl;
     chip.dataset.umamiEventName = productTitle;
+    chip.dataset.productClickSiteId = text(item.siteId);
+    chip.dataset.productClickUrl = item.productUrl;
+    chip.dataset.productClickCategory = categoryName;
+    chip.dataset.productClickName = productName;
   }
 
   appendTextElement(chip, 'span', 'product-category', shortCategory);
@@ -560,6 +583,7 @@ function renderMerchantRows() {
     row.dataset.siteId = siteFavoriteKey;
     row.dataset.siteText = siteName.toLowerCase();
     row.dataset.siteName = siteName;
+    row.dataset.siteScore = String(Number(site.score) || 0);
     row.dataset.latestProductRefreshedAt = String(new Date(site.latestProductRefreshedAt || '').getTime() || 0);
     row.dataset.originalIndex = String(index);
     row.dataset.productCount = String(siteProducts.length);
@@ -677,7 +701,6 @@ function applyFilters() {
   const visibleCount = groupByMerchant ? visibleMerchantCount : visibleFlatProductCount;
   emptyState.classList.toggle('hidden', visibleCount > 0);
   if (groupByMerchant) updateFlatProgressiveLoadSummary(0, 0);
-  reportEmptyResultIfNeeded(visibleCount);
   const params = new URLSearchParams();
   if (searchQuery) params.set('q', searchQuery);
   if (showSoldOut) params.set('showSoldOut', '1');
@@ -700,17 +723,8 @@ function sortRows() {
       const favoriteDiff = Number(b.element.dataset.favorite) - Number(a.element.dataset.favorite);
       if (favoriteDiff !== 0) return favoriteDiff;
 
-      const productMatchDiff = Number(b.element.dataset.visibleProductMatchCount) - Number(a.element.dataset.visibleProductMatchCount);
-      if (productMatchDiff !== 0) return productMatchDiff;
-
-      const inStockDiff = Number(b.element.dataset.visibleInStockCount) - Number(a.element.dataset.visibleInStockCount);
-      if (inStockDiff !== 0) return inStockDiff;
-
-      const soldOutDiff = Number(b.element.dataset.visibleSoldOutCount) - Number(a.element.dataset.visibleSoldOutCount);
-      if (soldOutDiff !== 0) return soldOutDiff;
-
-      const refreshDiff = Number(b.element.dataset.latestProductRefreshedAt) - Number(a.element.dataset.latestProductRefreshedAt);
-      if (refreshDiff !== 0) return refreshDiff;
+      const siteScoreDiff = Number(b.element.dataset.siteScore) - Number(a.element.dataset.siteScore);
+      if (siteScoreDiff !== 0) return siteScoreDiff;
 
       return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
     })
@@ -895,7 +909,7 @@ quickTagFilters?.addEventListener('click', event => {
   if (!tag) return;
   searchFilter.value = tag.label;
   resetFlatVisibleLimit();
-  reportSearchTerm(tag.label, 'tag');
+  reportSearchTerm(tag.label, filteredFlatRows().length);
   applyFilters();
 });
 flatProductLoadMoreButton?.addEventListener('click', () => {
@@ -909,6 +923,17 @@ flatSortButtons.forEach(button => {
       key: button.dataset.sortKey || '',
       direction: button.dataset.sortDirection || '',
     });
+  });
+});
+
+document.addEventListener('click', event => {
+  const target = event.target instanceof Element ? event.target.closest('[data-product-click-site-id]') : null;
+  if (!(target instanceof HTMLElement)) return;
+  reportProductClick({
+    siteId: target.dataset.productClickSiteId || '',
+    productUrl: target.dataset.productClickUrl || '',
+    categoryName: target.dataset.productClickCategory || '',
+    name: target.dataset.productClickName || '',
   });
 });
 buildFlatRows();

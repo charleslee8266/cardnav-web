@@ -1,3 +1,7 @@
+/**
+ * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
+ * 对应文档: docs/specs/sorting-and-score.md
+ */
 import pg from 'pg';
 
 export type PublicSiteRow = {
@@ -21,10 +25,16 @@ export type PublicProductRow = {
   siteName: string;
   siteLatestProductRefreshedAt: string | null;
   siteLatestProductRefreshTime: string;
+  clickCount: number;
   score: number;
 };
 
-export type SearchTermSource = 'query' | 'tag' | 'empty';
+export type ProductClickInput = {
+  siteId: string;
+  productUrl?: string;
+  categoryName?: string;
+  name?: string;
+};
 
 export type PopularSearchTermsSnapshot = {
   terms: string[];
@@ -79,12 +89,13 @@ export async function loadDashboardData() {
       products.product_url,
       products.stock,
       products.in_stock,
+      products.click_count,
       products.score,
       products.refreshed_at
     FROM products
     INNER JOIN sites ON sites.id = products.site_id
     WHERE sites.type = 'cardShop'
-    ORDER BY sites.score DESC, products.score DESC, products.in_stock DESC, products.refreshed_at DESC, products.category_name ASC, products.name ASC
+    ORDER BY products.score DESC, sites.score DESC, products.in_stock DESC, products.refreshed_at DESC, products.category_name ASC, products.name ASC
   `);
 
   const sites: PublicSiteRow[] = sitesResult.rows.map(row => ({
@@ -106,6 +117,7 @@ export async function loadDashboardData() {
       ...(row.product_url ? { productUrl: String(row.product_url) } : {}),
       ...(typeof row.stock === 'number' ? { stock: row.stock } : {}),
       inStock: Boolean(row.in_stock),
+      clickCount: Number(row.click_count) || 0,
       siteId: String(row.site_id),
       siteName: String(row.site_name),
       siteLatestProductRefreshedAt,
@@ -163,8 +175,9 @@ export async function submitSiteUrl(input: string) {
   return { ok: true as const, url };
 }
 
-export async function recordSearchTerm(term: string, source: SearchTermSource) {
+export async function recordSearchTerm(term: string, resultCount: number) {
   const normalized = normalizeSearchText(term);
+  const safeResultCount = Number.isFinite(resultCount) ? Math.max(0, Math.floor(resultCount)) : 0;
   if (!normalized || normalized.length < 2) return { recorded: false };
   if (/^https?:\/\//i.test(normalized) || /\/shop\//i.test(normalized) || /[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(normalized)) {
     return { recorded: false };
@@ -172,40 +185,65 @@ export async function recordSearchTerm(term: string, source: SearchTermSource) {
 
   await pool.query(
     `
-      INSERT INTO search_terms (term, source, total_count, empty_count, last_seen_at)
-      VALUES ($1, $2, 1, $3, now())
-      ON CONFLICT (term, source) DO UPDATE SET
+      INSERT INTO search_terms (term, total_count, result_count, last_seen_at)
+      VALUES ($1, 1, $2, now())
+      ON CONFLICT (term) DO UPDATE SET
         total_count = search_terms.total_count + 1,
-        empty_count = search_terms.empty_count + EXCLUDED.empty_count,
+        result_count = EXCLUDED.result_count,
         last_seen_at = now()
     `,
-    [normalized, source, source === 'empty' ? 1 : 0],
+    [normalized, safeResultCount],
   );
   return { recorded: true };
+}
+
+export async function recordProductClick(input: ProductClickInput) {
+  const siteId = input.siteId.trim();
+  const productUrl = input.productUrl?.trim() ?? '';
+  const categoryName = input.categoryName?.trim() ?? '';
+  const name = input.name?.trim() ?? '';
+  if (!siteId) return { recorded: false as const };
+  if (!productUrl && (!categoryName || !name)) return { recorded: false as const };
+
+  const result = await pool.query(
+    `
+      UPDATE products
+      SET click_count = click_count + 1
+      WHERE ctid IN (
+        SELECT ctid
+        FROM products
+        WHERE site_id = $1
+          AND (
+            ($2 <> '' AND product_url = $2)
+            OR ($2 = '' AND category_name = $3 AND name = $4)
+          )
+        ORDER BY refreshed_at DESC, name ASC
+        LIMIT 1
+      )
+      RETURNING site_id
+    `,
+    [siteId, productUrl, categoryName, name],
+  );
+  return { recorded: result.rows.length > 0 as const };
 }
 
 export async function loadPopularSearchTerms(limit = 10) {
   const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
   const runtimeResult = await pool.query(
     `
-      WITH candidates AS (
-        SELECT term, SUM(total_count)::INTEGER AS total_count, MAX(last_seen_at) AS last_seen_at
-        FROM search_terms
-        WHERE source IN ('query', 'tag')
-        GROUP BY term
-        HAVING SUM(total_count) > 0
-      )
       SELECT
-        candidates.term,
-        candidates.total_count,
-        candidates.last_seen_at,
+        search_terms.term,
+        search_terms.total_count,
+        search_terms.last_seen_at,
         COUNT(products.*)::INTEGER AS product_count
-      FROM candidates
-      INNER JOIN products ON lower(products.category_name || ' ' || products.name) LIKE '%' || candidates.term || '%'
+      FROM search_terms
+      INNER JOIN products ON lower(products.category_name || ' ' || products.name) LIKE '%' || search_terms.term || '%'
       INNER JOIN sites ON sites.id = products.site_id AND sites.type = 'cardShop'
-      GROUP BY candidates.term, candidates.total_count, candidates.last_seen_at
+      WHERE search_terms.total_count > 0
+        AND search_terms.result_count > 0
+      GROUP BY search_terms.term, search_terms.total_count, search_terms.last_seen_at
       HAVING COUNT(products.*) >= 2
-      ORDER BY candidates.total_count DESC, product_count DESC, candidates.last_seen_at DESC, candidates.term ASC
+      ORDER BY search_terms.total_count DESC, product_count DESC, search_terms.last_seen_at DESC, search_terms.term ASC
       LIMIT $1
     `,
     [safeLimit],
