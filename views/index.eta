@@ -136,61 +136,63 @@
 
   <section id="flatProductView" class="product-table">
     <div class="table-hint-bar">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
-    <table class="flat-product-table">
-      <thead class="flat-product-head">
-        <tr>
-          <th scope="col" class="table-head-index">序号</th>
-          <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="productName" data-sort-type="text"><span>商品</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-          <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="priceValue" data-sort-type="number"><span>价格</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-          <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-          <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-          <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-        </tr>
-      </thead>
-
-      <tbody id="flatProductRows">
-      <% let renderedFlatCount = 0; %>
-      <% renderedProducts.forEach(function(item){ %>
-        <% if (renderedFlatCount >= initialProductLimitValue) { return; } %>
-        <% const productTitle = `${item.categoryName}-${item.name}`; %>
-        <% const productFavoriteKey = `${item.siteName}#${productTitle}`; %>
-        <% const siteFavoriteKey = item.siteId || item.siteName; %>
-          <tr class="flat-product-row">
-            <th scope="row" class="flat-row-index"></th>
-            <td class="flat-product-cell">
-              <div class="cell-inline">
-                <button type="button" class="favorite-toggle" data-favorite-kind="product" data-favorite-key="<%= productFavoriteKey %>" aria-label="收藏 <%= productTitle %>" aria-pressed="false" title="收藏商品">
-                  <span aria-hidden="true">♡</span>
-                </button>
-                <% if (item.productUrl) { %>
-                  <a href="<%= item.productUrl %>" target="_blank" rel="noopener noreferrer" class="product-link" data-umami-event="product-click" data-umami-event-url="<%= item.productUrl %>" data-umami-event-name="<%= productTitle %>" data-product-click-site-id="<%= item.siteId %>" data-product-click-url="<%= item.productUrl %>" data-product-click-category="<%= item.categoryName %>" data-product-click-name="<%= item.name %>"><%= item.name %></a>
-                <% } else { %>
-                  <span class="product-text"><%= item.name %></span>
-                <% } %>
-              </div>
-            </td>
-            <td class="flat-price-cell">
-              <%= renderProductPrice(item) %>
-            </td>
-            <td class="flat-status-cell">
-              <span class="<%= item.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out' %>"><%= productStockLabel(item) %></span>
-            </td>
-            <td class="flat-category-cell">
-              <%= item.categoryName %>
-            </td>
-            <td class="flat-merchant-cell">
-              <div class="cell-inline">
-                <button type="button" class="favorite-toggle" data-favorite-kind="site" data-favorite-key="<%= siteFavoriteKey %>" aria-label="收藏 <%= item.siteName %>" aria-pressed="false" title="收藏商家">
-                  <span aria-hidden="true">♡</span>
-                </button>
-                <span class="merchant-text"><%= item.siteName %></span>
-              </div>
-            </td>
+    <div class="product-table-scroll">
+      <table class="flat-product-table">
+        <thead class="flat-product-head">
+          <tr>
+            <th scope="col" class="table-head-index">序号</th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="productName" data-sort-type="text"><span>商品</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="priceValue" data-sort-type="number"><span>价格</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
           </tr>
-          <% renderedFlatCount += 1; %>
-      <% }) %>
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody id="flatProductRows">
+        <% let renderedFlatCount = 0; %>
+        <% renderedProducts.forEach(function(item){ %>
+          <% if (renderedFlatCount >= initialProductLimitValue) { return; } %>
+          <% const productTitle = `${item.categoryName}-${item.name}`; %>
+          <% const productFavoriteKey = `${item.siteName}#${productTitle}`; %>
+          <% const siteFavoriteKey = item.siteId || item.siteName; %>
+            <tr class="flat-product-row">
+              <th scope="row" class="flat-row-index"></th>
+              <td class="flat-product-cell">
+                <div class="cell-inline">
+                  <button type="button" class="favorite-toggle" data-favorite-kind="product" data-favorite-key="<%= productFavoriteKey %>" aria-label="收藏 <%= productTitle %>" aria-pressed="false" title="收藏商品">
+                    <span aria-hidden="true">♡</span>
+                  </button>
+                  <% if (item.productUrl) { %>
+                    <a href="<%= item.productUrl %>" target="_blank" rel="noopener noreferrer" class="product-link" data-umami-event="product-click" data-umami-event-url="<%= item.productUrl %>" data-umami-event-name="<%= productTitle %>" data-product-click-site-id="<%= item.siteId %>" data-product-click-url="<%= item.productUrl %>" data-product-click-category="<%= item.categoryName %>" data-product-click-name="<%= item.name %>"><%= item.name %></a>
+                  <% } else { %>
+                    <span class="product-text"><%= item.name %></span>
+                  <% } %>
+                </div>
+              </td>
+              <td class="flat-price-cell">
+                <%= renderProductPrice(item) %>
+              </td>
+              <td class="flat-status-cell">
+                <span class="<%= item.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out' %>"><%= productStockLabel(item) %></span>
+              </td>
+              <td class="flat-category-cell">
+                <%= item.categoryName %>
+              </td>
+              <td class="flat-merchant-cell">
+                <div class="cell-inline">
+                  <button type="button" class="favorite-toggle" data-favorite-kind="site" data-favorite-key="<%= siteFavoriteKey %>" aria-label="收藏 <%= item.siteName %>" aria-pressed="false" title="收藏商家">
+                    <span aria-hidden="true">♡</span>
+                  </button>
+                  <span class="merchant-text"><%= item.siteName %></span>
+                </div>
+              </td>
+            </tr>
+            <% renderedFlatCount += 1; %>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <div id="flatProductProgressiveLoad" class="progressive-load-panel">

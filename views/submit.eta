@@ -29,7 +29,11 @@
     <div class="mt-4 rounded border border-blue-200 bg-blue-50 p-4">
       <h3 class="text-sm font-semibold text-slate-900">合作曝光</h3>
       <p class="mt-2 text-sm leading-6 text-slate-700">如果商家愿意合作，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
-      <a href="<%= telegramGroupUrlValue %>" target="_blank" rel="noopener noreferrer" class="primary-button mt-3 inline-flex">
+      <a href="<%= telegramGroupUrlValue %>" target="_blank" rel="noopener noreferrer" class="primary-button mt-3 inline-flex items-center gap-2">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m22 2-7 20-4-9-9-4Z"></path>
+          <path d="M22 2 11 13"></path>
+        </svg>
         Telegram 联系
       </a>
     </div>

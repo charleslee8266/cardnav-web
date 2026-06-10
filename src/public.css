@@ -7,6 +7,15 @@
 @source "../../../public/assets/*.js";
 
 @layer base {
+  html {
+    overflow-x: clip;
+  }
+
+  body {
+    @apply flex min-h-screen flex-col;
+    overflow-x: clip;
+  }
+
   *,
   ::after,
   ::before,
@@ -149,9 +158,20 @@
     @apply px-4 py-3 text-sm font-semibold text-emerald-700;
   }
 
+  .hero-title-row {
+    @apply min-w-0;
+  }
+
+  .hero-domain {
+    overflow-wrap: anywhere;
+  }
 
   .product-table {
-    @apply overflow-x-auto rounded border bg-white;
+    @apply relative min-w-0 overflow-hidden rounded border bg-white;
+  }
+
+  .product-table-scroll {
+    @apply w-full max-w-full overflow-x-auto;
   }
 
   .table-hint-bar {
