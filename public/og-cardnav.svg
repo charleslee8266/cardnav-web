@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">卡网大全</title>
+  <desc id="desc">卡网商家与商品库存聚合首页</desc>
+  <rect width="1200" height="630" fill="#f8fafc"/>
+  <rect x="56" y="56" width="1088" height="518" rx="32" fill="#ffffff" stroke="#dbe4f0"/>
+  <text x="96" y="180" fill="#0f172a" font-size="72" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-weight="700">卡网大全</text>
+  <text x="96" y="245" fill="#2563eb" font-size="40" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-weight="600">cardnav.xyz</text>
+  <text x="96" y="330" fill="#475569" font-size="34" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">聚合卡网商家与商品，实时查看库存状态。</text>
+  <rect x="96" y="388" width="220" height="64" rx="16" fill="#dbeafe"/>
+  <text x="146" y="430" fill="#1d4ed8" font-size="28" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-weight="600">实时查看</text>
+  <rect x="336" y="388" width="220" height="64" rx="16" fill="#dcfce7"/>
+  <text x="386" y="430" fill="#166534" font-size="28" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-weight="600">库存筛选</text>
+</svg>
