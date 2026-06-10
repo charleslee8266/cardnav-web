@@ -38,7 +38,10 @@
     };
   });
   const latestRefreshTimeValue = typeof latestRefreshTime !== 'undefined' ? latestRefreshTime : null;
-  const initialProductLimitValue = 100;
+  const initialProductLimitValue = 10;
+  const initialRenderedProducts = renderedProducts.slice(0, initialProductLimitValue);
+  const initialRenderedSiteIds = new Set(initialRenderedProducts.map(function(product) { return product.siteId; }).filter(Boolean));
+  const initialRenderedSites = renderedSites.filter(function(site) { return initialRenderedSiteIds.has(site.id); });
   const productStockLabel = function(product) {
     return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? '有货' : '缺货');
   };
@@ -57,12 +60,13 @@
         .filter(Boolean)
     : [];
   const dashboardJsonValue = JSON.stringify({
-    sites: renderedSites,
-    products: renderedProducts,
+    sites: initialRenderedSites,
+    products: initialRenderedProducts,
     totalSiteCount: totalSiteCountValue,
     totalProductCount: totalProductCountValue,
     latestRefreshTime: latestRefreshTimeValue,
     initialProductLimit: initialProductLimitValue,
+    isPartial: renderedProducts.length > initialRenderedProducts.length,
   }).replace(/[<>&\u2028\u2029]/g, function(character) {
     return {
       '<': '\\u003c',
@@ -175,8 +179,7 @@
 
         <tbody id="flatProductRows">
         <% let renderedFlatCount = 0; %>
-        <% renderedProducts.forEach(function(item){ %>
-          <% if (renderedFlatCount >= initialProductLimitValue) { return; } %>
+        <% initialRenderedProducts.forEach(function(item){ %>
           <% const productTitle = `${item.categoryName}-${item.name}`; %>
           <% const productFavoriteKey = `${item.siteName}#${productTitle}`; %>
           <% const siteFavoriteKey = item.siteId || item.siteName; %>
