@@ -4,10 +4,12 @@
 const searchFilter = document.querySelector('#searchFilter');
 const showSoldOutFilter = document.querySelector('#showSoldOutFilter');
 const groupByMerchantFilter = document.querySelector('#groupByMerchantFilter');
+const matchCategoryFilter = document.querySelector('#matchCategoryFilter');
+const matchMerchantFilter = document.querySelector('#matchMerchantFilter');
 const priceMin = document.querySelector('#priceMin');
 const priceMax = document.querySelector('#priceMax');
 const quickTagFilters = document.querySelector('#quickTagFilters');
-let dashboardData = JSON.parse(document.querySelector('#dashboard-data')?.textContent || '{"rows":[]}');
+let dashboardData = JSON.parse(document.querySelector('#dashboard-data')?.textContent || '{"sites":[],"products":[]}');
 let flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
 const emptyState = document.querySelector('#emptyState');
 const rowContainer = document.querySelector('#merchantRows');
@@ -71,8 +73,15 @@ function matchTermCount(value, terms) {
   return terms.reduce((count, term) => count + (value.includes(term) ? 1 : 0), 0);
 }
 
-function matchesEveryTermAcrossProductAndSite(rowEntry, terms) {
-  return terms.every(term => rowEntry.productTitle.includes(term) || rowEntry.siteText.includes(term));
+function matchesEveryTermAcrossEnabledFields(rowEntry, terms) {
+  const matchCategory = matchCategoryFilter.checked;
+  const matchMerchant = matchMerchantFilter.checked;
+  return terms.every(term => {
+    if (rowEntry.productName.includes(term)) return true;
+    if (matchCategory && rowEntry.categoryName.includes(term)) return true;
+    if (matchMerchant && rowEntry.siteText.includes(term)) return true;
+    return false;
+  });
 }
 
 function searchMatchedFlatRows() {
@@ -84,16 +93,16 @@ function searchMatchedFlatRows() {
     const minPrice = parseBound(priceMinValue);
     const maxPrice = parseBound(priceMaxValue);
     const stockMatched = showSoldOut || rowEntry.inStock === 1;
-    const priceMatched = matchesPriceRange(rowEntry.priceText, minPrice, maxPrice);
-    const queryMatched = terms.length === 0 || matchesEveryTermAcrossProductAndSite(rowEntry, terms);
+    const priceMatched = matchesPriceRange(rowEntry.priceValue, minPrice, maxPrice);
+    const queryMatched = terms.length === 0 || matchesEveryTermAcrossEnabledFields(rowEntry, terms);
     return stockMatched && priceMatched && queryMatched;
   });
-  if (terms.length === 0) return matchedRows;
+  if (terms.length === 0) return prioritizeFavoriteFlatRows(matchedRows);
 
-  return matchedRows.slice().sort((left, right) => {
+  return prioritizeFavoriteFlatRows(matchedRows.slice().sort((left, right) => {
     const productMatchDiff = matchTermCount(right.productTitle, terms) - matchTermCount(left.productTitle, terms);
     return productMatchDiff || left.originalIndex - right.originalIndex;
-  });
+  }));
 }
 
 function loadFavoriteKeys(storageKey) {
@@ -166,8 +175,7 @@ function initializeFavoriteButton(button) {
     });
     saveFavoriteKeys(favoriteKind === 'product' ? favoriteProductStorageKey : favoriteSiteStorageKey, favoriteKeys);
     renderFavoriteButtonsByKey(favoriteKind, key, favoriteKeys.has(key));
-    if (merchantRowsRendered) sortRows();
-    if (currentFlatSort) sortFlatProductRows();
+    applyFilters();
   });
 }
 
@@ -186,17 +194,35 @@ function loadFavorites() {
   favoriteProductKeys = loadFavoriteKeys(favoriteProductStorageKey);
 }
 
-function parsePriceToCny(value) {
-  const text = normalize(value);
-  if (!text) return null;
+function formatDisplayPrice(priceNumber, priceUnit) {
+  if (typeof priceNumber !== 'number' || !Number.isFinite(priceNumber)) return '';
+  const unit = typeof priceUnit === 'string' ? priceUnit : '';
+  return `${unit}${String(priceNumber)}`;
+}
 
-  const compact = text.replace(/\s+/g, '');
-  const rmbMatch = compact.match(/^¥\s*([0-9]+(?:\.[0-9]+)?)$/i);
-  if (rmbMatch) return Number(rmbMatch[1]);
+function isFlatRowFavorite(rowEntry) {
+  return favoriteProductKeys.has(rowEntry.productFavoriteKey) || favoriteSiteKeys.has(rowEntry.siteFavoriteKey);
+}
 
-  const usdMatch = compact.match(/^\$\s*([0-9]+(?:\.[0-9]+)?)$/i);
-  if (usdMatch) return Number(usdMatch[1]) * 7;
+function prioritizeFavoriteFlatRows(rowEntries) {
+  const favoriteRows = [];
+  const regularRows = [];
+  rowEntries.forEach(rowEntry => {
+    if (isFlatRowFavorite(rowEntry)) {
+      favoriteRows.push(rowEntry);
+    } else {
+      regularRows.push(rowEntry);
+    }
+  });
+  return [...favoriteRows, ...regularRows];
+}
 
+function parseStructuredPriceToCny(priceNumber, priceUnit) {
+  if (typeof priceNumber !== 'number' || !Number.isFinite(priceNumber)) return null;
+  const normalizedUnit = normalize(priceUnit);
+  if (!normalizedUnit) return null;
+  if (normalizedUnit === '¥' || normalizedUnit === '￥' || normalizedUnit === '元') return priceNumber;
+  if (normalizedUnit === '$' || normalizedUnit === 'usd') return priceNumber * 7;
   return null;
 }
 
@@ -208,8 +234,8 @@ function parseBound(value) {
   return number;
 }
 
-function priceValueForSort(priceText) {
-  const price = parsePriceToCny(priceText);
+function priceValueForSort(priceNumber, priceUnit) {
+  const price = parseStructuredPriceToCny(priceNumber, priceUnit);
   return price === null ? -1 : price;
 }
 
@@ -230,37 +256,33 @@ function productStockValue(product) {
 
 function buildFlatRows() {
   flatRows.length = 0;
-  const entries = Array.isArray(dashboardData.rows) ? dashboardData.rows : [];
-  const products = entries.flatMap((entry, siteIndex) => {
-    const site = entry.site || {};
-    return (Array.isArray(entry.products) ? entry.products : []).map((product, productIndex) => {
-      const categoryName = text(product.categoryName);
-      const productName = text(product.name);
-      const productTitle = `${categoryName}-${productName}`;
-      const priceText = text(product.price);
-      const siteId = text(product.siteId || site.id);
-      return {
-        siteIndex,
-        productIndex,
-        siteId,
-        siteName: text(site.name).toLowerCase(),
-        siteText: text(site.name).toLowerCase(),
-        categoryName: categoryName.toLowerCase(),
-        productName: productName.toLowerCase(),
-        productTitle: `${categoryName} ${productName} ${productTitle}`.toLowerCase(),
-        priceText,
-        priceValue: priceValueForSort(priceText),
-        stockValue: productStockValue(product),
-        inStock: product.inStock ? 1 : 0,
-        score: Number(product.score) || 0,
-        latestProductRefreshedAt: new Date(site.latestProductRefreshedAt || '').getTime() || 0,
-      };
-    });
-  });
+  const products = Array.isArray(dashboardData.products) ? dashboardData.products : [];
 
   flatProductRows.forEach((row, index) => {
+    const product = products[index] || {};
+    const siteId = text(product.siteId);
+    const siteName = text(product.siteName);
+    const categoryName = text(product.categoryName);
+    const productName = text(product.name);
+    const productTitle = `${categoryName}-${productName}`;
+    const priceText = formatDisplayPrice(product.priceNumber, product.priceUnit);
     flatRows.push({
-      ...products[index],
+      siteId,
+      siteFavoriteKey: siteId || siteName,
+      siteName: siteName.toLowerCase(),
+      siteText: siteName.toLowerCase(),
+      categoryName: categoryName.toLowerCase(),
+      productName: productName.toLowerCase(),
+      productTitle: `${categoryName} ${productName} ${productTitle}`.toLowerCase(),
+      productFavoriteKey: `${siteName}#${productTitle}`,
+      priceText,
+      priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
+      priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
+      priceValue: priceValueForSort(product.priceNumber, product.priceUnit),
+      stockValue: productStockValue(product),
+      inStock: product.inStock ? 1 : 0,
+      score: Number(product.score) || 0,
+      latestProductRefreshedAt: new Date(product.siteLatestProductRefreshedAt || '').getTime() || 0,
       element: row,
       indexCell: row.querySelector('.flat-row-index'),
       originalIndex: index,
@@ -268,14 +290,12 @@ function buildFlatRows() {
   });
 }
 
-function matchesPriceRange(priceText, min, max) {
+function matchesPriceRange(priceValue, min, max) {
   if (min === null && max === null) return true;
+  if (typeof priceValue !== 'number' || priceValue < 0) return false;
 
-  const price = parsePriceToCny(priceText);
-  if (price === null) return false;
-
-  if (min !== null && price < min) return false;
-  if (max !== null && price > max) return false;
+  if (min !== null && priceValue < min) return false;
+  if (max !== null && priceValue > max) return false;
   return true;
 }
 
@@ -289,6 +309,8 @@ function syncFiltersFromUrl() {
     priceMax.value = params.get('priceMax') || '';
   }
   groupByMerchantFilter.checked = params.get('groupByMerchant') === '1';
+  matchCategoryFilter.checked = params.get('matchCategory') === '1';
+  matchMerchantFilter.checked = params.get('matchMerchant') === '1';
 }
 
 function reportSearchTerm(term, source) {
@@ -322,6 +344,8 @@ function currentFilterEventData(reason) {
     priceMax: priceMax.value.trim(),
     showSoldOut: showSoldOutFilter.checked ? '1' : '0',
     groupByMerchant: groupByMerchantFilter.checked ? '1' : '0',
+    matchCategory: matchCategoryFilter.checked ? '1' : '0',
+    matchMerchant: matchMerchantFilter.checked ? '1' : '0',
   };
 }
 
@@ -380,10 +404,9 @@ function createTrackedProductLink(href, className, label, eventLabel) {
   return link;
 }
 
-function createFlatProductRow(entry, item) {
-  const site = entry.site || {};
-  const siteId = text(item.siteId || site.id);
-  const siteName = text(site.name);
+function createFlatProductRow(item) {
+  const siteId = text(item.siteId);
+  const siteName = text(item.siteName);
   const categoryName = text(item.categoryName);
   const productName = text(item.name);
   const productTitle = `${categoryName}-${productName}`;
@@ -410,7 +433,7 @@ function createFlatProductRow(entry, item) {
 
   const priceCell = document.createElement('td');
   priceCell.className = 'flat-price-cell';
-  priceCell.appendChild(document.createTextNode(text(item.price)));
+  priceCell.appendChild(document.createTextNode(formatDisplayPrice(item.priceNumber, item.priceUnit)));
   row.appendChild(priceCell);
 
   const statusCell = document.createElement('td');
@@ -442,16 +465,11 @@ function createFlatProductRow(entry, item) {
 
 function renderFlatProductRowsFromData() {
   if (!flatProductRowsContainer) return;
-  const entries = Array.isArray(dashboardData.rows) ? dashboardData.rows : [];
+  const products = Array.isArray(dashboardData.products) ? dashboardData.products : [];
   const fragment = document.createDocumentFragment();
-
-  entries.forEach(entry => {
-    const products = Array.isArray(entry.products) ? entry.products : [];
-    products.forEach(item => {
-      fragment.appendChild(createFlatProductRow(entry, item));
-    });
+  products.forEach(item => {
+    fragment.appendChild(createFlatProductRow(item));
   });
-
   flatProductRowsContainer.replaceChildren(fragment);
   flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
 }
@@ -479,7 +497,7 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
 function createProductChip(item) {
   const categoryName = text(item.categoryName);
   const productName = text(item.name);
-  const price = text(item.price);
+  const price = formatDisplayPrice(item.priceNumber, item.priceUnit);
   const productTitle = `${categoryName}-${productName}`;
   const shortCategory = categoryName.length > 10 ? `${categoryName.slice(0, 10)}...` : categoryName;
   const shortName = productName.length > 14 ? `${productName.slice(0, 14)}...` : productName;
@@ -487,10 +505,12 @@ function createProductChip(item) {
 
   chip.title = productTitle;
   chip.dataset.productTitle = productTitle.toLowerCase();
-  chip.dataset.priceText = price;
+  chip.dataset.productName = productName.toLowerCase();
+  chip.dataset.categoryName = categoryName.toLowerCase();
+  chip.dataset.priceValue = String(priceValueForSort(item.priceNumber, item.priceUnit));
   chip.dataset.inStock = item.inStock ? '1' : '0';
   chip.dataset.stockValue = String(productStockValue(item));
-  chip.dataset.latestProductRefreshedAt = String(new Date(item.latestProductRefreshedAt || '').getTime() || 0);
+  chip.dataset.latestProductRefreshedAt = String(new Date(item.siteLatestProductRefreshedAt || '').getTime() || 0);
   chip.className = item.productUrl
     ? (item.inStock ? 'product-chip-link-in-stock' : 'product-chip-link-sold-out')
     : (item.inStock ? 'product-chip-static-in-stock' : 'product-chip-static-sold-out');
@@ -519,13 +539,20 @@ function createProductChip(item) {
 
 function renderMerchantRows() {
   if (merchantRowsRendered || !rowContainer) return;
-  const entries = Array.isArray(dashboardData.rows) ? dashboardData.rows : [];
+  const sites = Array.isArray(dashboardData.sites) ? dashboardData.sites : [];
+  const products = Array.isArray(dashboardData.products) ? dashboardData.products : [];
+  const productsBySiteId = new Map();
+  products.forEach(item => {
+    const siteId = text(item.siteId);
+    const items = productsBySiteId.get(siteId) ?? [];
+    items.push(item);
+    productsBySiteId.set(siteId, items);
+  });
   const fragment = document.createDocumentFragment();
 
-  entries.forEach((entry, index) => {
-    const site = entry.site || {};
-    const products = Array.isArray(entry.products) ? entry.products : [];
+  sites.forEach((site, index) => {
     const siteId = text(site.id);
+    const siteProducts = productsBySiteId.get(siteId) ?? [];
     const siteName = text(site.name);
     const siteFavoriteKey = siteId || siteName;
     const row = document.createElement('div');
@@ -535,7 +562,7 @@ function renderMerchantRows() {
     row.dataset.siteName = siteName;
     row.dataset.latestProductRefreshedAt = String(new Date(site.latestProductRefreshedAt || '').getTime() || 0);
     row.dataset.originalIndex = String(index);
-    row.dataset.productCount = String(products.length);
+    row.dataset.productCount = String(siteProducts.length);
 
     const indexCell = appendTextElement(row, 'div', 'row-index merchant-row-index', '');
     const merchantCell = document.createElement('div');
@@ -553,12 +580,12 @@ function renderMerchantRows() {
     const productsCell = document.createElement('div');
     productsCell.className = 'merchant-product-cell';
     const chips = [];
-    if (products.length === 0) {
+    if (siteProducts.length === 0) {
       appendTextElement(productsCell, 'div', 'no-products', '暂无数据');
     } else {
       const list = document.createElement('div');
       list.className = 'product-list';
-      products.forEach(item => {
+      siteProducts.forEach(item => {
         const chip = createProductChip(item);
         chips.push(chip);
         list.appendChild(chip);
@@ -602,11 +629,17 @@ function applyFilters() {
       let visibleProductMatchCount = 0;
 
       chips.forEach(chip => {
-        const combinedText = `${chip.dataset.productTitle || ''} ${row.dataset.siteText || ''}`;
         const productMatchCount = matchTermCount(chip.dataset.productTitle, terms);
         const stockMatched = showSoldOut || chip.dataset.inStock === '1';
-        const priceMatched = matchesPriceRange(chip.dataset.priceText, minPrice, maxPrice);
-        const queryMatched = terms.length === 0 || matchesAllTerms(combinedText, terms);
+        const priceMatched = matchesPriceRange(Number(chip.dataset.priceValue), minPrice, maxPrice);
+        const matchCategory = matchCategoryFilter.checked;
+        const matchMerchant = matchMerchantFilter.checked;
+        const queryMatched = terms.length === 0 || terms.every(term => {
+          if ((chip.dataset.productName || '').includes(term)) return true;
+          if (matchCategory && (chip.dataset.categoryName || '').includes(term)) return true;
+          if (matchMerchant && (row.dataset.siteText || '').includes(term)) return true;
+          return false;
+        });
         const visible = queryMatched && stockMatched && priceMatched;
         chip.classList.toggle('hidden', !visible);
         if (visible) visibleProductMatchCount += productMatchCount;
@@ -649,6 +682,8 @@ function applyFilters() {
   if (searchQuery) params.set('q', searchQuery);
   if (showSoldOut) params.set('showSoldOut', '1');
   if (groupByMerchant) params.set('groupByMerchant', '1');
+  if (matchCategoryFilter.checked) params.set('matchCategory', '1');
+  if (matchMerchantFilter.checked) params.set('matchMerchant', '1');
   if (priceMinValue) params.set('priceMin', priceMinValue);
   if (priceMaxValue) params.set('priceMax', priceMaxValue);
   const nextUrl = params.toString() ? `/?${params.toString()}` : '/';
@@ -720,6 +755,10 @@ function appendCurrentFlatRows() {
   flatProductRowsContainer.replaceChildren(fragment);
 }
 
+function filteredFlatRows() {
+  return searchMatchedFlatRows();
+}
+
 function sortFlatProductRows(button) {
   if (button) {
     const key = button.dataset.sortKey;
@@ -728,10 +767,17 @@ function sortFlatProductRows(button) {
     currentFlatSort = direction ? { key, direction, type: button.dataset.sortType || 'text' } : null;
   }
 
-  const sortedRows = flatRows.slice();
+  const sortedRows = filteredFlatRows().slice();
   if (currentFlatSort) {
     const multiplier = currentFlatSort.direction === 'asc' ? 1 : -1;
     sortedRows.sort((left, right) => {
+      if (currentFlatSort.key === 'priceValue') {
+        const leftMissing = typeof left.priceValue !== 'number' || left.priceValue < 0;
+        const rightMissing = typeof right.priceValue !== 'number' || right.priceValue < 0;
+        if (leftMissing && !rightMissing) return 1;
+        if (!leftMissing && rightMissing) return -1;
+        if (leftMissing && rightMissing) return left.originalIndex - right.originalIndex;
+      }
       const leftValue = flatRowValue(left, currentFlatSort.key, currentFlatSort.type);
       const rightValue = flatRowValue(right, currentFlatSort.key, currentFlatSort.type);
       if (typeof leftValue === 'number' && typeof rightValue === 'number') {
@@ -741,7 +787,7 @@ function sortFlatProductRows(button) {
     });
   }
 
-  currentFlatRows = sortedRows;
+  currentFlatRows = prioritizeFavoriteFlatRows(sortedRows);
   appendCurrentFlatRows();
   const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
   currentFlatRows.forEach(({ element: row }, index) => {
@@ -767,7 +813,7 @@ function updateFlatSortButtons() {
 }
 
 function replaceDashboardData(nextDashboardData) {
-  if (!nextDashboardData || !Array.isArray(nextDashboardData.rows)) return;
+  if (!nextDashboardData || !Array.isArray(nextDashboardData.products) || !Array.isArray(nextDashboardData.sites)) return;
 
   dashboardData = nextDashboardData;
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
@@ -812,6 +858,22 @@ groupByMerchantFilter.addEventListener('change', () => {
   trackUmamiEvent('filter-toggle-click', {
     name: 'groupByMerchant',
     value: groupByMerchantFilter.checked ? '1' : '0',
+  });
+  applyFilters();
+});
+matchCategoryFilter.addEventListener('change', () => {
+  resetFlatVisibleLimit();
+  trackUmamiEvent('filter-toggle-click', {
+    name: 'matchCategory',
+    value: matchCategoryFilter.checked ? '1' : '0',
+  });
+  applyFilters();
+});
+matchMerchantFilter.addEventListener('change', () => {
+  resetFlatVisibleLimit();
+  trackUmamiEvent('filter-toggle-click', {
+    name: 'matchMerchant',
+    value: matchMerchantFilter.checked ? '1' : '0',
   });
   applyFilters();
 });

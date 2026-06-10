@@ -154,6 +154,10 @@
     @apply overflow-x-auto rounded border bg-white;
   }
 
+  .table-hint-bar {
+    @apply border-b bg-slate-50 px-4 py-2 text-sm font-medium text-slate-500;
+  }
+
   .flat-product-table {
     @apply min-w-[560px] w-full table-fixed border-collapse lg:min-w-[860px];
   }

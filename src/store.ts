@@ -12,18 +12,16 @@ export type PublicProductRow = {
   categoryName: string;
   name: string;
   price: string;
+  priceNumber: number | null;
+  priceUnit: string | null;
   productUrl?: string;
   stock?: number;
   inStock: boolean;
   siteId: string;
   siteName: string;
+  siteLatestProductRefreshedAt: string | null;
+  siteLatestProductRefreshTime: string;
   score: number;
-};
-
-export type PublicDashboardRow = {
-  site: PublicSiteRow;
-  products: PublicProductRow[];
-  refreshedAt: null;
 };
 
 export type SearchTermSource = 'query' | 'tag' | 'empty';
@@ -72,9 +70,12 @@ export async function loadDashboardData() {
     SELECT
       products.site_id,
       sites.name AS site_name,
+      sites.latest_product_refreshed_at AS site_latest_product_refreshed_at,
       products.category_name,
       products.name,
       products.price,
+      products.price_number,
+      products.price_unit,
       products.product_url,
       products.stock,
       products.in_stock,
@@ -86,51 +87,46 @@ export async function loadDashboardData() {
     ORDER BY sites.score DESC, products.score DESC, products.in_stock DESC, products.refreshed_at DESC, products.category_name ASC, products.name ASC
   `);
 
-  const productsBySiteId = new Map();
-  for (const row of productsResult.rows) {
-    const siteId = String(row.site_id);
-    const products = productsBySiteId.get(siteId) ?? [];
-    products.push({
+  const sites: PublicSiteRow[] = sitesResult.rows.map(row => ({
+    id: String(row.id),
+    name: String(row.name),
+    latestProductRefreshedAt: row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null,
+    latestProductRefreshTime: formatBeijingRefreshTime(row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null),
+    score: Number(row.score) || 0,
+  }));
+
+  const products: PublicProductRow[] = productsResult.rows.map(row => {
+    const siteLatestProductRefreshedAt = row.site_latest_product_refreshed_at ? String(row.site_latest_product_refreshed_at) : null;
+    return {
       categoryName: String(row.category_name),
       name: String(row.name),
       price: String(row.price),
+      priceNumber: typeof row.price_number === 'number' ? Number(row.price_number) : null,
+      priceUnit: typeof row.price_unit === 'string' ? String(row.price_unit) : null,
       ...(row.product_url ? { productUrl: String(row.product_url) } : {}),
       ...(typeof row.stock === 'number' ? { stock: row.stock } : {}),
       inStock: Boolean(row.in_stock),
-      siteId,
+      siteId: String(row.site_id),
       siteName: String(row.site_name),
+      siteLatestProductRefreshedAt,
+      siteLatestProductRefreshTime: formatBeijingRefreshTime(siteLatestProductRefreshedAt),
       score: Number(row.score) || 0,
-    });
-    productsBySiteId.set(siteId, products);
-  }
-
-  const rows: PublicDashboardRow[] = sitesResult.rows.map(row => {
-    const siteId = String(row.id);
-    return {
-      site: {
-        id: siteId,
-        name: String(row.name),
-        latestProductRefreshedAt: row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null,
-        latestProductRefreshTime: formatBeijingRefreshTime(row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null),
-        score: Number(row.score) || 0,
-      },
-      products: productsBySiteId.get(siteId) ?? [],
-      refreshedAt: null,
     };
   });
 
-  const latestRefreshedAt = rows.reduce<string | null>((latest, row) => {
-    if (!row.site.latestProductRefreshedAt) return latest;
-    if (!latest) return row.site.latestProductRefreshedAt;
-    return new Date(row.site.latestProductRefreshedAt).getTime() > new Date(latest).getTime()
-      ? row.site.latestProductRefreshedAt
+  const latestRefreshedAt = sites.reduce<string | null>((latest, site) => {
+    if (!site.latestProductRefreshedAt) return latest;
+    if (!latest) return site.latestProductRefreshedAt;
+    return new Date(site.latestProductRefreshedAt).getTime() > new Date(latest).getTime()
+      ? site.latestProductRefreshedAt
       : latest;
   }, null);
 
   return {
-    rows,
-    totalSiteCount: rows.length,
-    totalProductCount: rows.reduce((total, row) => total + row.products.length, 0),
+    sites,
+    products,
+    totalSiteCount: sites.length,
+    totalProductCount: products.length,
     latestRefreshTime: formatBeijingRefreshTime(latestRefreshedAt),
   };
 }

@@ -6,30 +6,31 @@
   const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : canonicalUrlValue;
   const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
   const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'WebSite' };
-  const sourceRows = typeof initialRows !== 'undefined' && Array.isArray(initialRows) ? initialRows : rows;
-  const renderedRows = sourceRows.map(function(entry) {
+  const sourceSites = typeof initialSites !== 'undefined' && Array.isArray(initialSites) ? initialSites : sites;
+  const sourceProducts = typeof initialProducts !== 'undefined' && Array.isArray(initialProducts) ? initialProducts : products;
+  const renderedSites = sourceSites.map(function(site) {
     return {
-      site: {
-        id: entry.site.id || '',
-        name: entry.site.name,
-        latestProductRefreshedAt: entry.site.latestProductRefreshedAt || null,
-        latestProductRefreshTime: entry.site.latestProductRefreshTime || '',
-        score: entry.site.score || 0,
-      },
-      products: entry.products.map(function(product) {
-        return {
-          categoryName: product.categoryName,
-          name: product.name,
-          price: product.price,
-          productUrl: product.productUrl,
-          stock: product.stock,
-          inStock: product.inStock,
-          siteId: product.siteId || entry.site.id || '',
-          siteName: product.siteName || entry.site.name,
-          score: product.score || 0,
-        };
-      }),
-      refreshedAt: entry.refreshedAt || null,
+      id: site.id || '',
+      name: site.name,
+      latestProductRefreshedAt: site.latestProductRefreshedAt || null,
+      latestProductRefreshTime: site.latestProductRefreshTime || '',
+      score: site.score || 0,
+    };
+  });
+  const renderedProducts = sourceProducts.map(function(product) {
+    return {
+      categoryName: product.categoryName,
+      name: product.name,
+      priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
+      priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
+      productUrl: product.productUrl,
+      stock: product.stock,
+      inStock: product.inStock,
+      siteId: product.siteId || '',
+      siteName: product.siteName || '',
+      siteLatestProductRefreshedAt: product.siteLatestProductRefreshedAt || null,
+      siteLatestProductRefreshTime: product.siteLatestProductRefreshTime || '',
+      score: product.score || 0,
     };
   });
   const latestRefreshTimeValue = typeof latestRefreshTime !== 'undefined' ? latestRefreshTime : null;
@@ -37,16 +38,23 @@
   const productStockLabel = function(product) {
     return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? '有货' : '缺货');
   };
+  const renderProductPrice = function(product) {
+    if (typeof product.priceNumber === 'number' && typeof product.priceUnit === 'string' && product.priceUnit) {
+      return `${product.priceUnit}${String(product.priceNumber)}`;
+    }
+    return '';
+  };
   const searchQueryValue = typeof searchQuery === 'string' ? searchQuery : [siteQuery, productQuery].filter(Boolean).join(' ');
-  const totalSiteCountValue = typeof totalSiteCount === 'number' ? totalSiteCount : rows.length;
-  const totalProductCountValue = typeof totalProductCount === 'number' ? totalProductCount : rows.reduce(function(total, entry){ return total + entry.products.length; }, 0);
+  const totalSiteCountValue = typeof totalSiteCount === 'number' ? totalSiteCount : renderedSites.length;
+  const totalProductCountValue = typeof totalProductCount === 'number' ? totalProductCount : renderedProducts.length;
   const popularSearchTermsValue = typeof popularSearchTerms !== 'undefined' && Array.isArray(popularSearchTerms)
     ? popularSearchTerms
         .map(function(term) { return typeof term === 'string' ? term.trim() : ''; })
         .filter(Boolean)
     : [];
   const dashboardJsonValue = JSON.stringify({
-    rows: renderedRows,
+    sites: renderedSites,
+    products: renderedProducts,
     totalSiteCount: totalSiteCountValue,
     totalProductCount: totalProductCountValue,
     latestRefreshTime: latestRefreshTimeValue,
@@ -83,15 +91,18 @@
       <% } %>
     </div>
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-      <input id="searchFilter" name="q" value="<%= searchQueryValue %>" class="control-input" placeholder="搜索商品、分类或商家，多个关键词用空格隔开" autocomplete="off" />
+      <input id="searchFilter" name="q" value="<%= searchQueryValue %>" class="control-input" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
     </div>
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
       <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm text-slate-700">价格范围</span>
-        <div class="flex items-center gap-2">
-          <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最小价格" autocomplete="off" />
-          <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最大价格" autocomplete="off" />
-        </div>
+        <label class="filter-checkbox-label">
+          <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
+          匹配分类
+        </label>
+        <label class="filter-checkbox-label">
+          <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
+          匹配商家
+        </label>
       </div>
       <label class="filter-checkbox-label">
         <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="control-checkbox cursor-pointer" <%= showSoldOut ? 'checked' : '' %> />
@@ -101,6 +112,13 @@
         <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
         按商家分组
       </label>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm text-slate-700">价格范围</span>
+        <div class="flex items-center gap-2">
+          <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最小价格" autocomplete="off" />
+          <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最大价格" autocomplete="off" />
+        </div>
+      </div>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-sm font-medium text-slate-700">热门搜索</span>
@@ -116,6 +134,7 @@
   <div id="emptyState" class="table-shell table-empty-state hidden">没有匹配的商家或商品</div>
 
   <section id="flatProductView" class="product-table">
+    <div class="table-hint-bar">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
     <table class="flat-product-table">
       <thead class="flat-product-head">
         <tr>
@@ -130,12 +149,11 @@
 
       <tbody id="flatProductRows">
       <% let renderedFlatCount = 0; %>
-      <% renderedRows.forEach(function(entry){ %>
-        <% entry.products.forEach(function(item){ %>
-          <% if (renderedFlatCount >= initialProductLimitValue) { return; } %>
-          <% const productTitle = `${item.categoryName}-${item.name}`; %>
-          <% const productFavoriteKey = `${entry.site.name}#${productTitle}`; %>
-          <% const siteFavoriteKey = entry.site.id || entry.site.name; %>
+      <% renderedProducts.forEach(function(item){ %>
+        <% if (renderedFlatCount >= initialProductLimitValue) { return; } %>
+        <% const productTitle = `${item.categoryName}-${item.name}`; %>
+        <% const productFavoriteKey = `${item.siteName}#${productTitle}`; %>
+        <% const siteFavoriteKey = item.siteId || item.siteName; %>
           <tr class="flat-product-row">
             <th scope="row" class="flat-row-index"></th>
             <td class="flat-product-cell">
@@ -151,7 +169,7 @@
               </div>
             </td>
             <td class="flat-price-cell">
-              <%= item.price %>
+              <%= renderProductPrice(item) %>
             </td>
             <td class="flat-status-cell">
               <span class="<%= item.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out' %>"><%= productStockLabel(item) %></span>
@@ -161,15 +179,14 @@
             </td>
             <td class="flat-merchant-cell">
               <div class="cell-inline">
-                <button type="button" class="favorite-toggle" data-favorite-kind="site" data-favorite-key="<%= siteFavoriteKey %>" aria-label="收藏 <%= entry.site.name %>" aria-pressed="false" title="收藏商家">
+                <button type="button" class="favorite-toggle" data-favorite-kind="site" data-favorite-key="<%= siteFavoriteKey %>" aria-label="收藏 <%= item.siteName %>" aria-pressed="false" title="收藏商家">
                   <span aria-hidden="true">♡</span>
                 </button>
-                <span class="merchant-text"><%= entry.site.name %></span>
+                <span class="merchant-text"><%= item.siteName %></span>
               </div>
             </td>
           </tr>
           <% renderedFlatCount += 1; %>
-        <% }) %>
       <% }) %>
       </tbody>
     </table>
