@@ -1,6 +1,6 @@
 # CardNav
 
-![](docs/banner.png)
+![](docs/banner.webp)
 
 发现卡网，先不用一页页翻。
 

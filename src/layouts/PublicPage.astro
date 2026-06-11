@@ -1,0 +1,170 @@
+---
+/*
+文件说明: 定义 CardNav 公开站点 Astro 页面骨架，统一 SEO、导航、赞助区和页脚。
+*/
+import '../public.css';
+import Sponsors from '../components/Sponsors.astro';
+import { githubRepoUrl, headerAdTagEnabled, telegramGroupUrl } from '../site.js';
+
+type Props = {
+  activeNav?: string;
+  pageTitle: string;
+  description: string;
+  canonicalUrl: string;
+  robots: string;
+  ogUrl: string;
+  ogImageUrl: string;
+  ogType: string;
+  jsonLd: Record<string, unknown>;
+  showSponsors?: boolean;
+};
+
+const {
+  activeNav = '',
+  pageTitle,
+  description,
+  canonicalUrl,
+  robots,
+  ogUrl,
+  ogImageUrl,
+  ogType,
+  jsonLd,
+  showSponsors = true,
+} = Astro.props;
+
+const inactiveClass = 'rounded px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900';
+const activeClass = 'rounded px-3 py-2 text-blue-700 bg-blue-50';
+const shouldShowHero = activeNav === 'home';
+---
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <meta name="robots" content={robots} />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="canonical" href={canonicalUrl} />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={ogUrl} />
+  <meta property="og:image" content={ogImageUrl} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImageUrl} />
+  <slot name="head" />
+  <title>{pageTitle}</title>
+  <script is:inline defer src="https://stats.cardnav.xyz/script.js" data-website-id="f708ee4d-be15-48e0-9eb8-344da355f150"></script>
+  {headerAdTagEnabled && (
+    <>
+      <script is:inline src="https://5gvci.com/act/files/tag.min.js?z=11107777" data-cfasync="false" async></script>
+      <script is:inline>(function(s){s.dataset.zone='11113650',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    </>
+  )}
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+<header class="sticky top-0 z-40 border-b bg-white/95 backdrop-blur">
+  <nav class="flex w-full flex-wrap items-center gap-2 px-4 py-3 text-sm font-medium">
+    <a href="/" aria-label="返回首页" class="inline-flex shrink-0 items-center gap-2 rounded px-2 py-1 text-slate-950 hover:bg-slate-100">
+      <img src="/favicon.webp" alt="卡网大全" width="28" height="28" class="h-7 w-7 rounded object-cover" />
+      <span class="flex flex-col justify-center leading-none">
+        <span class="text-base font-bold tracking-normal">CardNav</span>
+        <span class="text-xs font-semibold text-slate-500">卡网大全</span>
+      </span>
+    </a>
+    <a href="/" class={activeNav === 'home' ? activeClass : inactiveClass}>首页</a>
+    <a href="/knowledge" class={activeNav === 'knowledge' ? activeClass : inactiveClass}>知识库</a>
+    <a href="/tools" class={activeNav === 'tools' ? activeClass : inactiveClass}>工具集</a>
+    <a href="/submit" class={activeNav === 'submit' ? activeClass : inactiveClass}>提交商家</a>
+    <div class="ml-auto flex items-center gap-1">
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 Telegram 群组" title="Telegram 群组" class="inline-flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-sky-50 hover:text-sky-600">
+        <svg aria-hidden="true" viewBox="0 0 1000 1000" class="h-6 w-6">
+          <defs>
+            <linearGradient id="telegramLogoGradient" x1="50%" x2="50%" y1="0%" y2="99.2583404%">
+              <stop stop-color="#2AABEE" offset="0%"></stop>
+              <stop stop-color="#229ED9" offset="100%"></stop>
+            </linearGradient>
+          </defs>
+          <circle fill="url(#telegramLogoGradient)" cx="500" cy="500" r="500"></circle>
+          <path fill="#FFFFFF" d="M226.328419,494.722069 C372.088573,431.216685 469.284839,389.350049 517.917216,369.122161 C656.772535,311.36743 685.625481,301.334815 704.431427,301.003532 C708.567621,300.93067 717.815839,301.955743 723.806446,306.816707 C728.864797,310.92121 730.256552,316.46581 730.922551,320.357329 C731.588551,324.248848 732.417879,333.113828 731.758626,340.040666 C724.234007,419.102486 691.675104,610.964674 675.110982,699.515267 C668.10208,736.984342 654.301336,749.547532 640.940618,750.777006 C611.904684,753.448938 589.856115,731.588035 561.733393,713.153237 C517.726886,684.306416 492.866009,666.349181 450.150074,638.200013 C400.78442,605.66878 432.786119,587.789048 460.919462,558.568563 C468.282091,550.921423 596.21508,434.556479 598.691227,424.000355 C599.00091,422.680135 599.288312,417.758981 596.36474,415.160431 C593.441168,412.561881 589.126229,413.450484 586.012448,414.157198 C581.598758,415.158943 511.297793,461.625274 375.109553,553.556189 C355.154858,567.258623 337.080515,573.934908 320.886524,573.585046 C303.033948,573.199351 268.692754,563.490928 243.163606,555.192408 C211.851067,545.013936 186.964484,539.632504 189.131547,522.346309 C190.260287,513.342589 202.659244,504.134509 226.328419,494.722069 Z"></path>
+        </svg>
+      </a>
+      <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 GitHub 仓库" title="GitHub 仓库" class="inline-flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+        <svg aria-hidden="true" viewBox="0 0 16 16" class="h-5 w-5 fill-current">
+          <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
+        </svg>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main class="grid w-full flex-1 content-start items-start gap-4 px-4 pb-6 pt-3">
+  {shouldShowHero && (
+    <section class="overflow-hidden rounded border bg-white">
+      <div class="px-5 py-5">
+        <div>
+          <div class="hero-title-row flex items-center gap-3">
+            <a href={canonicalUrl} aria-label="返回首页" class="shrink-0">
+              <img src="/favicon.webp" alt="卡网大全" width="56" height="56" class="h-12 w-12 rounded object-cover md:h-14 md:w-14" />
+            </a>
+            <div class="min-w-0 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-baseline">
+              <a href={canonicalUrl} aria-label="返回首页" class="inline-block text-slate-950 hover:text-blue-700">
+                <h1 class="text-3xl font-bold tracking-normal md:text-4xl">卡网大全</h1>
+              </a>
+              <span class="text-base font-semibold text-slate-600 md:text-lg">AI 大模型账号购买导航</span>
+              <a href={canonicalUrl} aria-label="返回首页" class="hero-domain inline-block max-w-full text-xl font-semibold tracking-normal text-blue-700 hover:text-blue-800">
+                cardnav.xyz
+              </a>
+            </div>
+          </div>
+          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">不知道 AI 账号在哪买、哪里买便宜？这里聚合 ChatGPT Plus、Claude、Gemini、Grok、Cursor 等大模型账号商家，按商品名、商家和价格筛选，查看库存、价格与购买入口。</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="telegram-channel-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name="Telegram 群组" class="primary-button inline-flex items-center justify-center gap-2">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m22 2-7 20-4-9-9-4Z"></path>
+                <path d="M22 2 11 13"></path>
+              </svg>
+              加入频道
+            </a>
+            <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" data-umami-event="github-repo-click" data-umami-event-url={githubRepoUrl} data-umami-event-name="GitHub 仓库" class="secondary-button inline-flex items-center justify-center gap-2">
+              <svg aria-hidden="true" viewBox="0 0 16 16" class="h-4 w-4 shrink-0 fill-current">
+                <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
+              </svg>
+              GitHub
+            </a>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+            <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1">ChatGPT Plus 账号购买</span>
+            <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1">Claude 账号购买</span>
+            <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1">Gemini 账号购买</span>
+            <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1">AI 账号在哪里买</span>
+            <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1">大模型账号哪里便宜</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {showSponsors && activeNav === 'home' && <Sponsors />}
+  <slot />
+  {showSponsors && activeNav !== 'home' && <Sponsors />}
+</main>
+
+<footer class="border-t bg-white">
+  <div class="mx-auto max-w-7xl px-4 py-4 text-center text-xs leading-5 text-slate-500">
+    <p>价格数据仅供参考，实际价格以各平台为准。</p>
+    <p class="mt-1">
+      <a href="/disclaimer" class="font-medium text-slate-600 hover:text-blue-700 hover:underline">免责声明</a>
+      <span class="mx-2 text-slate-300">|</span>
+      <a href="/privacy" class="font-medium text-slate-600 hover:text-blue-700 hover:underline">隐私政策</a>
+    </p>
+  </div>
+</footer>
+
+<script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+<slot name="scripts" />
+</body>
+</html>

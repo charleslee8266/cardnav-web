@@ -1,16 +1,7 @@
 @import "tailwindcss";
 
-@source "../views/layouts/public-page.eta";
-@source "../views/index.eta";
-@source "../views/knowledge.eta";
-@source "../views/knowledge-article.eta";
-@source "../views/tools.eta";
-@source "../views/session-converter.eta";
-@source "../views/disclaimer.eta";
-@source "../views/privacy.eta";
-@source "../views/sites.eta";
-@source "../views/submit.eta";
-@source "../../../public/assets/*.js";
+@source "./**/*.astro";
+@source "./scripts/*.js";
 
 @layer base {
   html {
@@ -117,6 +108,10 @@
   }
 
   .knowledge-card {
+    @apply rounded border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50;
+  }
+
+  .tool-card {
     @apply rounded border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50;
   }
 
@@ -374,6 +369,82 @@
 
   .stock-badge-sold-out {
     @apply inline-flex rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500;
+  }
+
+  .sponsor-section {
+    @apply rounded border border-slate-200 bg-white p-3 text-sm;
+  }
+
+  .sponsor-header {
+    @apply mb-2 flex items-center gap-3;
+  }
+
+  .sponsor-title {
+    @apply text-sm font-semibold text-slate-800;
+  }
+
+  .sponsor-join-link {
+    @apply text-xs font-medium text-blue-700 hover:text-blue-800;
+  }
+
+  .sponsor-grid {
+    @apply flex flex-wrap gap-3;
+  }
+
+  .sponsor-card {
+    @apply flex w-full max-w-[344px] flex-col rounded border border-slate-200 bg-slate-50;
+  }
+
+  .sponsor-main-link {
+    @apply flex flex-1 flex-col gap-2 p-3;
+  }
+
+  .sponsor-plan-main-link {
+    @apply flex flex-col gap-1 p-3 pb-1.5;
+  }
+
+  .sponsor-logo-frame {
+    @apply flex h-[100px] w-full items-center justify-center overflow-hidden rounded bg-white;
+  }
+
+  .sponsor-logo-frame-padded {
+    @apply px-4;
+  }
+
+  .sponsor-logo {
+    @apply h-auto w-full max-w-[320px] object-contain text-slate-950;
+  }
+
+  .sponsor-banner {
+    @apply h-auto w-full max-w-[320px] object-contain;
+  }
+
+  .sponsor-name {
+    @apply block text-center text-sm font-semibold leading-5 text-slate-900 underline-offset-2 group-hover:underline;
+  }
+
+  .sponsor-copy {
+    @apply block text-center text-xs leading-5 text-slate-600;
+  }
+
+  .sponsor-plan-title {
+    @apply block text-center;
+  }
+
+  .sponsor-plan-name {
+    @apply text-sm font-semibold text-slate-900;
+  }
+
+  .sponsor-plan-price {
+    @apply ml-1 text-sm font-semibold leading-5 text-red-600 underline-offset-2 group-hover:underline;
+  }
+
+  .sponsor-plan-grid {
+    @apply grid grid-cols-2 gap-y-0 pb-2 text-sm leading-5 text-slate-600;
+  }
+
+  .sponsor-plan-link {
+    @apply block px-3 py-0.5 text-center hover:text-red-700 hover:underline;
   }
 
   .tool-panel {

@@ -1,10 +1,8 @@
 /**
- * 文件说明: 维护公开知识库文章真源，并在请求文章页时把 Markdown 文档渲染成 HTML。
+ * 文件说明: 维护公开知识库文章元数据，并用成熟 Markdown 管线渲染构建期读取的正文。
  * 对应文档: public-web/docs/how-to-choose-reliable-merchant.md
  */
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import MarkdownIt from 'markdown-it';
 
 export type KnowledgeArticle = {
   slug: string;
@@ -20,8 +18,11 @@ export type RenderedKnowledgeArticle = KnowledgeArticle & {
   html: string;
 };
 
-const sourceRootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const docsRootDir = path.join(sourceRootDir, 'docs');
+const markdownRenderer = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+});
 
 export const knowledgeArticles: KnowledgeArticle[] = [
   {
@@ -34,90 +35,26 @@ export const knowledgeArticles: KnowledgeArticle[] = [
   },
 ];
 
-function escapeHtml(input: string) {
-  return input.replace(/[&<>"']/g, character => {
-    return {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    }[character] ?? character;
-  });
-}
-
-function renderInlineMarkdown(input: string) {
-  return escapeHtml(input)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
-}
-
 export function renderMarkdown(markdown: string) {
-  const blocks: string[] = [];
-  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
-  let paragraphLines: string[] = [];
-  let listItems: string[] = [];
-
-  const flushParagraph = () => {
-    if (paragraphLines.length === 0) {
-      return;
-    }
-    blocks.push(`<p>${renderInlineMarkdown(paragraphLines.join(' '))}</p>`);
-    paragraphLines = [];
-  };
-
-  const flushList = () => {
-    if (listItems.length === 0) {
-      return;
-    }
-    blocks.push(`<ul>${listItems.map(item => `<li>${renderInlineMarkdown(item)}</li>`).join('')}</ul>`);
-    listItems = [];
-  };
-
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (!trimmedLine) {
-      flushParagraph();
-      flushList();
-      continue;
-    }
-
-    const headingMatch = /^(#{1,3})\s+(.+)$/.exec(trimmedLine);
-    if (headingMatch) {
-      flushParagraph();
-      flushList();
-      const level = headingMatch[1].length;
-      blocks.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`);
-      continue;
-    }
-
-    const listMatch = /^-\s+(.+)$/.exec(trimmedLine);
-    if (listMatch) {
-      flushParagraph();
-      listItems.push(listMatch[1]);
-      continue;
-    }
-
-    flushList();
-    paragraphLines.push(trimmedLine);
-  }
-
-  flushParagraph();
-  flushList();
-
-  return blocks.join('\n');
+  return markdownRenderer.render(markdown);
 }
 
-export function getKnowledgeArticle(slug: string): RenderedKnowledgeArticle | null {
-  const article = knowledgeArticles.find(item => item.slug === slug);
-  if (!article) {
-    return null;
-  }
-  const markdown = readFileSync(path.join(docsRootDir, article.path), 'utf8');
+export function findKnowledgeArticle(slug: string): KnowledgeArticle | null {
+  return knowledgeArticles.find(item => item.slug === slug) ?? null;
+}
+
+export function renderKnowledgeArticle(article: KnowledgeArticle, markdown: string): RenderedKnowledgeArticle {
   return {
     ...article,
     markdown,
     html: renderMarkdown(markdown),
   };
+}
+
+export function getKnowledgeArticleFromMarkdown(slug: string, markdown: string): RenderedKnowledgeArticle | null {
+  const article = findKnowledgeArticle(slug);
+  if (!article) {
+    return null;
+  }
+  return renderKnowledgeArticle(article, markdown);
 }
