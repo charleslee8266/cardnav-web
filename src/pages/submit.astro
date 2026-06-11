@@ -31,7 +31,7 @@ const seo = buildSeoContext({
         Telegram 联系
       </a>
     </div>
-    <form id="submitForm" class="mt-4 space-y-3" method="post" action="/submit">
+    <form id="submitForm" class="mt-4 space-y-3" method="post" action="/api/submit">
       <label for="urlInput" class="block text-sm font-medium text-slate-700">URL</label>
       <input id="urlInput" name="url" type="url" required value="" class="control-input" placeholder="https://example.com" autocomplete="url" />
       <p id="clientError" class="hidden text-sm text-red-600">请输入有效的 URL</p>
@@ -99,12 +99,12 @@ const seo = buildSeoContext({
       clientError.classList.add('hidden');
       submitButton.disabled = true;
 
-      const formData = new FormData(form);
       fetch(form.action, {
         method: 'POST',
-        body: new URLSearchParams(formData),
+        body: JSON.stringify({ url: input.value.trim() }),
         headers: {
           accept: 'application/json',
+          'content-type': 'application/json',
           'x-requested-with': 'fetch',
         },
       })
@@ -135,4 +135,3 @@ const seo = buildSeoContext({
     syncSubmitEventUrl();
   </script>
 </PublicPage>
-
