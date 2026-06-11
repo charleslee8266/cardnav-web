@@ -1,28 +1,22 @@
-<% /*
-文件说明: 负责渲染 CardNav 公开站点的免责声明页面。
-*/ %>
-<%
-  const pageTitleValue = typeof pageTitle === 'string' ? pageTitle : '免责声明 - 卡网大全';
-  const descriptionValue = typeof description === 'string' ? description : '卡网大全免责声明说明第三方商家信息、价格库存、购买入口、合作展示和交易责任边界。';
-  const canonicalUrlValue = typeof canonicalUrl === 'string' ? canonicalUrl : 'https://cardnav.xyz/disclaimer';
-  const robotsValue = typeof robots === 'string' ? robots : 'index,follow';
-  const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : canonicalUrlValue;
-  const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
-  const ogTypeValue = typeof ogType === 'string' ? ogType : 'website';
-  const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'WebPage' };
-  layout('layouts/public-page.eta', {
-    pageTitle: pageTitleValue,
-    description: descriptionValue,
-    canonicalUrl: canonicalUrlValue,
-    robots: robotsValue,
-    ogUrl: ogUrlValue,
-    ogImageUrl: ogImageUrlValue,
-    ogType: ogTypeValue,
-    jsonLd: jsonLdValue,
-    showSponsors: false,
-  });
-%>
-<% block('content', function(){ %>
+---
+/*
+文件说明: 渲染 CardNav 公开站点的免责声明页面。
+*/
+import PublicPage from '../layouts/PublicPage.astro';
+import { buildSeoContext } from '../seo.js';
+import { publicSiteUrl } from '../site.js';
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/disclaimer',
+  title: '免责声明',
+  description: '卡网大全免责声明说明第三方商家信息、价格库存、购买入口、合作展示和交易责任边界。',
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+});
+---
+
+<PublicPage showSponsors={false} {...seo}>
   <article class="policy-page rounded border bg-white px-4 py-5 text-slate-700 md:px-8 md:py-7">
     <h2>免责声明</h2>
     <p>CardNav 提供 AI 账号、卡网和相关服务的导航与信息整理。页面中的商家信息、商品价格、库存状态、优惠内容和购买入口可能随时变化，具体信息请以第三方商家页面的实时展示为准。</p>
@@ -39,4 +33,5 @@
     <h3>风险承担</h3>
     <p>用户因访问第三方网站、购买第三方商品或使用第三方服务所产生的风险与损失，应由用户与对应第三方自行承担。</p>
   </article>
-<% }) %>
+</PublicPage>
+

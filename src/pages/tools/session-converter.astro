@@ -1,30 +1,28 @@
-<% /*
+---
+/*
 文件说明: 渲染 Session 转换工具页，承载本地 JSON 输入、输出格式选择、预览、复制和下载操作。
 参考资料: GPTSession2CPAandSub2API 行为逻辑
-*/ %>
-<%
-  const pageTitleValue = typeof pageTitle === 'string' ? pageTitle : 'Session 转换工具 - 卡网大全';
-  const descriptionValue = typeof description === 'string' ? description : '把 ChatGPT Web session、Codex auth.json、9Router OAuth JSON 等本地转换为 CPA、Sub2API、Cockpit、9Router、Codex、AxonHub 或 Codex-Manager 可导入 JSON。';
-  const canonicalUrlValue = typeof canonicalUrl === 'string' ? canonicalUrl : 'https://cardnav.xyz/tools/session-converter';
-  const robotsValue = typeof robots === 'string' ? robots : 'index,follow';
-  const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : canonicalUrlValue;
-  const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
-  const ogTypeValue = typeof ogType === 'string' ? ogType : 'website';
-  const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'WebApplication' };
-  layout('layouts/public-page.eta', {
-    activeNav: 'tools',
-    pageTitle: pageTitleValue,
-    description: descriptionValue,
-    canonicalUrl: canonicalUrlValue,
-    robots: robotsValue,
-    ogUrl: ogUrlValue,
-    ogImageUrl: ogImageUrlValue,
-    ogType: ogTypeValue,
-    jsonLd: jsonLdValue,
-    showSponsors: false,
-  });
-%>
-<% block('content', function(){ %>
+*/
+import PublicPage from '../../layouts/PublicPage.astro';
+import { buildSeoContext } from '../../seo.js';
+import highlightScriptUrl from '@highlightjs/cdn-assets/highlight.min.js?url';
+import highlightCssUrl from '@highlightjs/cdn-assets/styles/github.min.css?url';
+import sessionConverterScriptUrl from '../../scripts/session-converter.js?url';
+import { publicSiteUrl } from '../../site.js';
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/tools/session-converter',
+  title: 'Session 转换工具',
+  description: '把 ChatGPT Web session、Codex auth.json、9Router OAuth JSON 等本地转换为 CPA、Sub2API、Cockpit、9Router、Codex、AxonHub 或 Codex-Manager 可导入 JSON。',
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+});
+---
+
+<PublicPage activeNav="tools" showSponsors={false} {...seo}>
+  <link slot="head" rel="stylesheet" href={highlightCssUrl} />
+
   <section class="content-panel">
     <div>
       <h2 class="mt-1 text-2xl font-bold tracking-normal text-slate-950">ChatGPT Session 转换工具</h2>
@@ -52,12 +50,7 @@
           <button id="sessionLoadExample" class="secondary-button" type="button">填入示例</button>
           <button id="sessionClearInput" class="compact-secondary-button" type="button">清空</button>
         </div>
-        <textarea
-          id="sessionInput"
-          class="session-converter-textarea tool-json-textarea mt-3"
-          spellcheck="false"
-          placeholder='{"user":{"email":"mark@example.com"},"expires":"2026-08-06T14:29:36.155Z","account":{"id":"...","planType":"plus"},"accessToken":"...","sessionToken":"..."}'
-        ></textarea>
+        <textarea id="sessionInput" class="session-converter-textarea tool-json-textarea mt-3" spellcheck="false" placeholder='{"user":{"email":"mark@example.com"},"expires":"2026-08-06T14:29:36.155Z","account":{"id":"...","planType":"plus"},"accessToken":"...","sessionToken":"..."}'></textarea>
       </div>
     </section>
 
@@ -124,13 +117,7 @@
       </div>
     </section>
   </section>
-<% }) %>
 
-<% block('scripts', function(){ %>
-  <script defer src="/assets/vendor/highlight/highlight.min.js"></script>
-  <script defer src="/assets/session-converter.js"></script>
-<% }) %>
-
-<% block('head', function(){ %>
-  <link rel="stylesheet" href="/assets/vendor/highlight/github.min.css" />
-<% }) %>
+  <script is:inline slot="scripts" defer src={highlightScriptUrl}></script>
+  <script is:inline slot="scripts" defer src={sessionConverterScriptUrl}></script>
+</PublicPage>

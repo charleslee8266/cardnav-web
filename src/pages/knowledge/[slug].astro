@@ -1,0 +1,54 @@
+---
+/*
+文件说明: 渲染 CardNav 公开知识库文章详情页。
+*/
+import PublicPage from '../../layouts/PublicPage.astro';
+import articleMarkdown from '../../../docs/how-to-choose-reliable-merchant.md?raw';
+import { getKnowledgeArticleFromMarkdown, knowledgeArticles } from '../../knowledge.js';
+import { buildSeoContext } from '../../seo.js';
+import { publicSiteUrl } from '../../site.js';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return knowledgeArticles.map(article => ({
+    params: { slug: article.slug },
+  }));
+}
+
+const articleMarkdownBySlug: Record<string, string> = {
+  'how-to-choose-reliable-merchant': articleMarkdown,
+};
+
+const slug = Astro.params.slug || '';
+const article = getKnowledgeArticleFromMarkdown(slug, articleMarkdownBySlug[slug] || '');
+if (!article) return Astro.redirect('/knowledge', 302);
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: `/knowledge/${article.slug}`,
+  title: article.title,
+  description: article.description,
+  imagePath: '/og-cardnav.svg',
+  type: 'article',
+  datePublished: article.datePublished,
+  dateModified: article.dateModified,
+});
+---
+
+<PublicPage activeNav="knowledge" {...seo}>
+  <section aria-label="当前位置" class="text-sm">
+    <nav>
+      <a href="/knowledge" class="font-medium text-blue-700 hover:text-blue-800 hover:underline">知识库</a>
+      <span class="mx-2 text-slate-400">/</span>
+      <span class="text-slate-500">{article.title}</span>
+    </nav>
+  </section>
+
+  <article class="knowledge-article" set:html={article.html} />
+
+  <section class="rounded border border-blue-200 bg-blue-50 p-4">
+    <p class="text-sm leading-6 text-blue-950">继续查看实时商家、商品、价格和库存：</p>
+    <a href="/" class="mt-2 inline-flex rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">返回卡网大全首页</a>
+  </section>
+</PublicPage>

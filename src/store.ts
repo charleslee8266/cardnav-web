@@ -2,6 +2,7 @@
  * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
  * 对应文档: docs/specs/sorting-and-score.md
  */
+import 'dotenv/config';
 import pg from 'pg';
 
 export type PublicSiteRow = {
@@ -43,10 +44,16 @@ export type PopularSearchTermsSnapshot = {
   normalizedTerms: string[];
 };
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) throw new Error('DATABASE_URL is required');
-const pool = new pg.Pool({ connectionString });
+let pool: pg.Pool | null = null;
 const presetPopularSearchTerms = ['ChatGPT Plus', 'Claude', 'Gemini', 'Cursor', 'Codex', 'Team', '接码', '成品号', '共享号', 'API'];
+
+function getPool() {
+  if (pool) return pool;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error('DATABASE_URL is required');
+  pool = new pg.Pool({ connectionString });
+  return pool;
+}
 
 export function formatBeijingRefreshTime(input: string | null | undefined): string {
   if (!input) return '';
@@ -67,7 +74,8 @@ export function formatBeijingRefreshTime(input: string | null | undefined): stri
 }
 
 export async function loadDashboardData() {
-  const sitesResult = await pool.query(`
+  const db = getPool();
+  const sitesResult = await db.query(`
     SELECT
       id,
       name,
@@ -78,7 +86,7 @@ export async function loadDashboardData() {
     ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, latest_product_refreshed_at DESC NULLS LAST, id ASC
   `);
 
-  const productsResult = await pool.query(`
+  const productsResult = await db.query(`
     SELECT
       products.site_id,
       sites.name AS site_name,
@@ -165,7 +173,7 @@ export async function submitSiteUrl(input: string) {
     return { ok: false as const, message: '请输入有效的 URL' };
   }
 
-  const result = await pool.query(
+  const result = await getPool().query(
     `
       INSERT INTO urls (url, status, sub_status, notes)
       VALUES ($1, 'accepted', NULL, NULL)
@@ -188,7 +196,7 @@ export async function recordSearchTerm(term: string, resultCount: number) {
     return { recorded: false };
   }
 
-  await pool.query(
+  await getPool().query(
     `
       INSERT INTO search_terms (term, total_count, result_count, last_seen_at)
       VALUES ($1, 1, $2, now())
@@ -210,7 +218,7 @@ export async function recordProductClick(input: ProductClickInput) {
   if (!siteId) return { recorded: false as const };
   if (!productUrl && (!categoryName || !name)) return { recorded: false as const };
 
-  const result = await pool.query(
+  const result = await getPool().query(
     `
       UPDATE products
       SET click_count = click_count + 1
@@ -234,7 +242,8 @@ export async function recordProductClick(input: ProductClickInput) {
 
 export async function loadPopularSearchTerms(limit = 10) {
   const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
-  const runtimeResult = await pool.query(
+  const db = getPool();
+  const runtimeResult = await db.query(
     `
       SELECT
         search_terms.term,
@@ -263,7 +272,7 @@ export async function loadPopularSearchTerms(limit = 10) {
     };
   }
 
-  const presetResult = await pool.query(
+  const presetResult = await db.query(
     `
       WITH candidate_terms AS (
         SELECT DISTINCT ON (lower(trim(term))) trim(term) AS term, lower(trim(term)) AS normalized_term, ordinality

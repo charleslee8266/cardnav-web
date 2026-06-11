@@ -1,37 +1,29 @@
-<% /*
-文件说明: 负责渲染站点提交页面，并处理提交表单的前端校验与反馈展示。
-*/ %>
-<%
-  const pageTitleValue = typeof pageTitle === 'string' ? pageTitle : '提交商家 - 卡网大全';
-  const descriptionValue = typeof description === 'string' ? description : '商家可提交站点 URL 入驻卡网大全，也可通过 Telegram 联系合作，获得更多曝光入口。';
-  const canonicalUrlValue = typeof canonicalUrl === 'string' ? canonicalUrl : 'https://cardnav.xyz/submit';
-  const robotsValue = typeof robots === 'string' ? robots : 'index,follow';
-  const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : canonicalUrlValue;
-  const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
-  const ogTypeValue = typeof ogType === 'string' ? ogType : 'website';
-  const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'WebPage' };
-  const telegramGroupUrlValue = typeof telegramGroupUrl === 'string' ? telegramGroupUrl : 'https://t.me/cardnav_xyz_group';
-  layout('layouts/public-page.eta', {
-    activeNav: 'submit',
-    pageTitle: pageTitleValue,
-    description: descriptionValue,
-    canonicalUrl: canonicalUrlValue,
-    robots: robotsValue,
-    ogUrl: ogUrlValue,
-    ogImageUrl: ogImageUrlValue,
-    ogType: ogTypeValue,
-    jsonLd: jsonLdValue,
-    telegramGroupUrl: telegramGroupUrlValue,
-  });
-%>
-<% block('content', function(){ %>
+---
+/*
+文件说明: 渲染站点提交页面，并处理提交表单的前端校验与反馈展示。
+*/
+import PublicPage from '../layouts/PublicPage.astro';
+import { buildSeoContext } from '../seo.js';
+import { publicSiteUrl, telegramGroupUrl } from '../site.js';
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/submit',
+  title: '提交商家',
+  description: '商家可提交站点 URL 入驻卡网大全，也可通过 Telegram 联系合作，获得更多曝光入口。',
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+});
+---
+
+<PublicPage activeNav="submit" {...seo}>
   <section class="rounded border bg-white p-5">
     <h2 class="text-lg font-semibold">提交商家</h2>
     <p class="mt-2 text-sm text-slate-600">提交商家的站点 URL 后我们会尽快处理，请勿重复提交。</p>
     <div class="mt-4 rounded border border-blue-200 bg-blue-50 p-4">
       <h3 class="text-sm font-semibold text-slate-900">合作曝光</h3>
       <p class="mt-2 text-sm leading-6 text-slate-700">商家如有合作意向，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
-      <a href="<%= telegramGroupUrlValue %>" target="_blank" rel="noopener noreferrer" class="primary-button mt-3 inline-flex items-center gap-2">
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="primary-button mt-3 inline-flex items-center gap-2">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m22 2-7 20-4-9-9-4Z"></path>
           <path d="M22 2 11 13"></path>
@@ -41,28 +33,17 @@
     </div>
     <form id="submitForm" class="mt-4 space-y-3" method="post" action="/submit">
       <label for="urlInput" class="block text-sm font-medium text-slate-700">URL</label>
-      <input
-        id="urlInput"
-        name="url"
-        type="url"
-        required
-        value="<%= url %>"
-        class="control-input"
-        placeholder="https://example.com"
-        autocomplete="url"
-      />
+      <input id="urlInput" name="url" type="url" required value="" class="control-input" placeholder="https://example.com" autocomplete="url" />
       <p id="clientError" class="hidden text-sm text-red-600">请输入有效的 URL</p>
       <p id="submitError" class="hidden text-sm text-red-600"></p>
       <p id="submitSuccess" class="hidden text-sm text-emerald-700"></p>
-      <button type="submit" data-umami-event="submit-click" data-umami-event-url="<%= url %>" class="primary-button">
+      <button type="submit" data-umami-event="submit-click" data-umami-event-url="" class="primary-button">
         提交
       </button>
     </form>
   </section>
-<% }) %>
 
-<% block('scripts', function(){ %>
-  <script>
+  <script slot="scripts" is:inline>
     const form = document.querySelector('#submitForm');
     const input = document.querySelector('#urlInput');
     const clientError = document.querySelector('#clientError');
@@ -153,4 +134,5 @@
 
     syncSubmitEventUrl();
   </script>
-<% }) %>
+</PublicPage>
+

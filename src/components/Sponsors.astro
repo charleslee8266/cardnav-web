@@ -1,0 +1,62 @@
+---
+/*
+文件说明: 渲染 CardNav 公开站点赞助商展示区，供首页和内容页复用。
+*/
+import { telegramGroupUrl } from '../site.js';
+
+const sponsorPackyApiUrl = 'https://www.packyapi.com/register?aff=Nulo';
+const sponsorRightCodeUrl = 'https://www.right.codes/register?aff=7e525e44';
+const sponsorPrimaryUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=952';
+const sponsorPlan2c2gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=953';
+const sponsorPlan3c4gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=954';
+const sponsorPlan6c6gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=955';
+const sponsorPlan7c8gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=956';
+---
+
+<section class="sponsor-section">
+  <div class="sponsor-header">
+    <h2 class="sponsor-title">赞助商列表</h2>
+    <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="sponsor-join-link">成为赞助商</a>
+  </div>
+  <div class="sponsor-grid">
+    <article class="sponsor-card">
+      <a href={sponsorPackyApiUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorPackyApiUrl} class="sponsor-main-link group">
+        <span class="sponsor-logo-frame sponsor-logo-frame-padded">
+          <img src="https://www.packyapi.com/logo-full.svg" alt="PackyAPI AI API 聚合平台赞助商标志" width="320" height="73" loading="lazy" class="sponsor-logo" />
+        </span>
+        <span class="sponsor-name">
+          PackyAPI 老牌 AI API 中转站
+        </span>
+        <span class="sponsor-copy">一站式接入 Claude、GPT、Gemini 等主流 AI 服务，可提供发票。</span>
+      </a>
+    </article>
+    <article class="sponsor-card">
+      <a href={sponsorRightCodeUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorRightCodeUrl} class="sponsor-main-link group">
+        <span class="sponsor-logo-frame">
+          <img src="/rightcode.webp" alt="RightCode 赞助商标志" width="1150" height="332" loading="lazy" class="sponsor-logo" />
+        </span>
+        <span class="sponsor-name">
+          RightCode 企业级 AI Agent 分发平台
+        </span>
+        <span class="sponsor-copy">专注于编程开发，支持Codex、Claude、DeepSeek等多种模型。</span>
+      </a>
+    </article>
+    <article class="sponsor-card">
+      <a href={sponsorPrimaryUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorPrimaryUrl} class="sponsor-plan-main-link group">
+        <span class="sponsor-logo-frame">
+          <img src="https://racknerd.com/banners/320x100.gif" alt="RackNerd 云主机赞助商横幅" width="320" height="100" loading="lazy" class="sponsor-banner" />
+        </span>
+        <span class="sponsor-plan-title">
+          <span class="sponsor-plan-name">RackNerd云主机</span>
+          <span class="sponsor-plan-price">1C1G 仅需 $21.99/年</span>
+        </span>
+      </a>
+      <div class="sponsor-plan-grid">
+        <a href={sponsorPlan2c2gUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorPlan2c2gUrl} class="sponsor-plan-link">2C2G $35.99/年</a>
+        <a href={sponsorPlan3c4gUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorPlan3c4gUrl} class="sponsor-plan-link">3C4G $59.99/年</a>
+        <a href={sponsorPlan6c6gUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorPlan6c6gUrl} class="sponsor-plan-link">6C6G $89.99/年</a>
+        <a href={sponsorPlan7c8gUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorPlan7c8gUrl} class="sponsor-plan-link">7C8G $119.99/年</a>
+      </div>
+    </article>
+  </div>
+</section>

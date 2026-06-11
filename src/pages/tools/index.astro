@@ -1,28 +1,22 @@
-<% /*
-文件说明: 渲染 CardNav 公开工具集合页，作为未来多个小工具的统一入口。
-*/ %>
-<%
-  const pageTitleValue = typeof pageTitle === 'string' ? pageTitle : '工具集 - 卡网大全';
-  const descriptionValue = typeof description === 'string' ? description : '卡网大全工具提供和 AI 账号、订阅、导入格式相关的小工具，帮助用户在浏览器本地完成常用转换。';
-  const canonicalUrlValue = typeof canonicalUrl === 'string' ? canonicalUrl : 'https://cardnav.xyz/tools';
-  const robotsValue = typeof robots === 'string' ? robots : 'index,follow';
-  const ogUrlValue = typeof ogUrl === 'string' ? ogUrl : canonicalUrlValue;
-  const ogImageUrlValue = typeof ogImageUrl === 'string' ? ogImageUrl : 'https://cardnav.xyz/og-cardnav.svg';
-  const ogTypeValue = typeof ogType === 'string' ? ogType : 'website';
-  const jsonLdValue = typeof jsonLd === 'object' && jsonLd ? jsonLd : { '@context': 'https://schema.org', '@type': 'CollectionPage' };
-  layout('layouts/public-page.eta', {
-    activeNav: 'tools',
-    pageTitle: pageTitleValue,
-    description: descriptionValue,
-    canonicalUrl: canonicalUrlValue,
-    robots: robotsValue,
-    ogUrl: ogUrlValue,
-    ogImageUrl: ogImageUrlValue,
-    ogType: ogTypeValue,
-    jsonLd: jsonLdValue,
-  });
-%>
-<% block('content', function(){ %>
+---
+/*
+文件说明: 渲染 CardNav 公开工具集合页，作为多个小工具的统一入口。
+*/
+import PublicPage from '../../layouts/PublicPage.astro';
+import { buildSeoContext } from '../../seo.js';
+import { publicSiteUrl } from '../../site.js';
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/tools',
+  title: '工具集',
+  description: '卡网大全工具提供和 AI 账号、订阅、导入格式相关的小工具，帮助用户在浏览器本地完成常用转换。',
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+});
+---
+
+<PublicPage activeNav="tools" {...seo}>
   <section class="content-panel">
     <div class="max-w-3xl">
       <p class="text-sm font-semibold text-blue-700">卡网大全工具</p>
@@ -32,7 +26,7 @@
   </section>
 
   <section class="grid gap-3 md:grid-cols-2">
-    <article class="knowledge-card">
+    <article class="tool-card">
       <a href="/tools/session-converter" class="block">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="text-lg font-semibold tracking-normal text-slate-950">Session 转换工具</h3>
@@ -43,7 +37,7 @@
       </a>
     </article>
 
-    <article class="knowledge-card">
+    <article class="tool-card">
       <a href="https://codex.kedaya.xyz/" target="_blank" rel="noopener noreferrer" class="block">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="text-lg font-semibold tracking-normal text-slate-950">Codex 凭证助手</h3>
@@ -55,7 +49,7 @@
       </a>
     </article>
 
-    <article class="knowledge-card">
+    <article class="tool-card">
       <a href="https://mail.chatai.codes/" target="_blank" rel="noopener noreferrer" class="block">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="text-lg font-semibold tracking-normal text-slate-950">Outlook 快速取件</h3>
@@ -67,4 +61,4 @@
       </a>
     </article>
   </section>
-<% }) %>
+</PublicPage>
