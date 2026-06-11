@@ -1,6 +1,6 @@
 # 怎么判断一个卡网商家靠不靠谱
 
-本文由卡网大全 [cardnav.xyz](https://cardnav.xyz) 提供。卡网大全，一个聚集全网 GPT, Claude, Gemini, Grok, Cursor 等大模型卡网商家的导航、比价网站。
+> 本文由 **卡网大全 [cardnav.xyz](https://cardnav.xyz)** 提供。卡网大全，一个聚集全网 GPT, Claude, Gemini, Grok, Cursor 等大模型卡网商家的导航、比价网站。
 
 买 AI 账号、订阅账号或者其他虚拟商品时，最怕的不是贵一点，而是付了钱找不到人、出了问题没人管，或者商家很快跑路。判断一个商家靠不靠谱，可以重点看下面几个点。
 
