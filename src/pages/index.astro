@@ -8,7 +8,8 @@ import { publicSiteUrl } from '../site.js';
 import homepageScriptUrl from '../scripts/index.js?url';
 import { loadDashboardData, loadPopularSearchTerms, type PublicProductRow } from '../store.js';
 
-const data = await loadDashboardData();
+const initialProductLimitValue = 10;
+const data = await loadDashboardData({ productLimit: initialProductLimitValue });
 const popularSearchTerms = (await loadPopularSearchTerms(10)).terms;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -43,19 +44,15 @@ const renderedProducts = data.products.map(product => ({
   siteLatestProductRefreshTime: product.siteLatestProductRefreshTime || '',
   score: product.score || 0,
 }));
-const initialProductLimitValue = 10;
-const initialRenderedProducts = renderedProducts.slice(0, initialProductLimitValue);
-const initialRenderedSiteIds = new Set(initialRenderedProducts.map(product => product.siteId).filter(Boolean));
-const initialRenderedSites = renderedSites.filter(site => initialRenderedSiteIds.has(site.id));
 const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
 const dashboardJsonValue = JSON.stringify({
-  sites: initialRenderedSites,
-  products: initialRenderedProducts,
+  sites: renderedSites,
+  products: renderedProducts,
   totalSiteCount: data.totalSiteCount,
   totalProductCount: data.totalProductCount,
   latestRefreshTime: data.latestRefreshTime,
   initialProductLimit: initialProductLimitValue,
-  isPartial: renderedProducts.length > initialRenderedProducts.length,
+  isPartial: data.isPartial,
 }).replace(/[<>&\u2028\u2029]/g, character => ({
   '<': '\\u003c',
   '>': '\\u003e',
@@ -164,7 +161,7 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
         </thead>
 
         <tbody id="flatProductRows">
-          {initialRenderedProducts.map(item => {
+          {renderedProducts.map(item => {
             const productTitle = `${item.categoryName}-${item.name}`;
             const productFavoriteKey = `${item.siteName}#${productTitle}`;
             const siteFavoriteKey = item.siteId || item.siteName;

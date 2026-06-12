@@ -46,6 +46,16 @@ export type PopularSearchTermsSnapshot = {
 
 let pool: pg.Pool | null = null;
 const presetPopularSearchTerms = ['ChatGPT Plus', 'Claude', 'Gemini', 'Cursor', 'Codex', 'Team', '接码', '成品号', '共享号', 'API'];
+const beijingDateFormatter = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Asia/Shanghai',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false,
+});
 
 function getPool() {
   if (pool) return pool;
@@ -59,37 +69,33 @@ export function formatBeijingRefreshTime(input: string | null | undefined): stri
   if (!input) return '';
   const date = new Date(input);
   if (Number.isNaN(date.getTime())) return '';
-  const parts = new Intl.DateTimeFormat('sv-SE', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).formatToParts(date);
+  const parts = beijingDateFormatter.formatToParts(date);
   const lookup = Object.fromEntries(parts.map(part => [part.type, part.value]));
   return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}:${lookup.second}`;
 }
 
-export async function loadDashboardData() {
+export async function loadDashboardData(options: { productLimit?: number } = {}) {
   const db = getPool();
-  const sitesResult = await db.query(`
-    SELECT
-      id,
-      name,
-      score,
-      latest_product_refreshed_at
-    FROM sites
-    WHERE type = 'cardShop'
-    ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, latest_product_refreshed_at DESC NULLS LAST, id ASC
-  `);
-
+  const safeProductLimit = typeof options.productLimit === 'number' && Number.isFinite(options.productLimit)
+    ? Math.max(1, Math.floor(options.productLimit))
+    : null;
+  const sitesResult = safeProductLimit === null
+    ? await db.query(`
+      SELECT
+        id,
+        name,
+        score,
+        latest_product_refreshed_at
+      FROM sites
+      WHERE type = 'cardShop'
+      ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, latest_product_refreshed_at DESC NULLS LAST, id ASC
+    `)
+    : null;
   const productsResult = await db.query(`
     SELECT
       products.site_id,
       sites.name AS site_name,
+      sites.score AS site_score,
       sites.latest_product_refreshed_at AS site_latest_product_refreshed_at,
       products.category_name,
       products.name,
@@ -106,15 +112,8 @@ export async function loadDashboardData() {
     INNER JOIN sites ON sites.id = products.site_id
     WHERE sites.type = 'cardShop'
     ORDER BY products.score DESC, sites.score DESC, products.in_stock DESC, products.refreshed_at DESC, products.category_name ASC, products.name ASC
-  `);
-
-  const sites: PublicSiteRow[] = sitesResult.rows.map(row => ({
-    id: String(row.id),
-    name: String(row.name),
-    latestProductRefreshedAt: row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null,
-    latestProductRefreshTime: formatBeijingRefreshTime(row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null),
-    score: Number(row.score) || 0,
-  }));
+    ${safeProductLimit ? 'LIMIT $1' : ''}
+  `, safeProductLimit ? [safeProductLimit] : []);
 
   const products: PublicProductRow[] = productsResult.rows.map(row => {
     const refreshedAt = row.refreshed_at ? String(row.refreshed_at) : null;
@@ -139,20 +138,54 @@ export async function loadDashboardData() {
     };
   });
 
-  const latestRefreshedAt = sites.reduce<string | null>((latest, site) => {
-    if (!site.latestProductRefreshedAt) return latest;
-    if (!latest) return site.latestProductRefreshedAt;
-    return new Date(site.latestProductRefreshedAt).getTime() > new Date(latest).getTime()
-      ? site.latestProductRefreshedAt
-      : latest;
-  }, null);
+  const sites: PublicSiteRow[] = sitesResult
+    ? sitesResult.rows.map(row => ({
+      id: String(row.id),
+      name: String(row.name),
+      latestProductRefreshedAt: row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null,
+      latestProductRefreshTime: formatBeijingRefreshTime(row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null),
+      score: Number(row.score) || 0,
+    }))
+    : (() => {
+      const siteById = new Map<string, PublicSiteRow>();
+      for (const row of productsResult.rows) {
+        const siteId = String(row.site_id);
+        if (siteById.has(siteId)) continue;
+        const latestProductRefreshedAt = row.site_latest_product_refreshed_at ? String(row.site_latest_product_refreshed_at) : null;
+        siteById.set(siteId, {
+          id: siteId,
+          name: String(row.site_name),
+          latestProductRefreshedAt,
+          latestProductRefreshTime: formatBeijingRefreshTime(latestProductRefreshedAt),
+          score: Number(row.site_score) || 0,
+        });
+      }
+      return [...siteById.values()];
+    })();
+  const summaryResult = await db.query(`
+    SELECT
+      COUNT(*) FILTER (WHERE type = 'cardShop')::INTEGER AS total_site_count,
+      COALESCE((
+        SELECT COUNT(products.*)::INTEGER
+        FROM products
+        INNER JOIN sites ON sites.id = products.site_id
+        WHERE sites.type = 'cardShop'
+      ), 0) AS total_product_count,
+      MAX(latest_product_refreshed_at) FILTER (WHERE type = 'cardShop') AS latest_refreshed_at
+    FROM sites
+  `);
+  const summaryRow = summaryResult.rows[0] ?? {};
+  const totalSiteCount = Number(summaryRow.total_site_count) || 0;
+  const totalProductCount = Number(summaryRow.total_product_count) || 0;
+  const latestRefreshedAt = summaryRow.latest_refreshed_at ? String(summaryRow.latest_refreshed_at) : null;
 
   return {
     sites,
     products,
-    totalSiteCount: sites.length,
-    totalProductCount: products.length,
+    totalSiteCount,
+    totalProductCount,
     latestRefreshTime: formatBeijingRefreshTime(latestRefreshedAt),
+    isPartial: totalProductCount > products.length,
   };
 }
 
@@ -248,16 +281,11 @@ export async function loadPopularSearchTerms(limit = 10) {
       SELECT
         search_terms.term,
         search_terms.total_count,
-        search_terms.last_seen_at,
-        COUNT(products.*)::INTEGER AS product_count
+        search_terms.last_seen_at
       FROM search_terms
-      INNER JOIN products ON lower(products.category_name || ' ' || products.name) LIKE '%' || search_terms.term || '%'
-      INNER JOIN sites ON sites.id = products.site_id AND sites.type = 'cardShop'
       WHERE search_terms.total_count > 0
         AND search_terms.result_count > 0
-      GROUP BY search_terms.term, search_terms.total_count, search_terms.last_seen_at
-      HAVING COUNT(products.*) >= 2
-      ORDER BY search_terms.total_count DESC, product_count DESC, search_terms.last_seen_at DESC, search_terms.term ASC
+      ORDER BY search_terms.total_count DESC, search_terms.result_count DESC, search_terms.last_seen_at DESC, search_terms.term ASC
       LIMIT $1
     `,
     [safeLimit],

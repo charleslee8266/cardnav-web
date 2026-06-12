@@ -41,13 +41,14 @@ let merchantRowsRendered = false;
 let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
 let currentFlatVisibleLimit = Number(dashboardData.initialProductLimit) > 0 ? Number(dashboardData.initialProductLimit) : DEFAULT_FLAT_PRODUCT_LIMIT;
-let isDashboardDataLoading = Boolean(dashboardData.isPartial);
+let isDashboardDataLoading = false;
 let quickSearchTags = quickTagFilters
   ? Array.from(quickTagFilters.querySelectorAll('button[data-tag-key]')).map(button => toQuickSearchTag(button.textContent || ''))
   : [];
 let applyFiltersTimer = null;
 let searchReportTimer = null;
 let umamiFilterReportTimer = null;
+let backgroundDashboardLoadScheduled = false;
 const SEARCH_REPORT_DELAY_MS = 5000;
 const SEARCH_REPORT_DEDUP_WINDOW_MS = 2 * 60 * 1000;
 let lastReportedQuery = '';
@@ -402,6 +403,33 @@ function resetFlatVisibleLimit() {
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
 }
 
+function dashboardDataIsPartial() {
+  return Boolean(dashboardData.isPartial);
+}
+
+function loadedProductCount() {
+  return Array.isArray(dashboardData.products) ? dashboardData.products.length : 0;
+}
+
+function totalProductCount() {
+  return Number(dashboardData.totalProductCount) || loadedProductCount();
+}
+
+function shouldLoadFullDashboardData(options = {}) {
+  if (!dashboardDataIsPartial()) return false;
+  return Boolean(
+    options.force
+    || options.groupByMerchant
+    || options.searchQuery
+    || options.showSoldOut
+    || options.matchCategory
+    || options.matchMerchant
+    || options.priceMinValue
+    || options.priceMaxValue
+    || currentFlatVisibleLimit > loadedProductCount()
+  );
+}
+
 function createFavoriteButton(favoriteKind, key, label) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -525,9 +553,12 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
     return;
   }
 
-  flatProductLoadSummary.textContent = `当前显示 ${renderedCount} / ${visibleCount} 个匹配商品`;
+  const totalVisibleCount = dashboardDataIsPartial() && visibleCount === loadedProductCount() && renderedCount === visibleCount
+    ? totalProductCount()
+    : visibleCount;
+  flatProductLoadSummary.textContent = `当前显示 ${renderedCount} / ${totalVisibleCount} 个匹配商品`;
 
-  if (renderedCount < visibleCount) {
+  if (renderedCount < visibleCount || dashboardDataIsPartial()) {
     flatProductLoadMoreButton.classList.remove('hidden');
   } else {
     flatProductLoadMoreButton.classList.add('hidden');
@@ -662,6 +693,18 @@ function applyFilters() {
   const hasActiveFilters = Boolean(searchQuery || priceMinValue || priceMaxValue);
   let visibleFlatProductCount = 0;
   let visibleMerchantCount = 0;
+
+  if (shouldLoadFullDashboardData({
+    groupByMerchant,
+    searchQuery,
+    showSoldOut,
+    matchCategory: matchCategoryFilter.checked,
+    matchMerchant: matchMerchantFilter.checked,
+    priceMinValue,
+    priceMaxValue,
+  })) {
+    loadDashboardDataFromApi();
+  }
 
   merchantGroupedView.hidden = !groupByMerchant;
   flatProductView.hidden = groupByMerchant;
@@ -881,7 +924,10 @@ function updateFlatSortButtons() {
 function replaceDashboardData(nextDashboardData) {
   if (!nextDashboardData || !Array.isArray(nextDashboardData.products) || !Array.isArray(nextDashboardData.sites)) return;
 
-  dashboardData = nextDashboardData;
+  dashboardData = {
+    ...nextDashboardData,
+    isPartial: false,
+  };
   isDashboardDataLoading = false;
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
   merchantRowsRendered = false;
@@ -898,6 +944,9 @@ function replaceDashboardData(nextDashboardData) {
 }
 
 async function loadDashboardDataFromApi() {
+  if (!dashboardDataIsPartial() || isDashboardDataLoading) return;
+  isDashboardDataLoading = true;
+  updateFlatProgressiveLoadSummary(loadedProductCount(), Math.min(currentFlatVisibleLimit, loadedProductCount()));
   try {
     const response = await fetch('/api/dashboard', { headers: { accept: 'application/json' } });
     if (!response.ok) {
@@ -911,6 +960,23 @@ async function loadDashboardDataFromApi() {
     applyFilters();
     // SSR rows remain usable when the API request fails.
   }
+}
+
+function scheduleBackgroundDashboardLoad() {
+  if (!dashboardDataIsPartial() || backgroundDashboardLoadScheduled) return;
+  backgroundDashboardLoadScheduled = true;
+
+  const startLoad = () => {
+    backgroundDashboardLoadScheduled = false;
+    loadDashboardDataFromApi();
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(() => startLoad(), { timeout: 1500 });
+    return;
+  }
+
+  window.setTimeout(startLoad, 300);
 }
 
 searchFilter.addEventListener('input', () => {
@@ -979,6 +1045,9 @@ quickTagFilters?.addEventListener('click', event => {
 });
 flatProductLoadMoreButton?.addEventListener('click', () => {
   currentFlatVisibleLimit += FLAT_PRODUCT_LOAD_MORE_STEP;
+  if (shouldLoadFullDashboardData({ force: true })) {
+    loadDashboardDataFromApi();
+  }
   applyFilters();
 });
 flatSortButtons.forEach(button => {
@@ -1006,4 +1075,4 @@ loadFavorites();
 initializeFavorites();
 syncFiltersFromUrl();
 applyFilters();
-loadDashboardDataFromApi();
+scheduleBackgroundDashboardLoad();
