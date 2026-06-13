@@ -25,6 +25,12 @@ export const staticPublicSeoRoutes: PublicSeoRoute[] = [
     changefreq: 'monthly',
   },
   {
+    pathname: '/official-price',
+    title: '官方订阅比价',
+    description: '对比 ChatGPT Plus, Claude Pro, Gemini Advanced 等 AI 官方订阅在世界各地区（如美国、土耳其、日本等）的实时价格与汇率折算，助你选择最划算的购买区域。',
+    changefreq: 'daily',
+  },
+  {
     pathname: '/tools',
     title: '工具集',
     description: '与 AI 账号、订阅和导入格式相关的小工具集合。',
