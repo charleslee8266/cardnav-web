@@ -332,3 +332,35 @@ export async function loadPopularSearchTerms(limit = 10) {
     normalizedTerms: mergedTerms.slice(0, safeLimit).map(normalizeSearchText),
   };
 }
+
+export type PublicOfficialPriceRow = {
+  appSlug: string;
+  planSlug: string;
+  countryCode: string;
+  countryLabel: string;
+  currencyCode: string;
+  priceText: string;
+  priceValue: number;
+  cnyPrice: number;
+  fetchedAt: string;
+};
+
+export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
+  const db = getPool();
+  const result = await db.query(`
+    SELECT app_slug, plan_slug, country_code, country_label, currency_code, price_text, price_value, cny_price, fetched_at
+    FROM official_prices
+    ORDER BY app_slug ASC, cny_price ASC
+  `);
+  return result.rows.map(row => ({
+    appSlug: String(row.app_slug),
+    planSlug: String(row.plan_slug),
+    countryCode: String(row.country_code),
+    countryLabel: String(row.country_label),
+    currencyCode: String(row.currency_code),
+    priceText: String(row.price_text),
+    priceValue: Number(row.price_value),
+    cnyPrice: Number(row.cny_price),
+    fetchedAt: String(row.fetched_at),
+  }));
+}

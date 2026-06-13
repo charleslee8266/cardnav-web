@@ -1,0 +1,249 @@
+---
+/*
+文件说明: 渲染 CardNav 官方大模型价格对比页面。
+*/
+import PublicPage from '../layouts/PublicPage.astro';
+import { buildSeoContext } from '../seo.js';
+import { publicSiteUrl } from '../site.js';
+import { loadOfficialPrices, formatBeijingRefreshTime } from '../store.js';
+
+const rawPrices = await loadOfficialPrices();
+const latestFetchedAt = rawPrices.reduce<string | null>((latest, price) => {
+  if (!price.fetchedAt) return latest;
+  if (!latest) return price.fetchedAt;
+  return new Date(price.fetchedAt).getTime() > new Date(latest).getTime() ? price.fetchedAt : latest;
+}, null);
+const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : '未记录';
+
+const APP_LABELS: Record<string, string> = {
+  chatgpt: 'ChatGPT',
+  claude: 'Claude',
+  gemini: 'Gemini',
+  grok: 'Grok',
+};
+const APP_ORDER = ['chatgpt', 'claude', 'gemini', 'grok'];
+const PLAN_LABELS: Record<string, string> = {
+  'go-monthly': 'Go',
+  plus: 'Plus',
+  'pro-5x': 'Pro 5x',
+  'pro-20x': 'Pro 20x',
+  pro: 'Pro',
+  'max-5x-monthly': 'Max 5x',
+  'max-20x-monthly': 'Max 20x',
+  'ai-plus': 'AI Plus',
+  advanced: 'AI Pro',
+  'ai-ultra': 'AI Ultra',
+  'supergrok-lite': 'SuperGrok Lite',
+  supergrok: 'SuperGrok',
+  'supergrok-heavy': 'SuperGrok Heavy',
+};
+const PLAN_ORDER: Record<string, string[]> = {
+  chatgpt: ['go-monthly', 'plus', 'pro-5x', 'pro-20x'],
+  claude: ['pro', 'max-5x-monthly', 'max-20x-monthly'],
+  gemini: ['ai-plus', 'advanced', 'ai-ultra'],
+  grok: ['supergrok-lite', 'supergrok', 'supergrok-heavy'],
+};
+
+function labelFromSlug(slug: string) {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.length <= 3 ? part.toUpperCase() : `${part[0]?.toUpperCase() || ''}${part.slice(1)}`)
+    .join(' ');
+}
+
+function appLabel(appSlug: string) {
+  return APP_LABELS[appSlug] || labelFromSlug(appSlug);
+}
+
+function planLabel(planSlug: string) {
+  return PLAN_LABELS[planSlug] || labelFromSlug(planSlug);
+}
+
+function orderedIndex(values: string[], value: string) {
+  const index = values.indexOf(value);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+const groupMap = new Map<string, {
+  key: string;
+  appSlug: string;
+  planSlug: string;
+  appName: string;
+  planName: string;
+  displayName: string;
+  prices: typeof rawPrices;
+}>();
+
+for (const price of rawPrices) {
+  const key = `${price.appSlug}:${price.planSlug}`;
+  const existing = groupMap.get(key);
+  if (existing) {
+    existing.prices.push(price);
+    continue;
+  }
+  const appName = appLabel(price.appSlug);
+  const planName = planLabel(price.planSlug);
+  groupMap.set(key, {
+    key,
+    appSlug: price.appSlug,
+    planSlug: price.planSlug,
+    appName,
+    planName,
+    displayName: `${appName} ${planName}`,
+    prices: [price],
+  });
+}
+
+const appGroups = Array.from(groupMap.values())
+  .map(group => ({
+    ...group,
+    prices: group.prices.sort((a, b) => a.cnyPrice - b.cnyPrice),
+  }))
+  .sort((a, b) => {
+    const appDiff = orderedIndex(APP_ORDER, a.appSlug) - orderedIndex(APP_ORDER, b.appSlug);
+    if (appDiff !== 0) return appDiff;
+
+    const planDiff = orderedIndex(PLAN_ORDER[a.appSlug] || [], a.planSlug) - orderedIndex(PLAN_ORDER[b.appSlug] || [], b.planSlug);
+    if (planDiff !== 0) return planDiff;
+
+    return a.displayName.localeCompare(b.displayName, 'zh-Hans-CN', { numeric: true });
+  });
+const firstGroupKey = appGroups[0]?.key || '';
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/official-price',
+  title: 'AI 官方订阅价格对比',
+  description: '对比 ChatGPT Plus、Claude Pro、Gemini Advanced 等 AI 官方订阅在不同国家和地区的价格与人民币折算，快速查看更划算的订阅地区。',
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+});
+---
+
+<PublicPage activeNav="official-price" {...seo}>
+  <section class="content-panel">
+    <div>
+      <p class="text-sm font-semibold text-blue-700">CardNav 官方订阅价格</p>
+      <h2 class="mt-1 text-2xl font-bold tracking-normal text-slate-950">AI 官方订阅价格对比</h2>
+      <p class="mt-2 text-sm leading-6 text-slate-600">
+        对比主流 AI 订阅在不同国家和地区的本地标价与人民币折算价。
+        由于地区定价、税费和汇率不同，同一订阅在不同区域可能存在明显价差。
+      </p>
+      {updateTime && <p class="mt-1 text-xs text-slate-400">数据最近更新时间（北京时间）：{updateTime}</p>}
+    </div>
+  </section>
+
+  {appGroups.length > 0 && (
+    <section class="flex flex-wrap gap-2" aria-label="大模型选择">
+      {appGroups.map(group => (
+        <button
+          type="button"
+          class={`pricing-tab-btn ${group.key === firstGroupKey ? 'active-tab-btn' : 'inactive-tab-btn'}`}
+          data-price-group={group.key}
+          style={group.key === firstGroupKey
+            ? 'padding: 0.5rem 1rem; border-radius: 0.25rem; font-weight: 600; cursor: pointer; border: 1px solid #3b82f6; background: #eff6ff; color: #1d4ed8; font-size: 0.875rem;'
+            : 'padding: 0.5rem 1rem; border-radius: 0.25rem; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569; font-size: 0.875rem;'}
+        >
+          {group.displayName}
+        </button>
+      ))}
+    </section>
+  )}
+
+  <!-- 比价表格区域 -->
+  {appGroups.map(group => (
+    <section id={`panel-${group.key}`} class="pricing-panel product-table" style={group.key === firstGroupKey ? 'display: block;' : 'display: none;'}>
+      <div class="table-hint-bar" style="margin-bottom: 0.75rem;">
+        {group.appName} {group.planName} 各地区价格对比（已按人民币折算价格由低到高排列）：
+      </div>
+      <div class="product-table-scroll">
+        <table class="flat-product-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
+          <thead class="flat-product-head" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+            <tr>
+              <th scope="col" style="padding: 0.75rem 1rem; font-weight: 600; color: #475569;">推荐排名</th>
+              <th scope="col" style="padding: 0.75rem 1rem; font-weight: 600; color: #475569;">国家/地区</th>
+              <th scope="col" style="padding: 0.75rem 1rem; font-weight: 600; color: #475569;">本地标价</th>
+              <th scope="col" style="padding: 0.75rem 1rem; font-weight: 600; color: #475569;">币种</th>
+              <th scope="col" style="padding: 0.75rem 1rem; font-weight: 600; color: #475569;">折合人民币 (CNY)</th>
+              <th scope="col" style="padding: 0.75rem 1rem; font-weight: 600; color: #475569;">状态</th>
+            </tr>
+          </thead>
+          <tbody id={`rows-${group.key}`}>
+            {group.prices.map((item, idx) => (
+              <tr class="flat-product-row" style="border-bottom: 1px solid #f1f5f9; hover:background: #f8fafc;">
+                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #1e293b;">
+                  {idx === 0 ? '🥇 最便宜' : idx === 1 ? '🥈 推荐' : idx === 2 ? '🥉 推荐' : `${idx + 1}`}
+                </td>
+                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #0f172a;">
+                  {item.countryLabel} ({item.countryCode})
+                </td>
+                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #0f172a; font-family: monospace;">
+                  {item.priceText}
+                </td>
+                <td style="padding: 0.75rem 1rem; color: #475569; font-family: monospace;">
+                  {item.currencyCode}
+                </td>
+                <td style="padding: 0.75rem 1rem; font-weight: 700; color: #1e3a8a; font-family: monospace;">
+                  ¥{item.cnyPrice}
+                </td>
+                <td style="padding: 0.75rem 1rem;">
+                  {idx === 0 ? (
+                    <span style="background: #dcfce7; color: #15803d; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">低价首选</span>
+                  ) : (
+                    <span style="color: #64748b; font-size: 0.75rem;">正常</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {group.prices.length === 0 && (
+              <tr>
+                <td colspan="6" style="padding: 2rem; text-align: center; color: #94a3b8;">
+                  暂无价格数据，请稍后再查看。
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+  {appGroups.length === 0 && (
+    <section class="product-table">
+      <div class="table-empty-state">暂无价格数据，请稍后再查看。</div>
+    </section>
+  )}
+
+  <!-- 切换 Tab 脚本 -->
+  <script is:inline slot="scripts">
+    document.querySelectorAll('.pricing-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const group = btn.getAttribute('data-price-group');
+        if (!group) return;
+
+        // 更新按钮高亮
+        document.querySelectorAll('.pricing-tab-btn').forEach(b => {
+          b.classList.remove('active-tab-btn');
+          b.classList.add('inactive-tab-btn');
+          b.style.border = '1px solid #cbd5e1';
+          b.style.background = '#fff';
+          b.style.color = '#475569';
+        });
+        btn.classList.remove('inactive-tab-btn');
+        btn.classList.add('active-tab-btn');
+        btn.style.border = '1px solid #3b82f6';
+        btn.style.background = '#eff6ff';
+        btn.style.color = '#1d4ed8';
+
+        // 切换表格展示
+        document.querySelectorAll('.pricing-panel').forEach(panel => {
+          panel.style.display = 'none';
+        });
+        const targetPanel = document.getElementById(`panel-${group}`);
+        if (targetPanel) {
+          targetPanel.style.display = 'block';
+        }
+      });
+    });
+  </script>
+</PublicPage>
