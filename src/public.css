@@ -117,7 +117,7 @@
   }
 
   .page-hero-wrap {
-    @apply max-w-3xl;
+    @apply w-full;
   }
 
   .page-hero-kicker {
