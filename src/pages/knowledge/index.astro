@@ -1,11 +1,16 @@
 ---
 /*
-文件说明: 渲染 CardNav 公开知识库列表页。
+文件说明: 渲染 CardNav 公开知识库首页，展示文档列表和默认正文。
 */
 import PublicPage from '../../layouts/PublicPage.astro';
-import { knowledgeArticles } from '../../knowledge.js';
+import KnowledgeBrowser from '../../components/KnowledgeBrowser.astro';
+import { defaultKnowledgeArticle, knowledgeArticles, knowledgeNavItems } from '../../knowledge.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
+
+if (!defaultKnowledgeArticle) {
+  throw new Error('Knowledge articles are required to render /knowledge');
+}
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -17,26 +22,6 @@ const seo = buildSeoContext({
 });
 ---
 
-<PublicPage activeNav="knowledge" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="page-hero-wrap">
-        <p class="page-hero-kicker">CardNav 知识库</p>
-        <h2 class="page-hero-title">购买前先看几分钟，少踩很多坑</h2>
-        <p class="page-hero-copy">这里会持续整理 AI 账号购买、商家选择、价格与售后判断相关的实用文章。</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="grid gap-4">
-    {knowledgeArticles.map(article => (
-      <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/40 transition-all p-5">
-        <a href={`/knowledge/${article.slug}`} class="block">
-          <h3 class="text-lg font-bold text-base-content">{article.title}</h3>
-          <p class="mt-2 text-sm leading-6 text-base-content/75">{article.description}</p>
-          <div class="mt-4 link link-primary font-semibold text-sm">阅读全文 ➜</div>
-        </a>
-      </article>
-    ))}
-  </section>
+<PublicPage activeNav="knowledge" showSponsors={false} {...seo}>
+  <KnowledgeBrowser articles={knowledgeArticles} navItems={knowledgeNavItems} currentArticle={defaultKnowledgeArticle} />
 </PublicPage>

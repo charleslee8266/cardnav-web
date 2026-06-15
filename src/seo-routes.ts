@@ -25,6 +25,12 @@ export const staticPublicSeoRoutes: PublicSeoRoute[] = [
     changefreq: 'monthly',
   },
   {
+    pathname: '/model-leaderboard',
+    title: '模型排行榜',
+    description: '查看 Arena 当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
+    changefreq: 'daily',
+  },
+  {
     pathname: '/official-price',
     title: '官方订阅比价',
     description: '对比 ChatGPT Plus, Claude Pro, Gemini Advanced 等 AI 官方订阅在世界各地区（如美国、土耳其、日本等）的实时价格与汇率折算，助你选择最划算的购买区域。',
@@ -91,7 +97,6 @@ export function getPublicSeoRoutes(): PublicSeoRoute[] {
       title: article.title,
       description: article.description,
       changefreq: 'monthly' as const,
-      lastmod: article.dateModified,
     })),
   ];
 }

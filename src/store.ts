@@ -345,6 +345,19 @@ export type PublicOfficialPriceRow = {
   fetchedAt: string;
 };
 
+export type PublicModelLeaderboardRow = {
+  taskSlug: string;
+  taskLabel: string;
+  sourceName: string;
+  sourceUrl: string;
+  arenaSlug: string;
+  leaderboardSlug: string;
+  rank: number;
+  modelName: string;
+  score: number;
+  fetchedAt: string;
+};
+
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
   const db = getPool();
   const result = await db.query(`
@@ -361,6 +374,45 @@ export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
     priceText: String(row.price_text),
     priceValue: Number(row.price_value),
     cnyPrice: Number(row.cny_price),
+    fetchedAt: String(row.fetched_at),
+  }));
+}
+
+export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow[]> {
+  const db = getPool();
+  const result = await db.query(`
+    SELECT
+      task_slug,
+      task_label,
+      source_name,
+      source_url,
+      arena_slug,
+      leaderboard_slug,
+      rank,
+      model_name,
+      score,
+      fetched_at
+    FROM model_leaderboards
+    ORDER BY
+      CASE task_slug
+        WHEN 'coding' THEN 1
+        WHEN 'creative-writing' THEN 2
+        WHEN 'math' THEN 3
+        WHEN 'text-to-image' THEN 4
+        ELSE 999
+      END ASC,
+      rank ASC
+  `);
+  return result.rows.map(row => ({
+    taskSlug: String(row.task_slug),
+    taskLabel: String(row.task_label),
+    sourceName: String(row.source_name),
+    sourceUrl: String(row.source_url),
+    arenaSlug: String(row.arena_slug),
+    leaderboardSlug: String(row.leaderboard_slug),
+    rank: Number(row.rank),
+    modelName: String(row.model_name),
+    score: Number(row.score),
     fetchedAt: String(row.fetched_at),
   }));
 }

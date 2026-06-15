@@ -1,0 +1,159 @@
+---
+/*
+文件说明: 渲染 CardNav 模型排行榜页面，按 Arena 的四类任务展示当前大模型排行。
+*/
+import PublicPage from '../layouts/PublicPage.astro';
+import { buildSeoContext } from '../seo.js';
+import { publicSiteUrl } from '../site.js';
+import { formatBeijingRefreshTime, loadModelLeaderboards } from '../store.js';
+
+const rows = await loadModelLeaderboards();
+const latestFetchedAt = rows.reduce<string | null>((latest, row) => {
+  if (!latest) return row.fetchedAt;
+  return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
+}, null);
+const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : '未记录';
+
+const taskGroups = Array.from(
+  rows.reduce((map, row) => {
+    const existing = map.get(row.taskSlug);
+    if (existing) {
+      existing.rows.push(row);
+      return map;
+    }
+    map.set(row.taskSlug, {
+      taskSlug: row.taskSlug,
+      taskLabel: row.taskLabel,
+      sourceName: row.sourceName,
+      sourceUrl: row.sourceUrl,
+      arenaSlug: row.arenaSlug,
+      leaderboardSlug: row.leaderboardSlug,
+      rows: [row],
+    });
+    return map;
+  }, new Map<string, {
+    taskSlug: string;
+    taskLabel: string;
+    sourceName: string;
+    sourceUrl: string;
+    arenaSlug: string;
+    leaderboardSlug: string;
+    rows: typeof rows;
+  }>()).values(),
+);
+
+const firstGroupKey = taskGroups[0]?.taskSlug || '';
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/model-leaderboard',
+  title: '模型排行榜',
+  description: '查看 Arena 当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+});
+---
+
+<PublicPage activeNav="model-leaderboard" {...seo}>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5">
+      <div class="page-hero-wrap">
+        <p class="page-hero-kicker">CardNav 模型能力观察</p>
+        <h2 class="page-hero-title">模型排行榜</h2>
+        <p class="page-hero-copy">
+          这里先按 Arena 当前公开榜单同步四类任务：编程、创意写作、数学和文生图。
+          每日刷新一次，保留原始名次、模型名和评分，方便快速看最近谁在不同任务上更强。
+        </p>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-base-content/60">
+        <span>任务类型：{taskGroups.length || 0}</span>
+        <span>总条目：{rows.length}</span>
+        <span>最近刷新（北京时间）：{updateTime}</span>
+      </div>
+    </div>
+  </section>
+
+  {taskGroups.length > 0 && (
+    <div role="tablist" class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label="模型排行榜任务类型">
+      {taskGroups.map(group => (
+        <button
+          type="button"
+          role="tab"
+          class={'leaderboard-tab-btn tab text-sm ' + (group.taskSlug === firstGroupKey ? 'tab-active font-semibold text-primary' : 'text-base-content/70 hover:text-base-content')}
+          data-leaderboard-group={group.taskSlug}
+        >
+          {group.taskLabel}
+        </button>
+      ))}
+    </div>
+  )}
+
+  {taskGroups.map(group => (
+    <section id={'panel-' + group.taskSlug} class="leaderboard-panel card bg-base-100 border border-base-300 shadow-sm overflow-hidden" style={group.taskSlug === firstGroupKey ? 'display: block;' : 'display: none;'}>
+      <div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="text-sm font-bold text-base-content">{group.taskLabel}</p>
+            <p class="text-xs text-base-content/60">Arena / {group.arenaSlug} / {group.leaderboardSlug}</p>
+          </div>
+          <a href={group.sourceUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs">查看来源</a>
+        </div>
+      </div>
+      <div class="product-table-scroll">
+        <table class="table table-zebra table-md w-full border-collapse">
+          <thead class="bg-base-200 text-base-content text-sm">
+            <tr>
+              <th scope="col" class="font-bold">排名</th>
+              <th scope="col" class="font-bold">模型</th>
+              <th scope="col" class="font-bold text-primary">评分</th>
+            </tr>
+          </thead>
+          <tbody>
+            {group.rows.map(item => (
+              <tr class="hover">
+                <td class="font-bold">
+                  {item.rank <= 3 ? '#' + item.rank : item.rank}
+                </td>
+                <td class="font-semibold text-base-content break-all">{item.modelName}</td>
+                <td class="font-mono font-bold text-primary">{item.score.toFixed(2)}</td>
+              </tr>
+            ))}
+            {group.rows.length === 0 && (
+              <tr>
+                <td colspan="3" class="p-8 text-center text-base-content/40">暂无排行榜数据，请稍后再查看。</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+
+  {taskGroups.length === 0 && (
+    <section class="alert alert-info alert-soft max-w-md mx-auto my-6 justify-center">
+      <span>暂无排行榜数据，请稍后再查看。</span>
+    </section>
+  )}
+
+  <script is:inline slot="scripts">
+    document.querySelectorAll('.leaderboard-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const group = btn.getAttribute('data-leaderboard-group');
+        if (!group) return;
+
+        document.querySelectorAll('.leaderboard-tab-btn').forEach(button => {
+          button.classList.remove('tab-active', 'font-semibold', 'text-primary');
+          button.classList.add('text-base-content/70');
+        });
+        btn.classList.remove('text-base-content/70');
+        btn.classList.add('tab-active', 'font-semibold', 'text-primary');
+
+        document.querySelectorAll('.leaderboard-panel').forEach(panel => {
+          panel.style.display = 'none';
+        });
+        const targetPanel = document.getElementById('panel-' + group);
+        if (targetPanel) targetPanel.style.display = 'block';
+      });
+    });
+  </script>
+</PublicPage>

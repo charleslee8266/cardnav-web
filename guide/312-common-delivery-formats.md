@@ -1,0 +1,86 @@
+---
+title: 常见账号发货格式说明
+description: 先判断商家发的是账密、四段 RT，还是各种 JSON 凭证，再决定能不能直接登录或应该导入什么工具。
+parent:
+  slug: merchant-overview
+  title: 3.1 认识卡网与选购避坑
+guidePresentation:
+  kind: card-grid
+  eyebrow: 先认格式，再决定怎么买
+  intro: 很多商家都写“成品账号”，但真正发货时可能完全不是一回事。先看清是哪种格式，才能判断能不能直接登录，还是只能导入工具。
+  showArticleBody: false
+  cards:
+    - title: 账密
+      slug: common-delivery-formats#format-1
+      badge: 最直接
+      summary: 商家直接发邮箱和密码，通常可以直接网页或客户端登录。
+      fitFor: 想直接登录 ChatGPT 或客户端的人
+      notFitFor: 想批量导入工具或做格式转换的人
+      risk: 容易和其他“账号格式”混淆，仍需确认是否可直登
+      example: example@example.com | abc***XYZ
+      exampleLang: txt
+    - title: 四段 RT
+      slug: common-delivery-formats#format-2
+      badge: 可直登 / 可转换
+      summary: 一行里同时带账号、密码、client_id 和 refresh_token。
+      fitFor: 既想直登，也可能后续继续转换格式的人
+      notFitFor: 看不懂字段、只想无脑登录的人
+      risk: 名称看着复杂，容易误判成只能导入工具
+      example: example@example.com----abc***XYZ----cli***123----rt_abc***xyz
+      exampleLang: txt
+    - title: ChatGPT Session
+      slug: common-delivery-formats#format-3
+      badge: 会话 JSON
+      summary: 已登录网页拿到的会话信息，不是普通账密。
+      fitFor: 需要会话导出、继续转换格式的人
+      notFitFor: 想直接去登录页面输账号密码的人
+      risk: 很多人以为它等于账号，其实不能直接当账密使用
+      example: |
+        {
+          "user": {
+            "id": "user_abc***xyz",
+            "email": "example@example.com"
+          },
+          "account": {
+            "id": "acct_abc***xyz",
+            "planType": "plus"
+          }
+        }
+      exampleLang: json
+    - title: Codex / CPA / Sub2API / Cockpit
+      slug: common-delivery-formats#format-4
+      badge: 工具导入格式
+      summary: 这类通常都是给工具、面板或中转程序导入用的 JSON。
+      fitFor: 本地工具导入、批量管理、继续格式转换的人
+      notFitFor: 只想网页直登的人
+      risk: 商品标题写成“账号”时，最容易让新手买错
+      example: |
+        {
+          "refresh_token": "rt_abc***xyz",
+          "access_token": "eyJ***xyz",
+          "email": "example@example.com"
+        }
+      exampleLang: json
+---
+# 常见账号发货格式说明
+
+> 本文由 **卡网大全 [cardnav.xyz](https://cardnav.xyz)** 提供。
+
+很多商家售卖的虽然都被称为“账号”，但实际交付内容并不相同。有些是可直接用于网页登录的账号信息，有些则是供中转面板、导入工具或脚本使用的 JSON 配置。下单前先确认发货格式，有助于减少理解偏差和使用风险。
+
+可以先做一个基础区分：
+
+- **网页与客户端直登**：优先选择可以直接在官网登录的“账密”格式，或带密码的“四段 RT”直登格式。
+- **工具与中转站导入**：对于交付为 session 或各类 JSON 配置的格式，通常更适合导入第三方中转软件或管理面板。
+
+## 怎么转换
+
+如果你拿到的是 `账密` 或 `四段 RT`，通常先确认能不能直登，再决定是否转换成 `Session` 或其他导入格式。
+
+如果你拿到的是 `Session`、`CPA`、`Sub2API`、`Cockpit` 这类 JSON，通常就是给工具或中转程序用的，先看商家说明，再决定怎么导入。
+
+## 下单确认
+
+- **直登格式核对**：仔细确认卡密内容是否属于账号密码等可以直接网页登录的交付格式。
+- **工具格式识别**：识别商家提供的是否为面向 Codex / CPA 等客户端导入的 JSON 凭证。
+- **服务条款确认**：检查商品详情中是否写明了订阅期限、二次验证方式以及风控质保时间。

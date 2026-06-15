@@ -35,6 +35,7 @@ const {
 const inactiveClass = 'nav-top-tab tab text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
 const activeClass = 'nav-top-tab nav-top-tab-active tab tab-active text-sm md:text-base font-bold text-primary';
 const shouldShowHero = activeNav === 'home';
+const isKnowledgePage = activeNav === 'knowledge';
 ---
 
 <!DOCTYPE html>
@@ -74,7 +75,10 @@ const shouldShowHero = activeNav === 'home';
     </>
   )}
 </head>
-<body class="min-h-screen bg-base-200 text-base-content text-[15px] font-sans antialiased">
+<body class:list={[
+  'bg-base-200 text-base-content text-[15px] font-sans antialiased',
+  isKnowledgePage ? 'h-dvh overflow-hidden' : 'min-h-screen',
+]}>
 <header class="sticky top-0 z-40 border-b border-base-300 bg-base-100/90 backdrop-blur">
   <nav class="navbar w-full px-4 flex flex-wrap gap-2 justify-between">
     <div class="flex items-center gap-4 flex-wrap">
@@ -87,6 +91,7 @@ const shouldShowHero = activeNav === 'home';
       </a>
       <div role="tablist" class="nav-top-tablist tabs tabs-box ml-2 md:ml-4">
         <a role="tab" href="/" class={activeNav === 'home' ? activeClass : inactiveClass}>首页</a>
+        <a role="tab" href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? activeClass : inactiveClass}>模型排行榜</a>
         <a role="tab" href="/official-price" class={activeNav === 'official-price' ? activeClass : inactiveClass}>官方订阅比价</a>
         <a role="tab" href="/knowledge" class={activeNav === 'knowledge' ? activeClass : inactiveClass}>知识库</a>
         <a role="tab" href="/tools" class={activeNav === 'tools' ? activeClass : inactiveClass}>工具集</a>
@@ -125,7 +130,10 @@ const shouldShowHero = activeNav === 'home';
   </nav>
 </header>
 
-<main class="grid w-full flex-1 content-start items-start gap-4 p-4">
+<main class:list={[
+  'grid w-full flex-1 content-start items-start gap-4 p-4',
+  isKnowledgePage && 'min-h-0 h-full overflow-hidden grid-rows-[minmax(0,1fr)]',
+]}>
   {shouldShowHero && (
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="card-body p-6">
@@ -177,16 +185,18 @@ const shouldShowHero = activeNav === 'home';
   {showSponsors && activeNav !== 'home' && <Sponsors />}
 </main>
 
-<footer class="footer footer-center p-6 bg-base-100 border-t border-base-300 text-base-content/60 text-xs">
-  <div class="w-full text-center">
-    <p>价格数据仅供参考，实际价格以各平台为准。</p>
-    <p class="mt-1.5 flex justify-center gap-2">
-      <a href="/disclaimer" class="link link-hover font-semibold text-base-content/75">免责声明</a>
-      <span>|</span>
-      <a href="/privacy" class="link link-hover font-semibold text-base-content/75">隐私政策</a>
-    </p>
-  </div>
-</footer>
+{activeNav === 'home' && (
+  <footer class="footer footer-center p-6 bg-base-100 border-t border-base-300 text-base-content/60 text-xs">
+    <div class="w-full text-center">
+      <p>价格数据仅供参考，实际价格以各平台为准。</p>
+      <p class="mt-1.5 flex justify-center gap-2">
+        <a href="/disclaimer" class="link link-hover font-semibold text-base-content/75">免责声明</a>
+        <span>|</span>
+        <a href="/privacy" class="link link-hover font-semibold text-base-content/75">隐私政策</a>
+      </p>
+    </div>
+  </footer>
+)}
 
 <script is:inline>
   (function () {

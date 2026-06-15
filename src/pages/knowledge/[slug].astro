@@ -1,10 +1,10 @@
 ---
 /*
-文件说明: 渲染 CardNav 公开知识库文章详情页。
+文件说明: 渲染 CardNav 公开知识库文章详情页，并与知识库首页共享双栏浏览布局。
 */
 import PublicPage from '../../layouts/PublicPage.astro';
-import articleMarkdown from '../../../docs/how-to-choose-reliable-merchant.md?raw';
-import { getKnowledgeArticleFromMarkdown, knowledgeArticles } from '../../knowledge.js';
+import KnowledgeBrowser from '../../components/KnowledgeBrowser.astro';
+import { findKnowledgeArticle, knowledgeArticles, knowledgeNavItems } from '../../knowledge.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 
@@ -16,12 +16,8 @@ export function getStaticPaths() {
   }));
 }
 
-const articleMarkdownBySlug: Record<string, string> = {
-  'how-to-choose-reliable-merchant': articleMarkdown,
-};
-
 const slug = Astro.params.slug || '';
-const article = getKnowledgeArticleFromMarkdown(slug, articleMarkdownBySlug[slug] || '');
+const article = findKnowledgeArticle(slug);
 if (!article) return Astro.redirect('/knowledge', 302);
 
 const seo = buildSeoContext({
@@ -31,19 +27,9 @@ const seo = buildSeoContext({
   description: article.description,
   imagePath: '/og-cardnav.svg',
   type: 'article',
-  datePublished: article.datePublished,
-  dateModified: article.dateModified,
 });
 ---
 
-<PublicPage activeNav="knowledge" {...seo}>
-  <div class="breadcrumbs text-sm px-1">
-    <ul>
-      <li><a href="/knowledge" class="link link-hover text-primary font-semibold">知识库</a></li>
-      <li class="text-base-content/60">{article.title}</li>
-    </ul>
-  </div>
-
-  <article class="knowledge-article" set:html={article.html} />
-
+<PublicPage activeNav="knowledge" showSponsors={false} {...seo}>
+  <KnowledgeBrowser articles={knowledgeArticles} navItems={knowledgeNavItems} currentArticle={article} />
 </PublicPage>

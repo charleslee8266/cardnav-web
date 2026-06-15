@@ -1,0 +1,215 @@
+---
+/*
+文件说明: 渲染知识库双栏浏览界面，左侧显示文档列表，右侧显示当前文档正文和赞助区。
+*/
+import Sponsors from './Sponsors.astro';
+import type { GuideCard, GuideParentLink, KnowledgeArticle, KnowledgeNavItem, RenderedKnowledgeArticle } from '../knowledge.js';
+
+type Props = {
+  articles: KnowledgeArticle[];
+  navItems: KnowledgeNavItem[];
+  currentArticle: RenderedKnowledgeArticle;
+};
+
+const { navItems, currentArticle } = Astro.props;
+const guidePresentation = currentArticle.guidePresentation;
+const guideCards: GuideCard[] = guidePresentation?.kind === 'card-grid' ? guidePresentation.cards : [];
+
+function buildBreadcrumbs(parentLink: GuideParentLink | null) {
+  const chain: GuideParentLink[] = [];
+  let cursor = parentLink;
+  while (cursor) {
+    chain.unshift(cursor);
+    cursor = cursor.parent ?? null;
+  }
+  return chain.map(item => ({
+    slug: item.slug,
+    title: item.title?.trim() || item.slug,
+  }));
+}
+
+const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
+
+const iconMap: Record<string, string> = {
+  globe: '🌐',
+  phone: '📱',
+  key: '🔑',
+  card: '💳',
+  bank: '🏦',
+  vpn: '🔒',
+  vps: '💻',
+  support: '🤝',
+  help: '❓',
+  info: 'ℹ️',
+  warning: '⚠️',
+  check: '✅',
+  api: '🔌',
+  model: '🧠',
+  cash: '💵',
+  cart: '🛒',
+  gift: '🎁',
+};
+---
+
+<section class="knowledge-browser-grid h-full min-h-0 overflow-hidden grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
+  <aside class="knowledge-sidebar card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <div class="border-b border-base-300 bg-base-200 px-4 py-3">
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/60">Knowledge</p>
+      <h2 class="mt-1 text-lg font-bold text-base-content">全部文档</h2>
+    </div>
+    <nav aria-label="知识库文档列表" class="knowledge-sidebar-scroll p-2">
+      <ul class="space-y-1">
+        {navItems.map(item => {
+          const article = item.article;
+          const isActive = article.slug === currentArticle.slug;
+          return (
+            <li>
+              <a
+                href={`/knowledge/${article.slug}`}
+                aria-current={isActive ? 'page' : undefined}
+                data-knowledge-current={isActive ? 'true' : undefined}
+                class:list={[
+                  'knowledge-sidebar-link block rounded-xl border px-3 py-1.5 transition-colors',
+                  item.depth > 0 && 'knowledge-sidebar-link-child',
+                  isActive
+                    ? 'border-primary/25 bg-primary/8 text-primary'
+                    : 'border-transparent text-base-content/80 hover:border-base-300 hover:bg-base-200/70 hover:text-base-content',
+                ]}
+                style={`padding-left: ${0.75 + item.depth * 1.1}rem;`}
+              >
+                <span class:list={[
+                  'block leading-5',
+                  item.depth === 0 ? 'text-sm font-semibold' : 'text-[13px] font-medium',
+                  isActive && 'font-bold'
+                ]}>{article.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  </aside>
+
+  <section class="knowledge-content-scroll min-w-0 space-y-4">
+    <nav aria-label="知识库面包屑" class="knowledge-breadcrumbs rounded-2xl border border-base-300 bg-base-100 px-4 py-3 shadow-sm">
+      <ol class="knowledge-breadcrumb-list">
+        <li>
+          <a href="/knowledge">知识库</a>
+        </li>
+        {breadcrumbs.map(item => (
+          <li>
+            <span aria-hidden="true" class="knowledge-breadcrumb-separator">/</span>
+            <a href={`/knowledge/${item.slug}`}>{item.title}</a>
+          </li>
+        ))}
+        <li aria-current="page">
+          <span aria-hidden="true" class="knowledge-breadcrumb-separator">/</span>
+          <span class="knowledge-breadcrumb-current">{currentArticle.title}</span>
+        </li>
+      </ol>
+    </nav>
+
+    {guidePresentation?.kind === 'card-grid' && (
+      <section class="knowledge-guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
+        <div class="knowledge-guide-hero">
+          <p class="knowledge-guide-eyebrow">{guidePresentation.eyebrow}</p>
+          <h1 class="knowledge-guide-title">{currentArticle.title}</h1>
+          <p class="knowledge-guide-intro">{guidePresentation.intro}</p>
+        </div>
+
+        <div class="knowledge-guide-grid">
+          {guideCards.map(card => (
+            <a href={`/knowledge/${card.slug}`} class="knowledge-guide-card">
+              <div class="knowledge-guide-card-top">
+                <span class="knowledge-guide-badge">{card.badge}</span>
+                <span class="knowledge-guide-arrow" aria-hidden="true">查看详情</span>
+              </div>
+              <h2 class="knowledge-guide-card-title">{card.title}</h2>
+              <p class="knowledge-guide-card-summary">{card.summary}</p>
+              <dl class="knowledge-guide-meta">
+                <div>
+                  <dt>风险点</dt>
+                  <dd>{card.risk}</dd>
+                </div>
+                <div>
+                  <dt>适合谁</dt>
+                  <dd>{card.fitFor}</dd>
+                </div>
+                <div>
+                  <dt>不适合谁</dt>
+                  <dd>{card.notFitFor}</dd>
+                </div>
+              </dl>
+              {card.example && (
+                <div class="knowledge-guide-example">
+                  <p class="knowledge-guide-example-label">格式示例</p>
+                  <pre class="knowledge-guide-example-pre"><code>{card.example}</code></pre>
+                </div>
+              )}
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+    <section class="knowledge-guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
+      <div class="knowledge-guide-hero">
+        <p class="knowledge-guide-eyebrow">{currentArticle.presentation === 'cards' ? '向导指南' : '主题文档'}</p>
+        <h1 class="knowledge-guide-title">{currentArticle.title}</h1>
+        {currentArticle.presentation === 'cards' && currentArticle.introHtml && (
+          <div class="knowledge-guide-intro" set:html={currentArticle.introHtml} />
+        )}
+      </div>
+
+      {currentArticle.presentation === 'cards' ? (
+        <div class="knowledge-guide-grid">
+          {currentArticle.cards?.map(card => (
+            <div class="knowledge-guide-card flex flex-col justify-between">
+              <div>
+                <div class="knowledge-guide-card-top">
+                  {card.badge ? (
+                    <span class="knowledge-guide-badge">{card.badge}</span>
+                  ) : (
+                    <span></span>
+                  )}
+                  {card.icon && (
+                    <span class="text-primary text-xl" aria-hidden="true">
+                      {iconMap[card.icon] || card.icon}
+                    </span>
+                  )}
+                </div>
+                <h2 class="knowledge-guide-card-title">{card.title}</h2>
+                
+                {/* The card content */}
+                <div class="knowledge-article mt-4 p-0 border-0 bg-transparent text-sm leading-relaxed" set:html={card.html} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="knowledge-article mt-6 p-0 border-0 bg-transparent text-base-content/90" set:html={currentArticle.html} />
+      )}
+    </section>
+
+    {currentArticle.nextLink && (
+      <a
+        href={`/knowledge/${currentArticle.nextLink.slug}`}
+        class="knowledge-next-step block rounded-2xl border border-base-300 bg-base-100 px-5 py-4 shadow-sm no-underline transition duration-200 hover:border-primary/30 hover:bg-primary/[0.02] active:scale-[0.99]"
+      >
+        <p class="knowledge-next-step-label">下一步</p>
+        <span class="knowledge-next-step-link mt-2 inline-flex text-lg font-bold text-primary">
+          {currentArticle.nextLink.title || currentArticle.nextLink.slug}
+        </span>
+      </a>
+    )}
+
+    <Sponsors />
+  </section>
+</section>
+
+<script is:inline>
+  (() => {
+    const currentLink = document.querySelector('[data-knowledge-current="true"]');
+    if (!currentLink) return;
+    currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  })();
+</script>

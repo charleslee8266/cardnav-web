@@ -16,6 +16,7 @@
     "astro": "^6.4.6",
     "codemirror": "^5.65.21",
     "dotenv": "^17.4.2",
+    "gray-matter": "^4.0.3",
     "markdown-it": "^14.2.0",
     "pg": "^8.21.0"
   },
