@@ -7,6 +7,7 @@ import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
 import highlightScriptUrl from '@highlightjs/cdn-assets/highlight.min.js?url';
 import highlightCssUrl from '@highlightjs/cdn-assets/styles/github.min.css?url';
+import highlightDarkCssUrl from '@highlightjs/cdn-assets/styles/github-dark.min.css?url';
 import sessionConverterScriptUrl from '../../scripts/session-converter.js?url';
 import { publicSiteUrl } from '../../site.js';
 
@@ -21,59 +22,67 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="tools" showSponsors={false} {...seo}>
-  <link slot="head" rel="stylesheet" href={highlightCssUrl} />
+  <link slot="head" id="hljs-theme" rel="stylesheet" href={highlightCssUrl} data-light={highlightCssUrl} data-dark={highlightDarkCssUrl} />
 
-  <section class="content-panel">
-    <div>
-      <h2 class="mt-1 text-2xl font-bold tracking-normal text-slate-950">ChatGPT Session 转换工具</h2>
-      <p class="mt-2 text-sm leading-6 text-slate-600">粘贴或导入 JSON，在浏览器本地转换为 CPA、Sub2API、Cockpit、9Router、Codex、AxonHub 或 Codex-Manager 格式。</p>
-      <p class="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold leading-6 text-red-700">Session、access_token、refresh_token 都属于敏感凭证，只建议在自己的设备上临时处理；转换前请确认输入内容来自你自己掌握的账号。</p>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="page-hero-wrap flex-1">
+          <h2 class="page-hero-title mt-0">ChatGPT Session 转换工具</h2>
+          <p class="page-hero-copy">浏览器本地处理，支持转换为 CPA、Sub2API、Cockpit、9Router、Codex、AxonHub 或 Codex-Manager 格式。</p>
+        </div>
+        <div class="alert border border-error/20 dark:border-error/30 bg-error/5 py-2 px-3 rounded-md text-left text-xs font-semibold text-error lg:max-w-xl shrink-0">
+          <span class="leading-relaxed">Session/Token 等均属敏感凭证，仅建议在自己设备上处理；请确认数据来自您掌握的账号。</span>
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="session-converter-grid grid gap-4 xl:grid-cols-2">
-    <section class="tool-panel" aria-labelledby="session-input-title">
-      <div class="tool-panel-head">
+    <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" aria-labelledby="session-input-title">
+      <div class="bg-base-200 px-5 py-4 border-b border-base-300">
         <div>
-          <h3 id="session-input-title" class="text-base font-semibold text-slate-950">Session JSON</h3>
-          <p class="mt-1 text-sm leading-6 text-slate-600">支持格式：ChatGPT Web session / 9 Router OAuth JSON / Codex auth.json / AxonHub auth.json / Codex-Manager JSON</p>
+          <h3 id="session-input-title" class="text-base font-bold text-base-content">Session JSON</h3>
+          <p class="mt-1 text-sm text-base-content/75">支持格式：ChatGPT Web session / 9 Router OAuth JSON / Codex auth.json / AxonHub auth.json / Codex-Manager JSON</p>
         </div>
       </div>
-      <div class="tool-panel-body">
-        <div class="rounded border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-slate-700">
-          <p class="font-semibold text-blue-950">Session 数据获取入口</p>
-          <p class="mt-1">登录 ChatGPT 后打开 <a href="https://chatgpt.com/api/auth/session" target="_blank" rel="noopener noreferrer" class="font-semibold text-blue-700 hover:underline">https://chatgpt.com/api/auth/session</a>，复制整段 JSON 后粘贴到下方。</p>
+      <div class="card-body p-5">
+        <div class="alert alert-info alert-soft shadow-sm p-4 text-sm text-left text-base-content">
+          <div>
+            <p class="font-bold">Session 数据获取入口</p>
+            <p class="mt-1 text-sm text-base-content/85">登录 ChatGPT 后打开 <a href="https://chatgpt.com/api/auth/session" target="_blank" rel="noopener noreferrer" class="link link-primary font-bold">https://chatgpt.com/api/auth/session</a>，复制整段 JSON 后粘贴到下方。</p>
+          </div>
         </div>
         <input id="sessionFileInput" class="hidden" type="file" accept=".json,application/json" multiple />
         <div class="mt-3 flex flex-wrap gap-2">
-          <button id="sessionPickFiles" class="secondary-button" type="button">选择文件</button>
-          <button id="sessionLoadExample" class="secondary-button" type="button">填入示例</button>
-          <button id="sessionClearInput" class="compact-secondary-button" type="button">清空</button>
+          <button id="sessionPickFiles" class="btn btn-sm btn-outline btn-primary" type="button">选择文件</button>
+          <button id="sessionLoadExample" class="btn btn-sm btn-outline btn-primary" type="button">填入示例</button>
+          <button id="sessionClearInput" class="btn btn-sm btn-outline btn-error" type="button">清空</button>
         </div>
-        <textarea id="sessionInput" class="session-converter-textarea tool-json-textarea mt-3" spellcheck="false" placeholder='{"user":{"email":"mark@example.com"},"expires":"2026-08-06T14:29:36.155Z","account":{"id":"...","planType":"plus"},"accessToken":"...","sessionToken":"..."}'></textarea>
+        <textarea id="sessionInput" class="session-converter-textarea tool-json-textarea textarea textarea-bordered w-full mt-3 h-96 font-mono text-sm leading-6" spellcheck="false" placeholder='{"user":{"email":"mark@example.com"},"expires":"2026-08-06T14:29:36.155Z","account":{"id":"...","planType":"plus"},"accessToken":"...","sessionToken":"..."}'></textarea>
       </div>
     </section>
 
-    <section class="tool-panel" aria-labelledby="session-output-title">
-      <div class="tool-panel-head">
+    <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" aria-labelledby="session-output-title">
+      <div class="bg-base-200 px-5 py-4 border-b border-base-300">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h3 id="session-output-title" class="text-base font-semibold text-slate-950">转换结果</h3>
-            <p id="sessionOutputSubtitle" class="mt-1 text-sm leading-6 text-slate-600">当前输出为 Sub2API 导入 JSON。</p>
+            <h3 id="session-output-title" class="text-base font-bold text-base-content">转换结果</h3>
+            <p id="sessionOutputSubtitle" class="mt-1 text-sm text-base-content/75">当前输出为 Sub2API 导入 JSON。</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button id="sessionCopyOutput" class="secondary-button" type="button" disabled>复制输出</button>
-            <button id="sessionDownloadOutput" class="primary-button" type="button" disabled>下载 JSON</button>
+            <button id="sessionCopyOutput" class="btn btn-sm btn-outline btn-primary" type="button" disabled>复制输出</button>
+            <button id="sessionDownloadOutput" class="btn btn-sm btn-primary" type="button" disabled>下载 JSON</button>
           </div>
         </div>
       </div>
-      <div class="tool-panel-body">
-        <p id="sessionTokenNotice" class="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-800">
-          ChatGPT Web session 通常没有 refresh_token。缺少真实 id_token 时，CPA、Cockpit、Codex 和 AxonHub 会生成可解析的占位 JWT claims；AxonHub 缺少真实 refresh_token 时会写入占位值。
-        </p>
-        <div class="grid gap-2 sm:grid-cols-3">
-          <div class="tool-stat">
-            <select id="sessionFormatSelect" class="tool-format-select" aria-label="输出格式">
+      <div class="card-body p-5">
+        <div id="sessionTokenNotice" class="alert alert-warning alert-soft shadow-sm mb-3 flex-none text-left text-sm leading-6 text-base-content">
+          <span>ChatGPT Web session 通常没有 refresh_token。缺少真实 id_token 时，CPA、Cockpit、Codex 和 AxonHub 会生成可解析的占位 JWT claims；AxonHub 缺少真实 refresh_token 时会写入占位值。</span>
+        </div>
+        <div class="grid gap-2 sm:grid-cols-3 flex-none">
+          <div class="card bg-base-200 border border-base-300 p-3 justify-center">
+            <select id="sessionFormatSelect" class="select select-bordered select-sm w-full font-bold bg-base-100" aria-label="输出格式">
               <option value="Sub2API" selected>Sub2API</option>
               <option value="cpa">CPA</option>
               <option value="cockpit">Cockpit</option>
@@ -82,42 +91,64 @@ const seo = buildSeoContext({
               <option value="axonhub">AxonHub</option>
               <option value="codexmanager">Codex-Manager</option>
             </select>
-            <div class="tool-stat-label">输出格式</div>
+            <div class="text-xs font-semibold text-base-content/70 uppercase mt-1">输出格式</div>
           </div>
-          <div class="tool-stat">
-            <div id="sessionStatCount" class="tool-stat-value">0</div>
-            <div class="tool-stat-label">账号数</div>
+          <div class="card bg-base-200 border border-base-300 p-3">
+            <div id="sessionStatCount" class="font-bold text-2xl font-mono text-base-content leading-none">0</div>
+            <div class="text-xs font-semibold text-base-content/70 uppercase mt-1">账号数</div>
           </div>
-          <div class="tool-stat">
-            <div id="sessionStatErrors" class="tool-stat-value">0</div>
-            <div class="tool-stat-label">跳过项</div>
+          <div class="card bg-base-200 border border-base-300 p-3">
+            <div id="sessionStatErrors" class="font-bold text-2xl font-mono text-base-content leading-none">0</div>
+            <div class="text-xs font-semibold text-base-content/70 uppercase mt-1">跳过项</div>
           </div>
         </div>
-        <div class="session-account-table mt-3 overflow-hidden rounded border bg-white">
+        <div class="session-account-table mt-3 overflow-hidden rounded-lg border border-base-300 bg-base-100">
           <div class="max-h-56 overflow-auto">
-            <table class="w-full table-fixed border-collapse text-sm">
-              <thead class="sticky top-0 bg-slate-100 text-xs font-semibold text-slate-600">
+            <table class="table table-xs table-zebra w-full text-sm">
+              <thead class="sticky top-0 bg-base-200 text-sm font-bold text-base-content">
                 <tr>
-                  <th class="w-[30%] border-b px-3 py-2 text-left">名称</th>
-                  <th class="w-[42%] border-b px-3 py-2 text-left">邮箱</th>
-                  <th class="w-[28%] border-b px-3 py-2 text-left">过期时间</th>
+                  <th class="w-[30%] text-left">名称</th>
+                  <th class="w-[42%] text-left">邮箱</th>
+                  <th class="w-[28%] text-left">过期时间</th>
                 </tr>
               </thead>
               <tbody id="sessionAccountRows">
                 <tr>
-                  <td colspan="3" class="px-3 py-4 text-sm text-slate-500">暂无可转换账号。</td>
+                  <td colspan="3" class="text-center py-4 text-sm text-base-content/40">暂无可转换账号。</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div id="sessionIssues" class="tool-issues"></div>
-        <pre class="session-converter-textarea tool-code-output mt-3"><code id="sessionOutput" class="language-json"></code></pre>
-        <p id="sessionOutputStatus" class="tool-status-line"></p>
+        <div id="sessionIssues" class="tool-issues mt-3 alert alert-error shadow-sm text-sm hidden flex-none"></div>
+        <pre class="session-converter-textarea tool-code-output mt-3 p-4 border border-base-300 hljs overflow-auto rounded-lg font-mono text-sm leading-6"><code id="sessionOutput" class="language-json"></code></pre>
+        <p id="sessionOutputStatus" class="tool-status-line mt-2 text-xs font-semibold"></p>
       </div>
     </section>
   </section>
 
   <script is:inline slot="scripts" defer src={highlightScriptUrl}></script>
   <script is:inline slot="scripts" defer src={sessionConverterScriptUrl}></script>
+  <script is:inline slot="scripts">
+    (function() {
+      const link = document.getElementById('hljs-theme');
+      if (!link) return;
+      const lightUrl = link.getAttribute('data-light');
+      const darkUrl = link.getAttribute('data-dark');
+      
+      function updateTheme() {
+        const theme = document.documentElement.getAttribute('data-theme');
+        const isDark = theme === 'dark';
+        link.setAttribute('href', isDark ? darkUrl : lightUrl);
+      }
+      
+      updateTheme();
+      
+      const observer = new MutationObserver(updateTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+      });
+    })();
+  </script>
 </PublicPage>

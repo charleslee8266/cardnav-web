@@ -17,30 +17,40 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="submit" {...seo}>
-  <section class="rounded border bg-white p-5">
-    <h2 class="text-lg font-semibold">提交商家</h2>
-    <p class="mt-2 text-sm text-slate-600">提交商家的站点 URL 后我们会尽快处理，请勿重复提交。</p>
-    <div class="mt-4 rounded border border-blue-200 bg-blue-50 p-4">
-      <h3 class="text-sm font-semibold text-slate-900">合作曝光</h3>
-      <p class="mt-2 text-sm leading-6 text-slate-700">商家如有合作意向，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="primary-button mt-3 inline-flex items-center gap-2">
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m22 2-7 20-4-9-9-4Z"></path>
-          <path d="M22 2 11 13"></path>
-        </svg>
-        Telegram 联系
-      </a>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5">
+      <div class="page-hero-wrap">
+        <h2 class="page-hero-title mt-0">提交商家</h2>
+        <p class="page-hero-copy">提交商家的站点 URL 后我们会尽快处理，请勿重复提交。</p>
+      </div>
+      
+      <div class="alert alert-info alert-soft shadow-sm mt-4 flex flex-col items-start gap-1.5 text-left text-base-content">
+        <span class="font-bold text-sm">合作曝光</span>
+        <p class="text-sm text-base-content/85 leading-6">商家如有合作意向，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
+        <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm mt-2 inline-flex items-center gap-2">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4Z"></path>
+            <path d="M22 2 11 13"></path>
+          </svg>
+          Telegram 联系
+        </a>
+      </div>
+      
+      <form id="submitForm" class="form-control gap-3 mt-4" method="post" action="/api/submit">
+        <div>
+          <label for="urlInput" class="label font-semibold text-sm pb-1">URL</label>
+          <input id="urlInput" name="url" type="url" required value="" class="input input-bordered w-full" placeholder="https://example.com" autocomplete="url" />
+        </div>
+        <p id="clientError" class="hidden text-sm text-error font-medium">请输入有效的 URL</p>
+        <p id="submitError" class="hidden text-sm text-error font-medium"></p>
+        <p id="submitSuccess" class="hidden text-sm text-success font-medium"></p>
+        <div class="card-actions justify-start mt-2">
+          <button type="submit" data-umami-event="submit-click" data-umami-event-url="" class="btn btn-primary">
+            提交
+          </button>
+        </div>
+      </form>
     </div>
-    <form id="submitForm" class="mt-4 space-y-3" method="post" action="/api/submit">
-      <label for="urlInput" class="block text-sm font-medium text-slate-700">URL</label>
-      <input id="urlInput" name="url" type="url" required value="" class="control-input" placeholder="https://example.com" autocomplete="url" />
-      <p id="clientError" class="hidden text-sm text-red-600">请输入有效的 URL</p>
-      <p id="submitError" class="hidden text-sm text-red-600"></p>
-      <p id="submitSuccess" class="hidden text-sm text-emerald-700"></p>
-      <button type="submit" data-umami-event="submit-click" data-umami-event-url="" class="primary-button">
-        提交
-      </button>
-    </form>
   </section>
 
   <script slot="scripts" is:inline>

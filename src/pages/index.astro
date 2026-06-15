@@ -74,60 +74,62 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
 ---
 
 <PublicPage activeNav="home" {...seo}>
-  <section class="content-panel">
-    <form id="filters" class="flex flex-col gap-3" method="get">
-      <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-700">
-        <span>已收录商家：<span class="public-summary-value">{data.totalSiteCount}</span></span>
-        <span>商品：<span class="public-summary-value">{data.totalProductCount}</span></span>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <form id="filters" class="card-body p-5 flex flex-col gap-3" method="get">
+      <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
+        <span>已收录商家：<span class="font-bold text-primary">{data.totalSiteCount}</span></span>
+        <span>商品：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
         {data.latestRefreshTime && <span>最近刷新：{data.latestRefreshTime}</span>}
       </div>
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <input id="searchFilter" name="q" value="" class="control-input" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
+      <div class="w-full">
+        <input id="searchFilter" name="q" value="" class="input input-bordered w-full" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
       </div>
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div class="flex flex-wrap items-center gap-3">
-          <label class="filter-checkbox-label">
-            <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
-            匹配分类
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-wrap items-center gap-4">
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>匹配分类</span>
           </label>
-          <label class="filter-checkbox-label">
-            <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
-            匹配商家
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>匹配商家</span>
+          </label>
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>显示无货商品</span>
+          </label>
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>按商家分组</span>
           </label>
         </div>
-        <label class="filter-checkbox-label">
-          <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
-          显示无货商品
-        </label>
-        <label class="filter-checkbox-label">
-          <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="control-checkbox cursor-pointer" />
-          按商家分组
-        </label>
-        <div class="flex flex-wrap items-center gap-3">
-          <span class="text-sm text-slate-700">价格范围</span>
+        
+        <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2">
-            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最小价格" autocomplete="off" />
-            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="control-input w-28" placeholder="最大价格" autocomplete="off" />
+            <span class="text-sm text-base-content/80">价格</span>
+            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最小" autocomplete="off" />
+            <span class="text-xs text-base-content/40">~</span>
+            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最大" autocomplete="off" />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-base-content/80">排序</span>
+            <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
+              <option value="default">综合排序</option>
+              <option value="price-asc">低价优先</option>
+              <option value="stock-desc">库存最多</option>
+              <option value="refresh-desc">最近刷新</option>
+              <option value="custom" hidden>表头排序</option>
+            </select>
           </div>
         </div>
-        <label class="filter-select-label">
-          <span class="text-sm text-slate-700">排序</span>
-          <select id="flatSortSelect" name="sort" class="control-select w-28" autocomplete="off">
-            <option value="default">综合排序</option>
-            <option value="price-asc">低价优先</option>
-            <option value="stock-desc">库存最多</option>
-            <option value="refresh-desc">最近刷新</option>
-            <option value="custom" hidden>表头排序</option>
-          </select>
-        </label>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm font-medium text-slate-700">热门搜索</span>
-        <div id="quickTagFilters" class="flex flex-wrap gap-2" aria-label="热门搜索标签">
+        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">热门搜索</span>
+        <div id="quickTagFilters" class="flex flex-wrap gap-1.5" aria-label="热门搜索标签">
           {popularSearchTermsValue.map(term => {
             const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
             return (
-              <button type="button" class="quick-tag-filter" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
+              <button type="button" class="btn btn-outline btn-sm text-sm! rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
             );
           })}
         </div>
@@ -135,28 +137,33 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
     </form>
   </section>
 
-  <section id="emptyState" class="table-shell table-empty-state hidden">没有匹配的商家或商品</section>
+  <section id="emptyState" class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center hidden">
+    <span>没有匹配的商家或商品</span>
+  </section>
 
   <section>
-    <a href="/knowledge/how-to-choose-reliable-merchant" class="knowledge-feature-link">
-      <span class="text-sm font-bold text-blue-950">购买前先看：怎么判断一个商家靠不靠谱</span>
-      <span class="text-sm text-blue-800">从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。</span>
+    <a href="/knowledge/how-to-choose-reliable-merchant" class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
+      <div>
+        <span class="font-bold text-base block text-base-content">购买前先看：怎么判断一个商家靠不靠谱</span>
+        <span class="text-sm text-base-content/85 block mt-1">从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。</span>
+      </div>
+      <div class="btn btn-sm btn-ghost text-primary hover:bg-transparent shrink-0">阅读 ➜</div>
     </a>
   </section>
 
-  <section id="flatProductView" class="product-table">
-    <div class="table-hint-bar">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
+  <section id="flatProductView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
     <div class="product-table-scroll">
-      <table class="flat-product-table">
-        <thead class="flat-product-head">
+      <table class="table table-zebra w-full flat-product-table border-collapse">
+        <thead class="bg-base-200 text-base-content text-base">
           <tr>
-            <th scope="col" class="table-head-index">序号</th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="productName" data-sort-type="text"><span>商品</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="priceValue" data-sort-type="number"><span>价格</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button" data-sort-key="productRefreshedAt" data-sort-type="number"><span>最近刷新</span><span class="sort-indicator" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" class="table-head-index w-14 text-center">序号</th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productName" data-sort-type="text"><span>商品</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="priceValue" data-sort-type="number"><span>价格</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productRefreshedAt" data-sort-type="number"><span>最近刷新</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
           </tr>
         </thead>
 
@@ -166,34 +173,34 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
             const productFavoriteKey = `${item.siteName}#${productTitle}`;
             const siteFavoriteKey = item.siteId || item.siteName;
             return (
-              <tr class="flat-product-row">
-                <th scope="row" class="flat-row-index"></th>
-                <td class="flat-product-cell">
+              <tr class="flat-product-row hover">
+                <th scope="row" class="flat-row-index text-center text-base-content/50 font-bold"></th>
+                <td class="flat-product-cell font-medium">
                   <div class="cell-inline">
-                    <button type="button" class="favorite-toggle" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`收藏 ${productTitle}`} aria-pressed="false" title="收藏商品">
-                      <span aria-hidden="true">♡</span>
+                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`收藏 ${productTitle}`} aria-pressed="false" title="收藏商品">
+                      <span aria-hidden="true" class="text-sm">♡</span>
                     </button>
                     {item.productUrl ? (
-                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" class="product-link" data-umami-event="product-click" data-umami-event-url={item.productUrl} data-umami-event-name={productTitle} data-product-click-site-id={item.siteId} data-product-click-url={item.productUrl} data-product-click-category={item.categoryName} data-product-click-name={item.name}>{item.name}</a>
+                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" class="product-link font-semibold" data-umami-event="product-click" data-umami-event-url={item.productUrl} data-umami-event-name={productTitle} data-product-click-site-id={item.siteId} data-product-click-url={item.productUrl} data-product-click-category={item.categoryName} data-product-click-name={item.name}>{item.name}</a>
                     ) : (
-                      <span class="product-text">{item.name}</span>
+                      <span class="product-text text-base-content">{item.name}</span>
                     )}
                   </div>
                 </td>
-                <td class="flat-price-cell">{renderProductPrice(item)}</td>
+                <td class="flat-price-cell font-bold text-primary">{renderProductPrice(item)}</td>
                 <td class="flat-status-cell">
-                  <span class={item.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out'}>{productStockLabel(item)}</span>
+                  <span class={`badge ${item.inStock ? 'badge-success badge-outline' : 'badge-ghost opacity-60'} badge-sm font-semibold`}>{productStockLabel(item)}</span>
                 </td>
-                <td class="flat-category-cell">{item.categoryName}</td>
+                <td class="flat-category-cell text-base-content/80">{item.categoryName}</td>
                 <td class="flat-merchant-cell">
                   <div class="cell-inline">
-                    <button type="button" class="favorite-toggle" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`收藏 ${item.siteName}`} aria-pressed="false" title="收藏商家">
-                      <span aria-hidden="true">♡</span>
+                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`收藏 ${item.siteName}`} aria-pressed="false" title="收藏商家">
+                      <span aria-hidden="true" class="text-sm">♡</span>
                     </button>
-                    <span class="merchant-text">{item.siteName}</span>
+                    <span class="merchant-text text-base-content/90 font-semibold">{item.siteName}</span>
                   </div>
                 </td>
-                <td class="flat-refresh-cell">{item.refreshTime}</td>
+                <td class="flat-refresh-cell text-xs text-base-content/60">{item.refreshTime}</td>
               </tr>
             );
           })}
@@ -202,14 +209,14 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
     </div>
   </section>
 
-  <section id="flatProductProgressiveLoad" class="progressive-load-panel">
-    <p id="flatProductLoadSummary" class="progressive-load-summary hidden"></p>
-    <button id="flatProductLoadMoreButton" type="button" class="secondary-button hidden">加载更多商品</button>
+  <section id="flatProductProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3">
+    <p id="flatProductLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
+    <button id="flatProductLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">加载更多商品</button>
   </section>
 
-  <section id="merchantGroupedView" class="product-table" hidden>
-    <div class="merchant-table-head">
-      <div class="merchant-head-index">序号</div>
+  <section id="merchantGroupedView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" hidden>
+    <div class="merchant-table-head bg-base-200 font-bold text-sm text-base-content">
+      <div class="merchant-head-index text-center w-14">序号</div>
       <div class="merchant-head-cell">商家</div>
       <div class="merchant-head-cell">商品</div>
     </div>

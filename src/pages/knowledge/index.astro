@@ -18,24 +18,25 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="knowledge" {...seo}>
-  <section class="content-panel">
-    <div class="max-w-3xl">
-      <p class="text-sm font-semibold text-blue-700">CardNav 知识库</p>
-      <h2 class="mt-1 text-2xl font-bold tracking-normal text-slate-950">购买前先看几分钟，少踩很多坑</h2>
-      <p class="mt-2 text-sm leading-6 text-slate-600">这里会持续整理 AI 账号购买、商家选择、价格与售后判断相关的实用文章。</p>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5">
+      <div class="page-hero-wrap">
+        <p class="page-hero-kicker">CardNav 知识库</p>
+        <h2 class="page-hero-title">购买前先看几分钟，少踩很多坑</h2>
+        <p class="page-hero-copy">这里会持续整理 AI 账号购买、商家选择、价格与售后判断相关的实用文章。</p>
+      </div>
     </div>
   </section>
 
-  <section class="grid gap-3">
+  <section class="grid gap-4">
     {knowledgeArticles.map(article => (
-      <article class="knowledge-card">
+      <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/40 transition-all p-5">
         <a href={`/knowledge/${article.slug}`} class="block">
-          <h3 class="text-lg font-semibold tracking-normal text-slate-950">{article.title}</h3>
-          <p class="mt-2 text-sm leading-6 text-slate-600">{article.description}</p>
-          <span class="mt-3 inline-flex text-sm font-semibold text-blue-700">阅读全文</span>
+          <h3 class="text-lg font-bold text-base-content">{article.title}</h3>
+          <p class="mt-2 text-sm leading-6 text-base-content/75">{article.description}</p>
+          <div class="mt-4 link link-primary font-semibold text-sm">阅读全文 ➜</div>
         </a>
       </article>
     ))}
   </section>
 </PublicPage>
-
