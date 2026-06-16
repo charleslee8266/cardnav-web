@@ -1,0 +1,59 @@
+---
+/*
+文件说明: 为公开工具页提供统一的顶层工具 Tab，方便在多个工具之间快速切换。
+*/
+type ToolTabKey = 'session-converter' | 'ip-purity';
+
+type ToolTab = {
+  key: ToolTabKey;
+  label: string;
+  href: string;
+  badge?: string;
+};
+
+type Props = {
+  activeTab?: ToolTabKey;
+};
+
+const { activeTab } = Astro.props;
+const tabs: ToolTab[] = [
+  {
+    key: 'session-converter',
+    label: 'Session 转换',
+    href: '/tools/session-converter',
+    badge: '本地转换',
+  },
+  {
+    key: 'ip-purity',
+    label: 'IP 纯净度',
+    href: '/tools/ip-purity',
+    badge: 'IPv4',
+  },
+];
+---
+
+<section class="card bg-base-100 border border-base-300 shadow-sm">
+  <div class="card-body p-4">
+    <div class="tool-tablist-wrap">
+      <div role="tablist" class="tool-tablist tabs tabs-box" aria-label="工具集导航">
+        {tabs.map((tab) => {
+          const isActive = tab.key === activeTab;
+          return (
+            <a
+              role="tab"
+              href={tab.href}
+              aria-current={isActive ? 'page' : undefined}
+              class:list={[
+                'tool-tab tab',
+                isActive ? 'tool-tab-active tab-active' : 'tool-tab-inactive',
+              ]}
+            >
+              <span>{tab.label}</span>
+              {tab.badge && <span class="tool-tab-badge">{tab.badge}</span>}
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</section>

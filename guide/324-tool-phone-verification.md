@@ -1,7 +1,6 @@
 ---
 title: 国外手机号验证
 description: 解决注册验证码和后续二次验证问题，避免一次性号码导致账号后续卡死。
-presentation: cards
 parent:
   slug: network-env-overview
   title: 3.2 网络环境与主机准备
@@ -33,4 +32,3 @@ parent:
 ### 2. 推荐渠道：英国 GiffGaff 卡
 目前在中国较容易申请且维护成本低的是英国 GiffGaff 电话卡。它可以做到零月租，只要每半年有一次短信发送等消费即可持续保号，维护成本极低。
 - **前往 GiffGaff 官网**：了解并采购长期低成本的实体英国 GiffGaff 卡，详情请点击 [GiffGaff 官网](https://www.giffgaff.com/)。
-

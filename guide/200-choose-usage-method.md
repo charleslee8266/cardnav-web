@@ -1,15 +1,14 @@
 ---
-title: 二、选择大模型使用方式
+title: 二、选择 AI 订阅使用方式
 description: 对比中转站、成品号、代充、自充、自建等五种大模型使用方式的门槛与风险，并提供详细操作路径。
-presentation: cards
 parent:
   slug: start-here
   title: 开始向导
 next:
   slug: practical-prep
-  title: 三、实操准备与选购避坑
+  title: 三、AI 订阅实操准备与选购避坑
 ---
-# 二、选择大模型使用方式
+# 二、选择 AI 订阅使用方式
 
 > 本文由 **卡网大全 [cardnav.xyz](https://cardnav.xyz)** 提供。
 

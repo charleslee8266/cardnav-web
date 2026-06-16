@@ -1,0 +1,391 @@
+---
+/*
+文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
+*/
+import PublicPage from '../layouts/PublicPage.astro';
+import { buildSeoContext } from '../seo.js';
+import { publicSiteUrl, telegramGroupUrl } from '../site.js';
+import shopsScriptUrl from '../scripts/index.js?url';
+import { loadDashboardData, loadPopularSearchTerms, type PublicProductRow } from '../store.js';
+
+const initialProductLimitValue = 10;
+const data = await loadDashboardData({ productLimit: initialProductLimitValue });
+const popularSearchTerms = (await loadPopularSearchTerms(10)).terms;
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/shops',
+  title: '卡网商家',
+  description: '搜集全网第三方卡网商家与商品，支持按关键词、分类、价格、库存、商家和刷新时间进行筛选与排序。',
+  imagePath: '/og-cardnav.svg',
+  type: 'website',
+});
+
+const renderedSites = data.sites.map(site => ({
+  id: site.id || '',
+  name: site.name,
+  latestProductRefreshedAt: site.latestProductRefreshedAt || null,
+  latestProductRefreshTime: site.latestProductRefreshTime || '',
+  score: site.score || 0,
+}));
+const renderedProducts = data.products.map(product => ({
+  categoryName: product.categoryName,
+  name: product.name,
+  priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
+  priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
+  productUrl: product.productUrl,
+  stock: product.stock,
+  inStock: product.inStock,
+  refreshedAt: product.refreshedAt || null,
+  refreshTime: product.refreshTime || '',
+  clickCount: product.clickCount || 0,
+  siteId: product.siteId || '',
+  siteName: product.siteName || '',
+  siteLatestProductRefreshedAt: product.siteLatestProductRefreshedAt || null,
+  siteLatestProductRefreshTime: product.siteLatestProductRefreshTime || '',
+  score: product.score || 0,
+}));
+const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
+const dashboardJsonValue = JSON.stringify({
+  sites: renderedSites,
+  products: renderedProducts,
+  totalSiteCount: data.totalSiteCount,
+  totalProductCount: data.totalProductCount,
+  latestRefreshTime: data.latestRefreshTime,
+  initialProductLimit: initialProductLimitValue,
+  isPartial: data.isPartial,
+}).replace(/[<>&\u2028\u2029]/g, character => ({
+  '<': '\\u003c',
+  '>': '\\u003e',
+  '&': '\\u0026',
+  '\u2028': '\\u2028',
+  '\u2029': '\\u2029',
+})[character] || character);
+
+function productStockLabel(product: Pick<PublicProductRow, 'stock' | 'inStock'>) {
+  return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? '有货' : '缺货');
+}
+
+function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'priceUnit'>) {
+  if (typeof product.priceNumber === 'number' && typeof product.priceUnit === 'string' && product.priceUnit) {
+    return `${product.priceUnit}${String(product.priceNumber)}`;
+  }
+  return '';
+}
+---
+
+<PublicPage activeNav="shops" {...seo}>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5 flex flex-col gap-3">
+      <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-base-content">卡网商家</h2>
+          <p class="text-sm leading-6 text-base-content/75">搜集全网第三方卡网商家与商品，支持按价格、库存、商家和刷新时间继续筛选，快速找到更合适的购买入口。</p>
+          <p class="mt-1 text-xs leading-5 text-base-content/55">价格数据仅供参考，实际价格以各平台为准。</p>
+        </div>
+        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-sm shrink-0">提交商家</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <a href="/guide/choose-reliable-merchant" class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
+      <div>
+        <span class="font-bold text-base block text-base-content">购前必看：如何挑选靠谱商家</span>
+        <span class="text-sm text-base-content/85 block mt-1">从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。</span>
+      </div>
+      <div class="btn btn-sm btn-ghost text-primary hover:bg-transparent shrink-0">阅读 ➜</div>
+    </a>
+  </section>
+
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <form id="filters" class="card-body p-5 flex flex-col gap-3" method="get">
+      <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
+        <span>已收录商家：<span class="font-bold text-primary">{data.totalSiteCount}</span></span>
+        <span>商品：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
+        {data.latestRefreshTime && <span>最近刷新：{data.latestRefreshTime}</span>}
+      </div>
+      <div class="w-full">
+        <input id="searchFilter" name="q" value="" class="input input-bordered w-full" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
+      </div>
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-wrap items-center gap-4">
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>匹配分类</span>
+          </label>
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>匹配商家</span>
+          </label>
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>显示无货商品</span>
+          </label>
+          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+            <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+            <span>按商家分组</span>
+          </label>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-base-content/80">价格</span>
+            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最小" autocomplete="off" />
+            <span class="text-xs text-base-content/40">~</span>
+            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最大" autocomplete="off" />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-base-content/80">排序</span>
+            <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
+              <option value="default">综合排序</option>
+              <option value="price-asc">低价优先</option>
+              <option value="stock-desc">库存最多</option>
+              <option value="refresh-desc">最近刷新</option>
+              <option value="custom" hidden>表头排序</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">热门搜索</span>
+        <div id="quickTagFilters" class="flex flex-wrap gap-1.5" aria-label="热门搜索标签">
+          {popularSearchTermsValue.map(term => {
+            const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
+            return (
+              <button type="button" class="btn btn-outline btn-sm text-sm! rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
+            );
+          })}
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section id="emptyState" class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center hidden">
+    <span>没有匹配的商家或商品</span>
+  </section>
+
+  <section id="flatProductView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
+    <div class="product-table-scroll">
+      <table class="table table-zebra w-full flat-product-table border-collapse">
+        <thead class="bg-base-200 text-base-content text-base">
+          <tr>
+            <th scope="col" class="table-head-index w-14 text-center">序号</th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productName" data-sort-type="text"><span>商品</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="priceValue" data-sort-type="number"><span>价格</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productRefreshedAt" data-sort-type="number"><span>最近刷新</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
+          </tr>
+        </thead>
+
+        <tbody id="flatProductRows">
+          {renderedProducts.map(item => {
+            const productTitle = `${item.categoryName}-${item.name}`;
+            const productFavoriteKey = `${item.siteName}#${productTitle}`;
+            const siteFavoriteKey = item.siteId || item.siteName;
+            return (
+              <tr class="flat-product-row hover">
+                <th scope="row" class="flat-row-index text-center text-base-content/50 font-bold"></th>
+                <td class="flat-product-cell font-medium">
+                  <div class="cell-inline">
+                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`收藏 ${productTitle}`} aria-pressed="false" title="收藏商品">
+                      <span aria-hidden="true" class="text-sm">♡</span>
+                    </button>
+                    {item.productUrl ? (
+                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" class="product-link font-semibold" data-umami-event="product-click" data-umami-event-url={item.productUrl} data-umami-event-name={productTitle} data-product-click-site-id={item.siteId} data-product-click-url={item.productUrl} data-product-click-category={item.categoryName} data-product-click-name={item.name}>{item.name}</a>
+                    ) : (
+                      <span class="product-text text-base-content">{item.name}</span>
+                    )}
+                  </div>
+                </td>
+                <td class="flat-price-cell font-bold text-primary">{renderProductPrice(item)}</td>
+                <td class="flat-status-cell">
+                  <span class={`badge ${item.inStock ? 'badge-success badge-outline' : 'badge-ghost opacity-60'} badge-sm font-semibold`}>{productStockLabel(item)}</span>
+                </td>
+                <td class="flat-category-cell text-base-content/80">{item.categoryName}</td>
+                <td class="flat-merchant-cell">
+                  <div class="cell-inline">
+                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`收藏 ${item.siteName}`} aria-pressed="false" title="收藏商家">
+                      <span aria-hidden="true" class="text-sm">♡</span>
+                    </button>
+                    <span class="merchant-text text-base-content/90 font-semibold">{item.siteName}</span>
+                  </div>
+                </td>
+                <td class="flat-refresh-cell text-xs text-base-content/60">{item.refreshTime}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="flatProductProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3">
+    <p id="flatProductLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
+    <button id="flatProductLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">加载更多商品</button>
+  </section>
+
+  <section id="merchantGroupedView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" hidden>
+    <div class="merchant-table-head bg-base-200 font-bold text-sm text-base-content">
+      <div class="merchant-head-index text-center w-14">序号</div>
+      <div class="merchant-head-cell">商家</div>
+      <div class="merchant-head-cell">商品</div>
+    </div>
+    <div id="merchantRows"></div>
+  </section>
+
+  <dialog id="shopSubmitDialog" class="modal">
+    <div class="modal-box max-w-2xl p-0">
+      <section class="card bg-base-100 shadow-none">
+        <div class="card-body p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="page-hero-wrap">
+              <h2 class="page-hero-title mt-0">提交商家</h2>
+              <p class="page-hero-copy">提交后，系统将自动识别并收录支持的站点，其余类型将转为人工尽快审核，请勿重复提交。</p>
+            </div>
+            <form method="dialog">
+              <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label="关闭提交商家弹窗">✕</button>
+            </form>
+          </div>
+
+          <div class="alert alert-info alert-soft shadow-sm mt-4 flex flex-col items-start gap-1.5 text-left text-base-content">
+            <span class="font-bold text-sm">合作曝光</span>
+            <p class="text-sm text-base-content/85 leading-6">商家如有合作意向，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
+            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm mt-2 inline-flex items-center gap-2">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m22 2-7 20-4-9-9-4Z"></path>
+                <path d="M22 2 11 13"></path>
+              </svg>
+              Telegram 联系
+            </a>
+          </div>
+
+          <form id="submitForm" class="form-control gap-3 mt-4" method="post" action="/api/submit">
+            <div>
+              <label for="urlInput" class="label font-semibold text-sm pb-1">URL</label>
+              <input id="urlInput" name="url" type="url" required value="" class="input input-bordered w-full" placeholder="https://example.com" autocomplete="url" />
+            </div>
+            <p id="clientError" class="hidden text-sm text-error font-medium">请输入有效的 URL</p>
+            <p id="submitError" class="hidden text-sm text-error font-medium"></p>
+            <p id="submitSuccess" class="hidden text-sm text-success font-medium"></p>
+            <div class="card-actions justify-start mt-2">
+              <button type="submit" data-umami-event="submit-click" data-umami-event-url="" class="btn btn-primary">
+                提交
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button type="submit" aria-label="关闭提交商家弹窗背景">close</button>
+    </form>
+  </dialog>
+
+  <script is:inline type="application/json" id="dashboard-data" set:html={dashboardJsonValue}></script>
+  <script is:inline slot="scripts" defer src={shopsScriptUrl}></script>
+  <script slot="scripts" is:inline>
+    const shopSubmitDialog = document.querySelector('#shopSubmitDialog');
+    const openShopSubmitModalButton = document.querySelector('#openShopSubmitModal');
+    const submitForm = document.querySelector('#submitForm');
+    const urlInput = document.querySelector('#urlInput');
+    const clientError = document.querySelector('#clientError');
+    const submitError = document.querySelector('#submitError');
+    const submitSuccess = document.querySelector('#submitSuccess');
+    const submitButton = submitForm?.querySelector('button[type="submit"]');
+
+    function syncSubmitEventUrl() {
+      if (submitButton) submitButton.dataset.umamiEventUrl = urlInput?.value.trim() || '';
+    }
+
+    function isValidUrl(value) {
+      try {
+        const url = new URL(value.trim());
+        return url.protocol === 'http:' || url.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    }
+
+    function hideServerMessages() {
+      submitError?.classList.add('hidden');
+      submitSuccess?.classList.add('hidden');
+      if (submitError) submitError.textContent = '';
+      if (submitSuccess) submitSuccess.textContent = '';
+    }
+
+    function showError(message) {
+      submitSuccess?.classList.add('hidden');
+      if (submitSuccess) submitSuccess.textContent = '';
+      if (submitError) {
+        submitError.textContent = message;
+        submitError.classList.remove('hidden');
+      }
+    }
+
+    function showSuccess(message) {
+      submitError?.classList.add('hidden');
+      if (submitError) submitError.textContent = '';
+      if (submitSuccess) {
+        submitSuccess.textContent = message;
+        submitSuccess.classList.remove('hidden');
+      }
+    }
+
+    openShopSubmitModalButton?.addEventListener('click', () => {
+      shopSubmitDialog?.showModal();
+      syncSubmitEventUrl();
+    });
+
+    submitForm?.addEventListener('submit', event => {
+      syncSubmitEventUrl();
+      hideServerMessages();
+      if (!isValidUrl(urlInput?.value || '')) {
+        event.preventDefault();
+        clientError?.classList.remove('hidden');
+        urlInput?.focus();
+        return;
+      }
+
+      event.preventDefault();
+      clientError?.classList.add('hidden');
+      if (submitButton) submitButton.disabled = true;
+
+      fetch(submitForm.action, {
+        method: 'POST',
+        body: JSON.stringify({ url: urlInput.value.trim() }),
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-requested-with': 'fetch',
+        },
+      })
+        .then(async response => {
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload || payload.ok !== true) {
+            showError(payload && payload.message ? payload.message : '提交失败，请稍后重试');
+            return;
+          }
+          urlInput.value = '';
+          syncSubmitEventUrl();
+          showSuccess(payload.message || '提交成功');
+        })
+        .catch(() => {
+          showError('提交失败，请稍后重试');
+        })
+        .finally(() => {
+          if (submitButton) submitButton.disabled = false;
+        });
+    });
+
+    urlInput?.addEventListener('input', () => {
+      syncSubmitEventUrl();
+      clientError?.classList.add('hidden');
+      hideServerMessages();
+    });
+
+    syncSubmitEventUrl();
+  </script>
+</PublicPage>

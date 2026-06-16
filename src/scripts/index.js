@@ -306,6 +306,7 @@ function matchesPriceRange(priceValue, min, max) {
 
 function syncFiltersFromUrl() {
   const params = new URLSearchParams(window.location.search);
+  searchFilter.value = params.get('q') || '';
   showSoldOutFilter.checked = params.get('showSoldOut') === '1';
   if (params.has('priceMin')) {
     priceMin.value = params.get('priceMin') || '';
@@ -777,7 +778,8 @@ function applyFilters() {
   if (flatSortSelect?.value && flatSortSelect.value !== 'default' && flatSortSelect.value !== 'custom') {
     params.set('sort', flatSortSelect.value);
   }
-  const nextUrl = params.toString() ? `/?${params.toString()}` : '/';
+  const currentPath = window.location.pathname || '/';
+  const nextUrl = params.toString() ? `${currentPath}?${params.toString()}` : currentPath;
   history.replaceState(null, '', nextUrl);
 }
 

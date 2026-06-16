@@ -1,228 +1,293 @@
 ---
 /*
-文件说明: 渲染 CardNav 公开首页，保留首屏商品 SSR 与后续数据懒加载入口。
+文件说明: 渲染 CardNav 公开首页，按卡片模块展示模型、订阅价格、热门产品和卡网商家入口。
 */
 import PublicPage from '../layouts/PublicPage.astro';
+import Sponsors from '../components/Sponsors.astro';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
-import homepageScriptUrl from '../scripts/index.js?url';
-import { loadDashboardData, loadPopularSearchTerms, type PublicProductRow } from '../store.js';
+import { loadDashboardData, loadModelLeaderboards, loadOfficialPrices, loadPopularSearchTerms } from '../store.js';
 
-const initialProductLimitValue = 10;
-const data = await loadDashboardData({ productLimit: initialProductLimitValue });
-const popularSearchTerms = (await loadPopularSearchTerms(10)).terms;
+const dashboardData = await loadDashboardData({ productLimit: 10 });
+const leaderboardRows = await loadModelLeaderboards();
+const officialPrices = await loadOfficialPrices();
+const popularSearchTerms = (await loadPopularSearchTerms(10)).terms
+  .map(term => term.trim())
+  .filter(Boolean);
+
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/',
-  title: '卡网大全 - AI 大模型账号购买导航',
-  description: '不知道 ChatGPT Plus、Claude、Gemini、Grok 等 AI 账号在哪买？卡网大全聚合大模型账号商家，帮你查找购买入口、库存和价格。',
+  title: '卡网大全 - 一站式 AI 大模型账号购买导航',
+  description: '汇总 AI 大模型排行榜、官方 AI 订阅渠道、第三方 AI 卡网比价、实用工具、风险控制、使用指南，帮你少踩坑、少花钱。GPT，Claude，Gemini，Cursor，Grok 应有尽有。',
   imagePath: '/og-cardnav.svg',
   type: 'website',
 });
 
-const renderedSites = data.sites.map(site => ({
-  id: site.id || '',
-  name: site.name,
-  latestProductRefreshedAt: site.latestProductRefreshedAt || null,
-  latestProductRefreshTime: site.latestProductRefreshTime || '',
-  score: site.score || 0,
-}));
-const renderedProducts = data.products.map(product => ({
-  categoryName: product.categoryName,
-  name: product.name,
-  priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
-  priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
-  productUrl: product.productUrl,
-  stock: product.stock,
-  inStock: product.inStock,
-  refreshedAt: product.refreshedAt || null,
-  refreshTime: product.refreshTime || '',
-  clickCount: product.clickCount || 0,
-  siteId: product.siteId || '',
-  siteName: product.siteName || '',
-  siteLatestProductRefreshedAt: product.siteLatestProductRefreshedAt || null,
-  siteLatestProductRefreshTime: product.siteLatestProductRefreshTime || '',
-  score: product.score || 0,
-}));
-const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
-const dashboardJsonValue = JSON.stringify({
-  sites: renderedSites,
-  products: renderedProducts,
-  totalSiteCount: data.totalSiteCount,
-  totalProductCount: data.totalProductCount,
-  latestRefreshTime: data.latestRefreshTime,
-  initialProductLimit: initialProductLimitValue,
-  isPartial: data.isPartial,
-}).replace(/[<>&\u2028\u2029]/g, character => ({
-  '<': '\\u003c',
-  '>': '\\u003e',
-  '&': '\\u0026',
-  '\u2028': '\\u2028',
-  '\u2029': '\\u2029',
-})[character] || character);
+const taskOrder = ['coding', 'creative-writing', 'math', 'text-to-image'];
+type LeaderboardPreviewGroup = {
+  taskSlug: string;
+  taskLabel: string;
+  rows: typeof leaderboardRows;
+};
 
-function productStockLabel(product: Pick<PublicProductRow, 'stock' | 'inStock'>) {
-  return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? '有货' : '缺货');
+const taskGroups: LeaderboardPreviewGroup[] = taskOrder
+  .map(taskSlug => {
+    const rows = leaderboardRows.filter(row => row.taskSlug === taskSlug).slice(0, 3);
+    if (rows.length === 0) return null;
+    return {
+      taskSlug,
+      taskLabel: rows[0]?.taskLabel || taskSlug,
+      rows,
+    };
+  })
+  .filter((group): group is LeaderboardPreviewGroup => group !== null);
+
+const appLabelMap = {
+  'chatgpt': 'ChatGPT',
+  'claude': 'Claude',
+  'gemini': 'Gemini',
+  'grok': 'Grok',
+  'copilot': 'Copilot',
+  'kimi': 'Kimi',
+  'x': 'X',
+};
+
+const planLabelMap = {
+  'go-monthly': 'Go',
+  'plus': 'Plus',
+  'pro-5x': 'Pro 5x',
+  'pro-20x': 'Pro 20x',
+  'pro': 'Pro',
+  'max-5x-monthly': 'Max 5x',
+  'max-20x-monthly': 'Max 20x',
+  'ai-plus': 'AI Plus',
+  'advanced': 'AI Pro',
+  'ai-ultra': 'AI Ultra',
+  'supergrok-lite': 'SuperGrok Lite',
+  'supergrok': 'SuperGrok',
+  'supergrok-heavy': 'SuperGrok Heavy',
+  'moderato': 'Moderato',
+  'allegretto': 'Allegretto',
+  'basic': 'Basic',
+  'premium': 'Premium',
+  'premium-plus': 'Premium+',
+};
+
+function labelFromSlug(slug: string) {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.length <= 3 ? part.toUpperCase() : `${part[0]?.toUpperCase() || ''}${part.slice(1)}`)
+    .join(' ');
 }
 
-function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'priceUnit'>) {
-  if (typeof product.priceNumber === 'number' && typeof product.priceUnit === 'string' && product.priceUnit) {
-    return `${product.priceUnit}${String(product.priceNumber)}`;
-  }
-  return '';
+function appLabel(appSlug: string) {
+  return appLabelMap[appSlug as keyof typeof appLabelMap] || labelFromSlug(appSlug);
 }
+
+function planLabel(planSlug: string) {
+  return planLabelMap[planSlug as keyof typeof planLabelMap] || labelFromSlug(planSlug);
+}
+
+const officialPriceTargets = [
+  { appSlug: 'chatgpt', planSlug: 'pro-20x' },
+  { appSlug: 'claude', planSlug: 'max-20x-monthly' },
+  { appSlug: 'gemini', planSlug: 'ai-ultra' },
+];
+
+const officialPriceGroups = officialPriceTargets
+  .map(target => {
+    const prices = officialPrices
+      .filter(item => item.appSlug === target.appSlug && item.planSlug === target.planSlug)
+      .slice()
+      .sort((left, right) => left.cnyPrice - right.cnyPrice)
+      .slice(0, 3);
+    return {
+      key: `${target.appSlug}:${target.planSlug}`,
+      appName: appLabel(target.appSlug),
+      planName: planLabel(target.planSlug),
+      prices,
+    };
+  })
+  .filter(group => group.prices.length > 0);
+
+const hotProducts = dashboardData.products.slice(0, 10).map(product => ({
+  ...product,
+  displayPrice: typeof product.priceNumber === 'number' && product.priceUnit
+    ? `${product.priceUnit}${String(product.priceNumber)}`
+    : product.price,
+}));
+
+const guideSteps = [
+  { title: '选择你想使用的 AI 大模型', href: '/guide/choose-model' },
+  { title: '选择 AI 订阅使用方式', href: '/guide/choose-usage-method' },
+  { title: 'AI 订阅实操准备与选购避坑', href: '/guide/practical-prep' },
+  { title: 'AI 订阅使用期间的风控与日常避坑', href: '/guide/daily-usage-risk' },
+];
+
 ---
 
-<PublicPage activeNav="home" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <form id="filters" class="card-body p-5 flex flex-col gap-3" method="get">
-      <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
-        <span>已收录商家：<span class="font-bold text-primary">{data.totalSiteCount}</span></span>
-        <span>商品：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
-        {data.latestRefreshTime && <span>最近刷新：{data.latestRefreshTime}</span>}
-      </div>
-      <div class="w-full">
-        <input id="searchFilter" name="q" value="" class="input input-bordered w-full" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
-      </div>
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div class="flex flex-wrap items-center gap-4">
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>匹配分类</span>
-          </label>
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>匹配商家</span>
-          </label>
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>显示无货商品</span>
-          </label>
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>按商家分组</span>
-          </label>
+<PublicPage activeNav="home" showSponsors={false} {...seo}>
+  <section class="card relative cursor-pointer bg-base-100 border border-base-300 shadow-sm overflow-hidden transition hover:border-primary/35 hover:shadow-md">
+    <a href="/guide" class="absolute inset-0 z-0" aria-label="打开完整向导"></a>
+    <div class="card-body p-4">
+      <div class="relative z-10 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-base-content">不知道如何开始？点击进入向导</h2>
+          <p class="mt-1 text-sm leading-6 text-base-content/75">从模型选择到实操准备，先把购买路径理清楚。</p>
         </div>
-        
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-base-content/80">价格</span>
-            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最小" autocomplete="off" />
-            <span class="text-xs text-base-content/40">~</span>
-            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最大" autocomplete="off" />
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-base-content/80">排序</span>
-            <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
-              <option value="default">综合排序</option>
-              <option value="price-asc">低价优先</option>
-              <option value="stock-desc">库存最多</option>
-              <option value="refresh-desc">最近刷新</option>
-              <option value="custom" hidden>表头排序</option>
-            </select>
-          </div>
-        </div>
+        <a href="/guide" class="btn btn-outline btn-sm shrink-0">打开完整向导</a>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">热门搜索</span>
-        <div id="quickTagFilters" class="flex flex-wrap gap-1.5" aria-label="热门搜索标签">
-          {popularSearchTermsValue.map(term => {
-            const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
-            return (
-              <button type="button" class="btn btn-outline btn-sm text-sm! rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
-            );
-          })}
-        </div>
+      <div class="relative z-10 mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+        {guideSteps.map((step, index) => (
+          <a href={step.href} class="rounded-lg border border-base-300 bg-base-100 px-3 py-2 no-underline transition hover:border-primary/35 hover:bg-base-200/50">
+            <span class="text-xs font-semibold text-primary">步骤 {index + 1}</span>
+            <span class="mt-1 block text-sm font-bold text-base-content">{step.title}</span>
+          </a>
+        ))}
       </div>
-    </form>
+    </div>
   </section>
 
-  <section id="emptyState" class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center hidden">
-    <span>没有匹配的商家或商品</span>
+  <section class="grid gap-3 xl:grid-cols-3">
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5">
+        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-base-content">AI 大模型排行榜</h2>
+            <p class="text-sm leading-6 text-base-content/75">不同场景下的模型排行</p>
+          </div>
+          <a href="/model-leaderboard" class="btn btn-outline btn-sm shrink-0">查看完整榜单</a>
+        </div>
+        <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+          {taskGroups.map(group => (
+            <article class="rounded-2xl border border-base-300 bg-base-100 p-4">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="text-lg font-bold text-base-content">{group.taskLabel}</h3>
+                <span class="badge badge-ghost badge-sm font-medium">Top 3</span>
+              </div>
+              <div class="mt-3 space-y-3">
+                {group.rows.map(item => (
+                  <div class="flex items-center justify-between gap-3 rounded-xl bg-base-200/45 px-3 py-2">
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-base-content">#{item.rank} {item.modelName}</p>
+                    </div>
+                    <span class="text-sm font-mono font-bold text-primary">{item.score.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </article>
+
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5">
+        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-base-content">官方 AI 订阅比价</h2>
+            <p class="text-sm leading-6 text-base-content/75">全球不同地区官方订阅价格对比</p>
+          </div>
+          <a href="/official-price" class="btn btn-outline btn-sm shrink-0">进入比价页</a>
+        </div>
+        <div class="mt-3 space-y-3">
+          {officialPriceGroups.map(group => (
+            <section class="rounded-2xl border border-base-300 bg-base-100 p-4">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="text-base font-bold text-base-content">{group.appName} {group.planName}</h3>
+                <span class="badge badge-ghost badge-sm font-medium">低价地区</span>
+              </div>
+              <div class="mt-3 space-y-2">
+                {group.prices.map((item, index) => (
+                  <div class="flex items-center justify-between gap-3 rounded-xl bg-base-200/45 px-3 py-2">
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-base-content">#{index + 1} {item.countryLabel}</p>
+                      <p class="text-xs text-base-content/65">{item.countryCode} · {item.priceText}</p>
+                    </div>
+                    <p class="min-w-16 text-right text-sm font-bold text-primary">¥{item.cnyPrice}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
+    </article>
+
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5">
+        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-base-content">热门 AI 卡网商品</h2>
+            <p class="text-sm leading-6 text-base-content/75">全网第三方 AI 卡网商家与商品搜索</p>
+          </div>
+          <a href="/shops" class="btn btn-outline btn-sm shrink-0">进入卡网商家页</a>
+        </div>
+
+        <div class="mt-3 space-y-3">
+          <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
+            <span>已收录商家：<span class="font-bold text-primary">{dashboardData.totalSiteCount}</span></span>
+            <span>商品：<span class="font-bold text-primary">{dashboardData.totalProductCount}</span></span>
+            {dashboardData.latestRefreshTime && <span>最近刷新：{dashboardData.latestRefreshTime}</span>}
+          </div>
+
+          <form action="/shops" method="get" class="flex flex-col gap-3">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <input name="q" type="search" class="input input-bordered w-full" placeholder="搜索商品、商家关键词" autocomplete="off" />
+              <button type="submit" class="btn btn-primary shrink-0">搜索</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">热门搜索</span>
+              {popularSearchTerms.map(term => (
+                <a
+                  href={`/shops?q=${encodeURIComponent(term)}`}
+                  class="btn btn-outline btn-sm rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
+                >
+                  {term}
+                </a>
+              ))}
+            </div>
+          </form>
+
+          <div class="space-y-2">
+            {hotProducts.map(item => (
+              <div class="flex items-center justify-between gap-3 rounded-xl bg-base-200/45 px-3 py-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-base-content">{item.name}</p>
+                  <p class="text-xs text-base-content/65">{item.siteName} · {item.categoryName}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-bold text-primary">{item.displayPrice}</p>
+                  <p class="text-xs text-base-content/60">{item.inStock ? '有货' : '缺货'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </article>
   </section>
 
-  <section>
-    <a href="/knowledge/choose-reliable-merchant" class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
-      <div>
-        <span class="font-bold text-base block text-base-content">购买前先看：怎么判断一个商家靠不靠谱</span>
-        <span class="text-sm text-base-content/85 block mt-1">从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。</span>
+  <section class="grid gap-4 lg:grid-cols-2">
+    <a href="/tools" class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+      <div class="card-body p-5">
+        <span class="badge badge-ghost badge-sm w-fit font-medium">实用工具</span>
+        <h2 class="mt-2 text-xl font-bold text-base-content">AI 订阅工具集</h2>
+        <p class="mt-2 text-sm leading-6 text-base-content/75">把 IP 纯净度检测、Session 转换等工具集中放到一起，真正操作时不用来回找。</p>
+        <span class="mt-4 text-sm font-semibold text-primary">打开工具集</span>
       </div>
-      <div class="btn btn-sm btn-ghost text-primary hover:bg-transparent shrink-0">阅读 ➜</div>
+    </a>
+    <a href="/guide" class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+      <div class="card-body p-5">
+        <span class="badge badge-ghost badge-sm w-fit font-medium">购买向导</span>
+        <h2 class="mt-2 text-xl font-bold text-base-content">继续看向导</h2>
+        <p class="mt-2 text-sm leading-6 text-base-content/75">如果你更在意怎么选、怎么买、怎么买得更稳，那就继续顺着向导往下走。</p>
+        <span class="mt-4 text-sm font-semibold text-primary">继续看向导</span>
+      </div>
     </a>
   </section>
 
-  <section id="flatProductView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
-    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
-    <div class="product-table-scroll">
-      <table class="table table-zebra w-full flat-product-table border-collapse">
-        <thead class="bg-base-200 text-base-content text-base">
-          <tr>
-            <th scope="col" class="table-head-index w-14 text-center">序号</th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productName" data-sort-type="text"><span>商品</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="priceValue" data-sort-type="number"><span>价格</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productRefreshedAt" data-sort-type="number"><span>最近刷新</span><span class="sort-indicator opacity-60" aria-hidden="true"></span><span class="sort-status">，点击排序</span></button></th>
-          </tr>
-        </thead>
-
-        <tbody id="flatProductRows">
-          {renderedProducts.map(item => {
-            const productTitle = `${item.categoryName}-${item.name}`;
-            const productFavoriteKey = `${item.siteName}#${productTitle}`;
-            const siteFavoriteKey = item.siteId || item.siteName;
-            return (
-              <tr class="flat-product-row hover">
-                <th scope="row" class="flat-row-index text-center text-base-content/50 font-bold"></th>
-                <td class="flat-product-cell font-medium">
-                  <div class="cell-inline">
-                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`收藏 ${productTitle}`} aria-pressed="false" title="收藏商品">
-                      <span aria-hidden="true" class="text-sm">♡</span>
-                    </button>
-                    {item.productUrl ? (
-                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" class="product-link font-semibold" data-umami-event="product-click" data-umami-event-url={item.productUrl} data-umami-event-name={productTitle} data-product-click-site-id={item.siteId} data-product-click-url={item.productUrl} data-product-click-category={item.categoryName} data-product-click-name={item.name}>{item.name}</a>
-                    ) : (
-                      <span class="product-text text-base-content">{item.name}</span>
-                    )}
-                  </div>
-                </td>
-                <td class="flat-price-cell font-bold text-primary">{renderProductPrice(item)}</td>
-                <td class="flat-status-cell">
-                  <span class={`badge ${item.inStock ? 'badge-success badge-outline' : 'badge-ghost opacity-60'} badge-sm font-semibold`}>{productStockLabel(item)}</span>
-                </td>
-                <td class="flat-category-cell text-base-content/80">{item.categoryName}</td>
-                <td class="flat-merchant-cell">
-                  <div class="cell-inline">
-                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`收藏 ${item.siteName}`} aria-pressed="false" title="收藏商家">
-                      <span aria-hidden="true" class="text-sm">♡</span>
-                    </button>
-                    <span class="merchant-text text-base-content/90 font-semibold">{item.siteName}</span>
-                  </div>
-                </td>
-                <td class="flat-refresh-cell text-xs text-base-content/60">{item.refreshTime}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="flatProductProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3">
-    <p id="flatProductLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
-    <button id="flatProductLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">加载更多商品</button>
-  </section>
-
-  <section id="merchantGroupedView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" hidden>
-    <div class="merchant-table-head bg-base-200 font-bold text-sm text-base-content">
-      <div class="merchant-head-index text-center w-14">序号</div>
-      <div class="merchant-head-cell">商家</div>
-      <div class="merchant-head-cell">商品</div>
-    </div>
-    <div id="merchantRows"></div>
-  </section>
-
-  <script is:inline type="application/json" id="dashboard-data" set:html={dashboardJsonValue}></script>
-  <script is:inline slot="scripts" defer src={homepageScriptUrl}></script>
+  <Sponsors />
 </PublicPage>

@@ -1,0 +1,27 @@
+---
+/*
+文件说明: 渲染 CardNav 公开向导首页，展示文档列表和默认正文。
+*/
+import PublicPage from '../../layouts/PublicPage.astro';
+import GuideBrowser from '../../components/GuideBrowser.astro';
+import { defaultGuideArticle, guideArticles, guideNavItems } from '../../guide.js';
+import { buildSeoContext } from '../../seo.js';
+import { publicSiteUrl } from '../../site.js';
+
+if (!defaultGuideArticle) {
+  throw new Error('Guide articles are required to render /guide');
+}
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/guide',
+  title: '向导',
+  description: '卡网大全向导整理 AI 账号购买、商家选择和虚拟商品下单前的判断方法。',
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+});
+---
+
+<PublicPage activeNav="guide" showSponsors={false} {...seo}>
+  <GuideBrowser articles={guideArticles} navItems={guideNavItems} currentArticle={defaultGuideArticle} />
+</PublicPage>

@@ -350,8 +350,8 @@ export type PublicModelLeaderboardRow = {
   taskLabel: string;
   sourceName: string;
   sourceUrl: string;
-  arenaSlug: string;
-  leaderboardSlug: string;
+  sourceGroupSlug: string;
+  sourceBoardSlug: string;
   rank: number;
   modelName: string;
   score: number;
@@ -386,8 +386,8 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
       task_label,
       source_name,
       source_url,
-      arena_slug,
-      leaderboard_slug,
+      source_group_slug,
+      source_board_slug,
       rank,
       model_name,
       score,
@@ -408,8 +408,8 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
     taskLabel: String(row.task_label),
     sourceName: String(row.source_name),
     sourceUrl: String(row.source_url),
-    arenaSlug: String(row.arena_slug),
-    leaderboardSlug: String(row.leaderboard_slug),
+    sourceGroupSlug: String(row.source_group_slug),
+    sourceBoardSlug: String(row.source_board_slug),
     rank: Number(row.rank),
     modelName: String(row.model_name),
     score: Number(row.score),

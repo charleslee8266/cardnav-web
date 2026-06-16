@@ -17,6 +17,7 @@
     "codemirror": "^5.65.21",
     "dotenv": "^17.4.2",
     "gray-matter": "^4.0.3",
+    "maplibre-gl": "^5.24.0",
     "markdown-it": "^14.2.0",
     "pg": "^8.21.0"
   },

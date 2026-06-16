@@ -1,5 +1,5 @@
 /*
-文件说明: public-web 全站共享样式，包含首页列表、收藏按钮、知识页和公共组件的视觉规则。
+文件说明: public-web 全站共享样式，包含首页列表、收藏按钮、向导页和公共组件的视觉规则。
 */
 @import "tailwindcss";
 @plugin "daisyui";
@@ -58,32 +58,32 @@
 }
 
 @layer components {
-  /* 知识库及政策详情排版 */
-  .knowledge-card {
+  /* 向导及政策详情排版 */
+  .guide-card {
     @apply rounded border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50;
   }
 
-  .knowledge-browser-grid {
+  .guide-browser-grid {
     @apply items-stretch;
     height: 100%;
     min-height: 0;
   }
 
-  .knowledge-sidebar {
+  .guide-sidebar {
     @apply grid self-stretch;
     grid-template-rows: auto minmax(0, 1fr);
     min-height: 0;
   }
 
-  .knowledge-sidebar-link {
+  .guide-sidebar-link {
     @apply no-underline;
   }
 
-  .knowledge-sidebar-link-child {
+  .guide-sidebar-link-child {
     position: relative;
   }
 
-  .knowledge-sidebar-link-child::before {
+  .guide-sidebar-link-child::before {
     content: "";
     position: absolute;
     left: 0.85rem;
@@ -93,13 +93,13 @@
     background: color-mix(in srgb, var(--color-base-content) 12%, transparent);
   }
 
-  .knowledge-sidebar-scroll {
+  .guide-sidebar-scroll {
     height: 100%;
     min-height: 0;
     overflow-y: auto;
   }
 
-  .knowledge-content-scroll {
+  .guide-content-scroll {
     height: 100%;
     min-height: 0;
     overflow-y: auto;
@@ -107,220 +107,220 @@
     padding-right: 0.25rem;
   }
 
-  .knowledge-breadcrumbs {
+  .guide-breadcrumbs {
     @apply text-sm;
   }
 
-  .knowledge-breadcrumb-list {
+  .guide-breadcrumb-list {
     @apply flex flex-wrap items-center gap-y-1 text-sm text-base-content/60;
   }
 
-  .knowledge-breadcrumb-list li {
+  .guide-breadcrumb-list li {
     @apply inline-flex items-center;
   }
 
-  .knowledge-breadcrumb-list a {
+  .guide-breadcrumb-list a {
     @apply font-medium text-base-content/72 no-underline transition-colors hover:text-primary;
   }
 
-  .knowledge-breadcrumb-separator {
+  .guide-breadcrumb-separator {
     @apply mx-2 text-base-content/30;
   }
 
-  .knowledge-breadcrumb-current {
+  .guide-breadcrumb-current {
     @apply font-semibold text-base-content;
   }
 
-  .knowledge-article {
+  .guide-article {
     @apply rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7;
   }
 
-  .knowledge-guide-shell {
+  .guide-shell {
     background:
       radial-gradient(circle at top left, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 38%),
       linear-gradient(180deg, color-mix(in srgb, var(--color-base-100) 92%, white), var(--color-base-100));
   }
 
-  .knowledge-guide-shell .knowledge-article {
+  .guide-shell .guide-article {
     @apply p-0 border-0 bg-transparent shadow-none rounded-none;
   }
 
-  .knowledge-guide-shell .knowledge-article > h1:first-child {
+  .guide-shell .guide-article > h1:first-child {
     display: none;
   }
 
-  .knowledge-guide-hero {
+  .guide-hero {
   }
 
-  .knowledge-guide-eyebrow {
+  .guide-eyebrow {
     @apply text-xs font-semibold uppercase tracking-[0.18em] text-primary;
   }
 
-  .knowledge-guide-title {
+  .guide-title {
     @apply mt-2 text-3xl font-bold tracking-tight text-base-content md:text-[2.2rem];
   }
 
-  .knowledge-guide-intro {
+  .guide-intro {
     @apply mt-3 text-base leading-7 text-base-content/75;
   }
 
-  .knowledge-guide-intro h3 {
+  .guide-intro h3 {
     @apply mt-6 text-lg font-bold text-base-content;
   }
 
-  .knowledge-guide-intro p {
+  .guide-intro p {
     @apply mt-3;
   }
 
-  .knowledge-guide-intro ol {
+  .guide-intro ol {
     @apply mt-3 list-decimal space-y-2 pl-6 text-base leading-7;
   }
 
-  .knowledge-guide-intro ul {
+  .guide-intro ul {
     @apply mt-3 list-disc space-y-2 pl-6 text-base leading-7;
   }
 
-  .knowledge-guide-intro a {
+  .guide-intro a {
     @apply font-semibold text-primary hover:opacity-80 hover:underline;
   }
 
-  .knowledge-guide-grid {
+  .guide-grid {
     @apply mt-6 grid gap-4 lg:grid-cols-2;
   }
 
-  .knowledge-guide-card {
+  .guide-card {
     @apply block rounded-[1.4rem] border border-base-300/90 bg-base-100/88 p-5 no-underline shadow-sm transition duration-200;
     backdrop-filter: blur(8px);
   }
 
-  .knowledge-guide-card:hover {
+  .guide-card:hover {
     @apply -translate-y-0.5 border-primary/35 shadow-md;
   }
 
   /* Card specific article formatting */
-  .knowledge-guide-card .knowledge-article h3 {
+  .guide-card .guide-article h3 {
     @apply mt-5 mb-2.5 flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-base-content/45;
   }
   
-  .knowledge-guide-card .knowledge-article h3::after {
+  .guide-card .guide-article h3::after {
     content: "";
     @apply h-[1px] flex-1 bg-base-300/70;
   }
   
-  .knowledge-guide-card .knowledge-article ul {
+  .guide-card .guide-article ul {
     @apply space-y-2.5 pl-0 list-none mt-1;
   }
   
-  .knowledge-guide-card .knowledge-article li {
+  .guide-card .guide-article li {
     @apply relative pl-3.5 text-[14px] leading-relaxed text-base-content/78;
   }
   
-  .knowledge-guide-card .knowledge-article li::before {
+  .guide-card .guide-article li::before {
     content: "";
     @apply absolute left-0 top-[8px] h-1.5 w-1.5 rounded-full bg-primary/40;
   }
   
-  .knowledge-guide-card .knowledge-article li strong {
+  .guide-card .guide-article li strong {
     @apply text-base-content font-bold text-[14px];
   }
   
-  .knowledge-guide-card .knowledge-article a {
+  .guide-card .guide-article a {
     @apply inline-flex items-center gap-0.5 rounded bg-primary/8 px-1.5 py-0.5 text-[13px] font-semibold text-primary no-underline transition hover:bg-primary/15;
   }
 
-  .knowledge-guide-card-top {
+  .guide-card-top {
     @apply flex items-center justify-between gap-3;
   }
 
-  .knowledge-guide-badge {
+  .guide-badge {
     @apply inline-flex rounded-full border border-primary/18 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.04em] text-primary;
   }
 
-  .knowledge-guide-arrow {
+  .guide-arrow {
     @apply text-xs font-semibold text-base-content/45;
   }
 
-  .knowledge-guide-card-title {
+  .guide-card-title {
     @apply mt-4 text-xl font-bold tracking-tight text-base-content;
   }
 
-  .knowledge-guide-card-summary {
+  .guide-card-summary {
     @apply mt-2 text-sm leading-6 text-base-content/78;
   }
 
-  .knowledge-guide-meta {
+  .guide-meta {
     @apply mt-5 space-y-3;
   }
 
-  .knowledge-guide-meta dt {
+  .guide-meta dt {
     @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-base-content/45;
   }
 
-  .knowledge-guide-meta dd {
+  .guide-meta dd {
     @apply mt-1 text-sm leading-6 text-base-content/88;
   }
 
-  .knowledge-guide-example {
+  .guide-example {
     @apply mt-5;
   }
 
-  .knowledge-guide-example-label {
+  .guide-example-label {
     @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-base-content/45;
   }
 
-  .knowledge-guide-example-pre {
+  .guide-example-pre {
     @apply mt-2 overflow-x-auto rounded-2xl border border-base-300 bg-base-200 p-3 text-xs leading-6 text-base-content;
   }
 
-  .knowledge-next-step-label {
+  .guide-next-step-label {
     @apply text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45;
   }
 
-  .knowledge-next-step-link {
+  .guide-next-step-link {
     @apply mt-2 inline-flex text-lg font-bold text-primary no-underline transition hover:opacity-80;
   }
 
-  .knowledge-article h1 {
+  .guide-article h1 {
     @apply text-3xl font-bold tracking-normal text-base-content;
   }
 
-  .knowledge-article h2 {
+  .guide-article h2 {
     @apply mt-8 text-xl font-bold tracking-normal text-base-content;
   }
 
-  .knowledge-article h3 {
+  .guide-article h3 {
     @apply mt-6 text-lg font-semibold tracking-normal text-base-content;
   }
 
-  .knowledge-article p {
+  .guide-article p {
     @apply mt-4 text-base leading-8;
   }
 
-  .knowledge-article ul {
+  .guide-article ul {
     @apply mt-3 list-disc space-y-2 pl-6 text-base leading-7;
   }
 
-  .knowledge-article ol {
+  .guide-article ol {
     @apply mt-3 list-decimal space-y-2 pl-6 text-base leading-7;
   }
 
-  .knowledge-article a {
+  .guide-article a {
     @apply font-semibold text-primary hover:opacity-80 hover:underline;
   }
 
-  .knowledge-article code {
+  .guide-article code {
     @apply rounded bg-base-300 px-1 py-0.5 text-sm text-base-content;
   }
 
-  .knowledge-article pre {
+  .guide-article pre {
     @apply mt-4 overflow-x-auto rounded-xl border border-base-300 bg-base-200 p-4 text-sm leading-6 text-base-content;
   }
 
-  .knowledge-article pre code {
+  .guide-article pre code {
     @apply bg-transparent p-0 text-inherit;
   }
 
-  .card-body .knowledge-article > :first-child {
+  .card-body .guide-article > :first-child {
     @apply mt-0;
   }
 
@@ -366,6 +366,90 @@
 
   .page-hero-copy {
     @apply mt-2 text-sm leading-6 text-base-content/80;
+  }
+
+  .tool-tablist-wrap {
+    @apply overflow-x-auto;
+  }
+
+  .tool-tablist {
+    @apply inline-flex min-w-full flex-nowrap gap-1 rounded-2xl border border-base-300/80 bg-base-200/85 p-1 shadow-sm md:min-w-0;
+  }
+
+  .tool-tab {
+    @apply rounded-xl border border-transparent px-3.5 py-2 text-sm font-semibold transition-colors transition-shadow duration-200;
+  }
+
+  .tool-tab-inactive {
+    @apply text-base-content/75 hover:bg-base-100 hover:text-primary;
+  }
+
+  .tool-tab-active {
+    @apply border-base-300/80 bg-base-100 text-primary shadow-sm;
+  }
+
+  .tool-tab-badge {
+    @apply ml-2 rounded-full bg-base-200 px-2 py-0.5 text-[11px] font-semibold text-base-content/60;
+  }
+
+  .ip-purity-facts-grid {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+
+  .ip-purity-fact-card {
+    @apply rounded-xl border border-base-300 bg-base-200/70 px-4 py-3;
+  }
+
+  .ip-purity-fact-card dt {
+    @apply text-xs font-semibold uppercase tracking-wide text-base-content/50;
+  }
+
+  .ip-purity-fact-card dd {
+    @apply mt-2 break-words text-sm font-semibold leading-6 text-base-content;
+  }
+
+  .ip-purity-map-card {
+    @apply rounded-2xl border border-base-300 bg-base-200/60 p-4;
+  }
+
+  .ip-purity-map {
+    @apply mt-3 overflow-hidden rounded-2xl border border-base-300 bg-base-100;
+    min-height: 250px;
+  }
+
+  .ip-purity-map-empty {
+    @apply flex h-full min-h-[250px] flex-col items-center justify-center gap-2 px-6 text-center text-sm text-base-content/65;
+  }
+
+  .ip-purity-map .maplibregl-ctrl-attrib,
+  .ip-purity-map .maplibregl-ctrl-attrib a {
+    @apply text-[10px] text-base-content/55;
+  }
+
+  .ip-purity-map .maplibregl-popup-content {
+    @apply rounded-xl border border-base-300 bg-base-100 px-3 py-2 shadow-lg;
+  }
+
+  .ip-purity-map-popup {
+    @apply flex flex-col gap-1 text-xs text-base-content;
+  }
+
+  .ip-purity-map-popup strong {
+    @apply font-semibold text-base-content;
+  }
+
+  .ip-purity-map-popup span {
+    @apply text-base-content/72;
+  }
+
+  .ip-purity-signals,
+  .ip-purity-sources {
+    @apply grid gap-3;
+  }
+
+  .ip-purity-signal-card,
+  .ip-purity-source-card {
+    @apply rounded-xl border border-base-300 bg-base-200/55 px-4 py-4;
   }
 
   /* 收藏功能高亮状态 */

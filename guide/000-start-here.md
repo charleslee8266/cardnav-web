@@ -3,7 +3,7 @@ title: 开始向导
 description: 从 Start here 开始，先确定模型、再选使用方式、再补齐工具与支付等准备项。
 next:
   slug: choose-model
-  title: 一、选择你想使用的大模型
+  title: 一、选择你想使用的 AI 大模型
 ---
 # 开始向导
 
@@ -15,8 +15,7 @@ next:
 
 建议按照以下四步开始探索：
 
-- [第一步：选择你想使用的大模型](./100-choose-model.md)
+- [第一步：选择你想使用的 AI 大模型](./100-choose-model.md)
 - [第二步：评估最适合你的大模型使用方式](./200-choose-usage-method.md)
 - [第三步：准备网络与支付环境，挑选商家避坑](./300-practical-prep.md)
-- [第四步：使用期间的风控与日常避坑](./400-daily-usage-risk.md)
-
+- [第四步：AI 订阅使用期间的风控与日常避坑](./400-daily-usage-risk.md)

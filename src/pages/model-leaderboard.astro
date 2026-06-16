@@ -1,6 +1,6 @@
 ---
 /*
-文件说明: 渲染 CardNav 模型排行榜页面，按 Arena 的四类任务展示当前大模型排行。
+文件说明: 渲染 CardNav 模型排行榜页面，按四类任务展示当前大模型排行。
 */
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildSeoContext } from '../seo.js';
@@ -24,20 +24,12 @@ const taskGroups = Array.from(
     map.set(row.taskSlug, {
       taskSlug: row.taskSlug,
       taskLabel: row.taskLabel,
-      sourceName: row.sourceName,
-      sourceUrl: row.sourceUrl,
-      arenaSlug: row.arenaSlug,
-      leaderboardSlug: row.leaderboardSlug,
       rows: [row],
     });
     return map;
   }, new Map<string, {
     taskSlug: string;
     taskLabel: string;
-    sourceName: string;
-    sourceUrl: string;
-    arenaSlug: string;
-    leaderboardSlug: string;
     rows: typeof rows;
   }>()).values(),
 );
@@ -48,7 +40,7 @@ const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/model-leaderboard',
   title: '模型排行榜',
-  description: '查看 Arena 当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
+  description: '查看当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
 });
@@ -58,16 +50,12 @@ const seo = buildSeoContext({
   <section class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body p-5">
       <div class="page-hero-wrap">
-        <p class="page-hero-kicker">CardNav 模型能力观察</p>
         <h2 class="page-hero-title">模型排行榜</h2>
         <p class="page-hero-copy">
-          这里先按 Arena 当前公开榜单同步四类任务：编程、创意写作、数学和文生图。
-          每日刷新一次，保留原始名次、模型名和评分，方便快速看最近谁在不同任务上更强。
+          大模型能力公开排行榜，包含编程、创意写作、数学和文生图榜单。
         </p>
       </div>
-      <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-base-content/60">
-        <span>任务类型：{taskGroups.length || 0}</span>
-        <span>总条目：{rows.length}</span>
+      <div class="flex flex-wrap items-center gap-3 text-xs text-base-content/60">
         <span>最近刷新（北京时间）：{updateTime}</span>
       </div>
     </div>
@@ -91,13 +79,7 @@ const seo = buildSeoContext({
   {taskGroups.map(group => (
     <section id={'panel-' + group.taskSlug} class="leaderboard-panel card bg-base-100 border border-base-300 shadow-sm overflow-hidden" style={group.taskSlug === firstGroupKey ? 'display: block;' : 'display: none;'}>
       <div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p class="text-sm font-bold text-base-content">{group.taskLabel}</p>
-            <p class="text-xs text-base-content/60">Arena / {group.arenaSlug} / {group.leaderboardSlug}</p>
-          </div>
-          <a href={group.sourceUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs">查看来源</a>
-        </div>
+        <p class="text-sm font-bold text-base-content">{group.taskLabel}</p>
       </div>
       <div class="product-table-scroll">
         <table class="table table-zebra table-md w-full border-collapse">

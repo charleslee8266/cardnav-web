@@ -1,5 +1,5 @@
 /**
- * 文件说明: 在构建期扫描 public-web/guide 下的 Markdown 文档，生成知识库列表、详情内容和站内跳转链接。
+ * 文件说明: 在构建期扫描 public-web/guide 下的 Markdown 文档，生成向导列表、详情内容和站内跳转链接。
  * 对应文档: public-web/guide
  */
 import matter from 'gray-matter';
@@ -7,17 +7,7 @@ import MarkdownIt from 'markdown-it';
 
 const cardnavSiteOrigin = 'https://cardnav.xyz';
 
-export type CardSection = {
-  title: string;
-  badge?: string;
-  icon?: string;
-  risk?: string;
-  fitFor?: string;
-  notFitFor?: string;
-  html: string;
-};
-
-export type KnowledgeArticle = {
+export type GuideArticle = {
   slug: string;
   title: string;
   description: string;
@@ -25,40 +15,16 @@ export type KnowledgeArticle = {
   order: number;
   parentLink: GuideParentLink | null;
   nextLink: GuideLinkRef | null;
-  guidePresentation: GuidePresentation | null;
-  presentation: 'document' | 'cards';
 };
 
-export type RenderedKnowledgeArticle = KnowledgeArticle & {
+export type RenderedGuideArticle = GuideArticle & {
   markdown: string;
   html: string;
-  introHtml?: string;
-  cards?: CardSection[];
 };
 
-export type KnowledgeNavItem = {
-  article: KnowledgeArticle;
+export type GuideNavItem = {
+  article: GuideArticle;
   depth: number;
-};
-
-export type GuideCard = {
-  title: string;
-  slug: string;
-  badge: string;
-  summary: string;
-  fitFor: string;
-  notFitFor: string;
-  risk: string;
-  example?: string;
-  exampleLang?: string;
-};
-
-export type GuidePresentation = {
-  kind: 'card-grid';
-  eyebrow: string;
-  intro: string;
-  cards: GuideCard[];
-  showArticleBody?: boolean;
 };
 
 export type GuideParentLink = {
@@ -78,42 +44,20 @@ const markdownRenderer = new MarkdownIt({
   typographer: true,
 });
 
-const rawKnowledgeMarkdownModules = import.meta.glob('../guide/*.md', {
+const rawGuideMarkdownModules = import.meta.glob('../guide/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
 }) as Record<string, string>;
-
-type FrontmatterGuideCard = {
-  title?: unknown;
-  slug?: unknown;
-  badge?: unknown;
-  summary?: unknown;
-  fitFor?: unknown;
-  notFitFor?: unknown;
-  risk?: unknown;
-  example?: unknown;
-  exampleLang?: unknown;
-};
-
-type FrontmatterGuidePresentation = {
-  kind?: unknown;
-  eyebrow?: unknown;
-  intro?: unknown;
-  cards?: unknown;
-  showArticleBody?: unknown;
-};
 
 type FrontmatterData = {
   title?: unknown;
   description?: unknown;
   parent?: unknown;
   next?: unknown;
-  guidePresentation?: FrontmatterGuidePresentation | null;
-  presentation?: unknown;
 };
 
-type ParsedKnowledgeDocument = {
+type ParsedGuideDocument = {
   fileName: string;
   sourcePath: string;
   stem: string;
@@ -124,8 +68,6 @@ type ParsedKnowledgeDocument = {
   description: string;
   directParentLink: GuideParentLink | null;
   directNextLink: GuideLinkRef | null;
-  guidePresentation: GuidePresentation | null;
-  presentation: 'document' | 'cards';
 };
 
 function fileNameFromModulePath(modulePath: string) {
@@ -147,63 +89,6 @@ function slugFromStem(stem: string) {
 
 function asNonEmptyString(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
-}
-
-function parseGuideCard(value: unknown): GuideCard | null {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-  const rawCard = value as FrontmatterGuideCard;
-  const title = asNonEmptyString(rawCard.title);
-  const slug = asNonEmptyString(rawCard.slug);
-  const badge = asNonEmptyString(rawCard.badge);
-  const summary = asNonEmptyString(rawCard.summary);
-  const fitFor = asNonEmptyString(rawCard.fitFor);
-  const notFitFor = asNonEmptyString(rawCard.notFitFor);
-  const risk = asNonEmptyString(rawCard.risk);
-  const example = asNonEmptyString(rawCard.example) ?? undefined;
-  const exampleLang = asNonEmptyString(rawCard.exampleLang) ?? undefined;
-  if (!title || !slug || !badge || !summary || !fitFor || !notFitFor || !risk) {
-    return null;
-  }
-  return {
-    title,
-    slug,
-    badge,
-    summary,
-    fitFor,
-    notFitFor,
-    risk,
-    example,
-    exampleLang,
-  };
-}
-
-function parseGuidePresentation(value: unknown): GuidePresentation | null {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-  const rawPresentation = value as FrontmatterGuidePresentation;
-  if (rawPresentation.kind !== 'card-grid') {
-    return null;
-  }
-  const eyebrow = asNonEmptyString(rawPresentation.eyebrow);
-  const intro = asNonEmptyString(rawPresentation.intro);
-  const cards = Array.isArray(rawPresentation.cards)
-    ? rawPresentation.cards
-      .map(parseGuideCard)
-      .filter((card): card is GuideCard => card !== null)
-    : [];
-  if (!eyebrow || !intro || cards.length === 0) {
-    return null;
-  }
-  return {
-    kind: 'card-grid',
-    eyebrow,
-    intro,
-    cards,
-    showArticleBody: rawPresentation.showArticleBody === false ? false : true,
-  };
 }
 
 function parseGuideParentLink(value: unknown): GuideParentLink | null {
@@ -243,7 +128,7 @@ function parseGuideLinkRef(value: unknown): GuideLinkRef | null {
 function resolveParentLink(
   slug: string,
   directParentBySlug: Map<string, GuideParentLink | null>,
-  documentBySlug: Map<string, ParsedKnowledgeDocument>,
+  documentBySlug: Map<string, ParsedGuideDocument>,
   visited = new Set<string>(),
 ): GuideParentLink | null {
   const directParent = directParentBySlug.get(slug) ?? null;
@@ -271,9 +156,9 @@ function resolveParentLink(
 
 function collectDescendants(
   parentSlug: string | null,
-  childrenByParentSlug: Map<string | null, ParsedKnowledgeDocument[]>,
+  childrenByParentSlug: Map<string | null, ParsedGuideDocument[]>,
   depth: number,
-): KnowledgeNavItem[] {
+): GuideNavItem[] {
   const children = childrenByParentSlug.get(parentSlug) ?? [];
   return children.flatMap(child => ([
     {
@@ -285,8 +170,6 @@ function collectDescendants(
         order: child.order,
         parentLink: null,
         nextLink: null,
-        guidePresentation: child.guidePresentation,
-        presentation: child.presentation,
       },
       depth,
     },
@@ -344,7 +227,7 @@ function rewriteMarkdownLinks(markdown: string, slugByFileName: Map<string, stri
       if (!slug) {
         return `](${relativePath}${hash})`;
       }
-      return `](/knowledge/${slug}${hash})`;
+      return `](/guide/${slug}${hash})`;
     })
     .replace(/\]\((https:\/\/cardnav\.xyz[^)\s]*)\)/gu, (_match, absoluteUrl: string) => {
       try {
@@ -366,9 +249,9 @@ function rewriteRenderedHtmlLinks(html: string) {
     return `href="${normalized}"`;
   });
 
-  // Open links that do not target /knowledge or # in a new tab
+  // Open links that do not target /guide or # in a new tab
   processed = processed.replace(/<a\s+([^>]*?)href="([^"]+)"([^>]*?)>/gu, (match, prefix, href, suffix) => {
-    if (href.startsWith('/knowledge') || href.startsWith('#')) {
+    if (href.startsWith('/guide') || href.startsWith('#')) {
       return match;
     }
     if (prefix.includes('target=') || suffix.includes('target=')) {
@@ -380,102 +263,153 @@ function rewriteRenderedHtmlLinks(html: string) {
   return processed;
 }
 
-function parseCardsFromMarkdown(
-  markdown: string,
-  slugByFileName: Map<string, string>
-): { introHtml: string; cards: CardSection[] } {
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/gu, '&amp;')
+    .replace(/</gu, '&lt;')
+    .replace(/>/gu, '&gt;')
+    .replace(/"/gu, '&quot;')
+    .replace(/'/gu, '&#39;');
+}
+
+function renderMarkdownFragment(markdown: string, slugByFileName: Map<string, string>) {
+  return rewriteRenderedHtmlLinks(markdownRenderer.render(rewriteMarkdownLinks(markdown, slugByFileName)));
+}
+
+function parseCommentAttributes(line: string) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('<!--') || !trimmed.endsWith('-->')) {
+    return null;
+  }
+  const commentContent = trimmed.replace(/^<!--\s*/u, '').replace(/\s*-->$/u, '');
+  const attrs = new Map<string, string>();
+  const attrRegex = /([a-zA-Z0-9_-]+)="([^"]*)"/gu;
+  let attrMatch;
+  while ((attrMatch = attrRegex.exec(commentContent)) !== null) {
+    attrs.set(attrMatch[1], attrMatch[2]);
+  }
+  return attrs;
+}
+
+type InlineMarkdownCard = {
+  title: string;
+  badge?: string;
+  markdown: string;
+};
+
+function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<string, string>) {
+  if (cards.length === 0) {
+    return '';
+  }
+
+  const cardsHtml = cards.map(card => {
+    const badgeHtml = card.badge
+      ? `<span class="guide-badge">${escapeHtml(card.badge)}</span>`
+      : '<span></span>';
+
+    const bodyHtml = renderMarkdownFragment(card.markdown, slugByFileName);
+    return [
+      '<article class="guide-card">',
+      `<div class="guide-card-top">${badgeHtml}</div>`,
+      `<h3 class="guide-card-title">${escapeHtml(card.title)}</h3>`,
+      `<div class="guide-article">${bodyHtml}</div>`,
+      '</article>',
+    ].join('');
+  }).join('');
+
+  return `<div class="guide-grid">${cardsHtml}</div>`;
+}
+
+function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map<string, string>) {
   const lines = markdown.split(/\r?\n/u);
-  const cards: CardSection[] = [];
-  let introLines: string[] = [];
-  let currentCardTitle = '';
-  let currentCardMetadata: { badge?: string; icon?: string } = {};
-  let currentCardLines: string[] = [];
-  let inCard = false;
+  const htmlParts: string[] = [];
+  const introLines: string[] = [];
+  const sections: Array<{ title: string; badge?: string; isCard: boolean; bodyLines: string[] }> = [];
+  let currentSection: { title: string; badge?: string; isCard: boolean; bodyLines: string[] } | null = null;
 
-  const pushCurrentCard = () => {
-    let firstNonEmptyIndex = -1;
-    for (let i = 0; i < currentCardLines.length; i++) {
-      if (currentCardLines[i].trim() !== '') {
-        if (currentCardLines[i].trim().startsWith('<!--') && currentCardLines[i].trim().endsWith('-->')) {
-          firstNonEmptyIndex = i;
-        }
-        break;
+  const pushCurrentSection = () => {
+    if (!currentSection) {
+      return;
+    }
+    let commentLineIndex = -1;
+    for (let index = 0; index < currentSection.bodyLines.length; index += 1) {
+      if (currentSection.bodyLines[index].trim() === '') {
+        continue;
+      }
+      commentLineIndex = index;
+      break;
+    }
+    if (commentLineIndex !== -1) {
+      const attrs = parseCommentAttributes(currentSection.bodyLines[commentLineIndex]);
+      if (attrs) {
+        currentSection.isCard = true;
+        currentSection.badge = currentSection.badge || attrs.get('badge') || undefined;
+        currentSection.bodyLines.splice(commentLineIndex, 1);
       }
     }
-
-    const metadata: { badge?: string; icon?: string; risk?: string; fitFor?: string; notFitFor?: string } = { ...currentCardMetadata };
-    if (firstNonEmptyIndex !== -1) {
-      const commentContent = currentCardLines[firstNonEmptyIndex].trim().replace(/^<!--\s*/u, '').replace(/\s*-->$/u, '');
-      const attrRegex = /([a-zA-Z0-9_-]+)="([^"]*)"/gu;
-      let attrMatch;
-      while ((attrMatch = attrRegex.exec(commentContent)) !== null) {
-        if (attrMatch[1] === 'badge') metadata.badge = attrMatch[2];
-        if (attrMatch[1] === 'icon') metadata.icon = attrMatch[2];
-        if (attrMatch[1] === 'risk') metadata.risk = attrMatch[2];
-        if (attrMatch[1] === 'fitFor') metadata.fitFor = attrMatch[2];
-        if (attrMatch[1] === 'notFitFor') metadata.notFitFor = attrMatch[2];
-      }
-      currentCardLines.splice(firstNonEmptyIndex, 1);
-    }
-
-    cards.push({
-      title: currentCardTitle,
-      badge: metadata.badge,
-      icon: metadata.icon,
-      risk: metadata.risk,
-      fitFor: metadata.fitFor,
-      notFitFor: metadata.notFitFor,
-      html: rewriteRenderedHtmlLinks(markdownRenderer.render(rewriteMarkdownLinks(currentCardLines.join('\n'), slugByFileName))),
-    });
+    sections.push(currentSection);
+    currentSection = null;
   };
 
   for (const line of lines) {
-    if (line.trim().startsWith('## ')) {
-      if (inCard) {
-        pushCurrentCard();
-        currentCardLines = [];
-      } else {
-        inCard = true;
-      }
-      
-      const h2Content = line.replace(/^\s*##\s+/u, '').trim();
-      const commentMatch = h2Content.match(/<!--\s*([\s\S]*?)\s*-->/u);
-      let cleanTitle = h2Content;
-      const metadata: { badge?: string; icon?: string } = {};
-      
-      if (commentMatch) {
-        cleanTitle = h2Content.replace(/<!--\s*[\s\S]*?\s*-->/gu, '').trim();
-        const commentContent = commentMatch[1];
-        const attrRegex = /([a-zA-Z0-9_-]+)="([^"]*)"/gu;
-        let attrMatch;
-        while ((attrMatch = attrRegex.exec(commentContent)) !== null) {
-          if (attrMatch[1] === 'badge') metadata.badge = attrMatch[2];
-          if (attrMatch[1] === 'icon') metadata.icon = attrMatch[2];
-        }
-      }
-      
-      currentCardTitle = cleanTitle;
-      currentCardMetadata = metadata;
+    const trimmed = line.trim();
+    if (trimmed.startsWith('## ')) {
+      pushCurrentSection();
+      const headingContent = trimmed.replace(/^##\s+/u, '').trim();
+      const commentMatch = headingContent.match(/<!--\s*([\s\S]*?)\s*-->/u);
+      const title = headingContent.replace(/<!--\s*[\s\S]*?\s*-->/gu, '').trim();
+      const attrs = commentMatch ? parseCommentAttributes(`<!-- ${commentMatch[1]} -->`) : null;
+      currentSection = {
+        title,
+        badge: attrs?.get('badge') || undefined,
+        isCard: commentMatch !== null,
+        bodyLines: [],
+      };
+      continue;
+    }
+
+    if (currentSection) {
+      currentSection.bodyLines.push(line);
     } else {
-      if (inCard) {
-        currentCardLines.push(line);
-      } else {
-        if (!line.trim().startsWith('# ')) {
-          introLines.push(line);
-        }
-      }
+      introLines.push(line);
     }
   }
 
-  if (inCard) {
-    pushCurrentCard();
+  pushCurrentSection();
+
+  if (introLines.length > 0) {
+    htmlParts.push(renderMarkdownFragment(introLines.join('\n'), slugByFileName));
   }
 
-  const introHtml = rewriteRenderedHtmlLinks(markdownRenderer.render(rewriteMarkdownLinks(introLines.join('\n'), slugByFileName)));
-  return { introHtml, cards };
+  let pendingCards: InlineMarkdownCard[] = [];
+  const flushPendingCards = () => {
+    if (pendingCards.length === 0) {
+      return;
+    }
+    htmlParts.push(renderInlineCardGrid(pendingCards, slugByFileName));
+    pendingCards = [];
+  };
+
+  for (const section of sections) {
+    if (section.isCard) {
+      pendingCards.push({
+        title: section.title,
+        badge: section.badge,
+        markdown: section.bodyLines.join('\n').trim(),
+      });
+      continue;
+    }
+
+    flushPendingCards();
+    const sectionMarkdown = [`## ${section.title}`, ...section.bodyLines].join('\n');
+    htmlParts.push(renderMarkdownFragment(sectionMarkdown, slugByFileName));
+  }
+
+  flushPendingCards();
+  return htmlParts.join('');
 }
 
-const rawKnowledgeDocuments: ParsedKnowledgeDocument[] = Object.entries(rawKnowledgeMarkdownModules)
+const rawGuideDocuments: ParsedGuideDocument[] = Object.entries(rawGuideMarkdownModules)
   .map(([modulePath, rawMarkdown]) => {
     const fileName = fileNameFromModulePath(modulePath);
     const stem = stemFromFileName(fileName);
@@ -485,7 +419,6 @@ const rawKnowledgeDocuments: ParsedKnowledgeDocument[] = Object.entries(rawKnowl
     const frontmatter = (data ?? {}) as FrontmatterData;
     const frontmatterTitle = asNonEmptyString(frontmatter.title);
     const frontmatterDescription = asNonEmptyString(frontmatter.description);
-    const presentation: 'document' | 'cards' = frontmatter.presentation === 'cards' || frontmatter.presentation === 'wizard' ? 'cards' : 'document';
     return {
       fileName,
       sourcePath: modulePath,
@@ -497,8 +430,6 @@ const rawKnowledgeDocuments: ParsedKnowledgeDocument[] = Object.entries(rawKnowl
       description: frontmatterDescription || descriptionFromMarkdown(content),
       directParentLink: parseGuideParentLink(frontmatter.parent),
       directNextLink: parseGuideLinkRef(frontmatter.next),
-      guidePresentation: parseGuidePresentation(frontmatter.guidePresentation),
-      presentation,
     };
   })
   .sort((left, right) => {
@@ -508,20 +439,12 @@ const rawKnowledgeDocuments: ParsedKnowledgeDocument[] = Object.entries(rawKnowl
     return left.stem.localeCompare(right.stem, 'zh-Hans-CN');
   });
 
-const slugByFileName = new Map(rawKnowledgeDocuments.map(item => [item.fileName, item.slug]));
-const documentBySlug = new Map(rawKnowledgeDocuments.map(item => [item.slug, item]));
-const directParentBySlug = new Map(rawKnowledgeDocuments.map(item => [item.slug, item.directParentLink]));
+const slugByFileName = new Map(rawGuideDocuments.map(item => [item.fileName, item.slug]));
+const documentBySlug = new Map(rawGuideDocuments.map(item => [item.slug, item]));
+const directParentBySlug = new Map(rawGuideDocuments.map(item => [item.slug, item.directParentLink]));
 
-export const renderedKnowledgeArticles: RenderedKnowledgeArticle[] = rawKnowledgeDocuments.map(item => {
+export const renderedGuideArticles: RenderedGuideArticle[] = rawGuideDocuments.map(item => {
   const normalizedMarkdown = rewriteMarkdownLinks(item.markdown, slugByFileName);
-  let introHtml: string | undefined = undefined;
-  let cards: CardSection[] | undefined = undefined;
-  
-  if (item.presentation === 'cards') {
-    const parsed = parseCardsFromMarkdown(item.markdown, slugByFileName);
-    introHtml = parsed.introHtml;
-    cards = parsed.cards;
-  }
 
   return {
     slug: item.slug,
@@ -529,7 +452,6 @@ export const renderedKnowledgeArticles: RenderedKnowledgeArticle[] = rawKnowledg
     description: item.description,
     sourcePath: item.sourcePath,
     order: item.order,
-    presentation: item.presentation,
     parentLink: resolveParentLink(item.slug, directParentBySlug, documentBySlug),
     nextLink: (() => {
       const nextSlug = item.directNextLink?.slug;
@@ -542,15 +464,12 @@ export const renderedKnowledgeArticles: RenderedKnowledgeArticle[] = rawKnowledg
         title: item.directNextLink?.title || nextDocument?.title,
       };
     })(),
-    guidePresentation: item.guidePresentation,
     markdown: normalizedMarkdown,
-    html: rewriteRenderedHtmlLinks(markdownRenderer.render(normalizedMarkdown)),
-    introHtml,
-    cards,
+    html: renderDocumentHtmlWithInlineCards(item.markdown, slugByFileName),
   };
 });
 
-export const knowledgeArticles: KnowledgeArticle[] = renderedKnowledgeArticles.map(({
+export const guideArticles: GuideArticle[] = renderedGuideArticles.map(({
   slug,
   title,
   description,
@@ -558,8 +477,6 @@ export const knowledgeArticles: KnowledgeArticle[] = renderedKnowledgeArticles.m
   order,
   parentLink,
   nextLink,
-  guidePresentation,
-  presentation,
 }) => ({
   slug,
   title,
@@ -568,16 +485,14 @@ export const knowledgeArticles: KnowledgeArticle[] = renderedKnowledgeArticles.m
   order,
   parentLink,
   nextLink,
-  guidePresentation,
-  presentation,
 }));
 
-export const defaultKnowledgeArticle = renderedKnowledgeArticles[0] ?? null;
+export const defaultGuideArticle = renderedGuideArticles[0] ?? null;
 
-const articleBySlug = new Map(knowledgeArticles.map(article => [article.slug, article]));
-const childrenByParentSlug = new Map<string | null, ParsedKnowledgeDocument[]>();
+const articleBySlug = new Map(guideArticles.map(article => [article.slug, article]));
+const childrenByParentSlug = new Map<string | null, ParsedGuideDocument[]>();
 
-for (const item of rawKnowledgeDocuments) {
+for (const item of rawGuideDocuments) {
   const parentSlug = item.directParentLink?.slug ?? null;
   const existingChildren = childrenByParentSlug.get(parentSlug) ?? [];
   existingChildren.push(item);
@@ -590,11 +505,11 @@ for (const item of rawKnowledgeDocuments) {
   childrenByParentSlug.set(parentSlug, existingChildren);
 }
 
-export const knowledgeNavItems: KnowledgeNavItem[] = collectDescendants(null, childrenByParentSlug, 0).map(item => ({
+export const guideNavItems: GuideNavItem[] = collectDescendants(null, childrenByParentSlug, 0).map(item => ({
   article: articleBySlug.get(item.article.slug) ?? item.article,
   depth: item.depth,
 }));
 
-export function findKnowledgeArticle(slug: string) {
-  return renderedKnowledgeArticles.find(item => item.slug === slug) ?? null;
+export function findGuideArticle(slug: string) {
+  return renderedGuideArticles.find(item => item.slug === slug) ?? null;
 }

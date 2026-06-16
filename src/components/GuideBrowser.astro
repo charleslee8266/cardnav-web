@@ -1,0 +1,120 @@
+---
+/*
+文件说明: 渲染向导双栏浏览界面，左侧显示文档列表，右侧显示当前文档正文和赞助区。
+*/
+import Sponsors from './Sponsors.astro';
+import type { GuideParentLink, GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
+
+type Props = {
+  articles: GuideArticle[];
+  navItems: GuideNavItem[];
+  currentArticle: RenderedGuideArticle;
+};
+
+const { navItems, currentArticle } = Astro.props;
+
+function buildBreadcrumbs(parentLink: GuideParentLink | null) {
+  const chain: GuideParentLink[] = [];
+  let cursor = parentLink;
+  while (cursor) {
+    chain.unshift(cursor);
+    cursor = cursor.parent ?? null;
+  }
+  return chain.map(item => ({
+    slug: item.slug,
+    title: item.title?.trim() || item.slug,
+  }));
+}
+
+const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
+---
+
+<section class="guide-browser-grid h-full min-h-0 overflow-hidden grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
+  <aside class="guide-sidebar card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <div class="border-b border-base-300 bg-base-200 px-4 py-3">
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/60">Guide</p>
+      <h2 class="mt-1 text-lg font-bold text-base-content">全部文档</h2>
+    </div>
+    <nav aria-label="向导文档列表" class="guide-sidebar-scroll p-2">
+      <ul class="space-y-1">
+        {navItems.map(item => {
+          const article = item.article;
+          const isActive = article.slug === currentArticle.slug;
+          return (
+            <li>
+              <a
+                href={`/guide/${article.slug}`}
+                aria-current={isActive ? 'page' : undefined}
+                data-guide-current={isActive ? 'true' : undefined}
+                class:list={[
+                  'guide-sidebar-link block rounded-xl border px-3 py-1.5 transition-colors',
+                  item.depth > 0 && 'guide-sidebar-link-child',
+                  isActive
+                    ? 'border-primary/25 bg-primary/8 text-primary'
+                    : 'border-transparent text-base-content/80 hover:border-base-300 hover:bg-base-200/70 hover:text-base-content',
+                ]}
+                style={`padding-left: ${0.75 + item.depth * 1.1}rem;`}
+              >
+                <span class:list={[
+                  'block leading-5',
+                  item.depth === 0 ? 'text-sm font-semibold' : 'text-[13px] font-medium',
+                  isActive && 'font-bold'
+                ]}>{article.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  </aside>
+
+  <section class="guide-content-scroll min-w-0 space-y-4">
+    <nav aria-label="向导面包屑" class="guide-breadcrumbs rounded-2xl border border-base-300 bg-base-100 px-4 py-3 shadow-sm">
+      <ol class="guide-breadcrumb-list">
+        <li>
+          <a href="/guide">向导</a>
+        </li>
+        {breadcrumbs.map(item => (
+          <li>
+            <span aria-hidden="true" class="guide-breadcrumb-separator">/</span>
+            <a href={`/guide/${item.slug}`}>{item.title}</a>
+          </li>
+        ))}
+        <li aria-current="page">
+          <span aria-hidden="true" class="guide-breadcrumb-separator">/</span>
+          <span class="guide-breadcrumb-current">{currentArticle.title}</span>
+        </li>
+      </ol>
+    </nav>
+
+    <section class="guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
+      <div class="guide-hero">
+        <p class="guide-eyebrow">向导指南</p>
+        <h1 class="guide-title">{currentArticle.title}</h1>
+      </div>
+      <div class="guide-article guide-intro mt-6 p-0 border-0 bg-transparent text-base-content/90" set:html={currentArticle.html} />
+    </section>
+
+    {currentArticle.nextLink && (
+      <a
+        href={`/guide/${currentArticle.nextLink.slug}`}
+        class="guide-next-step block rounded-2xl border border-base-300 bg-base-100 px-5 py-4 shadow-sm no-underline transition duration-200 hover:border-primary/30 hover:bg-primary/[0.02] active:scale-[0.99]"
+      >
+        <p class="guide-next-step-label">下一步</p>
+        <span class="guide-next-step-link mt-2 inline-flex text-lg font-bold text-primary">
+          {currentArticle.nextLink.title || currentArticle.nextLink.slug}
+        </span>
+      </a>
+    )}
+
+    <Sponsors />
+  </section>
+</section>
+
+<script is:inline>
+  (() => {
+    const currentLink = document.querySelector('[data-guide-current="true"]');
+    if (!currentLink) return;
+    currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  })();
+</script>

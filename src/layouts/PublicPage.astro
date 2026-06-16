@@ -35,7 +35,7 @@ const {
 const inactiveClass = 'nav-top-tab tab text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
 const activeClass = 'nav-top-tab nav-top-tab-active tab tab-active text-sm md:text-base font-bold text-primary';
 const shouldShowHero = activeNav === 'home';
-const isKnowledgePage = activeNav === 'knowledge';
+const isGuidePage = activeNav === 'guide';
 ---
 
 <!DOCTYPE html>
@@ -77,10 +77,10 @@ const isKnowledgePage = activeNav === 'knowledge';
 </head>
 <body class:list={[
   'bg-base-200 text-base-content text-[15px] font-sans antialiased',
-  isKnowledgePage ? 'h-dvh overflow-hidden' : 'min-h-screen',
+  isGuidePage ? 'h-dvh overflow-hidden' : 'min-h-screen',
 ]}>
 <header class="sticky top-0 z-40 border-b border-base-300 bg-base-100/90 backdrop-blur">
-  <nav class="navbar w-full px-4 flex flex-wrap gap-2 justify-between">
+  <nav class="navbar w-full px-4 flex flex-wrap gap-4 justify-start">
     <div class="flex items-center gap-4 flex-wrap">
       <a href="/" aria-label="返回首页" class="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base-content hover:bg-base-200 transition">
         <img src="/favicon.webp" alt="卡网大全" width="28" height="28" class="h-7 w-7 rounded object-cover" />
@@ -91,15 +91,17 @@ const isKnowledgePage = activeNav === 'knowledge';
       </a>
       <div role="tablist" class="nav-top-tablist tabs tabs-box ml-2 md:ml-4">
         <a role="tab" href="/" class={activeNav === 'home' ? activeClass : inactiveClass}>首页</a>
+        <a role="tab" href="/guide" class={activeNav === 'guide' ? activeClass : inactiveClass}>向导</a>
+        <a role="tab" href="/shops" class={activeNav === 'shops' ? activeClass : inactiveClass}>卡网商家</a>
         <a role="tab" href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? activeClass : inactiveClass}>模型排行榜</a>
         <a role="tab" href="/official-price" class={activeNav === 'official-price' ? activeClass : inactiveClass}>官方订阅比价</a>
-        <a role="tab" href="/knowledge" class={activeNav === 'knowledge' ? activeClass : inactiveClass}>知识库</a>
         <a role="tab" href="/tools" class={activeNav === 'tools' ? activeClass : inactiveClass}>工具集</a>
-        <a role="tab" href="/submit" class={activeNav === 'submit' ? activeClass : inactiveClass}>提交商家</a>
+        <a role="tab" href="/tools/ip-purity" class={activeNav === 'ip-purity' ? activeClass : inactiveClass}>IP纯净度</a>
+        <a role="tab" href="/about" class={activeNav === 'about' ? activeClass : inactiveClass}>关于</a>
       </div>
     </div>
     <div class="flex items-center gap-1">
-      <button id="themeToggle" class="btn btn-ghost btn-circle btn-sm text-base-content/80 hover:bg-base-200" aria-label="切换主题" title="切换主题">
+      <button id="themeToggle" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 p-0 text-base-content/80 hover:bg-base-200" aria-label="切换主题" title="切换主题">
         <!-- Moon icon (show when theme is light) -->
         <svg id="themeMoonIcon" class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
           <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,9.2,10.19,10.19,0,0,0,8,18.81,8.19,8.19,0,0,1,12.14,19.69Z"/>
@@ -109,19 +111,13 @@ const isKnowledgePage = activeNav === 'knowledge';
           <path d="M12,8a4,4,0,1,0,4,4A4,4,0,0,0,12,8Zm0,6a2,2,0,1,1,2-2A2,2,0,0,1,12,14ZM12,2a1,1,0,0,0-1,1V4a1,1,0,0,0,2,0V3A1,1,0,0,0,12,2ZM12,18a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V19A1,1,0,0,0,12,18ZM5.64,4.22a1,1,0,1,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM17.36,15.94a1,1,0,0,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2ZM4,11H3a1,1,0,0,0,0,2H4a1,1,0,0,0,0-2Zm14.78-6.78a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,18.78,4.22ZM6.64,15.94a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,6.64,15.94Z"/>
         </svg>
       </button>
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 Telegram 群组" title="Telegram 群组" class="btn btn-ghost btn-circle btn-sm text-sky-600 hover:bg-sky-50">
-        <svg aria-hidden="true" viewBox="0 0 1000 1000" class="h-5 w-5">
-          <defs>
-            <linearGradient id="telegramLogoGradient" x1="50%" x2="50%" y1="0%" y2="99.2583404%">
-              <stop stop-color="#2AABEE" offset="0%"></stop>
-              <stop stop-color="#229ED9" offset="100%"></stop>
-            </linearGradient>
-          </defs>
-          <circle fill="url(#telegramLogoGradient)" cx="500" cy="500" r="500"></circle>
-          <path fill="#FFFFFF" d="M226.328419,494.722069 C372.088573,431.216685 469.284839,389.350049 517.917216,369.122161 C656.772535,311.36743 685.625481,301.334815 704.431427,301.003532 C708.567621,300.93067 717.815839,301.955743 723.806446,306.816707 C728.864797,310.92121 730.256552,316.46581 730.922551,320.357329 C731.588551,324.248848 732.417879,333.113828 731.758626,340.040666 C724.234007,419.102486 691.675104,610.964674 675.110982,699.515267 C668.10208,736.984342 654.301336,749.547532 640.940618,750.777006 C611.904684,753.448938 589.856115,731.588035 561.733393,713.153237 C517.726886,684.306416 492.866009,666.349181 450.150074,638.200013 C400.78442,605.66878 432.786119,587.789048 460.919462,558.568563 C468.282091,550.921423 596.21508,434.556479 598.691227,424.000355 C599.00091,422.680135 599.288312,417.758981 596.36474,415.160431 C593.441168,412.561881 589.126229,413.450484 586.012448,414.157198 C581.598758,415.158943 511.297793,461.625274 375.109553,553.556189 C355.154858,567.258623 337.080515,573.934908 320.886524,573.585046 C303.033948,573.199351 268.692754,563.490928 243.163606,555.192408 C211.851067,545.013936 186.964484,539.632504 189.131547,522.346309 C190.260287,513.342589 202.659244,504.134509 226.328419,494.722069 Z"></path>
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 Telegram 群组" title="Telegram 群组" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 p-0 text-base-content hover:bg-base-200 hover:text-base-content">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m22 2-7 20-4-9-9-4Z"></path>
+          <path d="M22 2 11 13"></path>
         </svg>
       </a>
-      <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 GitHub 仓库" title="GitHub 仓库" class="btn btn-ghost btn-circle btn-sm text-base-content/85 hover:bg-base-200">
+      <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 GitHub 仓库" title="GitHub 仓库" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 p-0 text-base-content/85 hover:bg-base-200">
         <svg aria-hidden="true" viewBox="0 0 16 16" class="h-5 w-5 fill-current">
           <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
         </svg>
@@ -132,7 +128,7 @@ const isKnowledgePage = activeNav === 'knowledge';
 
 <main class:list={[
   'grid w-full flex-1 content-start items-start gap-4 p-4',
-  isKnowledgePage && 'min-h-0 h-full overflow-hidden grid-rows-[minmax(0,1fr)]',
+  isGuidePage && 'min-h-0 h-full overflow-hidden grid-rows-[minmax(0,1fr)]',
 ]}>
   {shouldShowHero && (
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
@@ -146,13 +142,13 @@ const isKnowledgePage = activeNav === 'knowledge';
               <a href={canonicalUrl} aria-label="返回首页" class="inline-block text-base-content hover:text-primary transition">
                 <h1 class="text-3xl font-bold tracking-normal md:text-4xl">卡网大全</h1>
               </a>
-              <span class="text-base font-semibold text-base-content/70 md:text-lg">AI 大模型账号购买导航</span>
+              <span class="text-base font-semibold text-base-content/70 md:text-lg">一站式 AI 大模型账号购买导航</span>
               <a href={canonicalUrl} aria-label="返回首页" class="hero-domain inline-block max-w-full text-xl font-semibold tracking-normal text-primary hover:text-primary-focus transition">
                 cardnav.xyz
               </a>
             </div>
           </div>
-          <p class="mt-2 text-sm leading-6 text-base-content/85">不知道 AI 账号在哪买、哪里买便宜？这里聚合 ChatGPT Plus、Claude、Gemini、Grok、Cursor 等大模型账号商家，按商品名、商家和价格筛选，查看库存、价格与购买入口。</p>
+          <p class="mt-2 text-sm leading-6 text-base-content/85">不知道 AI 账号去哪买便宜又靠谱？这里汇总 AI 大模型排行榜、官方 AI 订阅渠道、第三方 AI 卡网比价、实用工具、风险控制、使用指南，帮你少踩坑、少花钱。</p>
           <div class="mt-4 flex flex-wrap items-center gap-2">
             <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="telegram-channel-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name="Telegram 群组" class="btn btn-primary btn-sm inline-flex items-center justify-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -168,19 +164,11 @@ const isKnowledgePage = activeNav === 'knowledge';
               GitHub
             </a>
           </div>
-          <div class="mt-4 flex flex-wrap gap-2 text-xs">
-            <span class="badge badge-outline">ChatGPT Plus 账号购买</span>
-            <span class="badge badge-outline">Claude 账号购买</span>
-            <span class="badge badge-outline">Gemini 账号购买</span>
-            <span class="badge badge-outline">AI 账号在哪里买</span>
-            <span class="badge badge-outline">大模型账号哪里便宜</span>
-          </div>
         </div>
       </div>
     </section>
   )}
 
-  {showSponsors && activeNav === 'home' && <Sponsors />}
   <slot />
   {showSponsors && activeNav !== 'home' && <Sponsors />}
 </main>
@@ -188,8 +176,9 @@ const isKnowledgePage = activeNav === 'knowledge';
 {activeNav === 'home' && (
   <footer class="footer footer-center p-6 bg-base-100 border-t border-base-300 text-base-content/60 text-xs">
     <div class="w-full text-center">
-      <p>价格数据仅供参考，实际价格以各平台为准。</p>
-      <p class="mt-1.5 flex justify-center gap-2">
+      <p class="flex justify-center gap-2">
+        <a href="/about" class="link link-hover font-semibold text-base-content/75">关于</a>
+        <span>|</span>
         <a href="/disclaimer" class="link link-hover font-semibold text-base-content/75">免责声明</a>
         <span>|</span>
         <a href="/privacy" class="link link-hover font-semibold text-base-content/75">隐私政策</a>
@@ -218,6 +207,7 @@ const isKnowledgePage = activeNav === 'knowledge';
         sunIcon.classList.add('hidden');
         moonIcon.classList.remove('hidden');
       }
+      document.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
     }
 
     // 初始化图标状态

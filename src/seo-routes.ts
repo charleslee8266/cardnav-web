@@ -1,7 +1,7 @@
 /**
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
-import { knowledgeArticles } from './knowledge.js';
+import { guideArticles } from './guide.js';
 
 export type PublicSeoRoute = {
   pathname: string;
@@ -15,19 +15,13 @@ export const staticPublicSeoRoutes: PublicSeoRoute[] = [
   {
     pathname: '/',
     title: '卡网大全',
-    description: 'AI 大模型账号购买导航，聚合 ChatGPT Plus、Claude、Gemini、Grok 等账号商家、库存、价格和购买入口。',
+    description: 'AI 大模型使用导航，汇总模型排行榜、官方订阅比价、AI 账号商家、库存、价格筛选、向导和工具入口。',
     changefreq: 'daily',
-  },
-  {
-    pathname: '/submit',
-    title: '提交商家',
-    description: '商家提交站点 URL 入驻卡网大全，进入后续收录和展示流程。',
-    changefreq: 'monthly',
   },
   {
     pathname: '/model-leaderboard',
     title: '模型排行榜',
-    description: '查看 Arena 当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
+    description: '查看当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
     changefreq: 'daily',
   },
   {
@@ -49,10 +43,22 @@ export const staticPublicSeoRoutes: PublicSeoRoute[] = [
     changefreq: 'monthly',
   },
   {
-    pathname: '/knowledge',
-    title: '知识库',
+    pathname: '/tools/ip-purity',
+    title: 'IP 纯净度检测',
+    description: '检测公网 IPv4 的代理、VPN、Tor、机房和滥用风险信号，帮助注册、登录和支付前筛掉高风险出口。',
+    changefreq: 'weekly',
+  },
+  {
+    pathname: '/guide',
+    title: '向导',
     description: 'AI 账号购买、商家选择和虚拟商品下单前的判断方法。',
     changefreq: 'weekly',
+  },
+  {
+    pathname: '/about',
+    title: '关于我们',
+    description: '了解 CardNav 为什么会被做出来，以及它想为 AI 账号购买用户和商家解决什么问题。',
+    changefreq: 'monthly',
   },
   {
     pathname: '/disclaimer',
@@ -92,8 +98,8 @@ export function resolvePublicUrl(baseUrlInput: string, pathname: string) {
 export function getPublicSeoRoutes(): PublicSeoRoute[] {
   return [
     ...staticPublicSeoRoutes,
-    ...knowledgeArticles.map(article => ({
-      pathname: `/knowledge/${article.slug}`,
+    ...guideArticles.map(article => ({
+      pathname: `/guide/${article.slug}`,
       title: article.title,
       description: article.description,
       changefreq: 'monthly' as const,

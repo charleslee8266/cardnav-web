@@ -1,0 +1,35 @@
+---
+/*
+文件说明: 渲染 CardNav 公开向导文章详情页，并与向导首页共享双栏浏览布局。
+*/
+import PublicPage from '../../layouts/PublicPage.astro';
+import GuideBrowser from '../../components/GuideBrowser.astro';
+import { findGuideArticle, guideArticles, guideNavItems } from '../../guide.js';
+import { buildSeoContext } from '../../seo.js';
+import { publicSiteUrl } from '../../site.js';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return guideArticles.map(article => ({
+    params: { slug: article.slug },
+  }));
+}
+
+const slug = Astro.params.slug || '';
+const article = findGuideArticle(slug);
+if (!article) return Astro.redirect('/guide', 302);
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: `/guide/${article.slug}`,
+  title: article.title,
+  description: article.description,
+  imagePath: '/og-cardnav.svg',
+  type: 'article',
+});
+---
+
+<PublicPage activeNav="guide" showSponsors={false} {...seo}>
+  <GuideBrowser articles={guideArticles} navItems={guideNavItems} currentArticle={article} />
+</PublicPage>
