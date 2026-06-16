@@ -1,14 +1,33 @@
-# 卡网大全
+![](assets/banner.webp)
 
-![](docs/banner.webp)
+<h1 align="center">卡网大全 · CardNav</h1>
 
-[卡网大全 (CardNav)](https://cardnav.xyz) 是一个一站式 AI 大模型使用导航入口。它把 AI 大模型排行榜与选择、官方 AI 订阅比价、第三方 AI 卡网商家与商品搜索、AI 订阅相关实用工具和使用向导放在同一个公开站点里，尽量让人少切几个页面，少在信息里来回跳。
+<p align="center">
+  <strong>一站式 AI 大模型使用导航入口，帮用户把模型选择、官方订阅比价、第三方商家搜索、实用工具和使用向导放到同一个公开站点里。</strong><br/>
+  面向 AI 订阅、账号、卡密、成品号、API/CDK 和相关工具用户，也面向希望被发现、被搜索、被合作的商家。
+</p>
 
-它不只是一个卡网列表，也不只是一个搜索页。更准确地说，它想做的是一站式 AI 使用前置导航：先帮你判断该用什么模型、该走哪种方式、哪里能找到相关服务、价格和库存大概怎样、下单前要注意哪些风险，使用过程中又有哪些工具可以直接拿来用。
+<p align="center">
+  <a href="https://cardnav.xyz">在线访问</a> ·
+  <a href="#产品故事">产品故事</a> ·
+  <a href="#一站式能力">一站式能力</a> ·
+  <a href="#面向用户">面向用户</a> ·
+  <a href="#使用方式">使用方式</a> ·
+  <a href="#使用向导">使用向导</a> ·
+  <a href="#本地运行">本地运行</a> ·
+  <a href="#贡献">贡献</a> ·
+  <a href="#license">License</a>
+</p>
+
+---
+
+[卡网大全 (CardNav)](https://cardnav.xyz/) 是一个一站式 AI 大模型使用导航入口，按使用顺序把模型排行榜与选择、官方 AI 订阅比价、第三方 AI 卡网商家与商品搜索、实用工具和友好的向导页面放在同一个公开站点里，帮助小白用户先理清思路，判断用什么模型、选择哪种使用方式、哪里能找到相关服务、价格和库存大概怎样、下单前要注意哪些风险，再在使用过程中找到可以直接使用的辅助工具。
 
 在线访问地址：[https://cardnav.xyz](https://cardnav.xyz)
 
-## 产品说明
+![](assets/screenshot.webp)
+
+## 产品故事
 
 卡网大全的起点并不复杂。很多人第一次想认真用 ChatGPT、Claude、Gemini、Grok、Cursor 这些服务时，真正卡住的不是“有没有这个产品”，而是“我到底该怎么开始”。模型怎么选，官方订阅怎么比，第三方渠道靠不靠谱，库存还在不在，网络、手机号、支付和地区差异会不会把事情搞复杂，这些问题常常一起冒出来。
 
@@ -33,7 +52,16 @@
 | 工具集 | 集中提供 ChatGPT Session 转换工具、IP 纯净度检测，以及 Codex 凭证助手、Outlook 快速取件等外部辅助工具，帮助用户在注册、登录、支付、导入和格式处理前先完成快速检查与处理 |
 | 商家提交与合作 | 提供商家提交、公开收录、赞助位和合作入口，让商家获得更清晰的展示和曝光路径 |
 
-## 使用路径
+## 面向用户
+
+- 想把 AI 真正用起来，但不想在模型、账号、网络、支付和商家信息之间反复跳的人
+- 想比较 ChatGPT、Claude、Gemini、Grok 等订阅价格和地区差异的人
+- 想查找 AI 账号、订阅、卡密、成品号或相关服务购买入口的人
+- 想先看商品库存、价格、商家活跃度，再决定是否进入具体站点的人
+- 想了解商家筛选、交付格式、网络环境、支付方式和风控注意事项的人
+- 想提交站点、获得收录、赞助展示或进一步合作的商家
+
+## 使用方式
 
 卡网大全不是把所有东西都塞给你，而是尽量把顺序排清楚一点：
 
@@ -44,14 +72,32 @@
 5. 真到要操作时，再用 IP 纯净度检测、Session 转换这些工具
 6. 商家则可以通过提交入口进入收录流程，或者直接看合作曝光入口
 
-## 适合谁
+## 使用向导
 
-- 想把 AI 真正用起来，但不想在模型、账号、网络、支付和商家信息之间反复跳的人
-- 想比较 ChatGPT、Claude、Gemini、Grok 等订阅价格和地区差异的人
-- 想查找 AI 账号、订阅、卡密、成品号或相关服务购买入口的人
-- 想先看商品库存、价格、商家活跃度，再决定是否进入具体站点的人
-- 想了解商家筛选、交付格式、网络环境、支付方式和风控注意事项的人
-- 想提交站点、获得收录、赞助展示或进一步合作的商家
+[向导](https://cardnav.xyz/guide) 是卡网大全给新手用户准备的使用路径。它不是零散教程集合，而是按“先选模型、再选使用方式、再补齐网络与支付准备、最后处理日常风控”的顺序，系统性的把容易混在一起的问题拆开讲清楚。
+
+以下为向导内容的 Markdown 原始文档，推荐直接在 [官网](https://cardnav.xyz/guide) 阅读，以获得最佳排版与浏览体验。
+
+| 向导 | 说明 |
+| --- | --- |
+| [开始向导](guide/000-start-here.md) | 从 Start here 开始，先确定模型、再选使用方式、再补齐工具与支付等准备项。 |
+| [一、选择你想使用的 AI 大模型](guide/100-choose-model.md) | 先判断你是要顶级模型能力，还是低门槛和低成本，再决定是否继续这条向导。 |
+| [二、选择 AI 订阅使用方式](guide/200-choose-usage-method.md) | 对比中转站、成品号、代充、自充、自建等五种大模型使用方式的门槛与风险，并提供详细操作路径。 |
+| [三、AI 订阅实操准备与选购避坑](guide/300-practical-prep.md) | 补齐网络与云主机配置、准备支付通道、了解订阅区域价差以及认识卡网和发货格式。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.1 认识卡网与选购避坑](guide/310-merchant-overview.md) | 了解什么是虚拟商品卡网平台，以及如何安全选购海外大模型账号与服务。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[如何挑选靠谱商家](guide/311-choose-reliable-merchant.md) | 购买 AI 账号或虚拟商品时，从商品数量、热门覆盖、平台属性、支付渠道和社群活跃度等维度判断商家信任度。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[常见账号发货格式说明](guide/312-common-delivery-formats.md) | 先判断商家发的是账密、四段 RT，还是各种 JSON 凭证，再决定能不能直接登录或应该导入什么工具。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.2 网络环境与主机准备](guide/320-network-env-overview.md) | 梳理独立注册、登录与付款时的网络配置、IP 风险控制及海外主机租用流程。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[科学上网与 VPN](guide/321-tool-vpn.md) | 解决地区访问限制，并尽量保证后续注册、登录和订阅时的地区与 IP 稳定匹配。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[云服务器推荐](guide/322-tool-vps.md) | 为自建节点或自建中转站准备更可控的海外主机环境。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[IP 纯净度检查](guide/323-tool-ip-check.md) | 在注册、登录和付款前，先粗略筛掉明显高风险的出口 IP。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[国外手机号验证](guide/324-tool-phone-verification.md) | 解决注册验证码和后续二次验证问题，避免一次性号码导致账号后续卡死。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.3 国际支付与价差](guide/330-payment-overview.md) | 先看订阅的地区价格差异，再选择合适的国际支付渠道和防风控建议。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[订阅价格地区差异](guide/331-region-pricing-differences.md) | 同一个订阅套餐在不同国家和地区的定价可能差很多。对比不同地区的实际开销与支付门槛。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[App Store 支付](guide/332-payment-app-store.md) | 通过对应地区的 Apple ID 和礼品卡完成应用商店内订阅支付。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Google Play Store 支付](guide/333-payment-google-play.md) | 使用目标地区 Google 账号和 Google Play 完成应用内订阅支付。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.4 认识 KYC 风控](guide/340-kyc-verification.md) | 了解什么是 KYC 身份认证风控，为什么以 Claude 为代表的平台容易触发，以及在没有海外身份时该如何应对。 |
+| [四、AI 订阅使用期间的风控与日常避坑](guide/400-daily-usage-risk.md) | 梳理海外大模型账号在日常使用期间常见的风控触发点与避坑建议。 |
 
 ## 本地运行
 
@@ -63,7 +109,7 @@ npm run dev
 
 默认读取当前目录下的 `.env`。
 
-## 环境变量
+### 环境变量
 
 ```dotenv
 DATABASE_URL=postgres://user:password@host:5432/cardnav
@@ -75,7 +121,7 @@ GREYNOISE_API_KEY=
 TOR_EXIT_LIST_URL=
 ```
 
-## 常用命令
+### 常用命令
 
 ```bash
 npm run dev
@@ -84,10 +130,10 @@ npm run start
 npm run typecheck
 ```
 
-## 目录结构
+### 目录结构
 
 ```text
-public-web/
+cardnav-web/
 ├── guide/                # 向导 Markdown 内容
 ├── public/               # favicon、OG 图和静态资源
 ├── src/pages/            # Astro 页面和 API 路由
@@ -97,15 +143,18 @@ public-web/
 └── views/                # 公开站点模板资源
 ```
 
-## 相关页面
+## 贡献
 
-- 首页：`/`
-- 模型排行榜：`/model-leaderboard`
-- 官方订阅比价：`/official-price`
-- 向导：`/guide`
-- 工具集：`/tools`
-- IP 纯净度检测：`/tools/ip-purity`
-- ChatGPT Session 转换工具：`/tools/session-converter`
-- 关于：`/about`
-- 免责声明：`/disclaimer`
-- 隐私政策：`/privacy`
+欢迎通过 Issue 或 Pull Request 提交：
+
+- 页面、样式和交互体验改进
+- 公开向导内容补充
+- 工具页能力优化
+- 搜索、筛选和排序体验建议
+- 文档、环境变量和本地运行说明修正
+
+## License
+
+卡网大全 CardNav 的软件代码使用 [GNU Affero General Public License v3.0](./LICENSE) 开源。
+
+`CardNav`、`卡网大全` 名称、Logo、域名、视觉品牌、线上生产数据、商家数据、商品数据、搜索数据、指南内容、截图和公开页面文案不随软件代码授权。Fork、二次开发或部署公开服务时，请阅读 [数据与内容授权](./DATA_LICENSE.md) 和 [品牌与商标政策](./TRADEMARKS.md)，并避免让用户误认为你的服务是官方网站。

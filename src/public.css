@@ -1,5 +1,5 @@
 /*
-文件说明: public-web 全站共享样式，包含首页列表、收藏按钮、向导页和公共组件的视觉规则。
+文件说明: 全站共享样式，包含首页列表、收藏按钮、向导页和公共组件的视觉规则。
 */
 @import "tailwindcss";
 @plugin "daisyui";
@@ -201,29 +201,29 @@
   .guide-card .guide-article h3 {
     @apply mt-5 mb-2.5 flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-base-content/45;
   }
-  
+
   .guide-card .guide-article h3::after {
     content: "";
     @apply h-[1px] flex-1 bg-base-300/70;
   }
-  
+
   .guide-card .guide-article ul {
     @apply space-y-2.5 pl-0 list-none mt-1;
   }
-  
+
   .guide-card .guide-article li {
     @apply relative pl-3.5 text-[14px] leading-relaxed text-base-content/78;
   }
-  
+
   .guide-card .guide-article li::before {
     content: "";
     @apply absolute left-0 top-[8px] h-1.5 w-1.5 rounded-full bg-primary/40;
   }
-  
+
   .guide-card .guide-article li strong {
     @apply text-base-content font-bold text-[14px];
   }
-  
+
   .guide-card .guide-article a {
     @apply inline-flex items-center gap-0.5 rounded bg-primary/8 px-1.5 py-0.5 text-[13px] font-semibold text-primary no-underline transition hover:bg-primary/15;
   }

@@ -1,6 +1,5 @@
 /**
- * 文件说明: 在构建期扫描 public-web/guide 下的 Markdown 文档，生成向导列表、详情内容和站内跳转链接。
- * 对应文档: public-web/guide
+ * 文件说明: 在构建期扫描 guide 下的 Markdown 文档，生成向导列表、详情内容和站内跳转链接。
  */
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
