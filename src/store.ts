@@ -8,6 +8,7 @@ import pg from 'pg';
 export type PublicSiteRow = {
   id: string;
   name: string;
+  url: string;
   latestProductRefreshedAt: string | null;
   latestProductRefreshTime: string;
   score: number;
@@ -26,6 +27,7 @@ export type PublicProductRow = {
   refreshTime: string;
   siteId: string;
   siteName: string;
+  siteUrl: string;
   siteLatestProductRefreshedAt: string | null;
   siteLatestProductRefreshTime: string;
   clickCount: number;
@@ -84,6 +86,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
       SELECT
         id,
         name,
+        url,
         score,
         latest_product_refreshed_at
       FROM sites
@@ -95,6 +98,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
     SELECT
       products.site_id,
       sites.name AS site_name,
+      sites.url AS site_url,
       sites.score AS site_score,
       sites.latest_product_refreshed_at AS site_latest_product_refreshed_at,
       products.category_name,
@@ -132,6 +136,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
       clickCount: Number(row.click_count) || 0,
       siteId: String(row.site_id),
       siteName: String(row.site_name),
+      siteUrl: String(row.site_url),
       siteLatestProductRefreshedAt,
       siteLatestProductRefreshTime: formatBeijingRefreshTime(siteLatestProductRefreshedAt),
       score: Number(row.score) || 0,
@@ -142,6 +147,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
     ? sitesResult.rows.map(row => ({
       id: String(row.id),
       name: String(row.name),
+      url: String(row.url),
       latestProductRefreshedAt: row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null,
       latestProductRefreshTime: formatBeijingRefreshTime(row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null),
       score: Number(row.score) || 0,
@@ -155,6 +161,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
         siteById.set(siteId, {
           id: siteId,
           name: String(row.site_name),
+          url: String(row.site_url),
           latestProductRefreshedAt,
           latestProductRefreshTime: formatBeijingRefreshTime(latestProductRefreshedAt),
           score: Number(row.site_score) || 0,

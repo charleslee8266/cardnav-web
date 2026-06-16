@@ -457,9 +457,23 @@ function createTrackedProductLink(href, className, label, eventLabel) {
   return link;
 }
 
+function createTrackedMerchantLink(href, label) {
+  const link = document.createElement('a');
+  link.href = href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.dataset.umamiEvent = 'merchant-click';
+  link.dataset.umamiEventUrl = href;
+  link.dataset.umamiEventName = label;
+  link.className = 'merchant-link merchant-text';
+  link.textContent = label;
+  return link;
+}
+
 function createFlatProductRow(item) {
   const siteId = text(item.siteId);
   const siteName = text(item.siteName);
+  const siteUrl = text(item.siteUrl).trim();
   const categoryName = text(item.categoryName);
   const productName = text(item.name);
   const productTitle = `${categoryName}-${productName}`;
@@ -514,7 +528,11 @@ function createFlatProductRow(item) {
   const merchantInline = document.createElement('div');
   merchantInline.className = 'cell-inline';
   merchantInline.appendChild(createFavoriteButton('site', siteFavoriteKey, `收藏 ${siteName}`));
-  appendTextElement(merchantInline, 'span', 'merchant-text', siteName);
+  if (siteUrl) {
+    merchantInline.appendChild(createTrackedMerchantLink(siteUrl, siteName));
+  } else {
+    appendTextElement(merchantInline, 'span', 'merchant-text', siteName);
+  }
   merchantCell.appendChild(merchantInline);
   row.appendChild(merchantCell);
 
@@ -630,6 +648,7 @@ function renderMerchantRows() {
     const siteId = text(site.id);
     const siteProducts = productsBySiteId.get(siteId) ?? [];
     const siteName = text(site.name);
+    const siteUrl = text(site.url).trim();
     const siteFavoriteKey = siteId || siteName;
     const row = document.createElement('div');
     row.className = 'merchant-row';
@@ -647,7 +666,11 @@ function renderMerchantRows() {
     const merchantHeader = document.createElement('div');
     merchantHeader.className = 'merchant-header';
     merchantHeader.appendChild(createFavoriteButton('site', siteFavoriteKey, `收藏 ${siteName}`));
-    appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
+    if (siteUrl) {
+      merchantHeader.appendChild(createTrackedMerchantLink(siteUrl, siteName));
+    } else {
+      appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
+    }
     merchantCell.appendChild(merchantHeader);
     if (site.latestProductRefreshTime) {
       appendTextElement(merchantCell, 'div', 'merchant-refresh-time', `最近刷新：${site.latestProductRefreshTime}`);

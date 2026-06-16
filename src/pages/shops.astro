@@ -23,6 +23,7 @@ const seo = buildSeoContext({
 const renderedSites = data.sites.map(site => ({
   id: site.id || '',
   name: site.name,
+  url: site.url || '',
   latestProductRefreshedAt: site.latestProductRefreshedAt || null,
   latestProductRefreshTime: site.latestProductRefreshTime || '',
   score: site.score || 0,
@@ -40,6 +41,7 @@ const renderedProducts = data.products.map(product => ({
   clickCount: product.clickCount || 0,
   siteId: product.siteId || '',
   siteName: product.siteName || '',
+  siteUrl: product.siteUrl || '',
   siteLatestProductRefreshedAt: product.siteLatestProductRefreshedAt || null,
   siteLatestProductRefreshTime: product.siteLatestProductRefreshTime || '',
   score: product.score || 0,
@@ -212,7 +214,11 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
                     <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`收藏 ${item.siteName}`} aria-pressed="false" title="收藏商家">
                       <span aria-hidden="true" class="text-sm">♡</span>
                     </button>
-                    <span class="merchant-text text-base-content/90 font-semibold">{item.siteName}</span>
+                    {item.siteUrl ? (
+                      <a href={item.siteUrl} target="_blank" rel="noopener noreferrer" class="merchant-link merchant-text font-semibold" data-umami-event="merchant-click" data-umami-event-url={item.siteUrl} data-umami-event-name={item.siteName}>{item.siteName}</a>
+                    ) : (
+                      <span class="merchant-text text-base-content/90 font-semibold">{item.siteName}</span>
+                    )}
                   </div>
                 </td>
                 <td class="flat-refresh-cell text-xs text-base-content/60">{item.refreshTime}</td>

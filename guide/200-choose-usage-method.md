@@ -33,7 +33,7 @@ next:
 - **核心群体**：适用于调试代码或进行轻度非涉密对话的开发者与个人用户。
 
 ### 实操步骤
-- **注册**：注册推荐平台 [Packy Code](https://www.packyapi.com/register?aff=Nulo) 或 [Right Code](https://www.right.codes/register?aff=84ba7fb0)。
+- **注册**：注册推荐平台 [Packy Code](https://www.packyapi.com/register?aff=Nulo)、[Right Code](https://www.right.codes/register?aff=84ba7fb0)，以及公益站 [AnyRouter](https://anyrouter.top/register?aff=JA5h)。
 - **充值**：在后台充值小额额度并生成专属 API Key。
 - **配置**：在 Chatbox 等客户端填入 Key 与代理 URL 即可使用。
 

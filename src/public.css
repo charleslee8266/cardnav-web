@@ -507,6 +507,7 @@
     overflow-wrap: anywhere;
   }
 
+  .merchant-link,
   .product-link {
     @apply inline underline decoration-primary/55 decoration-[1.5px] underline-offset-[0.18em] text-primary transition hover:text-[color:var(--color-primary-hover)] hover:decoration-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30;
     overflow-wrap: anywhere;
@@ -568,6 +569,10 @@
   }
 
   .sponsor-logo[src$=".svg"] {
+    @apply max-h-[80%] max-w-[90%] object-contain;
+  }
+
+  .sponsor-logo-contain {
     @apply max-h-[80%] max-w-[90%] object-contain;
   }
 
