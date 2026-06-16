@@ -1,126 +1,23 @@
 ---
 /*
-文件说明: 渲染 CardNav 官方大模型价格对比页面。
+文件说明: 渲染 CardNav 官方大模型价格对比默认入口，服务端优先展示 ChatGPT Plus。
 */
+import OfficialPriceContent from '../components/OfficialPriceContent.astro';
 import PublicPage from '../layouts/PublicPage.astro';
+import { buildOfficialPriceGroups } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { loadOfficialPrices, formatBeijingRefreshTime } from '../store.js';
 
 const rawPrices = await loadOfficialPrices();
+const groups = buildOfficialPriceGroups(rawPrices);
+const currentGroup = groups.find(group => group.appSlug === 'chatgpt' && group.planSlug === 'plus') || groups[0] || null;
 const latestFetchedAt = rawPrices.reduce<string | null>((latest, price) => {
   if (!price.fetchedAt) return latest;
   if (!latest) return price.fetchedAt;
   return new Date(price.fetchedAt).getTime() > new Date(latest).getTime() ? price.fetchedAt : latest;
 }, null);
 const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : '未记录';
-
-const APP_LABELS: Record<string, string> = {
-  chatgpt: 'ChatGPT',
-  claude: 'Claude',
-  gemini: 'Gemini',
-  grok: 'Grok',
-  copilot: 'Copilot',
-  kimi: 'Kimi',
-  x: 'X',
-};
-const APP_ORDER = ['chatgpt', 'claude', 'gemini', 'grok', 'copilot', 'kimi', 'x'];
-const PLAN_LABELS: Record<string, string> = {
-  'go-monthly': 'Go',
-  plus: 'Plus',
-  'pro-5x': 'Pro 5x',
-  'pro-20x': 'Pro 20x',
-  pro: 'Pro',
-  'max-5x-monthly': 'Max 5x',
-  'max-20x-monthly': 'Max 20x',
-  'ai-plus': 'AI Plus',
-  advanced: 'AI Pro',
-  'ai-ultra': 'AI Ultra',
-  'supergrok-lite': 'SuperGrok Lite',
-  supergrok: 'SuperGrok',
-  'supergrok-heavy': 'SuperGrok Heavy',
-  moderato: 'Moderato',
-  allegretto: 'Allegretto',
-  basic: 'Basic',
-  premium: 'Premium',
-  'premium-plus': 'Premium+',
-};
-const PLAN_ORDER: Record<string, string[]> = {
-  chatgpt: ['go-monthly', 'plus', 'pro-5x', 'pro-20x'],
-  claude: ['pro', 'max-5x-monthly', 'max-20x-monthly'],
-  gemini: ['ai-plus', 'advanced', 'ai-ultra'],
-  grok: ['supergrok-lite', 'supergrok', 'supergrok-heavy'],
-  copilot: ['pro'],
-  kimi: ['moderato', 'allegretto'],
-  x: ['basic', 'premium', 'premium-plus'],
-};
-
-function labelFromSlug(slug: string) {
-  return slug
-    .split('-')
-    .filter(Boolean)
-    .map(part => part.length <= 3 ? part.toUpperCase() : `${part[0]?.toUpperCase() || ''}${part.slice(1)}`)
-    .join(' ');
-}
-
-function appLabel(appSlug: string) {
-  return APP_LABELS[appSlug] || labelFromSlug(appSlug);
-}
-
-function planLabel(planSlug: string) {
-  return PLAN_LABELS[planSlug] || labelFromSlug(planSlug);
-}
-
-function orderedIndex(values: string[], value: string) {
-  const index = values.indexOf(value);
-  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
-}
-
-const groupMap = new Map<string, {
-  key: string;
-  appSlug: string;
-  planSlug: string;
-  appName: string;
-  planName: string;
-  displayName: string;
-  prices: typeof rawPrices;
-}>();
-
-for (const price of rawPrices) {
-  const key = `${price.appSlug}:${price.planSlug}`;
-  const existing = groupMap.get(key);
-  if (existing) {
-    existing.prices.push(price);
-    continue;
-  }
-  const appName = appLabel(price.appSlug);
-  const planName = planLabel(price.planSlug);
-  groupMap.set(key, {
-    key,
-    appSlug: price.appSlug,
-    planSlug: price.planSlug,
-    appName,
-    planName,
-    displayName: `${appName} ${planName}`,
-    prices: [price],
-  });
-}
-
-const appGroups = Array.from(groupMap.values())
-  .map(group => ({
-    ...group,
-    prices: group.prices.sort((a, b) => a.cnyPrice - b.cnyPrice),
-  }))
-  .sort((a, b) => {
-    const appDiff = orderedIndex(APP_ORDER, a.appSlug) - orderedIndex(APP_ORDER, b.appSlug);
-    if (appDiff !== 0) return appDiff;
-
-    const planDiff = orderedIndex(PLAN_ORDER[a.appSlug] || [], a.planSlug) - orderedIndex(PLAN_ORDER[b.appSlug] || [], b.planSlug);
-    if (planDiff !== 0) return planDiff;
-
-    return a.displayName.localeCompare(b.displayName, 'zh-Hans-CN', { numeric: true });
-  });
-const firstGroupKey = appGroups[0]?.key || '';
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -133,120 +30,5 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="official-price" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="page-hero-wrap">
-        <h1 class="page-hero-title">AI 官方订阅价格对比</h1>
-        <p class="page-hero-copy">
-          对比主流 AI 订阅在不同国家和地区的本地标价与人民币折算价。由于地区定价、税费和汇率不同，同一订阅在不同区域可能存在明显价差。
-        </p>
-      </div>
-      {updateTime && <p class="mt-1.5 text-xs text-base-content/60">最近刷新（北京时间）：{updateTime}</p>}
-    </div>
-  </section>
-
-  {appGroups.length > 0 && (
-    <div role="tablist" class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label="大模型选择">
-      {appGroups.map(group => (
-        <button
-          type="button"
-          role="tab"
-          class={`pricing-tab-btn tab text-sm ${group.key === firstGroupKey ? 'tab-active font-semibold text-primary' : 'text-base-content/70 hover:text-base-content'}`}
-          data-price-group={group.key}
-        >
-          {group.displayName}
-        </button>
-      ))}
-    </div>
-  )}
-
-  <!-- 比价表格区域 -->
-  {appGroups.map(group => (
-    <section id={`panel-${group.key}`} class="pricing-panel card bg-base-100 border border-base-300 shadow-sm overflow-hidden" style={group.key === firstGroupKey ? 'display: block;' : 'display: none;'}>
-      <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">
-        {group.appName} {group.planName} 各地区价格对比（已按人民币折算价格由低到高排列）：
-      </div>
-      <div class="product-table-scroll">
-        <table class="table table-zebra table-md w-full border-collapse">
-          <thead class="bg-base-200 text-base-content text-sm">
-            <tr>
-              <th scope="col" class="font-bold">推荐排名</th>
-              <th scope="col" class="font-bold">国家/地区</th>
-              <th scope="col" class="font-bold">本地标价</th>
-              <th scope="col" class="font-bold">币种</th>
-              <th scope="col" class="font-bold text-primary">折合人民币 (CNY)</th>
-              <th scope="col" class="font-bold">状态</th>
-            </tr>
-          </thead>
-          <tbody id={`rows-${group.key}`}>
-            {group.prices.map((item, idx) => (
-              <tr class="hover">
-                <td class="font-bold">
-                  {idx === 0 ? '🥇 最便宜' : idx === 1 ? '🥈 推荐' : idx === 2 ? '🥉 推荐' : `${idx + 1}`}
-                </td>
-                <td class="font-semibold text-base-content">
-                  {item.countryLabel} ({item.countryCode})
-                </td>
-                <td class="font-bold font-mono">
-                  {item.priceText}
-                </td>
-                <td class="font-mono text-base-content/70">
-                  {item.currencyCode}
-                </td>
-                <td class="font-bold text-primary font-mono text-base">
-                  ¥{item.cnyPrice}
-                </td>
-                <td>
-                  {idx === 0 ? (
-                    <span class="badge badge-success badge-sm font-semibold">低价首选</span>
-                  ) : (
-                    <span class="text-xs text-base-content/50">正常</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {group.prices.length === 0 && (
-              <tr>
-                <td colspan="6" class="p-8 text-center text-base-content/40">
-                  暂无价格数据，请稍后再查看。
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  ))}
-  {appGroups.length === 0 && (
-    <section class="alert alert-info alert-soft max-w-md mx-auto my-6 justify-center">
-      <span>暂无价格数据，请稍后再查看。</span>
-    </section>
-  )}
-
-  <!-- 切换 Tab 脚本 -->
-  <script is:inline slot="scripts">
-    document.querySelectorAll('.pricing-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const group = btn.getAttribute('data-price-group');
-        if (!group) return;
-
-        // 更新按钮高亮
-        document.querySelectorAll('.pricing-tab-btn').forEach(b => {
-          b.classList.remove('tab-active', 'font-semibold', 'text-primary');
-          b.classList.add('text-base-content/70');
-        });
-        btn.classList.remove('text-base-content/70');
-        btn.classList.add('tab-active', 'font-semibold', 'text-primary');
-
-        // 切换表格展示
-        document.querySelectorAll('.pricing-panel').forEach(panel => {
-          panel.style.display = 'none';
-        });
-        const targetPanel = document.getElementById(`panel-${group}`);
-        if (targetPanel) {
-          targetPanel.style.display = 'block';
-        }
-      });
-    });
-  </script>
+  <OfficialPriceContent groups={groups} currentGroup={currentGroup} updateTime={updateTime} />
 </PublicPage>

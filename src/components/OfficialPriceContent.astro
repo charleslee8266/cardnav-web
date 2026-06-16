@@ -1,0 +1,106 @@
+---
+/*
+文件说明: 渲染官方订阅比价页的服务端 HTML 内容，包括套餐导航和当前套餐价格表。
+*/
+import type { OfficialPriceGroup } from '../official-price.js';
+
+type Props = {
+  groups: OfficialPriceGroup[];
+  currentGroup: OfficialPriceGroup | null;
+  updateTime: string;
+};
+
+const { groups, currentGroup, updateTime } = Astro.props;
+---
+
+<section class="card bg-base-100 border border-base-300 shadow-sm">
+  <div class="card-body p-5">
+    <div class="page-hero-wrap">
+      <h1 class="page-hero-title">
+        {currentGroup ? `${currentGroup.displayName} 官方订阅价格对比` : 'AI 官方订阅价格对比'}
+      </h1>
+      <p class="page-hero-copy">
+        对比主流 AI 订阅在不同国家和地区的本地标价与人民币折算价。由于地区定价、税费和汇率不同，同一订阅在不同区域可能存在明显价差。
+      </p>
+    </div>
+    {updateTime && <p class="mt-1.5 text-xs text-base-content/60">最近刷新（北京时间）：{updateTime}</p>}
+  </div>
+</section>
+
+{groups.length > 0 && (
+  <nav class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label="大模型选择">
+    {groups.map(group => (
+      <a
+        role="tab"
+        href={group.pathname}
+        class={`tab text-sm ${currentGroup?.key === group.key ? 'tab-active font-semibold text-primary' : 'text-base-content/70 hover:text-base-content'}`}
+        aria-current={currentGroup?.key === group.key ? 'page' : undefined}
+      >
+        {group.displayName}
+      </a>
+    ))}
+  </nav>
+)}
+
+{currentGroup && (
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">
+      {currentGroup.appName} {currentGroup.planName} 各地区价格对比（已按人民币折算价格由低到高排列）：
+    </div>
+    <div class="product-table-scroll">
+      <table class="table table-zebra table-md w-full border-collapse">
+        <thead class="bg-base-200 text-base-content text-sm">
+          <tr>
+            <th scope="col" class="font-bold">推荐排名</th>
+            <th scope="col" class="font-bold">国家/地区</th>
+            <th scope="col" class="font-bold">本地标价</th>
+            <th scope="col" class="font-bold">币种</th>
+            <th scope="col" class="font-bold text-primary">折合人民币 (CNY)</th>
+            <th scope="col" class="font-bold">状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentGroup.prices.map((item, idx) => (
+            <tr class="hover">
+              <td class="font-bold">
+                {idx === 0 ? '最便宜' : idx === 1 || idx === 2 ? '推荐' : `${idx + 1}`}
+              </td>
+              <td class="font-semibold text-base-content">
+                {item.countryLabel} ({item.countryCode})
+              </td>
+              <td class="font-bold font-mono">
+                {item.priceText}
+              </td>
+              <td class="font-mono text-base-content/70">
+                {item.currencyCode}
+              </td>
+              <td class="font-bold text-primary font-mono text-base">
+                ¥{item.cnyPrice}
+              </td>
+              <td>
+                {idx === 0 ? (
+                  <span class="badge badge-success badge-sm font-semibold">低价首选</span>
+                ) : (
+                  <span class="text-xs text-base-content/50">正常</span>
+                )}
+              </td>
+            </tr>
+          ))}
+          {currentGroup.prices.length === 0 && (
+            <tr>
+              <td colspan="6" class="p-8 text-center text-base-content/40">
+                暂无价格数据，请稍后再查看。
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
+
+{groups.length === 0 && (
+  <section class="alert alert-info alert-soft max-w-md mx-auto my-6 justify-center">
+    <span>暂无价格数据，请稍后再查看。</span>
+  </section>
+)}

@@ -2,15 +2,17 @@
  * 文件说明: 生成 CardNav 公开站点 XML sitemap。
  */
 import type { APIRoute } from 'astro';
-import { buildSitemapXml } from '../seo-routes.js';
+import { buildOfficialPriceGroups } from '../official-price.js';
+import { buildSitemapXml, getPublicSeoRoutesWithOfficialPrices } from '../seo-routes.js';
 import { publicSiteUrl } from '../site.js';
+import { loadOfficialPrices } from '../store.js';
 
 export const GET: APIRoute = async () => {
-  return new Response(buildSitemapXml(publicSiteUrl), {
+  const groups = buildOfficialPriceGroups(await loadOfficialPrices());
+  return new Response(buildSitemapXml(publicSiteUrl, getPublicSeoRoutesWithOfficialPrices(groups)), {
     headers: {
       'content-type': 'application/xml; charset=utf-8',
       'cache-control': 'public, max-age=3600',
     },
   });
 };
-

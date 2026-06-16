@@ -2,6 +2,7 @@
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
 import { guideArticles } from './guide.js';
+import type { OfficialPriceGroup } from './official-price.js';
 
 export type PublicSeoRoute = {
   pathname: string;
@@ -107,6 +108,22 @@ export function getPublicSeoRoutes(): PublicSeoRoute[] {
   ];
 }
 
+export function buildOfficialPriceSeoRoutes(groups: OfficialPriceGroup[]): PublicSeoRoute[] {
+  return groups.map(group => ({
+    pathname: group.pathname,
+    title: `${group.displayName} 官方订阅价格对比`,
+    description: `查看 ${group.displayName} 官方订阅在不同国家和地区的本地价格、币种和人民币折算结果，按折算价格由低到高对比。`,
+    changefreq: 'daily' as const,
+  }));
+}
+
+export function getPublicSeoRoutesWithOfficialPrices(groups: OfficialPriceGroup[]): PublicSeoRoute[] {
+  return [
+    ...getPublicSeoRoutes(),
+    ...buildOfficialPriceSeoRoutes(groups),
+  ];
+}
+
 function escapeXml(input: string) {
   return input.replace(/[&<>"']/g, character => {
     return {
@@ -119,8 +136,8 @@ function escapeXml(input: string) {
   });
 }
 
-export function buildSitemapXml(baseUrlInput: string) {
-  const items = getPublicSeoRoutes()
+export function buildSitemapXml(baseUrlInput: string, routes = getPublicSeoRoutes()) {
+  const items = routes
     .map(route => {
       const lines = [
         '  <url>',
@@ -136,8 +153,8 @@ export function buildSitemapXml(baseUrlInput: string) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>\n`;
 }
 
-export function buildSitemapTxt(baseUrlInput: string) {
-  return `${getPublicSeoRoutes()
+export function buildSitemapTxt(baseUrlInput: string, routes = getPublicSeoRoutes()) {
+  return `${routes
     .map(route => resolvePublicUrl(baseUrlInput, route.pathname))
     .join('\n')}\n`;
 }
@@ -161,9 +178,9 @@ export function buildRobotsTxt(baseUrlInput: string) {
   ].join('\n');
 }
 
-export function buildLlmsTxt(baseUrlInput: string) {
+export function buildLlmsTxt(baseUrlInput: string, routes = getPublicSeoRoutes()) {
   const baseUrl = normalizeBaseUrl(baseUrlInput);
-  const routeLines = getPublicSeoRoutes()
+  const routeLines = routes
     .map(route => `- [${route.title}](${resolvePublicUrl(baseUrl, route.pathname)}): ${route.description}`)
     .join('\n');
   return [
