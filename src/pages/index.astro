@@ -126,22 +126,42 @@ const guideSteps = [
   { title: 'AI 订阅使用期间的风控与日常避坑', href: '/guide/daily-usage-risk' },
 ];
 
+const guideSourcePage = '/';
+
+function guideUrlClickAttrs(targetPage: string) {
+  return {
+    'data-umami-event': 'guide-url-click',
+    'data-umami-event-source-page': guideSourcePage,
+    'data-umami-event-target-page': targetPage,
+    'data-umami-event-url': targetPage,
+  };
+}
+
+function homeCtaClickAttrs(targetPage: string, name: string) {
+  return {
+    'data-umami-event': 'home-cta-click',
+    'data-umami-event-name': name,
+    'data-umami-event-target-page': targetPage,
+    'data-umami-event-url': targetPage,
+  };
+}
+
 ---
 
 <PublicPage activeNav="home" showSponsors={false} {...seo}>
   <section class="card relative cursor-pointer bg-base-100 border border-base-300 shadow-sm overflow-hidden transition hover:border-primary/35 hover:shadow-md">
-    <a href="/guide" class="absolute inset-0 z-0" aria-label="打开完整向导"></a>
+    <a href="/guide" class="absolute inset-0 z-0" aria-label="打开完整向导" {...guideUrlClickAttrs('/guide')}></a>
     <div class="card-body p-4">
       <div class="relative z-10 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 class="text-xl font-bold text-base-content">不知道如何开始？点击进入向导</h2>
           <p class="mt-1 text-sm leading-6 text-base-content/75">从模型选择到实操准备，先把购买路径理清楚。</p>
         </div>
-        <a href="/guide" class="btn btn-outline btn-sm shrink-0">打开完整向导</a>
+        <a href="/guide" class="btn btn-outline btn-sm shrink-0" {...guideUrlClickAttrs('/guide')}>打开完整向导</a>
       </div>
       <div class="relative z-10 mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {guideSteps.map((step, index) => (
-          <a href={step.href} class="rounded-lg border border-base-300 bg-base-100 px-3 py-2 no-underline transition hover:border-primary/35 hover:bg-base-200/50">
+          <a href={step.href} class="rounded-lg border border-base-300 bg-base-100 px-3 py-2 no-underline transition hover:border-primary/35 hover:bg-base-200/50" {...guideUrlClickAttrs(step.href)}>
             <span class="text-xs font-semibold text-primary">步骤 {index + 1}</span>
             <span class="mt-1 block text-sm font-bold text-base-content">{step.title}</span>
           </a>
@@ -158,7 +178,7 @@ const guideSteps = [
             <h2 class="text-xl font-bold text-base-content">AI 大模型排行榜</h2>
             <p class="text-sm leading-6 text-base-content/75">不同场景下的模型排行</p>
           </div>
-          <a href="/model-leaderboard" class="btn btn-outline btn-sm shrink-0">查看完整榜单</a>
+          <a href="/model-leaderboard" class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/model-leaderboard', '查看完整榜单')}>查看完整榜单</a>
         </div>
         <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-1">
           {taskGroups.map(group => (
@@ -190,7 +210,7 @@ const guideSteps = [
             <h2 class="text-xl font-bold text-base-content">官方 AI 订阅比价</h2>
             <p class="text-sm leading-6 text-base-content/75">全球不同地区官方订阅价格对比</p>
           </div>
-          <a href="/official-price" class="btn btn-outline btn-sm shrink-0">进入比价页</a>
+          <a href="/official-price" class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/official-price', '进入比价页')}>进入比价页</a>
         </div>
         <div class="mt-3 space-y-3">
           {officialPriceGroups.map(group => (
@@ -223,7 +243,7 @@ const guideSteps = [
             <h2 class="text-xl font-bold text-base-content">热门 AI 卡网商品</h2>
             <p class="text-sm leading-6 text-base-content/75">全网第三方 AI 卡网商家与商品搜索</p>
           </div>
-          <a href="/shops" class="btn btn-outline btn-sm shrink-0">进入卡网商家页</a>
+          <a href="/shops" class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/shops', '进入卡网商家页')}>进入卡网商家页</a>
         </div>
 
         <div class="mt-3 space-y-3">
@@ -236,7 +256,7 @@ const guideSteps = [
           <form action="/shops" method="get" class="flex flex-col gap-3">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
               <input name="q" type="search" class="input input-bordered w-full" placeholder="搜索商品、商家关键词" autocomplete="off" />
-              <button type="submit" class="btn btn-primary shrink-0">搜索</button>
+              <button type="submit" class="btn btn-primary shrink-0" data-umami-event="home-search-submit" data-umami-event-name="首页搜索" data-umami-event-target-page="/shops">搜索</button>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">热门搜索</span>
@@ -244,6 +264,10 @@ const guideSteps = [
                 <a
                   href={`/shops?q=${encodeURIComponent(term)}`}
                   class="btn btn-outline btn-sm rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
+                  data-umami-event="home-hot-search-click"
+                  data-umami-event-name={term}
+                  data-umami-event-target-page={`/shops?q=${encodeURIComponent(term)}`}
+                  data-umami-event-url={`/shops?q=${encodeURIComponent(term)}`}
                 >
                   {term}
                 </a>
@@ -271,7 +295,7 @@ const guideSteps = [
   </section>
 
   <section class="grid gap-4 lg:grid-cols-2">
-    <a href="/tools" class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+    <a href="/tools" class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...homeCtaClickAttrs('/tools', '打开工具集')}>
       <div class="card-body p-5">
         <span class="badge badge-ghost badge-sm w-fit font-medium">实用工具</span>
         <h2 class="mt-2 text-xl font-bold text-base-content">AI 订阅工具集</h2>
@@ -279,7 +303,7 @@ const guideSteps = [
         <span class="mt-4 text-sm font-semibold text-primary">打开工具集</span>
       </div>
     </a>
-    <a href="/guide" class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+    <a href="/guide" class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...guideUrlClickAttrs('/guide')}>
       <div class="card-body p-5">
         <span class="badge badge-ghost badge-sm w-fit font-medium">购买向导</span>
         <h2 class="mt-2 text-xl font-bold text-base-content">继续看向导</h2>

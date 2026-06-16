@@ -9,9 +9,25 @@ type Props = {
   articles: GuideArticle[];
   navItems: GuideNavItem[];
   currentArticle: RenderedGuideArticle;
+  sourcePage: string;
 };
 
-const { navItems, currentArticle } = Astro.props;
+const {
+  navItems,
+  currentArticle,
+  sourcePage,
+} = Astro.props;
+
+const guideUrlClickEventName = 'guide-url-click';
+
+function guideUrlClickAttrs(targetPage: string) {
+  return {
+    'data-umami-event': guideUrlClickEventName,
+    'data-umami-event-source-page': sourcePage,
+    'data-umami-event-target-page': targetPage,
+    'data-umami-event-url': targetPage,
+  };
+}
 
 function buildBreadcrumbs(parentLink: GuideParentLink | null) {
   const chain: GuideParentLink[] = [];
@@ -46,6 +62,7 @@ const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
                 href={`/guide/${article.slug}`}
                 aria-current={isActive ? 'page' : undefined}
                 data-guide-current={isActive ? 'true' : undefined}
+                {...guideUrlClickAttrs(`/guide/${article.slug}`)}
                 class:list={[
                   'guide-sidebar-link block rounded-xl border px-3 py-1.5 transition-colors',
                   item.depth > 0 && 'guide-sidebar-link-child',
@@ -72,12 +89,12 @@ const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
     <nav aria-label="向导面包屑" class="guide-breadcrumbs rounded-2xl border border-base-300 bg-base-100 px-4 py-3 shadow-sm">
       <ol class="guide-breadcrumb-list">
         <li>
-          <a href="/guide">向导</a>
+          <a href="/guide" {...guideUrlClickAttrs('/guide')}>向导</a>
         </li>
         {breadcrumbs.map(item => (
           <li>
             <span aria-hidden="true" class="guide-breadcrumb-separator">/</span>
-            <a href={`/guide/${item.slug}`}>{item.title}</a>
+            <a href={`/guide/${item.slug}`} {...guideUrlClickAttrs(`/guide/${item.slug}`)}>{item.title}</a>
           </li>
         ))}
         <li aria-current="page">
@@ -98,6 +115,7 @@ const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
     {currentArticle.nextLink && (
       <a
         href={`/guide/${currentArticle.nextLink.slug}`}
+        {...guideUrlClickAttrs(`/guide/${currentArticle.nextLink.slug}`)}
         class="guide-next-step block rounded-2xl border border-base-300 bg-base-100 px-5 py-4 shadow-sm no-underline transition duration-200 hover:border-primary/30 hover:bg-primary/[0.02] active:scale-[0.99]"
       >
         <p class="guide-next-step-label">下一步</p>

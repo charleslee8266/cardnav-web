@@ -84,13 +84,13 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
             <p class="page-hero-note">价格数据仅供参考，实际价格以各平台为准。</p>
           </div>
         </div>
-        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-md shrink-0">提交商家</button>
+        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-md shrink-0" data-umami-event="shop-submit-open-click" data-umami-event-name="提交商家">提交商家</button>
       </div>
     </div>
   </section>
 
   <section>
-    <a href="/guide/choose-reliable-merchant" class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
+    <a href="/guide/choose-reliable-merchant" data-umami-event="guide-url-click" data-umami-event-source-page="/shops" data-umami-event-target-page="/guide/choose-reliable-merchant" data-umami-event-url="/guide/choose-reliable-merchant" class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
       <div>
         <span class="font-bold text-base block text-base-content">购前必看：如何挑选靠谱商家</span>
         <span class="text-sm text-base-content/85 block mt-1">从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。</span>
@@ -255,7 +255,7 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
           <div class="alert alert-info alert-soft shadow-sm mt-4 flex flex-col items-start gap-1.5 text-left text-base-content">
             <span class="font-bold text-sm">合作曝光</span>
             <p class="text-sm text-base-content/85 leading-6">商家如有合作意向，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
-            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm mt-2 inline-flex items-center gap-2">
+            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="shop-submit-telegram-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name="Telegram 联系" class="btn btn-primary btn-sm mt-2 inline-flex items-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m22 2-7 20-4-9-9-4Z"></path>
                 <path d="M22 2 11 13"></path>

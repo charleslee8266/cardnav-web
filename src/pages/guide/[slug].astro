@@ -31,5 +31,10 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="guide" showSponsors={false} {...seo}>
-  <GuideBrowser articles={guideArticles} navItems={guideNavItems} currentArticle={article} />
+  <GuideBrowser
+    articles={guideArticles}
+    navItems={guideNavItems}
+    currentArticle={article}
+    sourcePage={`/guide/${article.slug}`}
+  />
 </PublicPage>

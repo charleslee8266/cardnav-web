@@ -6,6 +6,7 @@ import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
 
 const cardnavSiteOrigin = 'https://cardnav.xyz';
+const guideUrlClickEventName = 'guide-url-click';
 
 export type GuideArticle = {
   slug: string;
@@ -263,6 +264,50 @@ function rewriteRenderedHtmlLinks(html: string) {
   return processed;
 }
 
+function normalizeGuideSourcePage(slug: string) {
+  return slug ? `/guide/${slug}` : '/guide';
+}
+
+function normalizeGuideTargetPage(href: string, sourcePage: string) {
+  if (href.startsWith('#')) {
+    return `${sourcePage}${href}`;
+  }
+
+  if (href.startsWith('/')) {
+    return href;
+  }
+
+  try {
+    const url = new URL(href, cardnavSiteOrigin);
+    if (url.origin === cardnavSiteOrigin) {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+    return href;
+  } catch {
+    return href;
+  }
+}
+
+function buildGuideLinkTrackingAttributes(href: string, sourcePage: string) {
+  const targetPage = normalizeGuideTargetPage(href, sourcePage);
+  return [
+    `data-umami-event="${guideUrlClickEventName}"`,
+    `data-umami-event-source-page="${escapeHtml(sourcePage)}"`,
+    `data-umami-event-target-page="${escapeHtml(targetPage)}"`,
+    `data-umami-event-url="${escapeHtml(href)}"`,
+  ].join(' ');
+}
+
+function addGuideLinkTrackingToRenderedHtml(html: string, sourcePage: string) {
+  return html.replace(/<a\s+([^>]*?)href="([^"]+)"([^>]*?)>/gu, (match, prefix, href, suffix) => {
+    if (prefix.includes('data-umami-event=') || suffix.includes('data-umami-event=')) {
+      return match;
+    }
+    const trackingAttributes = buildGuideLinkTrackingAttributes(href, sourcePage);
+    return `<a ${prefix}href="${href}"${suffix} ${trackingAttributes}>`;
+  });
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/gu, '&amp;')
@@ -297,7 +342,7 @@ type InlineMarkdownCard = {
   markdown: string;
 };
 
-function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<string, string>) {
+function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<string, string>, sourcePage: string) {
   if (cards.length === 0) {
     return '';
   }
@@ -307,7 +352,10 @@ function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<s
       ? `<span class="guide-badge">${escapeHtml(card.badge)}</span>`
       : '<span></span>';
 
-    const bodyHtml = renderMarkdownFragment(card.markdown, slugByFileName);
+    const bodyHtml = addGuideLinkTrackingToRenderedHtml(
+      renderMarkdownFragment(card.markdown, slugByFileName),
+      sourcePage,
+    );
     return [
       '<article class="guide-card">',
       `<div class="guide-card-top">${badgeHtml}</div>`,
@@ -320,7 +368,7 @@ function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<s
   return `<div class="guide-grid">${cardsHtml}</div>`;
 }
 
-function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map<string, string>) {
+function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map<string, string>, sourcePage: string) {
   const lines = markdown.split(/\r?\n/u);
   const htmlParts: string[] = [];
   const introLines: string[] = [];
@@ -378,7 +426,10 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
   pushCurrentSection();
 
   if (introLines.length > 0) {
-    htmlParts.push(renderMarkdownFragment(introLines.join('\n'), slugByFileName));
+    htmlParts.push(addGuideLinkTrackingToRenderedHtml(
+      renderMarkdownFragment(introLines.join('\n'), slugByFileName),
+      sourcePage,
+    ));
   }
 
   let pendingCards: InlineMarkdownCard[] = [];
@@ -386,7 +437,7 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
     if (pendingCards.length === 0) {
       return;
     }
-    htmlParts.push(renderInlineCardGrid(pendingCards, slugByFileName));
+    htmlParts.push(renderInlineCardGrid(pendingCards, slugByFileName, sourcePage));
     pendingCards = [];
   };
 
@@ -402,7 +453,10 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
 
     flushPendingCards();
     const sectionMarkdown = [`## ${section.title}`, ...section.bodyLines].join('\n');
-    htmlParts.push(renderMarkdownFragment(sectionMarkdown, slugByFileName));
+    htmlParts.push(addGuideLinkTrackingToRenderedHtml(
+      renderMarkdownFragment(sectionMarkdown, slugByFileName),
+      sourcePage,
+    ));
   }
 
   flushPendingCards();
@@ -465,7 +519,11 @@ export const renderedGuideArticles: RenderedGuideArticle[] = rawGuideDocuments.m
       };
     })(),
     markdown: normalizedMarkdown,
-    html: renderDocumentHtmlWithInlineCards(item.markdown, slugByFileName),
+    html: renderDocumentHtmlWithInlineCards(
+      item.markdown,
+      slugByFileName,
+      normalizeGuideSourcePage(item.slug),
+    ),
   };
 });
 

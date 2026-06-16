@@ -36,6 +36,11 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   const IPV4_PATTERN = /^(?:\d{1,3}\.){3}\d{1,3}$/;
   let latestPayload = null;
 
+  function trackUmamiEvent(eventName, eventData = {}) {
+    if (typeof window.umami?.track !== 'function') return;
+    window.umami.track(eventName, eventData);
+  }
+
   window.addEventListener('resize', () => {
     if (ui.map) resizeIpLocationMap(ui.map);
   });
@@ -274,17 +279,34 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
       return;
     }
     if (!ip) {
+      trackUmamiEvent('tool-action-click', {
+        tool: 'ip-purity',
+        action: 'submit-detect-current',
+      });
       void detectCurrentIpv4();
       return;
     }
+    trackUmamiEvent('tool-action-click', {
+      tool: 'ip-purity',
+      action: 'submit-check',
+      hasInput: '1',
+    });
     void runCheck(ip);
   });
 
   ui.detectCurrent?.addEventListener('click', () => {
+    trackUmamiEvent('tool-action-click', {
+      tool: 'ip-purity',
+      action: 'detect-current-ip',
+    });
     void detectCurrentIpv4();
   });
 
   ui.clear?.addEventListener('click', () => {
+    trackUmamiEvent('tool-action-click', {
+      tool: 'ip-purity',
+      action: 'clear',
+    });
     ui.input.value = '';
     clearError();
     setEmptyState();

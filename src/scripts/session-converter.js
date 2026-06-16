@@ -54,6 +54,11 @@
     authProvider: 'openai',
   };
 
+  function trackUmamiEvent(eventName, eventData = {}) {
+    if (typeof window.umami?.track !== 'function') return;
+    window.umami.track(eventName, eventData);
+  }
+
   function isRecord(value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
   }
@@ -875,18 +880,48 @@
   });
 
   ui.input.addEventListener('input', syncFromTextarea);
-  ui.copyOutput.addEventListener('click', copyOutput);
-  ui.downloadOutput.addEventListener('click', downloadOutput);
-  ui.pickFiles.addEventListener('click', () => ui.fileInput.click());
+  ui.copyOutput.addEventListener('click', () => {
+    trackUmamiEvent('tool-action-click', {
+      tool: 'session-converter',
+      action: 'copy-output',
+      format: state.format,
+      accountCount: String(state.accounts.length),
+    });
+    void copyOutput();
+  });
+  ui.downloadOutput.addEventListener('click', () => {
+    trackUmamiEvent('tool-action-click', {
+      tool: 'session-converter',
+      action: 'download-output',
+      format: state.format,
+      accountCount: String(state.accounts.length),
+    });
+    downloadOutput();
+  });
+  ui.pickFiles.addEventListener('click', () => {
+    trackUmamiEvent('tool-action-click', {
+      tool: 'session-converter',
+      action: 'pick-files',
+    });
+    ui.fileInput.click();
+  });
   ui.fileInput.addEventListener('change', event => {
     convertFiles(event.target.files);
     event.target.value = '';
   });
   ui.clearInput.addEventListener('click', () => {
+    trackUmamiEvent('tool-action-click', {
+      tool: 'session-converter',
+      action: 'clear-input',
+    });
     ui.input.value = '';
     syncFromTextarea();
   });
   ui.loadExample.addEventListener('click', () => {
+    trackUmamiEvent('tool-action-click', {
+      tool: 'session-converter',
+      action: 'load-example',
+    });
     ui.input.value = JSON.stringify(sampleSession, null, 2);
     syncFromTextarea();
   });
