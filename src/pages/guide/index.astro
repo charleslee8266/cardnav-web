@@ -15,8 +15,8 @@ if (!defaultGuideArticle) {
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/guide',
-  title: '向导',
-  description: '卡网大全向导整理 AI 账号购买、商家选择和虚拟商品下单前的判断方法。',
+  title: defaultGuideArticle.title,
+  description: defaultGuideArticle.description,
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
 });

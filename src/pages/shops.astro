@@ -14,7 +14,7 @@ const popularSearchTerms = (await loadPopularSearchTerms(10)).terms;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/shops',
-  title: '卡网商家',
+  title: '卡网商品',
   description: '搜集全网第三方卡网商家与商品，支持按关键词、分类、价格、库存、商家和刷新时间进行筛选与排序。',
   imagePath: '/og-cardnav.svg',
   type: 'website',
@@ -75,14 +75,16 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
 
 <PublicPage activeNav="shops" {...seo}>
   <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5 flex flex-col gap-3">
-      <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-base-content">卡网商家</h2>
-          <p class="text-sm leading-6 text-base-content/75">搜集全网第三方卡网商家与商品，支持按价格、库存、商家和刷新时间继续筛选，快速找到更合适的购买入口。</p>
-          <p class="mt-1 text-xs leading-5 text-base-content/55">价格数据仅供参考，实际价格以各平台为准。</p>
+    <div class="card-body p-5">
+      <div class="page-hero-shell">
+        <div class="page-hero-main">
+          <div class="page-hero-wrap">
+            <h1 class="page-hero-title">AI 卡网商品</h1>
+            <p class="page-hero-copy">搜集全网第三方 AI 卡网商家与商品，支持按价格、库存、商家和刷新时间继续筛选，快速找到更合适的购买入口。</p>
+            <p class="page-hero-note">价格数据仅供参考，实际价格以各平台为准。</p>
+          </div>
         </div>
-        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-sm shrink-0">提交商家</button>
+        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-md shrink-0">提交商家</button>
       </div>
     </div>
   </section>

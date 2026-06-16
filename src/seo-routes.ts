@@ -57,7 +57,7 @@ export const staticPublicSeoRoutes: PublicSeoRoute[] = [
   {
     pathname: '/about',
     title: '关于我们',
-    description: '了解 CardNav 为什么会被做出来，以及它想为 AI 账号购买用户和商家解决什么问题。',
+    description: '了解卡网大全为什么会被做出来，以及它想为 AI 账号购买用户和商家解决什么问题。',
     changefreq: 'monthly',
   },
   {
@@ -167,9 +167,9 @@ export function buildLlmsTxt(baseUrlInput: string) {
     .map(route => `- [${route.title}](${resolvePublicUrl(baseUrl, route.pathname)}): ${route.description}`)
     .join('\n');
   return [
-    '# CardNav / 卡网大全',
+    '# 卡网大全',
     '',
-    'CardNav is a Chinese public directory for AI account merchants, products, stock status, prices, submission, and buyer education.',
+    '卡网大全是一个中文公开导航站点，聚合 AI 账号商家、商品、库存状态、价格、提交入口和购买前判断内容。',
     '',
     '## Important URLs',
     '',
@@ -182,7 +182,7 @@ export function buildLlmsTxt(baseUrlInput: string) {
     '',
     '## Crawler Policy',
     '',
-    'Public pages may be used for search indexing, citation, answer grounding, and user-requested retrieval. CardNav does not authorize model-training or bulk dataset crawling; see robots.txt for crawler-specific rules.',
+    'Public pages may be used for search indexing, citation, answer grounding, and user-requested retrieval. 卡网大全 does not authorize model-training or bulk dataset crawling; see robots.txt for crawler-specific rules.',
     '',
   ].join('\n');
 }
