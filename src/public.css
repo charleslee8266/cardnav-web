@@ -341,7 +341,15 @@
   }
 
   .nav-top-tab {
-    @apply rounded-xl border border-transparent px-3.5 text-[0.95rem] tracking-[0.01em] transition-colors transition-shadow duration-200;
+    @apply rounded-xl border border-base-300/80 bg-base-200/85 px-3.5 text-[0.95rem] tracking-[0.01em] transition-colors transition-shadow duration-200 md:border-transparent md:bg-transparent;
+  }
+
+  .nav-top-tab-compact {
+    @apply rounded-lg px-2.5 text-[0.78rem];
+  }
+
+  .nav-top-tab-mobile {
+    @apply inline-flex min-w-0 items-center justify-center rounded-none border-transparent bg-transparent px-1.5 text-[0.78rem] shadow-none;
   }
 
   .nav-top-tab:hover {
@@ -350,6 +358,18 @@
 
   .nav-top-tab-active {
     @apply border-base-300/80 bg-base-100 shadow-sm;
+  }
+
+  .nav-top-tab-mobile.nav-top-tab-active {
+    @apply border-transparent bg-transparent shadow-none text-primary;
+  }
+
+  .mobile-nav-scroll {
+    scrollbar-width: none;
+  }
+
+  .mobile-nav-scroll::-webkit-scrollbar {
+    display: none;
   }
 
   .page-hero-wrap {
