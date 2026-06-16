@@ -38,7 +38,7 @@ export const staticPublicSeoRoutes: PublicSeoRoute[] = [
   },
   {
     pathname: '/tools/session-converter',
-    title: 'Session 转换工具',
+    title: 'ChatGPT Session 转换工具',
     description: '在浏览器本地转换 ChatGPT Web session、Codex auth.json 和 9Router OAuth JSON 等账号凭证格式。',
     changefreq: 'monthly',
   },

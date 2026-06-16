@@ -4,7 +4,6 @@
 */
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
-import ipPurityScriptUrl from '../../scripts/ip-purity.js?url';
 import { publicSiteUrl } from '../../site.js';
 
 const seo = buildSeoContext({
@@ -182,5 +181,8 @@ const seo = buildSeoContext({
     </article>
   </section>
 
-  <script is:inline type="module" slot="scripts" src={ipPurityScriptUrl}></script>
 </PublicPage>
+
+<script>
+  import '../../scripts/ip-purity.js';
+</script>

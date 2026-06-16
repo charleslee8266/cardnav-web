@@ -1,6 +1,5 @@
 /*
 文件说明: 在浏览器本地解析 ChatGPT/Codex 相关认证 JSON，并转换为多种导入格式。
-参考资料: GPTSession2CPAandSub2API 行为逻辑
 */
 (() => {
   const formatNames = {
