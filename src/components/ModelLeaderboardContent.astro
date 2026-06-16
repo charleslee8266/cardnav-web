@@ -1,0 +1,86 @@
+---
+/*
+文件说明: 渲染模型排行榜页的服务端 HTML 内容，包括任务导航和当前任务榜单。
+*/
+import type { ModelLeaderboardGroup } from '../model-leaderboard.js';
+
+type Props = {
+  groups: ModelLeaderboardGroup[];
+  currentGroup: ModelLeaderboardGroup | null;
+  updateTime: string;
+};
+
+const { groups, currentGroup, updateTime } = Astro.props;
+---
+
+<section class="card bg-base-100 border border-base-300 shadow-sm">
+  <div class="card-body p-5">
+    <div class="page-hero-wrap">
+      <h1 class="page-hero-title">
+        {currentGroup ? `${currentGroup.taskLabel}模型排行榜` : 'AI 大模型排行榜'}
+      </h1>
+      <p class="page-hero-copy">
+        AI 大模型能力排行榜，包含编程、创意写作、数学和文生图榜单。
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 text-xs text-base-content/60">
+      <span>最近刷新（北京时间）：{updateTime}</span>
+    </div>
+  </div>
+</section>
+
+{groups.length > 0 && (
+  <nav class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label="模型排行榜任务类型">
+    {groups.map(group => (
+      <a
+        role="tab"
+        href={group.pathname}
+        class={'tab text-sm ' + (currentGroup?.taskSlug === group.taskSlug ? 'tab-active font-semibold text-primary' : 'text-base-content/70 hover:text-base-content')}
+        aria-current={currentGroup?.taskSlug === group.taskSlug ? 'page' : undefined}
+      >
+        {group.taskLabel}
+      </a>
+    ))}
+  </nav>
+)}
+
+{currentGroup && (
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
+      <p class="text-sm font-bold text-base-content">{currentGroup.taskLabel}</p>
+    </div>
+    <div class="product-table-scroll">
+      <table class="table table-zebra table-md w-full border-collapse">
+        <thead class="bg-base-200 text-base-content text-sm">
+          <tr>
+            <th scope="col" class="font-bold">排名</th>
+            <th scope="col" class="font-bold">模型</th>
+            <th scope="col" class="font-bold text-primary">评分</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentGroup.rows.map(item => (
+            <tr class="hover">
+              <td class="font-bold">
+                {item.rank <= 3 ? '#' + item.rank : item.rank}
+              </td>
+              <td class="font-semibold text-base-content break-all">{item.modelName}</td>
+              <td class="font-mono font-bold text-primary">{item.score.toFixed(2)}</td>
+            </tr>
+          ))}
+          {currentGroup.rows.length === 0 && (
+            <tr>
+              <td colspan="3" class="p-8 text-center text-base-content/40">暂无排行榜数据，请稍后再查看。</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
+
+{groups.length === 0 && (
+  <section class="alert alert-info alert-soft max-w-md mx-auto my-6 justify-center">
+    <span>暂无排行榜数据，请稍后再查看。</span>
+  </section>
+)}

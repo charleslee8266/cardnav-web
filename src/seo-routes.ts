@@ -2,6 +2,7 @@
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
 import { guideArticles } from './guide.js';
+import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
 
 export type PublicSeoRoute = {
@@ -117,10 +118,23 @@ export function buildOfficialPriceSeoRoutes(groups: OfficialPriceGroup[]): Publi
   }));
 }
 
-export function getPublicSeoRoutesWithOfficialPrices(groups: OfficialPriceGroup[]): PublicSeoRoute[] {
+export function buildModelLeaderboardSeoRoutes(groups: ModelLeaderboardGroup[]): PublicSeoRoute[] {
+  return groups.map(group => ({
+    pathname: group.pathname,
+    title: `${group.taskLabel}模型排行榜`,
+    description: `查看当前 ${group.taskLabel} 任务下的大模型能力排行榜，包括模型排名和评分。`,
+    changefreq: 'daily' as const,
+  }));
+}
+
+export function getPublicSeoRoutesWithDynamicPages(params: {
+  officialPriceGroups?: OfficialPriceGroup[];
+  modelLeaderboardGroups?: ModelLeaderboardGroup[];
+} = {}): PublicSeoRoute[] {
   return [
     ...getPublicSeoRoutes(),
-    ...buildOfficialPriceSeoRoutes(groups),
+    ...buildOfficialPriceSeoRoutes(params.officialPriceGroups ?? []),
+    ...buildModelLeaderboardSeoRoutes(params.modelLeaderboardGroups ?? []),
   ];
 }
 
