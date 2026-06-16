@@ -1,7 +1,7 @@
 /**
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
-import { guideArticles } from './guide.js';
+import { guideArticles } from './guide.ts';
 
 export type PublicSeoRoute = {
   pathname: string;
