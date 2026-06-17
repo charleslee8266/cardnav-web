@@ -8,14 +8,6 @@ import { findGuideArticle, guideArticles, guideNavItems } from '../../guide.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 
-export const prerender = true;
-
-export function getStaticPaths() {
-  return guideArticles.map(article => ({
-    params: { slug: article.slug },
-  }));
-}
-
 const slug = Astro.params.slug || '';
 const article = findGuideArticle(slug);
 if (!article) return Astro.redirect('/guide', 302);

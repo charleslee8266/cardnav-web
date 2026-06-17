@@ -215,8 +215,8 @@ export async function submitSiteUrl(input: string) {
 
   const result = await getPool().query(
     `
-      INSERT INTO urls (url, status, sub_status, notes)
-      VALUES ($1, 'accepted', NULL, NULL)
+      INSERT INTO urls (url, status)
+      VALUES ($1, 'accepted')
       ON CONFLICT (url) DO NOTHING
       RETURNING url
     `,
@@ -343,6 +343,12 @@ export async function loadPopularSearchTerms(limit = 10) {
 export type PublicOfficialPriceRow = {
   appSlug: string;
   planSlug: string;
+  appName: string;
+  planName: string;
+  displayName: string;
+  urlSlug: string;
+  isDefault: boolean;
+  displayOrder: number;
   countryCode: string;
   countryLabel: string;
   currencyCode: string;
@@ -368,13 +374,19 @@ export type PublicModelLeaderboardRow = {
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
   const db = getPool();
   const result = await db.query(`
-    SELECT app_slug, plan_slug, country_code, country_label, currency_code, price_text, price_value, cny_price, fetched_at
+    SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, fetched_at
     FROM official_prices
-    ORDER BY app_slug ASC, cny_price ASC
+    ORDER BY display_order ASC, cny_price ASC
   `);
   return result.rows.map(row => ({
     appSlug: String(row.app_slug),
     planSlug: String(row.plan_slug),
+    appName: String(row.app_name),
+    planName: String(row.plan_name),
+    displayName: String(row.display_name),
+    urlSlug: String(row.url_slug),
+    isDefault: Boolean(row.is_default),
+    displayOrder: Number(row.display_order) || 0,
     countryCode: String(row.country_code),
     countryLabel: String(row.country_label),
     currencyCode: String(row.currency_code),

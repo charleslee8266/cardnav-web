@@ -4,6 +4,7 @@
 */
 import PublicPage from '../layouts/PublicPage.astro';
 import Sponsors from '../components/Sponsors.astro';
+import { buildOfficialPriceGroups } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { loadDashboardData, loadModelLeaderboards, loadOfficialPrices, loadPopularSearchTerms } from '../store.js';
@@ -43,74 +44,12 @@ const taskGroups: LeaderboardPreviewGroup[] = taskOrder
   })
   .filter((group): group is LeaderboardPreviewGroup => group !== null);
 
-const appLabelMap = {
-  'chatgpt': 'ChatGPT',
-  'claude': 'Claude',
-  'gemini': 'Gemini',
-  'grok': 'Grok',
-  'copilot': 'Copilot',
-  'kimi': 'Kimi',
-  'x': 'X',
-};
-
-const planLabelMap = {
-  'go-monthly': 'Go',
-  'plus': 'Plus',
-  'pro-5x': 'Pro 5x',
-  'pro-20x': 'Pro 20x',
-  'pro': 'Pro',
-  'max-5x-monthly': 'Max 5x',
-  'max-20x-monthly': 'Max 20x',
-  'ai-plus': 'AI Plus',
-  'advanced': 'AI Pro',
-  'ai-ultra': 'AI Ultra',
-  'supergrok-lite': 'SuperGrok Lite',
-  'supergrok': 'SuperGrok',
-  'supergrok-heavy': 'SuperGrok Heavy',
-  'moderato': 'Moderato',
-  'allegretto': 'Allegretto',
-  'basic': 'Basic',
-  'premium': 'Premium',
-  'premium-plus': 'Premium+',
-};
-
-function labelFromSlug(slug: string) {
-  return slug
-    .split('-')
-    .filter(Boolean)
-    .map(part => part.length <= 3 ? part.toUpperCase() : `${part[0]?.toUpperCase() || ''}${part.slice(1)}`)
-    .join(' ');
-}
-
-function appLabel(appSlug: string) {
-  return appLabelMap[appSlug as keyof typeof appLabelMap] || labelFromSlug(appSlug);
-}
-
-function planLabel(planSlug: string) {
-  return planLabelMap[planSlug as keyof typeof planLabelMap] || labelFromSlug(planSlug);
-}
-
-const officialPriceTargets = [
-  { appSlug: 'chatgpt', planSlug: 'pro-20x' },
-  { appSlug: 'claude', planSlug: 'max-20x-monthly' },
-  { appSlug: 'gemini', planSlug: 'ai-ultra' },
-];
-
-const officialPriceGroups = officialPriceTargets
-  .map(target => {
-    const prices = officialPrices
-      .filter(item => item.appSlug === target.appSlug && item.planSlug === target.planSlug)
-      .slice()
-      .sort((left, right) => left.cnyPrice - right.cnyPrice)
-      .slice(0, 3);
-    return {
-      key: `${target.appSlug}:${target.planSlug}`,
-      appName: appLabel(target.appSlug),
-      planName: planLabel(target.planSlug),
-      prices,
-    };
-  })
-  .filter(group => group.prices.length > 0);
+const officialPriceGroups = buildOfficialPriceGroups(officialPrices)
+  .slice(0, 3)
+  .map(group => ({
+    ...group,
+    prices: group.prices.slice(0, 3),
+  }));
 
 const hotProducts = dashboardData.products.slice(0, 10).map(product => ({
   ...product,
@@ -152,12 +91,12 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
   <section class="card relative cursor-pointer bg-base-100 border border-base-300 shadow-sm overflow-hidden transition hover:border-primary/35 hover:shadow-md">
     <a href="/guide" class="absolute inset-0 z-0" aria-label="打开完整向导" {...guideUrlClickAttrs('/guide')}></a>
     <div class="card-body p-4">
-      <div class="relative z-10 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+      <div class="pointer-events-none relative z-10 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 class="text-xl font-bold text-base-content">不知道如何开始？点击进入向导</h2>
           <p class="mt-1 text-sm leading-6 text-base-content/75">从模型选择、使用方式到实践，先把思路理清楚。</p>
         </div>
-        <a href="/guide" class="btn btn-outline btn-sm shrink-0" {...guideUrlClickAttrs('/guide')}>打开完整向导</a>
+        <a href="/guide" class="pointer-events-auto btn btn-outline btn-sm shrink-0" {...guideUrlClickAttrs('/guide')}>打开完整向导</a>
       </div>
       <div class="relative z-10 mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {guideSteps.map((step, index) => (

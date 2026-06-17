@@ -32,8 +32,8 @@ const {
   showSponsors = true,
 } = Astro.props;
 
-const inactiveClass = 'nav-top-tab tab shrink-0 text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
-const activeClass = 'nav-top-tab nav-top-tab-active tab tab-active shrink-0 text-sm md:text-base font-bold text-primary';
+const inactiveClass = 'nav-top-tab shrink-0 text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
+const activeClass = 'nav-top-tab nav-top-tab-active shrink-0 text-sm md:text-base font-semibold text-primary';
 const mobilePrimaryTabClass = 'nav-top-tab nav-top-tab-mobile shrink-0 text-xs font-semibold text-base-content/85 hover:text-primary';
 const mobileMoreLinkClass = 'rounded-lg px-2.5 py-2 text-xs font-semibold text-base-content/85 transition hover:bg-base-200 hover:text-primary';
 const shouldShowHero = activeNav === 'home';
@@ -109,13 +109,13 @@ function siteLinkClickAttrs(url: string, name: string) {
         </svg>
       </summary>
       <ul class="menu dropdown-content z-50 mt-2 w-48 rounded-2xl border border-base-300 bg-base-100 p-2 shadow-lg">
-        <li><a href="/" class={activeNav === 'home' ? mobileMoreLinkClass + ' bg-base-200 text-primary' : mobileMoreLinkClass} {...navClickAttrs('/', '首页')}>首页</a></li>
-        <li><a href="/guide" class={activeNav === 'guide' ? mobileMoreLinkClass + ' bg-base-200 text-primary' : mobileMoreLinkClass} {...navClickAttrs('/guide', '向导')}>向导</a></li>
-        <li><a href="/shops" class={activeNav === 'shops' ? mobileMoreLinkClass + ' bg-base-200 text-primary' : mobileMoreLinkClass} {...navClickAttrs('/shops', '卡网商品')}>卡网商品</a></li>
-        <li><a href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? mobileMoreLinkClass + ' bg-base-200 text-primary' : mobileMoreLinkClass} {...navClickAttrs('/model-leaderboard', '模型排行榜')}>模型排行榜</a></li>
-        <li><a href="/official-price" class={activeNav === 'official-price' ? mobileMoreLinkClass + ' bg-base-200 text-primary' : mobileMoreLinkClass} {...navClickAttrs('/official-price', '官方订阅比价')}>官方订阅比价</a></li>
-        <li><a href="/tools" class={activeNav === 'tools' ? mobileMoreLinkClass + ' bg-base-200 text-primary' : mobileMoreLinkClass} {...navClickAttrs('/tools', '工具集')}>工具集</a></li>
-        <li><a href="/tools/ip-purity" class={activeNav === 'ip-purity' ? mobileMoreLinkClass + ' bg-base-200 text-primary' : mobileMoreLinkClass} {...navClickAttrs('/tools/ip-purity', 'IP纯净度')}>IP纯净度</a></li>
+        <li><a href="/" class={activeNav === 'home' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/', '首页')}>首页</a></li>
+        <li><a href="/guide" class={activeNav === 'guide' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/guide', '向导')}>向导</a></li>
+        <li><a href="/shops" class={activeNav === 'shops' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/shops', '卡网商品')}>卡网商品</a></li>
+        <li><a href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/model-leaderboard', '模型排行榜')}>模型排行榜</a></li>
+        <li><a href="/official-price" class={activeNav === 'official-price' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/official-price', '官方订阅比价')}>官方订阅比价</a></li>
+        <li><a href="/tools" class={activeNav === 'tools' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/tools', '工具集')}>工具集</a></li>
+        <li><a href="/tools/ip-purity" class={activeNav === 'ip-purity' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/tools/ip-purity', 'IP纯净度')}>IP纯净度</a></li>
         <li><a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(telegramGroupUrl, 'Header Telegram')}>Telegram</a></li>
         <li><a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(githubRepoUrl, 'Header GitHub')}>GitHub</a></li>
         <li><a href={xProfileUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>X @CharlesLee8266</a></li>
@@ -142,49 +142,49 @@ function siteLinkClickAttrs(url: string, name: string) {
       </button>
     </div>
   </nav>
-  <nav class="navbar hidden w-full flex-wrap items-center justify-start gap-3 px-4 py-2 md:flex">
-    <a href="/" aria-label="返回首页" class="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base-content transition hover:bg-base-200" {...navClickAttrs('/', 'Header Logo')}>
-      <img src="/favicon.webp" alt="卡网大全" width="28" height="28" class="h-7 w-7 rounded object-cover" />
-      <span class="flex flex-col justify-center leading-none">
-        <span class="text-base font-bold tracking-normal">卡网大全</span>
-        <span class="text-xs font-semibold text-base-content/60">cardnav.xyz</span>
-      </span>
-    </a>
-    <div role="tablist" class="nav-top-tablist tabs tabs-box">
-      <a role="tab" href="/" class={activeNav === 'home' ? activeClass : inactiveClass} {...navClickAttrs('/', '首页')}>首页</a>
-      <a role="tab" href="/guide" class={activeNav === 'guide' ? activeClass : inactiveClass} {...navClickAttrs('/guide', '向导')}>向导</a>
-      <a role="tab" href="/shops" class={activeNav === 'shops' ? activeClass : inactiveClass} {...navClickAttrs('/shops', '卡网商品')}>卡网商品</a>
-      <a role="tab" href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? activeClass : inactiveClass} {...navClickAttrs('/model-leaderboard', '模型排行榜')}>模型排行榜</a>
-      <a role="tab" href="/official-price" class={activeNav === 'official-price' ? activeClass : inactiveClass} {...navClickAttrs('/official-price', '官方订阅比价')}>官方订阅比价</a>
-      <a role="tab" href="/tools" class={activeNav === 'tools' ? activeClass : inactiveClass} {...navClickAttrs('/tools', '工具集')}>工具集</a>
-      <a role="tab" href="/tools/ip-purity" class={activeNav === 'ip-purity' ? activeClass : inactiveClass} {...navClickAttrs('/tools/ip-purity', 'IP纯净度')}>IP纯净度</a>
+  <nav class="hidden w-full px-4 py-2 md:block">
+    <div class="desktop-nav-wrap">
+      <a href="/" aria-label="返回首页" class="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base-content transition hover:bg-base-200" {...navClickAttrs('/', 'Header Logo')}>
+        <img src="/favicon.webp" alt="卡网大全" width="28" height="28" class="h-7 w-7 rounded object-cover" />
+        <span class="flex flex-col justify-center leading-none">
+          <span class="text-base font-bold tracking-normal">卡网大全</span>
+          <span class="text-xs font-semibold text-base-content/60">cardnav.xyz</span>
+        </span>
+      </a>
+      <a href="/" class={activeNav === 'home' ? activeClass : inactiveClass} {...navClickAttrs('/', '首页')}>首页</a>
+      <a href="/guide" class={activeNav === 'guide' ? activeClass : inactiveClass} {...navClickAttrs('/guide', '向导')}>向导</a>
+      <a href="/shops" class={activeNav === 'shops' ? activeClass : inactiveClass} {...navClickAttrs('/shops', '卡网商品')}>卡网商品</a>
+      <a href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? activeClass : inactiveClass} {...navClickAttrs('/model-leaderboard', '模型排行榜')}>模型排行榜</a>
+      <a href="/official-price" class={activeNav === 'official-price' ? activeClass : inactiveClass} {...navClickAttrs('/official-price', '官方订阅比价')}>官方订阅比价</a>
+      <a href="/tools" class={activeNav === 'tools' ? activeClass : inactiveClass} {...navClickAttrs('/tools', '工具集')}>工具集</a>
+      <a href="/tools/ip-purity" class={activeNav === 'ip-purity' ? activeClass : inactiveClass} {...navClickAttrs('/tools/ip-purity', 'IP纯净度')}>IP纯净度</a>
+      <button id="themeToggleDesktop" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label="切换主题" title="切换主题">
+        <!-- Moon icon (show when theme is light) -->
+        <svg id="themeMoonIconDesktop" class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,9.2,10.19,10.19,0,0,0,8,18.81,8.19,8.19,0,0,1,12.14,19.69Z"/>
+        </svg>
+        <!-- Sun icon (show when theme is dark) -->
+        <svg id="themeSunIconDesktop" class="hidden h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12,8a4,4,0,1,0,4,4A4,4,0,0,0,12,8Zm0,6a2,2,0,1,1,2-2A2,2,0,0,1,12,14ZM12,2a1,1,0,0,0-1,1V4a1,1,0,0,0,2,0V3A1,1,0,0,0,12,2ZM12,18a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V19A1,1,0,0,0,12,18ZM5.64,4.22a1,1,0,1,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM17.36,15.94a1,1,0,0,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2ZM4,11H3a1,1,0,0,0,0,2H4a1,1,0,0,0,0-2Zm14.78-6.78a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,18.78,4.22ZM6.64,15.94a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,6.64,15.94Z"/>
+        </svg>
+      </button>
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 Telegram 群组" title="Telegram 群组" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content hover:bg-base-200 hover:text-base-content" {...siteLinkClickAttrs(telegramGroupUrl, 'Header Telegram')}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m22 2-7 20-4-9-9-4Z"></path>
+          <path d="M22 2 11 13"></path>
+        </svg>
+      </a>
+      <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 GitHub 仓库" title="GitHub 仓库" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(githubRepoUrl, 'Header GitHub')}>
+        <svg aria-hidden="true" viewBox="0 0 16 16" class="h-5 w-5 fill-current">
+          <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
+        </svg>
+      </a>
+      <a href={xProfileUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 X @CharlesLee8266" title="X @CharlesLee8266" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current">
+          <path d="M13.93 10.16 21.31 1.5h-1.75l-6.41 7.52L8.03 1.5H2.13l7.74 11.36-7.74 9.08h1.75l6.76-7.93 5.4 7.93h5.9l-8.01-11.78Zm-2.39 2.81-.78-1.13L4.52 2.82h2.67l5.04 7.28.78 1.13 6.55 9.46h-2.67l-5.35-7.72Z"></path>
+        </svg>
+      </a>
     </div>
-    <button id="themeToggleDesktop" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label="切换主题" title="切换主题">
-      <!-- Moon icon (show when theme is light) -->
-      <svg id="themeMoonIconDesktop" class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,9.2,10.19,10.19,0,0,0,8,18.81,8.19,8.19,0,0,1,12.14,19.69Z"/>
-      </svg>
-      <!-- Sun icon (show when theme is dark) -->
-      <svg id="themeSunIconDesktop" class="hidden h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M12,8a4,4,0,1,0,4,4A4,4,0,0,0,12,8Zm0,6a2,2,0,1,1,2-2A2,2,0,0,1,12,14ZM12,2a1,1,0,0,0-1,1V4a1,1,0,0,0,2,0V3A1,1,0,0,0,12,2ZM12,18a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V19A1,1,0,0,0,12,18ZM5.64,4.22a1,1,0,1,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM17.36,15.94a1,1,0,0,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2ZM4,11H3a1,1,0,0,0,0,2H4a1,1,0,0,0,0-2Zm14.78-6.78a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,18.78,4.22ZM6.64,15.94a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,6.64,15.94Z"/>
-      </svg>
-    </button>
-    <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 Telegram 群组" title="Telegram 群组" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content hover:bg-base-200 hover:text-base-content" {...siteLinkClickAttrs(telegramGroupUrl, 'Header Telegram')}>
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m22 2-7 20-4-9-9-4Z"></path>
-        <path d="M22 2 11 13"></path>
-      </svg>
-    </a>
-    <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 GitHub 仓库" title="GitHub 仓库" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(githubRepoUrl, 'Header GitHub')}>
-      <svg aria-hidden="true" viewBox="0 0 16 16" class="h-5 w-5 fill-current">
-        <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
-      </svg>
-    </a>
-    <a href={xProfileUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 X @CharlesLee8266" title="X @CharlesLee8266" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>
-      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current">
-        <path d="M13.93 10.16 21.31 1.5h-1.75l-6.41 7.52L8.03 1.5H2.13l7.74 11.36-7.74 9.08h1.75l6.76-7.93 5.4 7.93h5.9l-8.01-11.78Zm-2.39 2.81-.78-1.13L4.52 2.82h2.67l5.04 7.28.78 1.13 6.55 9.46h-2.67l-5.35-7.72Z"></path>
-      </svg>
-    </a>
   </nav>
 </header>
 

@@ -1,7 +1,7 @@
 /**
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
-import { guideArticles } from './guide.js';
+import type { GuideArticle } from './guide.js';
 import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
 
@@ -97,10 +97,15 @@ export function resolvePublicUrl(baseUrlInput: string, pathname: string) {
   return new URL(pathname, `${normalizeBaseUrl(baseUrlInput)}/`).toString();
 }
 
-export function getPublicSeoRoutes(): PublicSeoRoute[] {
+export async function loadGuideArticles() {
+  const guideModule = await import('./guide.js');
+  return guideModule.guideArticles;
+}
+
+export function getPublicSeoRoutes(guideRoutes: GuideArticle[] = []): PublicSeoRoute[] {
   return [
     ...staticPublicSeoRoutes,
-    ...guideArticles.map(article => ({
+    ...guideRoutes.map(article => ({
       pathname: `/guide/${article.slug}`,
       title: article.title,
       description: article.description,
@@ -130,12 +135,29 @@ export function buildModelLeaderboardSeoRoutes(groups: ModelLeaderboardGroup[]):
 export function getPublicSeoRoutesWithDynamicPages(params: {
   officialPriceGroups?: OfficialPriceGroup[];
   modelLeaderboardGroups?: ModelLeaderboardGroup[];
+  guideRoutes?: GuideArticle[];
 } = {}): PublicSeoRoute[] {
-  return [
-    ...getPublicSeoRoutes(),
+  return normalizePublicSeoRoutes([
+    ...getPublicSeoRoutes(params.guideRoutes),
     ...buildOfficialPriceSeoRoutes(params.officialPriceGroups ?? []),
     ...buildModelLeaderboardSeoRoutes(params.modelLeaderboardGroups ?? []),
-  ];
+  ]);
+}
+
+export function normalizePublicSeoRoutes(routes: PublicSeoRoute[]) {
+  const seenPathnames = new Set<string>();
+  const normalizedRoutes: PublicSeoRoute[] = [];
+
+  for (const route of routes) {
+    const pathname = route.pathname.trim();
+    if (!pathname.startsWith('/')) continue;
+    if (pathname.includes('..')) continue;
+    if (seenPathnames.has(pathname)) continue;
+    seenPathnames.add(pathname);
+    normalizedRoutes.push({ ...route, pathname });
+  }
+
+  return normalizedRoutes;
 }
 
 function escapeXml(input: string) {
@@ -151,7 +173,7 @@ function escapeXml(input: string) {
 }
 
 export function buildSitemapXml(baseUrlInput: string, routes = getPublicSeoRoutes()) {
-  const items = routes
+  const items = normalizePublicSeoRoutes(routes)
     .map(route => {
       const lines = [
         '  <url>',
@@ -168,7 +190,7 @@ export function buildSitemapXml(baseUrlInput: string, routes = getPublicSeoRoute
 }
 
 export function buildSitemapTxt(baseUrlInput: string, routes = getPublicSeoRoutes()) {
-  return `${routes
+  return `${normalizePublicSeoRoutes(routes)
     .map(route => resolvePublicUrl(baseUrlInput, route.pathname))
     .join('\n')}\n`;
 }
@@ -194,11 +216,11 @@ export function buildRobotsTxt(baseUrlInput: string) {
 
 export function buildLlmsTxt(baseUrlInput: string, routes = getPublicSeoRoutes()) {
   const baseUrl = normalizeBaseUrl(baseUrlInput);
-  const routeLines = routes
+  const routeLines = normalizePublicSeoRoutes(routes)
     .map(route => `- [${route.title}](${resolvePublicUrl(baseUrl, route.pathname)}): ${route.description}`)
     .join('\n');
   return [
-    '# 卡网大全',
+    '# CardNav / 卡网大全',
     '',
     '卡网大全是一个中文公开导航站点，聚合 AI 账号商家、商品、库存状态、价格、提交入口和购买前判断内容。',
     '',

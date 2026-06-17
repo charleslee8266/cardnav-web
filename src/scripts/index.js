@@ -941,7 +941,7 @@ function updateFlatSortButtons() {
     const directionLabel = currentFlatSort?.direction === 'asc' ? '升序' : '降序';
     if (headerCell) headerCell.setAttribute('aria-sort', active ? (currentFlatSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
     button.dataset.sortDirection = active ? currentFlatSort.direction : '';
-    if (indicator) indicator.textContent = active ? (currentFlatSort.direction === 'asc' ? '↑' : '↓') : '';
+    if (indicator) indicator.dataset.sortDirection = active ? currentFlatSort.direction : '';
     if (status) status.textContent = active ? `，当前${directionLabel}` : '，点击排序';
   });
 }
@@ -1082,6 +1082,14 @@ flatSortButtons.forEach(button => {
       key: button.dataset.sortKey || '',
       direction: button.dataset.sortDirection || '',
     });
+  });
+});
+
+document.querySelectorAll('.flat-sort-head').forEach(headerCell => {
+  headerCell.addEventListener('click', event => {
+    const button = headerCell.querySelector('.flat-sort-button');
+    if (!(button instanceof HTMLElement) || event.target === button || button.contains(event.target)) return;
+    button.click();
   });
 });
 

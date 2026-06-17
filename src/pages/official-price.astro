@@ -4,14 +4,14 @@
 */
 import OfficialPriceContent from '../components/OfficialPriceContent.astro';
 import PublicPage from '../layouts/PublicPage.astro';
-import { buildOfficialPriceGroups } from '../official-price.js';
+import { buildOfficialPriceGroups, getDefaultOfficialPriceGroup } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { loadOfficialPrices, formatBeijingRefreshTime } from '../store.js';
 
 const rawPrices = await loadOfficialPrices();
 const groups = buildOfficialPriceGroups(rawPrices);
-const currentGroup = groups.find(group => group.appSlug === 'chatgpt' && group.planSlug === 'plus') || groups[0] || null;
+const currentGroup = getDefaultOfficialPriceGroup(groups);
 const latestFetchedAt = rawPrices.reduce<string | null>((latest, price) => {
   if (!price.fetchedAt) return latest;
   if (!latest) return price.fetchedAt;

@@ -11,10 +11,7 @@ import { formatBeijingRefreshTime, loadOfficialPrices } from '../../store.js';
 
 const rawPrices = await loadOfficialPrices();
 const groups = buildOfficialPriceGroups(rawPrices);
-const requestedGroup = resolveOfficialPriceSlug(Astro.params.slug || '');
-const currentGroup = requestedGroup
-  ? groups.find(group => group.appSlug === requestedGroup.appSlug && group.planSlug === requestedGroup.planSlug) || null
-  : null;
+const currentGroup = resolveOfficialPriceSlug(Astro.params.slug || '', groups);
 
 if (!currentGroup) return Astro.redirect('/official-price', 302);
 if (Astro.params.slug !== currentGroup.urlSlug) return Astro.redirect(currentGroup.pathname, 301);

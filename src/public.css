@@ -336,12 +336,13 @@
     @apply mt-4 text-base leading-8;
   }
 
+  .desktop-nav-wrap,
   .nav-top-tablist {
-    @apply gap-1 rounded-2xl border border-base-300/80 bg-base-200/85 p-1 shadow-sm;
+    @apply flex flex-wrap items-center gap-0.5 rounded-xl bg-base-100;
   }
 
   .nav-top-tab {
-    @apply rounded-xl border border-base-300/80 bg-base-200/85 px-3.5 text-[0.95rem] tracking-[0.01em] transition-colors transition-shadow duration-200 md:border-transparent md:bg-transparent;
+    @apply inline-flex min-h-9 items-center rounded-lg bg-base-100 px-2.5 text-[0.95rem] tracking-normal transition-colors duration-200;
   }
 
   .nav-top-tab-compact {
@@ -349,19 +350,19 @@
   }
 
   .nav-top-tab-mobile {
-    @apply inline-flex min-w-0 items-center justify-center rounded-none border-transparent bg-transparent px-1.5 text-[0.78rem] shadow-none;
+    @apply inline-flex min-w-0 items-center justify-center rounded-none bg-base-100 px-1 text-[0.78rem];
   }
 
   .nav-top-tab:hover {
-    @apply bg-base-100 text-primary;
+    @apply bg-base-200/70 text-primary;
   }
 
   .nav-top-tab-active {
-    @apply border-base-300/80 bg-base-100 shadow-sm;
+    @apply bg-base-100 text-primary shadow-none;
   }
 
   .nav-top-tab-mobile.nav-top-tab-active {
-    @apply border-transparent bg-transparent shadow-none text-primary;
+    @apply bg-base-100 text-primary shadow-none;
   }
 
   .mobile-nav-scroll {
@@ -616,6 +617,46 @@
   .flat-product-table th,
   .flat-product-table td {
     @apply align-top border-r border-base-300 last:border-r-0;
+  }
+
+  .flat-product-table thead .flat-sort-head {
+    padding: 0 !important;
+    @apply align-middle;
+  }
+
+  .flat-product-table .flat-sort-head {
+    @apply cursor-pointer select-none;
+  }
+
+  .flat-sort-button {
+    margin: 0;
+    border: 0;
+    appearance: none;
+    background: transparent;
+    @apply flex h-full min-h-12 w-full items-center justify-between gap-1 rounded-none px-2 py-3 text-left font-bold text-base-content transition-colors hover:bg-base-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary;
+  }
+
+  .flat-sort-label {
+    @apply min-w-0 flex-1 whitespace-nowrap;
+  }
+
+  .sort-indicator {
+    @apply ml-auto inline-flex h-4 w-4 shrink-0 items-center justify-center text-base-content/55;
+  }
+
+  .flat-sort-button[data-sort-direction="asc"] .sort-indicator,
+  .flat-sort-button[data-sort-direction="desc"] .sort-indicator {
+    @apply text-primary;
+  }
+
+  .sort-icon {
+    @apply hidden h-4 w-4;
+  }
+
+  .flat-sort-button:not([data-sort-direction="asc"]):not([data-sort-direction="desc"]) .sort-icon-none,
+  .flat-sort-button[data-sort-direction="asc"] .sort-icon-asc,
+  .flat-sort-button[data-sort-direction="desc"] .sort-icon-desc {
+    @apply block;
   }
 
   .flat-product-table th:nth-child(1) {

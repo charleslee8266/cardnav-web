@@ -47,6 +47,14 @@ const renderedProducts = data.products.map(product => ({
   score: product.score || 0,
 }));
 const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
+const flatSortColumns = [
+  { key: 'productName', type: 'text', label: '商品' },
+  { key: 'priceValue', type: 'number', label: '价格' },
+  { key: 'stockValue', type: 'number', label: '库存' },
+  { key: 'categoryName', type: 'text', label: '分类' },
+  { key: 'siteName', type: 'text', label: '商家' },
+  { key: 'productRefreshedAt', type: 'number', label: '最近刷新' },
+];
 const dashboardJsonValue = JSON.stringify({
   sites: renderedSites,
   products: renderedProducts,
@@ -175,12 +183,28 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
         <thead class="bg-base-200 text-base-content text-base">
           <tr>
             <th scope="col" class="table-head-index w-14 text-center">序号</th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productName" data-sort-type="text"><span>商品</span><span class="sort-indicator opacity-60" aria-hidden="true"></span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="priceValue" data-sort-type="number"><span>价格</span><span class="sort-indicator opacity-60" aria-hidden="true"></span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="stockValue" data-sort-type="number"><span>库存</span><span class="sort-indicator opacity-60" aria-hidden="true"></span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="categoryName" data-sort-type="text"><span>分类</span><span class="sort-indicator opacity-60" aria-hidden="true"></span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="siteName" data-sort-type="text"><span>商家</span><span class="sort-indicator opacity-60" aria-hidden="true"></span></button></th>
-            <th scope="col" aria-sort="none"><button type="button" class="flat-sort-button btn btn-ghost btn-sm w-full justify-between hover:bg-base-300 text-base-content font-bold px-1" data-sort-key="productRefreshedAt" data-sort-type="number"><span>最近刷新</span><span class="sort-indicator opacity-60" aria-hidden="true"></span></button></th>
+            {flatSortColumns.map(column => (
+              <th scope="col" class="flat-sort-head" aria-sort="none">
+                <button type="button" class="flat-sort-button" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}排序`}>
+                  <span class="flat-sort-label">{column.label}</span>
+                  <span class="sort-indicator" aria-hidden="true">
+                    <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m7 15 5 5 5-5"></path>
+                      <path d="m7 9 5-5 5 5"></path>
+                    </svg>
+                    <svg class="sort-icon sort-icon-asc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m5 12 7-7 7 7"></path>
+                      <path d="M12 19V5"></path>
+                    </svg>
+                    <svg class="sort-icon sort-icon-desc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 5v14"></path>
+                      <path d="m19 12-7 7-7-7"></path>
+                    </svg>
+                  </span>
+                  <span class="sort-status sr-only">点击排序</span>
+                </button>
+              </th>
+            ))}
           </tr>
         </thead>
 
