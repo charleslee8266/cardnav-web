@@ -11,6 +11,7 @@ const priceMax = document.querySelector('#priceMax');
 const flatSortSelect = document.querySelector('#flatSortSelect');
 const quickTagFilters = document.querySelector('#quickTagFilters');
 let dashboardData = JSON.parse(document.querySelector('#dashboard-data')?.textContent || '{"sites":[],"products":[]}');
+const shopsMessages = JSON.parse(document.querySelector('#shops-messages')?.textContent || '{}');
 let flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
 const emptyState = document.querySelector('#emptyState');
 const rowContainer = document.querySelector('#merchantRows');
@@ -139,7 +140,9 @@ function renderFavoriteButton(button, isFavorite, favoriteKind) {
   const icon = button.querySelector('span');
   const row = favoriteKind === 'site' ? button.closest('.merchant-row') : button.closest('.flat-product-row');
   button.setAttribute('aria-pressed', String(isFavorite));
-  button.setAttribute('title', isFavorite ? (favoriteKind === 'site' ? '取消收藏商家' : '取消收藏商品') : (favoriteKind === 'site' ? '收藏商家' : '收藏商品'));
+  button.setAttribute('title', isFavorite
+    ? (favoriteKind === 'site' ? shopsMessages.cancelMerchantFavorite || 'Unfavorite merchant' : shopsMessages.cancelProductFavorite || 'Unfavorite product')
+    : (favoriteKind === 'site' ? shopsMessages.merchantFavorite || 'Favorite merchant' : shopsMessages.productFavorite || 'Favorite product'));
   if (row) row.dataset.favorite = isFavorite ? '1' : '0';
   if (icon) icon.textContent = isFavorite ? '♥' : '♡';
 }
@@ -252,7 +255,7 @@ function productStockNumber(product) {
 function productStockLabel(product, options = {}) {
   const stock = productStockNumber(product);
   if (stock !== null) return options.prefix ? `${options.prefix}${stock}` : String(stock);
-  return product.inStock ? '有货' : '缺货';
+  return product.inStock ? (shopsMessages.inStock || 'In stock') : (shopsMessages.soldOut || 'Out of stock');
 }
 
 function productStockValue(product) {
@@ -439,7 +442,7 @@ function createFavoriteButton(favoriteKind, key, label) {
   button.dataset.favoriteKey = key;
   button.setAttribute('aria-label', label);
   button.setAttribute('aria-pressed', 'false');
-  button.title = favoriteKind === 'site' ? '收藏商家' : '收藏商品';
+  button.title = favoriteKind === 'site' ? (shopsMessages.merchantFavorite || 'Favorite merchant') : (shopsMessages.productFavorite || 'Favorite product');
   appendTextElement(button, 'span', '', '♡').setAttribute('aria-hidden', 'true');
   return button;
 }
@@ -489,7 +492,7 @@ function createFlatProductRow(item) {
   productCell.className = 'flat-product-cell';
   const productInline = document.createElement('div');
   productInline.className = 'cell-inline';
-  productInline.appendChild(createFavoriteButton('product', productFavoriteKey, `收藏 ${productTitle}`));
+  productInline.appendChild(createFavoriteButton('product', productFavoriteKey, `${shopsMessages.productFavorite || 'Favorite product'} ${productTitle}`));
   if (item.productUrl) {
     const productLink = createTrackedProductLink(item.productUrl, 'product-link', productName, productTitle);
     productLink.dataset.productClickSiteId = siteId;
@@ -527,7 +530,7 @@ function createFlatProductRow(item) {
   merchantCell.className = 'flat-merchant-cell';
   const merchantInline = document.createElement('div');
   merchantInline.className = 'cell-inline';
-  merchantInline.appendChild(createFavoriteButton('site', siteFavoriteKey, `收藏 ${siteName}`));
+  merchantInline.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
   if (siteUrl) {
     merchantInline.appendChild(createTrackedMerchantLink(siteUrl, siteName));
   } else {
@@ -567,7 +570,7 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
   flatProductProgressiveLoad.classList.remove('hidden');
   flatProductLoadSummary.classList.remove('hidden');
   if (isDashboardDataLoading) {
-    flatProductLoadSummary.textContent = '加载中';
+    flatProductLoadSummary.textContent = shopsMessages.loading || 'Loading';
     flatProductLoadMoreButton.classList.add('hidden');
     return;
   }
@@ -575,7 +578,9 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
   const totalVisibleCount = dashboardDataIsPartial() && visibleCount === loadedProductCount() && renderedCount === visibleCount
     ? totalProductCount()
     : visibleCount;
-  flatProductLoadSummary.textContent = `当前显示 ${renderedCount} / ${totalVisibleCount} 个匹配商品`;
+  flatProductLoadSummary.textContent = (shopsMessages.displaySummary || 'Showing {rendered} / {total} matching products')
+    .replace('{rendered}', String(renderedCount))
+    .replace('{total}', String(totalVisibleCount));
 
   if (renderedCount < visibleCount || dashboardDataIsPartial()) {
     flatProductLoadMoreButton.classList.remove('hidden');
@@ -625,7 +630,7 @@ function createProductChip(item) {
     chip,
     'span',
     item.inStock ? 'product-status-in-stock' : 'product-status-sold-out',
-    productStockLabel(item, { prefix: '库存 ' }),
+    productStockLabel(item, { prefix: shopsMessages.stockPrefix || 'Stock ' }),
   );
 
   return chip;
@@ -656,7 +661,7 @@ function renderMerchantRows() {
     row.dataset.siteText = siteName.toLowerCase();
     row.dataset.siteName = siteName;
     row.dataset.siteScore = String(Number(site.score) || 0);
-    row.dataset.latestProductRefreshedAt = String(new Date(site.latestProductRefreshedAt || '').getTime() || 0);
+    row.dataset.lastProductRefreshSuccessAt = String(new Date(site.lastProductRefreshSuccessAt || '').getTime() || 0);
     row.dataset.originalIndex = String(index);
     row.dataset.productCount = String(siteProducts.length);
 
@@ -665,15 +670,15 @@ function renderMerchantRows() {
     merchantCell.className = 'merchant-cell';
     const merchantHeader = document.createElement('div');
     merchantHeader.className = 'merchant-header';
-    merchantHeader.appendChild(createFavoriteButton('site', siteFavoriteKey, `收藏 ${siteName}`));
+    merchantHeader.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
     if (siteUrl) {
       merchantHeader.appendChild(createTrackedMerchantLink(siteUrl, siteName));
     } else {
       appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
     }
     merchantCell.appendChild(merchantHeader);
-    if (site.latestProductRefreshTime) {
-      appendTextElement(merchantCell, 'div', 'merchant-refresh-time', `最近刷新：${site.latestProductRefreshTime}`);
+    if (site.lastProductRefreshSuccessTime) {
+      appendTextElement(merchantCell, 'div', 'merchant-refresh-time', `${shopsMessages.latestRefreshPrefix || 'Last refresh: '}${site.lastProductRefreshSuccessTime}`);
     }
     row.appendChild(merchantCell);
 
@@ -681,7 +686,7 @@ function renderMerchantRows() {
     productsCell.className = 'merchant-product-cell';
     const chips = [];
     if (siteProducts.length === 0) {
-      appendTextElement(productsCell, 'div', 'no-products', '暂无数据');
+      appendTextElement(productsCell, 'div', 'no-products', shopsMessages.noData || 'No data');
     } else {
       const list = document.createElement('div');
       list.className = 'product-list';
@@ -938,11 +943,13 @@ function updateFlatSortButtons() {
     const headerCell = button.closest('th');
     const indicator = button.querySelector('.sort-indicator');
     const status = button.querySelector('.sort-status');
-    const directionLabel = currentFlatSort?.direction === 'asc' ? '升序' : '降序';
+    const directionLabel = currentFlatSort?.direction === 'asc' ? (shopsMessages.ascending || 'ascending') : (shopsMessages.descending || 'descending');
     if (headerCell) headerCell.setAttribute('aria-sort', active ? (currentFlatSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
     button.dataset.sortDirection = active ? currentFlatSort.direction : '';
     if (indicator) indicator.dataset.sortDirection = active ? currentFlatSort.direction : '';
-    if (status) status.textContent = active ? `，当前${directionLabel}` : '，点击排序';
+    if (status) status.textContent = active
+      ? (shopsMessages.currentSort || ', current {direction}').replace('{direction}', directionLabel)
+      : (shopsMessages.clickSort || ', click to sort');
   });
 }
 

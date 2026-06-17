@@ -8,14 +8,13 @@ export type IpPurityRiskLevel = 'clean' | 'watch' | 'risk' | 'blocked';
 export type IpPuritySourceResult = {
   name: string;
   status: IpPuritySourceStatus;
-  summary: string;
+  summaryKey: string;
+  summaryParams?: Record<string, string | number | boolean | string[]>;
 };
 
 export type IpPurityFlag = {
   key: string;
-  label: string;
   verdict: 'clean' | 'risk' | 'unknown';
-  detail: string;
 };
 
 export type IpPurityReport = {
@@ -23,7 +22,12 @@ export type IpPurityReport = {
   ip: string;
   score: number;
   riskLevel: IpPurityRiskLevel;
-  summary: string;
+  summaryKey: string;
+  summaryParams: {
+    score: number;
+    riskLevel: IpPurityRiskLevel;
+    signalKeys: string[];
+  };
   checkedAt: string;
   profile: {
     country: string;
@@ -49,7 +53,7 @@ type IpPurityFailureCode =
 export type IpPurityFailure = {
   ok: false;
   code: IpPurityFailureCode;
-  message: string;
+  messageKey: string;
 };
 
 type EnvLike = Record<string, string | undefined>;
@@ -112,18 +116,18 @@ const IPV4_PATTERN = /^(?:\d{1,3}\.){3}\d{1,3}$/;
 export function validateIpv4Input(rawValue: unknown): { ok: true; ip: string } | IpPurityFailure {
   const input = String(rawValue ?? '').trim();
   if (!input) {
-    return { ok: false, code: 'INVALID_IP', message: '请输入要检测的 IP 地址。' };
+    return { ok: false, code: 'INVALID_IP', messageKey: 'missingIp' };
   }
   if (input.includes(':')) {
-    return { ok: false, code: 'UNSUPPORTED_IP_VERSION', message: '当前只支持 IPv4 纯净度检测，IPv6 暂不支持。' };
+    return { ok: false, code: 'UNSUPPORTED_IP_VERSION', messageKey: 'ipv6Unsupported' };
   }
   if (!IPV4_PATTERN.test(input)) {
-    return { ok: false, code: 'INVALID_IP', message: 'IP 格式不正确，请输入正确地址，例如 8.8.8.8。' };
+    return { ok: false, code: 'INVALID_IP', messageKey: 'invalidIp' };
   }
 
   const segments = input.split('.').map(Number);
   if (segments.some(value => !Number.isInteger(value) || value < 0 || value > 255)) {
-    return { ok: false, code: 'INVALID_IP', message: 'IP 格式不正确，请输入正确地址，例如 8.8.8.8。' };
+    return { ok: false, code: 'INVALID_IP', messageKey: 'invalidIp' };
   }
 
   const [first, second] = segments;
@@ -140,7 +144,7 @@ export function validateIpv4Input(rawValue: unknown): { ok: true; ip: string } |
     first >= 224;
 
   if (isPrivate) {
-    return { ok: false, code: 'PRIVATE_OR_RESERVED_IP', message: '只支持检测公网 IPv4，私网、回环和保留地址不能检测纯净度。' };
+    return { ok: false, code: 'PRIVATE_OR_RESERVED_IP', messageKey: 'privateOrReservedIp' };
   }
 
   return { ok: true, ip: segments.join('.') };
@@ -164,7 +168,7 @@ export async function createIpPurityReport(ip: string, env: EnvLike = process.en
     return {
       ok: false,
       code: 'CHECK_FAILED',
-      message: '纯净度检测失败，当前外部数据源都没有返回可用结果，请稍后重试。',
+      messageKey: 'allSourcesFailed',
     };
   }
 
@@ -173,12 +177,12 @@ export async function createIpPurityReport(ip: string, env: EnvLike = process.en
   const checkedAt = new Date().toISOString();
 
   const profile = {
-    country: pickText(ipApiIs.data?.location?.country, ipApi.data?.country, '未识别'),
-    region: pickText(ipApiIs.data?.location?.state, ipApi.data?.regionName, '未识别'),
-    city: pickText(ipApiIs.data?.location?.city, ipApi.data?.city, '未识别'),
-    isp: pickText(ipApi.data?.isp, abuseIpDb.data?.data?.isp, '未识别'),
-    organization: pickText(ipApiIs.data?.asn?.org, ipApi.data?.org, ipApiIs.data?.company?.name, '未识别'),
-    asn: pickText(normalizeAsn(ipApiIs.data?.asn?.asn), normalizeAsn(extractAsnFromIpApi(ipApi.data?.as)), '未识别'),
+    country: pickText(ipApiIs.data?.location?.country, ipApi.data?.country),
+    region: pickText(ipApiIs.data?.location?.state, ipApi.data?.regionName),
+    city: pickText(ipApiIs.data?.location?.city, ipApi.data?.city),
+    isp: pickText(ipApi.data?.isp, abuseIpDb.data?.data?.isp),
+    organization: pickText(ipApiIs.data?.asn?.org, ipApi.data?.org, ipApiIs.data?.company?.name),
+    asn: pickText(normalizeAsn(ipApiIs.data?.asn?.asn), normalizeAsn(extractAsnFromIpApi(ipApi.data?.as))),
     networkType: pickText(
       ipApiIs.data?.asn?.type,
       ipApiIs.data?.company?.type,
@@ -191,12 +195,12 @@ export async function createIpPurityReport(ip: string, env: EnvLike = process.en
   };
 
   const signals: IpPurityFlag[] = [
-    makeSignal('proxy', '代理痕迹', ipApi.data?.proxy || ipApiIs.data?.is_proxy, '未发现明显代理标记', '检测到代理或匿名网络特征'),
-    makeSignal('vpn', 'VPN 痕迹', ipApiIs.data?.is_vpn, '未发现明确 VPN 标记', '检测到 VPN 标记'),
-    makeSignal('tor', 'Tor 痕迹', ipApiIs.data?.is_tor, '未发现 Tor 标记', '检测到 Tor 网络出口'),
-    makeSignal('hosting', '机房 / 数据中心', ipApi.data?.hosting || ipApiIs.data?.is_datacenter, '更像家宽或普通运营商出口', '更像机房、云服务或数据中心网络'),
-    makeSignal('abuse', '滥用记录', hasAbuseSignal(abuseIpDb.data), abuseIpDb.data ? '当前滥用记录较低或未命中' : '获取失败', abuseIpDb.data ? abuseSummary(abuseIpDb.data) : '获取失败'),
-    makeSignal('scanner', '扫描器噪声', greyNoise.data?.noise, greyNoise.data ? '未发现明显互联网扫描器噪声' : '获取失败', greyNoiseSummary(greyNoise.data)),
+    makeSignal('proxy', ipApi.data?.proxy || ipApiIs.data?.is_proxy),
+    makeSignal('vpn', ipApiIs.data?.is_vpn),
+    makeSignal('tor', ipApiIs.data?.is_tor),
+    makeSignal('hosting', ipApi.data?.hosting || ipApiIs.data?.is_datacenter),
+    makeSignal('abuse', hasAbuseSignal(abuseIpDb.data)),
+    makeSignal('scanner', greyNoise.data?.noise),
   ];
 
   const sourceResults: IpPuritySourceResult[] = [
@@ -205,13 +209,19 @@ export async function createIpPurityReport(ip: string, env: EnvLike = process.en
     toSourceResult('AbuseIPDB', abuseIpDb.status, summarizeAbuseIpDb(abuseIpDb.data, abuseIpDb.status)),
     toSourceResult('GreyNoise', greyNoise.status, summarizeGreyNoise(greyNoise.data, greyNoise.status)),
   ];
+  const riskSignalKeys = signals.filter(signal => signal.verdict === 'risk').map(signal => signal.key);
 
   return {
     ok: true,
     ip: normalizedIp,
     score,
     riskLevel,
-    summary: buildSummary(score, riskLevel, signals),
+    summaryKey: riskSignalKeys.length === 0 ? 'summary.clean' : 'summary.withRisks',
+    summaryParams: {
+      score,
+      riskLevel,
+      signalKeys: riskSignalKeys.slice(0, 3),
+    },
     checkedAt,
     profile,
     signals,
@@ -298,48 +308,29 @@ function calculatePurityScore(sources: {
   return Math.max(0, Math.min(100, 100 - penalty));
 }
 
-function buildSummary(score: number, riskLevel: IpPurityRiskLevel, signals: IpPurityFlag[]) {
-  const riskSignals = signals.filter(signal => signal.verdict === 'risk').map(signal => signal.label);
-  const label = {
-    clean: '高纯净',
-    watch: '可用但需留意',
-    risk: '风险偏高',
-    blocked: '高风险',
-  }[riskLevel];
-
-  if (riskSignals.length === 0) {
-    return `纯净度 ${score}/100，${label}。当前没有看到明显代理、Tor、滥用或扫描器强风险信号。`;
-  }
-
-  return `纯净度 ${score}/100，${label}。主要注意 ${riskSignals.slice(0, 3).join('、')}。`;
-}
-
-function makeSignal(
-  key: string,
-  label: string,
-  value: boolean | undefined,
-  cleanDetail: string,
-  riskDetail: string,
-): IpPurityFlag {
+function makeSignal(key: string, value: boolean | undefined): IpPurityFlag {
   if (value === true) {
-    return { key, label, verdict: 'risk', detail: riskDetail };
+    return { key, verdict: 'risk' };
   }
   if (value === false) {
-    return { key, label, verdict: 'clean', detail: cleanDetail };
+    return { key, verdict: 'clean' };
   }
-  return { key, label, verdict: 'unknown', detail: cleanDetail };
+  return { key, verdict: 'unknown' };
 }
 
 function summarizeIpApi(data: IpApiResult | null) {
   if (!data || data.status !== 'success') {
-    return '未返回可用结果';
+    return { summaryKey: 'source.noUsableResult' };
   }
-  return [data.country, data.regionName, data.city, data.isp].filter(Boolean).join(' / ') || '已返回基础网络信息';
+  const values = [data.country, data.regionName, data.city, data.isp].filter(isNonEmptyString);
+  return values.length > 0
+    ? { summaryKey: 'source.values', summaryParams: { values } }
+    : { summaryKey: 'source.basicNetworkInfo' };
 }
 
 function summarizeIpApiIs(data: IpApiIsResult | null) {
   if (!data) {
-    return '未返回可用结果';
+    return { summaryKey: 'source.noUsableResult' };
   }
   const parts = [
     data.location?.country,
@@ -347,26 +338,28 @@ function summarizeIpApiIs(data: IpApiIsResult | null) {
     data.is_proxy ? 'proxy' : '',
     data.is_vpn ? 'vpn' : '',
     data.is_tor ? 'tor' : '',
-  ].filter(Boolean);
-  return parts.join(' / ') || '已返回类型与风险标签';
+  ].filter(isNonEmptyString);
+  return parts.length > 0
+    ? { summaryKey: 'source.values', summaryParams: { values: parts } }
+    : { summaryKey: 'source.typeAndRiskTags' };
 }
 
 function summarizeAbuseIpDb(data: AbuseIpDbResult | null, status: IpPuritySourceStatus) {
   if (status === 'skipped') {
-    return '-';
+    return { summaryKey: 'source.skipped' };
   }
   if (!data?.data) {
-    return '-';
+    return { summaryKey: 'source.noUsableResult' };
   }
   return abuseSummary(data);
 }
 
 function summarizeGreyNoise(data: GreyNoiseResult | null, status: IpPuritySourceStatus) {
   if (status === 'skipped') {
-    return '-';
+    return { summaryKey: 'source.skipped' };
   }
   if (!data) {
-    return '-';
+    return { summaryKey: 'source.noUsableResult' };
   }
   return greyNoiseSummary(data);
 }
@@ -374,19 +367,21 @@ function summarizeGreyNoise(data: GreyNoiseResult | null, status: IpPuritySource
 function abuseSummary(data: AbuseIpDbResult | null) {
   const score = Number(data?.data?.abuseConfidenceScore || 0);
   const reports = Number(data?.data?.totalReports || 0);
-  return `置信分 ${score}，报告数 ${reports}`;
+  return { summaryKey: 'source.abuseIpDb', summaryParams: { score, reports } };
 }
 
 function greyNoiseSummary(data: GreyNoiseResult | null | undefined) {
   if (!data) {
-    return '未返回可用结果';
+    return { summaryKey: 'source.noUsableResult' };
   }
   const parts = [
-    data.classification ? `分类 ${data.classification}` : '',
+    data.classification ? `classification: ${data.classification}` : '',
     typeof data.noise === 'boolean' ? (data.noise ? 'noise' : 'not-noise') : '',
     typeof data.riot === 'boolean' ? (data.riot ? 'riot' : 'not-riot') : '',
-  ].filter(Boolean);
-  return parts.join(' / ') || '已返回社区情报结果';
+  ].filter(isNonEmptyString);
+  return parts.length > 0
+    ? { summaryKey: 'source.values', summaryParams: { values: parts } }
+    : { summaryKey: 'source.communityIntel' };
 }
 
 function hasAbuseSignal(data: AbuseIpDbResult | null) {
@@ -395,8 +390,12 @@ function hasAbuseSignal(data: AbuseIpDbResult | null) {
   return score > 0 || reports > 0;
 }
 
-function toSourceResult(name: string, status: IpPuritySourceStatus, summary: string): IpPuritySourceResult {
-  return { name, status, summary };
+function toSourceResult(
+  name: string,
+  status: IpPuritySourceStatus,
+  summary: Pick<IpPuritySourceResult, 'summaryKey' | 'summaryParams'>,
+): IpPuritySourceResult {
+  return { name, status, ...summary };
 }
 
 function pickText(...values: Array<string | undefined>) {
@@ -406,6 +405,10 @@ function pickText(...values: Array<string | undefined>) {
     }
   }
   return '';
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 function normalizeAsn(value: string | number | undefined) {

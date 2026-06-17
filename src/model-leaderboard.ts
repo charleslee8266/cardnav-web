@@ -3,11 +3,11 @@
  */
 import type { PublicModelLeaderboardRow } from './store.js';
 
-export type ModelLeaderboardGroup = {
+export type ModelLeaderboardGroup<Row extends PublicModelLeaderboardRow = PublicModelLeaderboardRow> = {
   taskSlug: string;
-  taskLabel: string;
+  displayName: string;
   pathname: string;
-  rows: PublicModelLeaderboardRow[];
+  rows: Row[];
 };
 
 const taskOrder = ['coding', 'creative-writing', 'math', 'text-to-image'];
@@ -32,7 +32,7 @@ export function buildModelLeaderboardGroups(rows: PublicModelLeaderboardRow[]): 
     }
     groupMap.set(row.taskSlug, {
       taskSlug: row.taskSlug,
-      taskLabel: row.taskLabel,
+      displayName: row.taskSlug,
       pathname: modelLeaderboardPathname(row.taskSlug),
       rows: [row],
     });
@@ -46,6 +46,6 @@ export function buildModelLeaderboardGroups(rows: PublicModelLeaderboardRow[]): 
     .sort((a, b) => {
       const orderDiff = orderedIndex(taskOrder, a.taskSlug) - orderedIndex(taskOrder, b.taskSlug);
       if (orderDiff !== 0) return orderDiff;
-      return a.taskLabel.localeCompare(b.taskLabel, 'zh-Hans-CN', { numeric: true });
+      return a.taskSlug.localeCompare(b.taskSlug, 'zh-Hans-CN', { numeric: true });
     });
 }

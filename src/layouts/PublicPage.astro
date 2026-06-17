@@ -4,6 +4,8 @@
 */
 import '../public.css';
 import Sponsors from '../components/Sponsors.astro';
+import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '../i18n/config.js';
+import { switchLocalePath } from '../i18n/paths.js';
 import { githubRepoUrl, headerAdTagEnabled, telegramGroupUrl, xProfileUrl } from '../site.js';
 
 type Props = {
@@ -16,6 +18,9 @@ type Props = {
   ogImageUrl: string;
   ogType: string;
   jsonLd: Record<string, unknown>;
+  htmlLang?: string;
+  alternateUrls?: { locale: Locale; hreflang: string; url: string }[];
+  xDefaultUrl?: string;
   showSponsors?: boolean;
 };
 
@@ -29,15 +34,43 @@ const {
   ogImageUrl,
   ogType,
   jsonLd,
+  htmlLang = getLocaleHtmlLang(Astro.locals.locale),
+  alternateUrls = [],
+  xDefaultUrl,
   showSponsors = true,
 } = Astro.props;
 
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
 const inactiveClass = 'nav-top-tab shrink-0 text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
 const activeClass = 'nav-top-tab nav-top-tab-active shrink-0 text-sm md:text-base font-semibold text-primary';
 const mobilePrimaryTabClass = 'nav-top-tab nav-top-tab-mobile shrink-0 text-xs font-semibold text-base-content/85 hover:text-primary';
 const mobileMoreLinkClass = 'rounded-lg px-2.5 py-2 text-xs font-semibold text-base-content/85 transition hover:bg-base-200 hover:text-primary';
 const shouldShowHero = activeNav === 'home';
 const isGuidePage = activeNav === 'guide';
+const primaryNavItems = [
+  { key: 'home', href: '/', label: t.nav.home },
+  { key: 'guide', href: '/guide', label: t.nav.guide },
+  { key: 'shops', href: '/shops', label: t.nav.shops },
+  { key: 'model-leaderboard', href: '/model-leaderboard', label: t.nav.modelLeaderboard },
+  { key: 'official-price', href: '/official-price', label: t.nav.officialPrice },
+  { key: 'tools', href: '/tools', label: t.nav.tools },
+  { key: 'ip-purity', href: '/tools/ip-purity', label: t.nav.ipPurity },
+];
+const mobilePrimaryNavItems = primaryNavItems.filter(item => ['home', 'shops', 'model-leaderboard', 'official-price'].includes(item.key));
+const footerLinks = [
+  { href: '/about', label: t.nav.about },
+  { href: '/disclaimer', label: t.nav.disclaimer },
+  { href: '/privacy', label: t.nav.privacy },
+];
+const languageItems = supportedLocales.map(itemLocale => ({
+  locale: itemLocale,
+  label: localeLabels[itemLocale].nativeLabel,
+  flag: localeLabels[itemLocale].flag,
+  href: switchLocalePath(Astro.locals.originalPathname, itemLocale),
+  isCurrent: itemLocale === Astro.locals.locale,
+  isAvailable: true,
+}));
 
 function navClickAttrs(targetPage: string, name: string) {
   return {
@@ -55,10 +88,11 @@ function siteLinkClickAttrs(url: string, name: string) {
     'data-umami-event-url': url,
   };
 }
+
 ---
 
 <!DOCTYPE html>
-<html lang="zh">
+<html lang={htmlLang}>
 <head>
   <script is:inline>
     // 立即执行以避免页面闪烁 (FOUC)
@@ -75,6 +109,8 @@ function siteLinkClickAttrs(url: string, name: string) {
   <meta name="robots" content={robots} />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="canonical" href={canonicalUrl} />
+  {alternateUrls.map(item => <link rel="alternate" hreflang={item.hreflang} href={item.url} />)}
+  {xDefaultUrl && <link rel="alternate" hreflang="x-default" href={xDefaultUrl} />}
   <meta property="og:type" content={ogType} />
   <meta property="og:title" content={pageTitle} />
   <meta property="og:description" content={description} />
@@ -101,7 +137,7 @@ function siteLinkClickAttrs(url: string, name: string) {
 <header class="fixed inset-x-0 top-0 z-40 border-b border-base-300 bg-base-100/90 backdrop-blur md:sticky">
   <nav class="flex h-12 items-center gap-1 px-2 md:hidden">
     <details class="dropdown dropdown-bottom">
-      <summary class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/85 hover:bg-base-200" aria-label="打开菜单" title="打开菜单">
+      <summary class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/85 hover:bg-base-200" aria-label={t.nav.openMenu} title={t.nav.openMenu}>
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M4 7h16"></path>
           <path d="M4 12h16"></path>
@@ -109,28 +145,49 @@ function siteLinkClickAttrs(url: string, name: string) {
         </svg>
       </summary>
       <ul class="menu dropdown-content z-50 mt-2 w-48 rounded-2xl border border-base-300 bg-base-100 p-2 shadow-lg">
-        <li><a href="/" class={activeNav === 'home' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/', '首页')}>首页</a></li>
-        <li><a href="/guide" class={activeNav === 'guide' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/guide', '向导')}>向导</a></li>
-        <li><a href="/shops" class={activeNav === 'shops' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/shops', '卡网商品')}>卡网商品</a></li>
-        <li><a href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/model-leaderboard', '模型排行榜')}>模型排行榜</a></li>
-        <li><a href="/official-price" class={activeNav === 'official-price' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/official-price', '官方订阅比价')}>官方订阅比价</a></li>
-        <li><a href="/tools" class={activeNav === 'tools' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/tools', '工具集')}>工具集</a></li>
-        <li><a href="/tools/ip-purity" class={activeNav === 'ip-purity' ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs('/tools/ip-purity', 'IP纯净度')}>IP纯净度</a></li>
+        {primaryNavItems.map(item => (
+          <li><a href={linkTo(item.href)} class={activeNav === item.key ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs(linkTo(item.href), item.label)}>{item.label}</a></li>
+        ))}
         <li><a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(telegramGroupUrl, 'Header Telegram')}>Telegram</a></li>
         <li><a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(githubRepoUrl, 'Header GitHub')}>GitHub</a></li>
-        <li><a href={xProfileUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>X @CharlesLee8266</a></li>
+        <li><a href={xProfileUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>{t.external.xProfile}</a></li>
       </ul>
     </details>
     <div class="mobile-nav-scroll min-w-0 flex-1 overflow-x-auto">
       <div role="tablist" class="flex w-max items-center gap-0 pr-0.5">
-        <a role="tab" href="/" class={activeNav === 'home' ? mobilePrimaryTabClass + ' nav-top-tab-active' : mobilePrimaryTabClass} {...navClickAttrs('/', '首页')}>首页</a>
-        <a role="tab" href="/shops" class={activeNav === 'shops' ? mobilePrimaryTabClass + ' nav-top-tab-active' : mobilePrimaryTabClass} {...navClickAttrs('/shops', '卡网商品')}>卡网商品</a>
-        <a role="tab" href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? mobilePrimaryTabClass + ' nav-top-tab-active' : mobilePrimaryTabClass} {...navClickAttrs('/model-leaderboard', '模型排行榜')}>模型排行榜</a>
-        <a role="tab" href="/official-price" class={activeNav === 'official-price' ? mobilePrimaryTabClass + ' nav-top-tab-active' : mobilePrimaryTabClass} {...navClickAttrs('/official-price', '官方订阅比价')}>官方订阅比价</a>
+        {mobilePrimaryNavItems.map(item => (
+          <a role="tab" href={linkTo(item.href)} class={activeNav === item.key ? mobilePrimaryTabClass + ' nav-top-tab-active' : mobilePrimaryTabClass} {...navClickAttrs(linkTo(item.href), item.label)}>{item.label}</a>
+        ))}
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-1">
-      <button id="themeToggle" class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label="切换主题" title="切换主题">
+      <details class="dropdown dropdown-end" data-language-menu>
+        <summary class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label={t.language.switchLanguage} title={t.language.switchLanguage}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M2 12h20"></path>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"></path>
+          </svg>
+        </summary>
+        <ul id="languageMenuMobile" class="menu dropdown-content z-50 mt-2 w-36 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg">
+          {languageItems.map(item => (
+            <li>
+              <a
+                href={item.isAvailable ? item.href : undefined}
+                aria-current={item.isCurrent ? 'true' : undefined}
+                class:list={[
+                  'rounded-lg px-2.5 py-2 text-xs font-semibold',
+                  item.isCurrent ? 'text-primary' : 'text-base-content/85',
+                  !item.isAvailable && 'pointer-events-none opacity-45',
+                ]}
+              >
+                <span class="mr-2">{item.flag}</span>{item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <button id="themeToggle" class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label={t.theme.toggle} title={t.theme.toggle}>
         <!-- Moon icon (show when theme is light) -->
         <svg id="themeMoonIcon" class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
           <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,9.2,10.19,10.19,0,0,0,8,18.81,8.19,8.19,0,0,1,12.14,19.69Z"/>
@@ -144,21 +201,43 @@ function siteLinkClickAttrs(url: string, name: string) {
   </nav>
   <nav class="hidden w-full px-4 py-2 md:block">
     <div class="desktop-nav-wrap">
-      <a href="/" aria-label="返回首页" class="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base-content transition hover:bg-base-200" {...navClickAttrs('/', 'Header Logo')}>
-        <img src="/favicon.webp" alt="卡网大全" width="28" height="28" class="h-7 w-7 rounded object-cover" />
+      <a href={linkTo('/')} aria-label={t.actions.backHome} class="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base-content transition hover:bg-base-200" {...navClickAttrs(linkTo('/'), 'Header Logo')}>
+        <img src="/favicon.webp" alt={t.site.name} width="28" height="28" class="h-7 w-7 rounded object-cover" />
         <span class="flex flex-col justify-center leading-none">
-          <span class="text-base font-bold tracking-normal">卡网大全</span>
-          <span class="text-xs font-semibold text-base-content/60">cardnav.xyz</span>
+          <span class="text-base font-bold tracking-normal">{t.site.name}</span>
+          <span class="text-xs font-semibold text-base-content/60">{t.site.domain}</span>
         </span>
       </a>
-      <a href="/" class={activeNav === 'home' ? activeClass : inactiveClass} {...navClickAttrs('/', '首页')}>首页</a>
-      <a href="/guide" class={activeNav === 'guide' ? activeClass : inactiveClass} {...navClickAttrs('/guide', '向导')}>向导</a>
-      <a href="/shops" class={activeNav === 'shops' ? activeClass : inactiveClass} {...navClickAttrs('/shops', '卡网商品')}>卡网商品</a>
-      <a href="/model-leaderboard" class={activeNav === 'model-leaderboard' ? activeClass : inactiveClass} {...navClickAttrs('/model-leaderboard', '模型排行榜')}>模型排行榜</a>
-      <a href="/official-price" class={activeNav === 'official-price' ? activeClass : inactiveClass} {...navClickAttrs('/official-price', '官方订阅比价')}>官方订阅比价</a>
-      <a href="/tools" class={activeNav === 'tools' ? activeClass : inactiveClass} {...navClickAttrs('/tools', '工具集')}>工具集</a>
-      <a href="/tools/ip-purity" class={activeNav === 'ip-purity' ? activeClass : inactiveClass} {...navClickAttrs('/tools/ip-purity', 'IP纯净度')}>IP纯净度</a>
-      <button id="themeToggleDesktop" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label="切换主题" title="切换主题">
+      {primaryNavItems.map(item => (
+        <a href={linkTo(item.href)} class={activeNav === item.key ? activeClass : inactiveClass} {...navClickAttrs(linkTo(item.href), item.label)}>{item.label}</a>
+      ))}
+      <details class="dropdown dropdown-end" data-language-menu>
+        <summary class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label={t.language.switchLanguage} title={t.language.switchLanguage}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M2 12h20"></path>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"></path>
+          </svg>
+        </summary>
+        <ul id="languageMenuDesktop" class="menu dropdown-content z-50 mt-2 w-36 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg">
+          {languageItems.map(item => (
+            <li>
+              <a
+                href={item.isAvailable ? item.href : undefined}
+                aria-current={item.isCurrent ? 'true' : undefined}
+                class:list={[
+                  'rounded-lg px-2.5 py-2 text-xs font-semibold',
+                  item.isCurrent ? 'text-primary' : 'text-base-content/85',
+                  !item.isAvailable && 'pointer-events-none opacity-45',
+                ]}
+              >
+                <span class="mr-2">{item.flag}</span>{item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <button id="themeToggleDesktop" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/80 hover:bg-base-200" aria-label={t.theme.toggle} title={t.theme.toggle}>
         <!-- Moon icon (show when theme is light) -->
         <svg id="themeMoonIconDesktop" class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
           <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,9.2,10.19,10.19,0,0,0,8,18.81,8.19,8.19,0,0,1,12.14,19.69Z"/>
@@ -168,18 +247,18 @@ function siteLinkClickAttrs(url: string, name: string) {
           <path d="M12,8a4,4,0,1,0,4,4A4,4,0,0,0,12,8Zm0,6a2,2,0,1,1,2-2A2,2,0,0,1,12,14ZM12,2a1,1,0,0,0-1,1V4a1,1,0,0,0,2,0V3A1,1,0,0,0,12,2ZM12,18a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V19A1,1,0,0,0,12,18ZM5.64,4.22a1,1,0,1,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM17.36,15.94a1,1,0,0,0-1.42,1.42l1,1a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2ZM4,11H3a1,1,0,0,0,0,2H4a1,1,0,0,0,0-2Zm14.78-6.78a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,18.78,4.22ZM6.64,15.94a1,1,0,0,0-1.42,0l-1,1a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l1-1A1,1,0,0,0,6.64,15.94Z"/>
         </svg>
       </button>
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 Telegram 群组" title="Telegram 群组" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content hover:bg-base-200 hover:text-base-content" {...siteLinkClickAttrs(telegramGroupUrl, 'Header Telegram')}>
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t.actions.open} ${t.external.telegramGroup}`} title={t.external.telegramGroup} class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content hover:bg-base-200 hover:text-base-content" {...siteLinkClickAttrs(telegramGroupUrl, 'Header Telegram')}>
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m22 2-7 20-4-9-9-4Z"></path>
           <path d="M22 2 11 13"></path>
         </svg>
       </a>
-      <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 GitHub 仓库" title="GitHub 仓库" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(githubRepoUrl, 'Header GitHub')}>
+      <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t.actions.open} ${t.external.githubRepo}`} title={t.external.githubRepo} class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(githubRepoUrl, 'Header GitHub')}>
         <svg aria-hidden="true" viewBox="0 0 16 16" class="h-5 w-5 fill-current">
           <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
         </svg>
       </a>
-      <a href={xProfileUrl} target="_blank" rel="noopener noreferrer" aria-label="打开 X @CharlesLee8266" title="X @CharlesLee8266" class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>
+      <a href={xProfileUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t.actions.open} ${t.external.xProfile}`} title={t.external.xProfile} class="btn btn-ghost btn-circle h-10 min-h-10 w-10 shrink-0 p-0 text-base-content/85 hover:bg-base-200" {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>
         <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current">
           <path d="M13.93 10.16 21.31 1.5h-1.75l-6.41 7.52L8.03 1.5H2.13l7.74 11.36-7.74 9.08h1.75l6.76-7.93 5.4 7.93h5.9l-8.01-11.78Zm-2.39 2.81-.78-1.13L4.52 2.82h2.67l5.04 7.28.78 1.13 6.55 9.46h-2.67l-5.35-7.72Z"></path>
         </svg>
@@ -197,29 +276,29 @@ function siteLinkClickAttrs(url: string, name: string) {
       <div class="card-body p-6">
         <div>
           <div class="hero-title-row flex items-center gap-3">
-            <a href={canonicalUrl} aria-label="返回首页" class="shrink-0">
-              <img src="/favicon.webp" alt="卡网大全" width="56" height="56" class="h-12 w-12 rounded-lg object-cover md:h-14 md:w-14" />
+            <a href={linkTo('/')} aria-label={t.actions.backHome} class="shrink-0">
+              <img src="/favicon.webp" alt={t.site.name} width="56" height="56" class="h-12 w-12 rounded-lg object-cover md:h-14 md:w-14" />
             </a>
             <div class="min-w-0 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-baseline">
-              <a href={canonicalUrl} aria-label="返回首页" class="inline-block text-base-content hover:text-primary transition">
-                <h1 class="text-3xl font-bold tracking-normal md:text-4xl">卡网大全</h1>
+              <a href={linkTo('/')} aria-label={t.actions.backHome} class="inline-block text-base-content hover:text-primary transition">
+                <h1 class="text-3xl font-bold tracking-normal md:text-4xl">{t.site.name}</h1>
               </a>
-              <span class="text-base font-semibold text-base-content/70 md:text-lg">一站式 AI 大模型账号购买导航</span>
-              <a href={canonicalUrl} aria-label="返回首页" class="hero-domain inline-block max-w-full text-xl font-semibold tracking-normal text-primary hover:text-primary-focus transition">
-                cardnav.xyz
+              <span class="text-base font-semibold text-base-content/70 md:text-lg">{t.site.tagline}</span>
+              <a href={linkTo('/')} aria-label={t.actions.backHome} class="hero-domain inline-block max-w-full text-xl font-semibold tracking-normal text-primary hover:text-primary-focus transition">
+                {t.site.domain}
               </a>
             </div>
           </div>
-          <p class="mt-2 text-sm leading-6 text-base-content/85">不知道 AI 账号去哪买便宜又靠谱？这里汇总 AI 大模型排行榜、官方 AI 订阅渠道、第三方 AI 卡网比价、实用工具、风险控制、使用指南，帮你少踩坑、少花钱。</p>
+          <p class="mt-2 text-sm leading-6 text-base-content/85">{t.site.heroDescription}</p>
           <div class="mt-4 flex flex-wrap items-center gap-2">
-            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="telegram-channel-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name="Telegram 群组" class="btn btn-primary btn-sm inline-flex items-center justify-center gap-2">
+            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="telegram-channel-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.external.telegramGroup} class="btn btn-primary btn-sm inline-flex items-center justify-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m22 2-7 20-4-9-9-4Z"></path>
                 <path d="M22 2 11 13"></path>
               </svg>
-              加入频道
+              {t.actions.joinChannel}
             </a>
-            <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" data-umami-event="github-repo-click" data-umami-event-url={githubRepoUrl} data-umami-event-name="GitHub 仓库" class="btn btn-outline btn-sm inline-flex items-center justify-center gap-2">
+            <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" data-umami-event="github-repo-click" data-umami-event-url={githubRepoUrl} data-umami-event-name={t.external.githubRepo} class="btn btn-outline btn-sm inline-flex items-center justify-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 16 16" class="h-4 w-4 shrink-0 fill-current">
                 <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
               </svg>
@@ -241,23 +320,34 @@ function siteLinkClickAttrs(url: string, name: string) {
   {showSponsors && activeNav !== 'home' && <Sponsors />}
 </main>
 
-{activeNav === 'home' && (
+{!isGuidePage && (
   <footer class="footer footer-center p-6 bg-base-100 border-t border-base-300 text-base-content/60 text-xs">
     <div class="w-full text-center">
       <p class="flex justify-center gap-2">
-        <a href="/about" class="link link-hover font-semibold text-base-content/75">关于</a>
-        <span>|</span>
-        <a href="/disclaimer" class="link link-hover font-semibold text-base-content/75">免责声明</a>
-        <span>|</span>
-        <a href="/privacy" class="link link-hover font-semibold text-base-content/75">隐私政策</a>
+        {footerLinks.map((item, index) => (
+          <>
+            {index > 0 && <span>|</span>}
+            <a href={linkTo(item.href)} class="link link-hover font-semibold text-base-content/75">{item.label}</a>
+          </>
+        ))}
       </p>
     </div>
   </footer>
 )}
 
-<script is:inline>
-  (function () {
-    const toggleTargets = [
+	<script is:inline>
+	  (function () {
+	    const languageMenus = Array.from(document.querySelectorAll('[data-language-menu]'));
+	
+	    document.addEventListener('click', event => {
+	      languageMenus.forEach(menu => {
+	        if (menu instanceof HTMLDetailsElement && !menu.contains(event.target)) {
+	          menu.open = false;
+	        }
+	      });
+	    });
+	
+	    const toggleTargets = [
       {
         moonIcon: document.getElementById('themeMoonIcon'),
         sunIcon: document.getElementById('themeSunIcon'),

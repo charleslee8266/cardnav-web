@@ -1,6 +1,10 @@
 /**
  * 文件说明: 生成公开页面的 canonical、Open Graph 和结构化数据上下文。
  */
+import { defaultLocale, localeLabels, supportedLocales, type Locale } from './i18n/config.js';
+import { canonicalPath, localizePath } from './i18n/paths.js';
+import { getMessages } from './i18n/messages.js';
+
 export interface SeoInput {
   baseUrl: string;
   pathname: string;
@@ -11,6 +15,7 @@ export interface SeoInput {
   noindex?: boolean;
   datePublished?: string;
   dateModified?: string;
+  locale?: Locale;
 }
 
 export function normalizeSiteUrl(input: string) {
@@ -23,11 +28,22 @@ function resolveUrl(baseUrl: string, pathname: string) {
 
 export function buildSeoContext(input: SeoInput) {
   const baseUrl = normalizeSiteUrl(input.baseUrl);
-  const canonicalUrl = resolveUrl(baseUrl, input.pathname);
+  const locale = input.locale ?? defaultLocale;
+  const messages = getMessages(locale);
+  const canonicalUrl = resolveUrl(baseUrl, canonicalPath(input.pathname, locale));
+  const alternateUrls = supportedLocales.map(itemLocale => ({
+    locale: itemLocale,
+    hreflang: localeLabels[itemLocale].htmlLang,
+    url: resolveUrl(baseUrl, localizePath(input.pathname, itemLocale)),
+  }));
   return {
-    pageTitle: input.pathname === '/' ? input.title : `${input.title} - 卡网大全`,
+    pageTitle: input.pathname === '/' ? input.title : `${input.title} - ${messages.seo.titleSuffix}`,
     description: input.description,
+    locale,
+    htmlLang: localeLabels[locale].htmlLang,
     canonicalUrl,
+    alternateUrls,
+    xDefaultUrl: resolveUrl(baseUrl, canonicalPath(input.pathname, defaultLocale)),
     ogType: input.type === 'article' ? 'article' : 'website',
     ogUrl: canonicalUrl,
     ogImageUrl: resolveUrl(baseUrl, input.imagePath),
@@ -37,7 +53,7 @@ export function buildSeoContext(input: SeoInput) {
         ? {
             '@context': 'https://schema.org',
             '@type': 'WebSite',
-            name: '卡网大全',
+            name: messages.seo.websiteName,
             url: canonicalUrl,
             description: input.description,
           }
@@ -53,7 +69,7 @@ export function buildSeoContext(input: SeoInput) {
               dateModified: input.dateModified,
               publisher: {
                 '@type': 'Organization',
-                name: '卡网大全',
+                name: messages.seo.websiteName,
                 url: baseUrl,
               },
             }

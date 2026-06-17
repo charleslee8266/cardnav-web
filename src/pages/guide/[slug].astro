@@ -4,13 +4,14 @@
 */
 import PublicPage from '../../layouts/PublicPage.astro';
 import GuideBrowser from '../../components/GuideBrowser.astro';
-import { findGuideArticle, guideArticles, guideNavItems } from '../../guide.js';
+import { findGuideArticle, getGuideCollection } from '../../guide.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 
 const slug = Astro.params.slug || '';
-const article = findGuideArticle(slug);
-if (!article) return Astro.redirect('/guide', 302);
+const article = findGuideArticle(slug, Astro.locals.locale);
+if (!article) return Astro.redirect(Astro.locals.localizePath('/guide'), 302);
+const guideCollection = getGuideCollection(Astro.locals.locale);
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -19,13 +20,14 @@ const seo = buildSeoContext({
   description: article.description,
   imagePath: '/og-cardnav.svg',
   type: 'article',
+  locale: Astro.locals.locale,
 });
 ---
 
 <PublicPage activeNav="guide" showSponsors={false} {...seo}>
   <GuideBrowser
-    articles={guideArticles}
-    navItems={guideNavItems}
+    articles={guideCollection.guideArticles}
+    navItems={guideCollection.guideNavItems}
     currentArticle={article}
     sourcePage={`/guide/${article.slug}`}
   />

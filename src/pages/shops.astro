@@ -9,23 +9,26 @@ import shopsScriptUrl from '../scripts/index.js?url';
 import { loadDashboardData, loadPopularSearchTerms, type PublicProductRow } from '../store.js';
 
 const initialProductLimitValue = 10;
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
 const data = await loadDashboardData({ productLimit: initialProductLimitValue });
-const popularSearchTerms = (await loadPopularSearchTerms(10)).terms;
+const popularSearchTerms = (await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms])).terms;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/shops',
-  title: '卡网商品',
-  description: '搜集全网第三方卡网商家与商品，支持按关键词、分类、价格、库存、商家和刷新时间进行筛选与排序。',
+  title: t.shops.seoTitle,
+  description: t.shops.seoDescription,
   imagePath: '/og-cardnav.svg',
   type: 'website',
+  locale: Astro.locals.locale,
 });
 
 const renderedSites = data.sites.map(site => ({
   id: site.id || '',
   name: site.name,
   url: site.url || '',
-  latestProductRefreshedAt: site.latestProductRefreshedAt || null,
-  latestProductRefreshTime: site.latestProductRefreshTime || '',
+  lastProductRefreshSuccessAt: site.lastProductRefreshSuccessAt || null,
+  lastProductRefreshSuccessTime: site.lastProductRefreshSuccessTime || '',
   score: site.score || 0,
 }));
 const renderedProducts = data.products.map(product => ({
@@ -42,18 +45,27 @@ const renderedProducts = data.products.map(product => ({
   siteId: product.siteId || '',
   siteName: product.siteName || '',
   siteUrl: product.siteUrl || '',
-  siteLatestProductRefreshedAt: product.siteLatestProductRefreshedAt || null,
-  siteLatestProductRefreshTime: product.siteLatestProductRefreshTime || '',
+  siteProductRefreshSuccessAt: product.siteProductRefreshSuccessAt || null,
+  siteProductRefreshSuccessTime: product.siteProductRefreshSuccessTime || '',
   score: product.score || 0,
 }));
 const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
+const shopsScriptMessages = {
+  ...t.shops.script,
+  productFavorite: t.shops.productFavorite,
+  merchantFavorite: t.shops.merchantFavorite,
+  cancelProductFavorite: t.shops.cancelProductFavorite,
+  cancelMerchantFavorite: t.shops.cancelMerchantFavorite,
+  inStock: t.labels.inStock,
+  soldOut: t.labels.soldOut,
+};
 const flatSortColumns = [
-  { key: 'productName', type: 'text', label: '商品' },
-  { key: 'priceValue', type: 'number', label: '价格' },
-  { key: 'stockValue', type: 'number', label: '库存' },
-  { key: 'categoryName', type: 'text', label: '分类' },
-  { key: 'siteName', type: 'text', label: '商家' },
-  { key: 'productRefreshedAt', type: 'number', label: '最近刷新' },
+  { key: 'productName', type: 'text', label: t.labels.product },
+  { key: 'priceValue', type: 'number', label: t.labels.price },
+  { key: 'stockValue', type: 'number', label: t.labels.stock },
+  { key: 'categoryName', type: 'text', label: t.labels.category },
+  { key: 'siteName', type: 'text', label: t.labels.merchant },
+  { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
 ];
 const dashboardJsonValue = JSON.stringify({
   sites: renderedSites,
@@ -72,7 +84,7 @@ const dashboardJsonValue = JSON.stringify({
 })[character] || character);
 
 function productStockLabel(product: Pick<PublicProductRow, 'stock' | 'inStock'>) {
-  return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? '有货' : '缺货');
+  return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? t.labels.inStock : t.labels.soldOut);
 }
 
 function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'priceUnit'>) {
@@ -89,78 +101,78 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
       <div class="page-hero-shell">
         <div class="page-hero-main">
           <div class="page-hero-wrap">
-            <h1 class="page-hero-title">AI 卡网商品</h1>
-            <p class="page-hero-copy">搜集全网第三方 AI 卡网商家与商品，支持按价格、库存、商家和刷新时间继续筛选，快速找到更合适的购买入口。</p>
-            <p class="page-hero-note">价格数据仅供参考，实际价格以各平台为准。</p>
+            <h1 class="page-hero-title">{t.shops.title}</h1>
+            <p class="page-hero-copy">{t.shops.description}</p>
+            <p class="page-hero-note">{t.shops.note}</p>
           </div>
         </div>
-        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-md shrink-0" data-umami-event="shop-submit-open-click" data-umami-event-name="提交商家">提交商家</button>
+        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-md shrink-0" data-umami-event="shop-submit-open-click" data-umami-event-name={t.shops.submitMerchant}>{t.shops.submitMerchant}</button>
       </div>
     </div>
   </section>
 
   <section>
-    <a href="/guide/choose-reliable-merchant" data-umami-event="guide-url-click" data-umami-event-source-page="/shops" data-umami-event-target-page="/guide/choose-reliable-merchant" data-umami-event-url="/guide/choose-reliable-merchant" class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
+    <a href={linkTo('/guide/choose-reliable-merchant')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/shops')} data-umami-event-target-page={linkTo('/guide/choose-reliable-merchant')} data-umami-event-url={linkTo('/guide/choose-reliable-merchant')} class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
       <div>
-        <span class="font-bold text-base block text-base-content">购前必看：如何挑选靠谱商家</span>
-        <span class="text-sm text-base-content/85 block mt-1">从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。</span>
+        <span class="font-bold text-base block text-base-content">{t.shops.guideTitle}</span>
+        <span class="text-sm text-base-content/85 block mt-1">{t.shops.guideDescription}</span>
       </div>
-      <div class="btn btn-sm btn-ghost text-primary hover:bg-transparent shrink-0">阅读 ➜</div>
+      <div class="btn btn-sm btn-ghost text-primary hover:bg-transparent shrink-0">{t.actions.read} ➜</div>
     </a>
   </section>
 
   <section class="card bg-base-100 border border-base-300 shadow-sm">
     <form id="filters" class="card-body p-5 flex flex-col gap-3" method="get">
       <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
-        <span>已收录商家：<span class="font-bold text-primary">{data.totalSiteCount}</span></span>
-        <span>商品：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
-        {data.latestRefreshTime && <span>最近刷新：{data.latestRefreshTime}</span>}
+        <span>{t.labels.collectedSites}：<span class="font-bold text-primary">{data.totalSiteCount}</span></span>
+        <span>{t.labels.products}：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
+        {data.latestRefreshTime && <span>{t.labels.latestRefresh}：{data.latestRefreshTime}</span>}
       </div>
       <div class="w-full">
-        <input id="searchFilter" name="q" value="" class="input input-bordered w-full" placeholder="搜索商品，多个关键词用空格隔开" autocomplete="off" />
+        <input id="searchFilter" name="q" value="" class="input input-bordered w-full" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
       </div>
       <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex flex-wrap items-center gap-4">
           <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
             <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>匹配分类</span>
+            <span>{t.shops.matchCategory}</span>
           </label>
           <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
             <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>匹配商家</span>
+            <span>{t.shops.matchMerchant}</span>
           </label>
           <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
             <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>显示无货商品</span>
+            <span>{t.shops.showSoldOut}</span>
           </label>
           <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
             <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>按商家分组</span>
+            <span>{t.shops.groupByMerchant}</span>
           </label>
         </div>
 
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2">
-            <span class="text-sm text-base-content/80">价格</span>
-            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最小" autocomplete="off" />
+            <span class="text-sm text-base-content/80">{t.labels.price}</span>
+            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" />
             <span class="text-xs text-base-content/40">~</span>
-            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder="最大" autocomplete="off" />
+            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-sm text-base-content/80">排序</span>
+            <span class="text-sm text-base-content/80">{t.shops.sort}</span>
             <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
-              <option value="default">综合排序</option>
-              <option value="price-asc">低价优先</option>
-              <option value="stock-desc">库存最多</option>
-              <option value="refresh-desc">最近刷新</option>
-              <option value="custom" hidden>表头排序</option>
+              <option value="default">{t.shops.defaultSort}</option>
+              <option value="price-asc">{t.shops.priceAsc}</option>
+              <option value="stock-desc">{t.shops.stockDesc}</option>
+              <option value="refresh-desc">{t.shops.refreshDesc}</option>
+              <option value="custom" hidden>{t.shops.headerSort}</option>
             </select>
           </div>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">热门搜索</span>
-        <div id="quickTagFilters" class="flex flex-wrap gap-1.5" aria-label="热门搜索标签">
+        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">{t.labels.popularSearch}</span>
+        <div id="quickTagFilters" class="flex flex-wrap gap-1.5" aria-label={t.shops.hotSearchTags}>
           {popularSearchTermsValue.map(term => {
             const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
             return (
@@ -173,19 +185,19 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
   </section>
 
   <section id="emptyState" class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center hidden">
-    <span>没有匹配的商家或商品</span>
+    <span>{t.shops.emptyState}</span>
   </section>
 
   <section id="flatProductView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
-    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">点击表格标题可排序。收藏的商家和商品会始终置顶。</div>
+    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">{t.shops.tableHint}</div>
     <div class="product-table-scroll">
       <table class="table table-zebra w-full flat-product-table border-collapse">
         <thead class="bg-base-200 text-base-content text-base">
           <tr>
-            <th scope="col" class="table-head-index w-14 text-center">序号</th>
+            <th scope="col" class="table-head-index w-14 text-center">{t.labels.sequence}</th>
             {flatSortColumns.map(column => (
               <th scope="col" class="flat-sort-head" aria-sort="none">
-                <button type="button" class="flat-sort-button" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}排序`}>
+                <button type="button" class="flat-sort-button" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
                   <span class="flat-sort-label">{column.label}</span>
                   <span class="sort-indicator" aria-hidden="true">
                     <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -201,7 +213,7 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
                       <path d="m19 12-7 7-7-7"></path>
                     </svg>
                   </span>
-                  <span class="sort-status sr-only">点击排序</span>
+                  <span class="sort-status sr-only">{t.shops.clickSort}</span>
                 </button>
               </th>
             ))}
@@ -218,7 +230,7 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
                 <th scope="row" class="flat-row-index text-center text-base-content/50 font-bold"></th>
                 <td class="flat-product-cell font-medium">
                   <div class="cell-inline">
-                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`收藏 ${productTitle}`} aria-pressed="false" title="收藏商品">
+                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`${t.shops.productFavorite} ${productTitle}`} aria-pressed="false" title={t.shops.productFavorite}>
                       <span aria-hidden="true" class="text-sm">♡</span>
                     </button>
                     {item.productUrl ? (
@@ -235,7 +247,7 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
                 <td class="flat-category-cell text-base-content/80">{item.categoryName}</td>
                 <td class="flat-merchant-cell">
                   <div class="cell-inline">
-                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`收藏 ${item.siteName}`} aria-pressed="false" title="收藏商家">
+                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`${t.shops.merchantFavorite} ${item.siteName}`} aria-pressed="false" title={t.shops.merchantFavorite}>
                       <span aria-hidden="true" class="text-sm">♡</span>
                     </button>
                     {item.siteUrl ? (
@@ -256,14 +268,14 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
 
   <section id="flatProductProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3">
     <p id="flatProductLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
-    <button id="flatProductLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">加载更多商品</button>
+    <button id="flatProductLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">{t.shops.loadMoreProducts}</button>
   </section>
 
   <section id="merchantGroupedView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" hidden>
     <div class="merchant-table-head bg-base-200 font-bold text-sm text-base-content">
-      <div class="merchant-head-index text-center w-14">序号</div>
-      <div class="merchant-head-cell">商家</div>
-      <div class="merchant-head-cell">商品</div>
+      <div class="merchant-head-index text-center w-14">{t.labels.sequence}</div>
+      <div class="merchant-head-cell">{t.labels.merchant}</div>
+      <div class="merchant-head-cell">{t.labels.product}</div>
     </div>
     <div id="merchantRows"></div>
   </section>
@@ -274,23 +286,23 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
         <div class="card-body p-5">
           <div class="flex items-start justify-between gap-4">
             <div class="page-hero-wrap">
-              <h2 class="page-hero-title mt-0">提交商家</h2>
-              <p class="page-hero-copy">提交后，系统将自动识别并收录支持的站点，其余类型将转为人工尽快审核，请勿重复提交。</p>
+              <h2 class="page-hero-title mt-0">{t.shops.submitMerchant}</h2>
+              <p class="page-hero-copy">{t.shops.submitDescription}</p>
             </div>
             <form method="dialog">
-              <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label="关闭提交商家弹窗">✕</button>
+              <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.shops.closeSubmitDialog}>✕</button>
             </form>
           </div>
 
           <div class="alert alert-info alert-soft shadow-sm mt-4 flex flex-col items-start gap-1.5 text-left text-base-content">
-            <span class="font-bold text-sm">合作曝光</span>
-            <p class="text-sm text-base-content/85 leading-6">商家如有合作意向，可以在卡网大全获得更高曝光，例如赞助位、重点展示或更多入口推荐。具体合作方式请通过 Telegram 联系。</p>
-            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="shop-submit-telegram-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name="Telegram 联系" class="btn btn-primary btn-sm mt-2 inline-flex items-center gap-2">
+            <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
+            <p class="text-sm text-base-content/85 leading-6">{t.shops.cooperationDescription}</p>
+            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="shop-submit-telegram-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.actions.contactTelegram} class="btn btn-primary btn-sm mt-2 inline-flex items-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m22 2-7 20-4-9-9-4Z"></path>
                 <path d="M22 2 11 13"></path>
               </svg>
-              Telegram 联系
+              {t.actions.contactTelegram}
             </a>
           </div>
 
@@ -299,12 +311,12 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
               <label for="urlInput" class="label font-semibold text-sm pb-1">URL</label>
               <input id="urlInput" name="url" type="url" required value="" class="input input-bordered w-full" placeholder="https://example.com" autocomplete="url" />
             </div>
-            <p id="clientError" class="hidden text-sm text-error font-medium">请输入有效的 URL</p>
+            <p id="clientError" class="hidden text-sm text-error font-medium">{t.submit.invalidUrl}</p>
             <p id="submitError" class="hidden text-sm text-error font-medium"></p>
             <p id="submitSuccess" class="hidden text-sm text-success font-medium"></p>
             <div class="card-actions justify-start mt-2">
               <button type="submit" data-umami-event="submit-click" data-umami-event-url="" class="btn btn-primary">
-                提交
+                {t.actions.submit}
               </button>
             </div>
           </form>
@@ -312,13 +324,14 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
       </section>
     </div>
     <form method="dialog" class="modal-backdrop">
-      <button type="submit" aria-label="关闭提交商家弹窗背景">close</button>
+      <button type="submit" aria-label={t.shops.closeSubmitBackdrop}>close</button>
     </form>
   </dialog>
 
   <script is:inline type="application/json" id="dashboard-data" set:html={dashboardJsonValue}></script>
+  <script is:inline type="application/json" id="shops-messages" set:html={JSON.stringify(shopsScriptMessages)}></script>
   <script is:inline slot="scripts" defer src={shopsScriptUrl}></script>
-  <script slot="scripts" is:inline>
+  <script slot="scripts" is:inline define:vars={{ submitMessages: { failed: t.submit.failed, success: t.submit.success } }}>
     const shopSubmitDialog = document.querySelector('#shopSubmitDialog');
     const openShopSubmitModalButton = document.querySelector('#openShopSubmitModal');
     const submitForm = document.querySelector('#submitForm');
@@ -397,15 +410,15 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
         .then(async response => {
           const payload = await response.json().catch(() => null);
           if (!response.ok || !payload || payload.ok !== true) {
-            showError(payload && payload.message ? payload.message : '提交失败，请稍后重试');
+            showError(payload && payload.message ? payload.message : submitMessages.failed);
             return;
           }
           urlInput.value = '';
           syncSubmitEventUrl();
-          showSuccess(payload.message || '提交成功');
+          showSuccess(payload.message || submitMessages.success);
         })
         .catch(() => {
-          showError('提交失败，请稍后重试');
+          showError(submitMessages.failed);
         })
         .finally(() => {
           if (submitButton) submitButton.disabled = false;

@@ -58,11 +58,6 @@
 }
 
 @layer components {
-  /* 向导及政策详情排版 */
-  .guide-card {
-    @apply rounded border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50;
-  }
-
   .guide-browser-grid {
     @apply items-stretch;
     height: 100%;
@@ -181,7 +176,7 @@
   }
 
   .guide-intro a {
-    @apply font-semibold text-primary hover:opacity-80 hover:underline;
+    @apply font-semibold text-primary hover:underline;
   }
 
   .guide-grid {
@@ -189,22 +184,72 @@
   }
 
   .guide-card {
-    @apply block rounded-[1.4rem] border border-base-300/90 bg-base-100/88 p-5 no-underline shadow-sm transition duration-200;
-    backdrop-filter: blur(8px);
+    @apply relative isolate block overflow-hidden rounded-[1.4rem] border border-base-300/90 bg-transparent p-5 no-underline shadow-sm;
   }
 
-  .guide-card:hover {
-    @apply -translate-y-0.5 border-primary/35 shadow-md;
+  .guide-card::before {
+    content: "";
+    @apply absolute inset-0 z-0 bg-base-100 transition-colors duration-200;
+  }
+
+  .guide-card > * {
+    @apply relative z-10;
+  }
+
+  a.guide-card-clickable,
+  a.guide-card-clickable:hover,
+  a.guide-card-clickable:focus,
+  a.guide-card-clickable:active {
+    @apply text-inherit;
+    text-decoration: none !important;
+  }
+
+  a.guide-card-clickable *,
+  a.guide-card-clickable:hover * {
+    text-decoration: none !important;
+  }
+
+  .guide-card-clickable {
+    @apply transition duration-200;
+  }
+
+  .guide-card-clickable:hover {
+    @apply -translate-y-0.5 border-primary/28 shadow-md;
+  }
+
+  .guide-card-clickable:hover .guide-card-title {
+    @apply text-base-content;
+  }
+
+  .guide-card-clickable:hover .guide-badge {
+    @apply border-primary/18 bg-primary/10 text-primary;
+  }
+
+  .guide-card-clickable:hover .guide-card-icon {
+    @apply border-primary/20 bg-primary/12 text-primary;
+  }
+
+  .guide-card-clickable:hover::before {
+    background-color: color-mix(in oklab, var(--color-base-100) 96%, var(--color-primary) 4%);
   }
 
   /* Card specific article formatting */
+  .guide-card .guide-article {
+    @apply mt-3 text-sm font-normal leading-6 text-base-content/78;
+  }
+
+  .guide-card .guide-article p {
+    @apply mt-3 text-sm font-normal leading-6 text-base-content/78;
+  }
+
   .guide-card .guide-article h3 {
-    @apply mt-5 mb-2.5 flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-base-content/45;
+    color: color-mix(in oklab, var(--color-primary) 68%, var(--color-base-content) 32%);
+    @apply mt-5 mb-2.5 flex items-center gap-2 text-[15px] font-bold;
   }
 
   .guide-card .guide-article h3::after {
     content: "";
-    @apply h-[1px] flex-1 bg-base-300/70;
+    @apply h-[1px] flex-1 bg-base-300/85;
   }
 
   .guide-card .guide-article ul {
@@ -212,7 +257,7 @@
   }
 
   .guide-card .guide-article li {
-    @apply relative pl-3.5 text-[14px] leading-relaxed text-base-content/78;
+    @apply relative pl-3.5 text-sm font-normal leading-6 text-base-content/78;
   }
 
   .guide-card .guide-article li::before {
@@ -221,7 +266,7 @@
   }
 
   .guide-card .guide-article li strong {
-    @apply text-base-content font-bold text-[14px];
+    @apply text-base-content/90 font-semibold text-sm;
   }
 
   .guide-card .guide-article a {
@@ -236,6 +281,14 @@
     @apply inline-flex rounded-full border border-primary/18 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.04em] text-primary;
   }
 
+  .guide-card-icon {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-base-300 bg-base-200/75 text-base-content/55 transition-colors duration-200;
+  }
+
+  .guide-card-icon svg {
+    @apply h-4.5 w-4.5;
+  }
+
   .guide-arrow {
     @apply text-xs font-semibold text-base-content/45;
   }
@@ -244,8 +297,29 @@
     @apply mt-4 text-xl font-bold tracking-tight text-base-content;
   }
 
+  .guide-card-image-frame {
+    aspect-ratio: var(--guide-card-image-aspect, 3.44 / 1);
+    @apply mx-auto mt-4 flex w-full max-w-[344px] items-center justify-center overflow-hidden rounded-xl border border-base-300 bg-white;
+  }
+
+  .guide-card-image {
+    @apply h-full w-full object-cover text-slate-950;
+  }
+
+  .guide-card-image[src$=".svg"] {
+    @apply p-4 object-contain;
+  }
+
   .guide-card-summary {
     @apply mt-2 text-sm leading-6 text-base-content/78;
+  }
+
+  .guide-card-action {
+    @apply mt-5 inline-flex items-center gap-1.5 rounded-full border border-primary/16 bg-primary/8 px-3 py-1.5 text-sm font-bold text-primary transition-colors duration-200;
+  }
+
+  .guide-card-clickable:hover .guide-card-action {
+    @apply border-primary/24 bg-primary/12;
   }
 
   .guide-meta {
@@ -304,8 +378,8 @@
     @apply mt-3 list-decimal space-y-2 pl-6 text-base leading-7;
   }
 
-  .guide-article a {
-    @apply font-semibold text-primary hover:opacity-80 hover:underline;
+  .guide-article a:not(.guide-card) {
+    @apply font-semibold text-primary hover:underline;
   }
 
   .guide-article code {
@@ -320,20 +394,49 @@
     @apply bg-transparent p-0 text-inherit;
   }
 
-  .card-body .guide-article > :first-child {
+  .guide-article > :first-child,
+  .content-page > :first-child {
     @apply mt-0;
   }
 
-  .policy-page h2 {
-    @apply text-2xl font-bold tracking-normal text-base-content;
+  .content-page h1 {
+    @apply text-3xl font-bold tracking-normal text-base-content;
   }
 
-  .policy-page h3 {
+  .content-page h2 {
+    @apply mt-8 text-xl font-bold tracking-normal text-base-content;
+  }
+
+  .content-page h3 {
     @apply mt-6 text-lg font-semibold tracking-normal text-base-content;
   }
 
-  .policy-page p {
+  .content-page p {
     @apply mt-4 text-base leading-8;
+  }
+
+  .content-page ul {
+    @apply mt-3 list-disc space-y-2 pl-6 text-base leading-7;
+  }
+
+  .content-page ol {
+    @apply mt-3 list-decimal space-y-2 pl-6 text-base leading-7;
+  }
+
+  .content-page a {
+    @apply font-semibold text-primary hover:underline;
+  }
+
+  .content-page code {
+    @apply rounded bg-base-300 px-1 py-0.5 text-sm text-base-content;
+  }
+
+  .content-page pre {
+    @apply mt-4 overflow-x-auto rounded-xl border border-base-300 bg-base-200 p-4 text-sm leading-6 text-base-content;
+  }
+
+  .content-page pre code {
+    @apply bg-transparent p-0 text-inherit;
   }
 
   .desktop-nav-wrap,
@@ -511,7 +614,6 @@
   .merchant-link,
   .product-link {
     @apply inline underline decoration-primary/55 decoration-[1.5px] underline-offset-[0.18em] text-primary transition hover:text-[color:var(--color-primary-hover)] hover:decoration-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30;
-    overflow-wrap: anywhere;
   }
 
   .product-text {

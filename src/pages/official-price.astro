@@ -3,6 +3,7 @@
 文件说明: 渲染 CardNav 官方大模型价格对比默认入口，服务端优先展示 ChatGPT Plus。
 */
 import OfficialPriceContent from '../components/OfficialPriceContent.astro';
+import { localizeOfficialPriceGroups } from '../localized-display.js';
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildOfficialPriceGroups, getDefaultOfficialPriceGroup } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
@@ -10,22 +11,23 @@ import { publicSiteUrl } from '../site.js';
 import { loadOfficialPrices, formatBeijingRefreshTime } from '../store.js';
 
 const rawPrices = await loadOfficialPrices();
-const groups = buildOfficialPriceGroups(rawPrices);
+const groups = localizeOfficialPriceGroups(buildOfficialPriceGroups(rawPrices), Astro.locals.locale);
 const currentGroup = getDefaultOfficialPriceGroup(groups);
 const latestFetchedAt = rawPrices.reduce<string | null>((latest, price) => {
   if (!price.fetchedAt) return latest;
   if (!latest) return price.fetchedAt;
   return new Date(price.fetchedAt).getTime() > new Date(latest).getTime() ? price.fetchedAt : latest;
 }, null);
-const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : '未记录';
+const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : Astro.locals.messages.labels.notRecorded;
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/official-price',
-  title: 'AI 官方订阅价格对比',
-  description: '对比 ChatGPT Plus、Claude Pro、Gemini Advanced 等 AI 官方订阅在不同国家和地区的价格与人民币折算，快速查看更划算的订阅地区。',
+  title: Astro.locals.messages.officialPrice.seoTitle,
+  description: Astro.locals.messages.officialPrice.seoDescription,
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
+  locale: Astro.locals.locale,
 });
 ---
 

@@ -3,6 +3,7 @@
 文件说明: 渲染单个模型排行榜任务的独立 SSR URL。
 */
 import ModelLeaderboardContent from '../../components/ModelLeaderboardContent.astro';
+import { localizeModelLeaderboardGroups } from '../../localized-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildModelLeaderboardGroups } from '../../model-leaderboard.js';
 import { buildSeoContext } from '../../seo.js';
@@ -10,24 +11,25 @@ import { publicSiteUrl } from '../../site.js';
 import { formatBeijingRefreshTime, loadModelLeaderboards } from '../../store.js';
 
 const rows = await loadModelLeaderboards();
-const groups = buildModelLeaderboardGroups(rows);
+const groups = localizeModelLeaderboardGroups(buildModelLeaderboardGroups(rows), Astro.locals.messages);
 const currentGroup = groups.find(group => group.taskSlug === Astro.params.slug) || null;
 
-if (!currentGroup) return Astro.redirect('/model-leaderboard', 302);
+if (!currentGroup) return Astro.redirect(Astro.locals.localizePath('/model-leaderboard'), 302);
 
 const latestFetchedAt = rows.reduce<string | null>((latest, row) => {
   if (!latest) return row.fetchedAt;
   return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
 }, null);
-const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : '未记录';
+const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : Astro.locals.messages.labels.notRecorded;
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: currentGroup.pathname,
-  title: `${currentGroup.taskLabel}模型排行榜`,
-  description: `查看当前 ${currentGroup.taskLabel} 任务下的大模型能力排行榜，包括模型排名和评分。`,
+  title: `${currentGroup.displayName}${Astro.locals.messages.leaderboard.titleSuffix}`,
+  description: Astro.locals.messages.leaderboard.dynamicDescription.replace('{taskLabel}', currentGroup.displayName),
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
+  locale: Astro.locals.locale,
 });
 ---
 

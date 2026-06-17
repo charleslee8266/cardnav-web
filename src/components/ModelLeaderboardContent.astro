@@ -2,43 +2,45 @@
 /*
 文件说明: 渲染模型排行榜页的服务端 HTML 内容，包括任务导航和当前任务榜单。
 */
-import type { ModelLeaderboardGroup } from '../model-leaderboard.js';
+import type { LocalizedModelLeaderboardGroup } from '../localized-display.js';
 
 type Props = {
-  groups: ModelLeaderboardGroup[];
-  currentGroup: ModelLeaderboardGroup | null;
+  groups: LocalizedModelLeaderboardGroup[];
+  currentGroup: LocalizedModelLeaderboardGroup | null;
   updateTime: string;
 };
 
 const { groups, currentGroup, updateTime } = Astro.props;
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
 ---
 
 <section class="card bg-base-100 border border-base-300 shadow-sm">
   <div class="card-body p-5">
     <div class="page-hero-wrap">
       <h1 class="page-hero-title">
-        {currentGroup ? `${currentGroup.taskLabel}模型排行榜` : 'AI 大模型排行榜'}
+        {currentGroup ? `${currentGroup.displayName}${t.leaderboard.titleSuffix}` : t.leaderboard.title}
       </h1>
       <p class="page-hero-copy">
-        AI 大模型能力排行榜，包含编程、创意写作、数学和文生图榜单。
+        {t.leaderboard.description}
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-3 text-xs text-base-content/60">
-      <span>最近刷新（北京时间）：{updateTime}</span>
+      <span>{t.labels.latestRefreshBeijing}：{updateTime}</span>
     </div>
   </div>
 </section>
 
 {groups.length > 0 && (
-  <nav class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label="模型排行榜任务类型">
+  <nav class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label={t.leaderboard.taskNavLabel}>
     {groups.map(group => (
       <a
         role="tab"
-        href={group.pathname}
+        href={linkTo(group.pathname)}
         class={'tab text-sm ' + (currentGroup?.taskSlug === group.taskSlug ? 'tab-active font-semibold text-primary' : 'text-base-content/70 hover:text-base-content')}
         aria-current={currentGroup?.taskSlug === group.taskSlug ? 'page' : undefined}
       >
-        {group.taskLabel}
+        {group.displayName}
       </a>
     ))}
   </nav>
@@ -47,15 +49,15 @@ const { groups, currentGroup, updateTime } = Astro.props;
 {currentGroup && (
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
     <div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
-      <p class="text-sm font-bold text-base-content">{currentGroup.taskLabel}</p>
+      <p class="text-sm font-bold text-base-content">{currentGroup.displayName}</p>
     </div>
     <div class="product-table-scroll">
       <table class="table table-zebra table-md w-full border-collapse">
         <thead class="bg-base-200 text-base-content text-sm">
           <tr>
-            <th scope="col" class="font-bold">排名</th>
-            <th scope="col" class="font-bold">模型</th>
-            <th scope="col" class="font-bold text-primary">评分</th>
+            <th scope="col" class="font-bold">{t.labels.rank}</th>
+            <th scope="col" class="font-bold">{t.labels.model}</th>
+            <th scope="col" class="font-bold text-primary">{t.labels.score}</th>
           </tr>
         </thead>
         <tbody>
@@ -70,7 +72,7 @@ const { groups, currentGroup, updateTime } = Astro.props;
           ))}
           {currentGroup.rows.length === 0 && (
             <tr>
-              <td colspan="3" class="p-8 text-center text-base-content/40">暂无排行榜数据，请稍后再查看。</td>
+              <td colspan="3" class="p-8 text-center text-base-content/40">{t.leaderboard.empty}</td>
             </tr>
           )}
         </tbody>
@@ -81,6 +83,6 @@ const { groups, currentGroup, updateTime } = Astro.props;
 
 {groups.length === 0 && (
   <section class="alert alert-info alert-soft max-w-md mx-auto my-6 justify-center">
-    <span>暂无排行榜数据，请稍后再查看。</span>
+    <span>{t.leaderboard.empty}</span>
   </section>
 )}

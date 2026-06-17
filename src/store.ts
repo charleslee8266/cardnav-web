@@ -9,8 +9,8 @@ export type PublicSiteRow = {
   id: string;
   name: string;
   url: string;
-  latestProductRefreshedAt: string | null;
-  latestProductRefreshTime: string;
+  lastProductRefreshSuccessAt: string | null;
+  lastProductRefreshSuccessTime: string;
   score: number;
 };
 
@@ -28,8 +28,8 @@ export type PublicProductRow = {
   siteId: string;
   siteName: string;
   siteUrl: string;
-  siteLatestProductRefreshedAt: string | null;
-  siteLatestProductRefreshTime: string;
+  siteProductRefreshSuccessAt: string | null;
+  siteProductRefreshSuccessTime: string;
   clickCount: number;
   score: number;
 };
@@ -46,8 +46,9 @@ export type PopularSearchTermsSnapshot = {
   normalizedTerms: string[];
 };
 
+type SubmitSiteUrlErrorKey = 'invalidUrl' | 'duplicateUrl';
+
 let pool: pg.Pool | null = null;
-const presetPopularSearchTerms = ['ChatGPT Plus', 'Claude', 'Gemini', 'Cursor', 'Codex', 'Team', '接码', '成品号', '共享号', 'API'];
 const beijingDateFormatter = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Asia/Shanghai',
   year: 'numeric',
@@ -88,10 +89,10 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
         name,
         url,
         score,
-        latest_product_refreshed_at
+        last_product_refresh_success_at
       FROM sites
       WHERE type = 'cardShop'
-      ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, latest_product_refreshed_at DESC NULLS LAST, id ASC
+      ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
     : null;
   const productsResult = await db.query(`
@@ -100,7 +101,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
       sites.name AS site_name,
       sites.url AS site_url,
       sites.score AS site_score,
-      sites.latest_product_refreshed_at AS site_latest_product_refreshed_at,
+      sites.last_product_refresh_success_at AS site_product_refresh_success_at,
       products.category_name,
       products.name,
       products.price,
@@ -121,7 +122,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
 
   const products: PublicProductRow[] = productsResult.rows.map(row => {
     const refreshedAt = row.refreshed_at ? String(row.refreshed_at) : null;
-    const siteLatestProductRefreshedAt = row.site_latest_product_refreshed_at ? String(row.site_latest_product_refreshed_at) : null;
+    const siteProductRefreshSuccessAt = row.site_product_refresh_success_at ? String(row.site_product_refresh_success_at) : null;
     return {
       categoryName: String(row.category_name),
       name: String(row.name),
@@ -137,8 +138,8 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
       siteId: String(row.site_id),
       siteName: String(row.site_name),
       siteUrl: String(row.site_url),
-      siteLatestProductRefreshedAt,
-      siteLatestProductRefreshTime: formatBeijingRefreshTime(siteLatestProductRefreshedAt),
+      siteProductRefreshSuccessAt,
+      siteProductRefreshSuccessTime: formatBeijingRefreshTime(siteProductRefreshSuccessAt),
       score: Number(row.score) || 0,
     };
   });
@@ -148,8 +149,8 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
       id: String(row.id),
       name: String(row.name),
       url: String(row.url),
-      latestProductRefreshedAt: row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null,
-      latestProductRefreshTime: formatBeijingRefreshTime(row.latest_product_refreshed_at ? String(row.latest_product_refreshed_at) : null),
+      lastProductRefreshSuccessAt: row.last_product_refresh_success_at ? String(row.last_product_refresh_success_at) : null,
+      lastProductRefreshSuccessTime: formatBeijingRefreshTime(row.last_product_refresh_success_at ? String(row.last_product_refresh_success_at) : null),
       score: Number(row.score) || 0,
     }))
     : (() => {
@@ -157,13 +158,13 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
       for (const row of productsResult.rows) {
         const siteId = String(row.site_id);
         if (siteById.has(siteId)) continue;
-        const latestProductRefreshedAt = row.site_latest_product_refreshed_at ? String(row.site_latest_product_refreshed_at) : null;
+        const lastProductRefreshSuccessAt = row.site_product_refresh_success_at ? String(row.site_product_refresh_success_at) : null;
         siteById.set(siteId, {
           id: siteId,
           name: String(row.site_name),
           url: String(row.site_url),
-          latestProductRefreshedAt,
-          latestProductRefreshTime: formatBeijingRefreshTime(latestProductRefreshedAt),
+          lastProductRefreshSuccessAt,
+          lastProductRefreshSuccessTime: formatBeijingRefreshTime(lastProductRefreshSuccessAt),
           score: Number(row.site_score) || 0,
         });
       }
@@ -178,7 +179,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
         INNER JOIN sites ON sites.id = products.site_id
         WHERE sites.type = 'cardShop'
       ), 0) AS total_product_count,
-      MAX(latest_product_refreshed_at) FILTER (WHERE type = 'cardShop') AS latest_refreshed_at
+      MAX(last_product_refresh_success_at) FILTER (WHERE type = 'cardShop') AS latest_refreshed_at
     FROM sites
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
@@ -205,12 +206,12 @@ export async function submitSiteUrl(input: string) {
   try {
     const parsed = new URL(input.trim());
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return { ok: false as const, message: '请输入有效的 URL' };
+      return { ok: false as const, errorKey: 'invalidUrl' satisfies SubmitSiteUrlErrorKey };
     }
     parsed.hash = '';
     url = parsed.toString().replace(/\/+$/, '');
   } catch {
-    return { ok: false as const, message: '请输入有效的 URL' };
+    return { ok: false as const, errorKey: 'invalidUrl' satisfies SubmitSiteUrlErrorKey };
   }
 
   const result = await getPool().query(
@@ -223,7 +224,7 @@ export async function submitSiteUrl(input: string) {
     [url],
   );
   if (result.rows.length === 0) {
-    return { ok: false as const, message: '当前已经有了，请勿重复提交' };
+    return { ok: false as const, errorKey: 'duplicateUrl' satisfies SubmitSiteUrlErrorKey };
   }
   return { ok: true as const, url };
 }
@@ -280,7 +281,7 @@ export async function recordProductClick(input: ProductClickInput) {
   return { recorded: result.rows.length > 0 };
 }
 
-export async function loadPopularSearchTerms(limit = 10) {
+export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerms: string[] = []) {
   const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
   const db = getPool();
   const runtimeResult = await db.query(
@@ -355,12 +356,13 @@ export type PublicOfficialPriceRow = {
   priceText: string;
   priceValue: number;
   cnyPrice: number;
+  usdPrice: number;
+  rubPrice: number;
   fetchedAt: string;
 };
 
 export type PublicModelLeaderboardRow = {
   taskSlug: string;
-  taskLabel: string;
   sourceName: string;
   sourceUrl: string;
   sourceGroupSlug: string;
@@ -374,7 +376,7 @@ export type PublicModelLeaderboardRow = {
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
   const db = getPool();
   const result = await db.query(`
-    SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, fetched_at
+    SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
     FROM official_prices
     ORDER BY display_order ASC, cny_price ASC
   `);
@@ -393,6 +395,8 @@ export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
     priceText: String(row.price_text),
     priceValue: Number(row.price_value),
     cnyPrice: Number(row.cny_price),
+    usdPrice: Number(row.usd_price),
+    rubPrice: Number(row.rub_price),
     fetchedAt: String(row.fetched_at),
   }));
 }
@@ -402,7 +406,6 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
   const result = await db.query(`
     SELECT
       task_slug,
-      task_label,
       source_name,
       source_url,
       source_group_slug,
@@ -424,7 +427,6 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
   `);
   return result.rows.map(row => ({
     taskSlug: String(row.task_slug),
-    taskLabel: String(row.task_label),
     sourceName: String(row.source_name),
     sourceUrl: String(row.source_url),
     sourceGroupSlug: String(row.source_group_slug),

@@ -16,23 +16,28 @@ parent:
 - **普通轻度使用**：对于没有长期高频稳定需求的用户，可以优先考虑使用成熟机场或代理服务。
 - **高阶稳定性要求**：需要稳定大模型会话或防止被封号的用户，建议自购独立的海外 VPS 节点。
 
+下面几个推荐入口可以先小额试用，确认节点稳定性、客户端兼容性和目标服务访问情况后，再决定是否长期订阅。
+
 ## SSRDOG
 <!-- badge="机场" icon="vpn" -->
 
 SSRDOG 是运营时间较长的主流中转站，优势是整体稳定性不错，缺点是价格相对稍高。使用时建议配合其官方或最新推荐版本的客户端。
-- **推荐链接**：可以 [点击这里注册 SSRDOG](https://st2.hosbb.com/#/register?code=5xRWMG6f) 并开始使用。
+
+[前往注册](https://st2.hosbb.com/#/register?code=5xRWMG6f)
 
 ## 狗狗加速
 <!-- badge="推荐" icon="vpn" -->
 
 高性能海外机场，稳定首选，集群负载均衡设计，高速专线。全球首家支持 Hysteria1/2 协议，基于最新 UDP QUIC 技术，极低延迟，无视晚高峰，4K 秒开。配合 Clash/V2ray 等客户端使用非常省心。
-- **推荐链接**：可以 [点击这里注册 狗狗加速](https://down.dginv.click/#/register?code=O1LnSIXG) 并开始使用。
+
+[前往注册](https://down.dginv.click/#/register?code=O1LnSIXG)
 
 ## iKuu
 <!-- badge="低成本" icon="vpn" -->
 
 iKuu 也是一个运营多年的成熟机场，优势是价格非常便宜，稳定性尚可，并且为新注册用户提供免费试用额度，适合轻度体验。
-- **推荐链接**：可以 [点击这里注册 iKuu](https://ikuuu.win/auth/register?code=1QoH) 开始免费试用。
+
+[前往注册](https://ikuuu.win/auth/register?code=1QoH)
 
 ## 云主机自建节点
 <!-- badge="高级自建" icon="vps" -->
@@ -40,4 +45,5 @@ iKuu 也是一个运营多年的成熟机场，优势是价格非常便宜，稳
 常规的共享 VPN 节点由于使用者多，IP 纯净度通常较差，若同节点有人因违规被封号，可能会关联影响到你的账号。
 
 如果你有更高的稳定性要求，建议自己购买云主机来搭建独享节点。目前推荐使用 vless + reality 协议搭建。具体搭建方式，你可以在购买配置好云主机的 SSH 登录后，直接向 ChatGPT 或 Claude 寻求一步步搭建命令。
-- **查看云服务器推荐**：关于海外主机的选购推荐与搭建，详情请参考 [云服务器推荐](./322-tool-vps.md)。
+
+[点击了解详情](./322-tool-vps.md)

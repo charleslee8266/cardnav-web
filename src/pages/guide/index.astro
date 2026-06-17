@@ -4,9 +4,15 @@
 */
 import PublicPage from '../../layouts/PublicPage.astro';
 import GuideBrowser from '../../components/GuideBrowser.astro';
-import { defaultGuideArticle, guideArticles, guideNavItems } from '../../guide.js';
+import { getGuideCollection } from '../../guide.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
+
+const {
+  defaultGuideArticle,
+  guideArticles,
+  guideNavItems,
+} = getGuideCollection(Astro.locals.locale);
 
 if (!defaultGuideArticle) {
   throw new Error('Guide articles are required to render /guide');
@@ -19,6 +25,7 @@ const seo = buildSeoContext({
   description: defaultGuideArticle.description,
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
+  locale: Astro.locals.locale,
 });
 ---
 

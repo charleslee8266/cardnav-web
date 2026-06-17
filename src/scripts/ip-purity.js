@@ -33,6 +33,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
 
   if (!ui.form || !ui.input) return;
 
+  const dict = JSON.parse(document.querySelector('#ip-purity-runtime-dict')?.textContent || '{}');
   const IPV4_PATTERN = /^(?:\d{1,3}\.){3}\d{1,3}$/;
   let latestPayload = null;
 
@@ -54,7 +55,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   function setLoading(loading) {
     if (ui.submit) ui.submit.disabled = loading;
     if (ui.detectCurrent) ui.detectCurrent.disabled = loading;
-    if (loading) ui.status.textContent = '正在检测，请稍候...';
+    if (loading) ui.status.textContent = dict.status?.loading || 'Checking...';
   }
 
   function clearError() {
@@ -67,9 +68,9 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     ui.error.classList.remove('hidden');
   }
 
-  function setEmptyState(statusText = '还没有检测结果。') {
+  function setEmptyState(statusText = dict.status?.emptySummary || 'No result yet.') {
     ui.score.textContent = '--';
-    ui.badge.textContent = '等待检测';
+    ui.badge.textContent = dict.status?.waiting || 'Waiting';
     ui.badge.className = 'badge badge-ghost mt-3 w-fit';
     ui.ip.textContent = '--';
     ui.checkedAt.textContent = '--';
@@ -83,18 +84,18 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     ui.networkType.textContent = '--';
     ui.coordinates.textContent = '--';
     clearMap();
-    ui.signals.innerHTML = '<p class="text-sm text-base-content/55">等待检测后显示风险信号。</p>';
-    ui.sources.innerHTML = '<p class="text-sm text-base-content/55">等待检测后显示不同来源返回的结果摘要。</p>';
+    ui.signals.innerHTML = `<p class="text-sm text-base-content/55">${escapeHtml(dict.status?.waitingSignals || 'Risk signals will appear after checking.')}</p>`;
+    ui.sources.innerHTML = `<p class="text-sm text-base-content/55">${escapeHtml(dict.status?.waitingSources || 'Source summaries will appear after checking.')}</p>`;
   }
 
   function validateIpv4(value) {
     const input = String(value || '').trim();
     if (!input) return '';
-    if (input.includes(':')) return '当前只支持 IPv4 纯净度检测，IPv6 暂不支持。';
-    if (!IPV4_PATTERN.test(input)) return 'IP 格式不正确，请输入正确地址，例如 8.8.8.8。';
+    if (input.includes(':')) return renderError('ipv6Unsupported');
+    if (!IPV4_PATTERN.test(input)) return renderError('invalidIp');
     const segments = input.split('.').map(Number);
     if (segments.some(number => !Number.isInteger(number) || number < 0 || number > 255)) {
-      return 'IP 格式不正确，请输入正确地址，例如 8.8.8.8。';
+      return renderError('invalidIp');
     }
     return '';
   }
@@ -102,16 +103,11 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   function renderReport(payload) {
     latestPayload = payload;
     ui.score.textContent = String(payload.score);
-    ui.badge.textContent = {
-      clean: '高纯净',
-      watch: '可用但需留意',
-      risk: '风险偏高',
-      blocked: '高风险',
-    }[payload.riskLevel] || payload.riskLevel;
+    ui.badge.textContent = renderRiskLevel(payload.riskLevel);
     ui.badge.className = `badge mt-3 w-fit ${badgeClassName(payload.riskLevel)}`;
     ui.ip.textContent = payload.ip;
     ui.checkedAt.textContent = formatTime(payload.checkedAt);
-    ui.summary.textContent = payload.summary;
+    ui.summary.textContent = renderSummary(payload.summaryKey, payload.summaryParams);
     ui.country.textContent = payload.profile.country || '--';
     ui.region.textContent = payload.profile.region || '--';
     ui.city.textContent = payload.profile.city || '--';
@@ -138,7 +134,8 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
         latitude: payload.profile.latitude,
         longitude: payload.profile.longitude,
       },
-      emptyCaption: '暂无位置坐标。',
+      messages: dict.map || {},
+      emptyCaption: dict.map?.noCoordinatesCaption || 'No coordinates.',
     });
   }
 
@@ -147,11 +144,11 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     if (!ui.map || !ui.mapCaption) return;
     ui.map.innerHTML = `
       <div class="ip-purity-map-empty">
-        <strong>暂无坐标</strong>
-        <p>这次没有拿到位置坐标。</p>
+        <strong>${escapeHtml(dict.map?.noCoordinatesTitle || 'No coordinates')}</strong>
+        <p>${escapeHtml(dict.map?.noCoordinatesDescription || 'No location coordinates were returned.')}</p>
       </div>
     `;
-    ui.mapCaption.textContent = '暂无位置坐标。';
+    ui.mapCaption.textContent = dict.map?.noCoordinatesCaption || 'No coordinates.';
     clearIpLocationMap(ui.map);
   }
 
@@ -160,8 +157,8 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
       <article class="ip-purity-signal-card">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h4 class="font-semibold text-base-content">${escapeHtml(signal.label)}</h4>
-            <p class="mt-2 text-sm leading-6 text-base-content/72">${escapeHtml(signal.detail)}</p>
+            <h4 class="font-semibold text-base-content">${escapeHtml(renderSignalLabel(signal.key))}</h4>
+            <p class="mt-2 text-sm leading-6 text-base-content/72">${escapeHtml(renderSignalDetail(signal))}</p>
           </div>
           <span class="badge ${signalBadgeClass(signal.verdict)}">${signalVerdictLabel(signal.verdict)}</span>
         </div>
@@ -173,7 +170,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     return `
       <article class="ip-purity-source-card">
         <h4 class="font-semibold text-base-content">${escapeHtml(source.name)}</h4>
-        <p class="mt-1 text-sm leading-6 text-base-content/72">${escapeHtml(source.summary)}</p>
+        <p class="mt-1 text-sm leading-6 text-base-content/72">${escapeHtml(renderSourceSummary(source))}</p>
       </article>
     `;
   }
@@ -192,9 +189,57 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   }
 
   function signalVerdictLabel(verdict) {
-    if (verdict === 'clean') return '正常';
-    if (verdict === 'risk') return '风险';
-    return '未知';
+    return dict.verdicts?.[verdict] || verdict || 'Unknown';
+  }
+
+  function renderError(messageKey) {
+    return dict.errors?.[messageKey] || '';
+  }
+
+  function renderRiskLevel(riskLevel) {
+    return dict.riskLevels?.[riskLevel] || riskLevel || 'Unknown';
+  }
+
+  function renderSummary(summaryKey, params = {}) {
+    const shortKey = stripPrefix(summaryKey, 'summary.');
+    const signalLabels = Array.isArray(params.signalKeys)
+      ? params.signalKeys.map(renderSignalLabel).filter(Boolean).join(dict.listSeparator || ', ')
+      : '';
+    return formatTemplate(dict.summary?.[shortKey] || '', {
+      ...params,
+      riskLevel: renderRiskLevel(params.riskLevel),
+      signals: signalLabels,
+    }) || `${params.score ?? '--'}/100`;
+  }
+
+  function renderSignalLabel(key) {
+    return dict.signals?.[key]?.label || key || '';
+  }
+
+  function renderSignalDetail(signal) {
+    const signalDict = dict.signals?.[signal.key] || {};
+    if (signal.verdict === 'risk') return signalDict.riskDetail || '';
+    if (signal.verdict === 'clean') return signalDict.cleanDetail || '';
+    return signalDict.unknownDetail || signalDict.cleanDetail || '';
+  }
+
+  function renderSourceSummary(source) {
+    const shortKey = stripPrefix(source.summaryKey, 'source.');
+    const template = dict.source?.[shortKey] || '';
+    const params = source.summaryParams || {};
+    const values = Array.isArray(params.values)
+      ? params.values.join(' / ')
+      : '';
+    return formatTemplate(template, { ...params, values }) || '-';
+  }
+
+  function stripPrefix(value, prefix) {
+    const text = String(value || '');
+    return text.startsWith(prefix) ? text.slice(prefix.length) : text;
+  }
+
+  function formatTemplate(template, params = {}) {
+    return String(template || '').replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? ''));
   }
 
   async function runCheck(ip) {
@@ -206,14 +251,14 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.message || '检测失败，请稍后重试。');
+        throw new Error(renderError(payload?.messageKey) || dict.status?.failed || 'Check failed.');
       }
       renderReport(payload);
-      ui.status.textContent = `检测完成：${payload.ip}`;
+      ui.status.textContent = formatTemplate(dict.status?.checkCompleted || 'Check completed: {ip}', { ip: payload.ip });
     } catch (error) {
-      setEmptyState('检测失败。');
-      showError(error instanceof Error ? error.message : '检测失败，请稍后重试。');
-      ui.status.textContent = '检测失败。';
+      setEmptyState(dict.status?.failed || 'Check failed.');
+      showError(error instanceof Error ? error.message : dict.status?.failed || 'Check failed.');
+      ui.status.textContent = dict.status?.failed || 'Check failed.';
     } finally {
       setLoading(false);
     }
@@ -223,7 +268,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     clearError();
     setLoading(true);
     try {
-      ui.status.textContent = '正在识别当前 IP...';
+      ui.status.textContent = dict.status?.identifyingCurrentIp || 'Detecting current IP...';
       const response = await fetch('https://api4.ipify.org?format=json', {
         headers: { Accept: 'application/json' },
       });
@@ -236,9 +281,9 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
       ui.input.value = ip;
       await runCheck(ip);
     } catch (error) {
-      setEmptyState('当前 IP 识别失败。');
-      showError(error instanceof Error ? error.message : '当前 IP 识别失败。');
-      ui.status.textContent = '当前 IP 识别失败。';
+      setEmptyState(dict.status?.failed || 'Check failed.');
+      showError(error instanceof Error ? error.message : dict.status?.failed || 'Check failed.');
+      ui.status.textContent = dict.status?.failed || 'Check failed.';
     } finally {
       setLoading(false);
     }
@@ -247,7 +292,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   function formatTime(value) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '--';
-    return new Intl.DateTimeFormat('zh-CN', {
+    return new Intl.DateTimeFormat(dict.locale || 'en-US', {
       dateStyle: 'medium',
       timeStyle: 'medium',
     }).format(date);
@@ -273,9 +318,9 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     const ip = ui.input.value.trim();
     const validationMessage = validateIpv4(ip);
     if (validationMessage) {
-      setEmptyState('输入校验失败。');
+      setEmptyState(dict.status?.validationFailed || 'Validation failed.');
       showError(validationMessage);
-      ui.status.textContent = '请输入有效 IP。';
+      ui.status.textContent = dict.status?.enterValidIp || 'Enter a valid IP.';
       return;
     }
     if (!ip) {
@@ -310,7 +355,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     ui.input.value = '';
     clearError();
     setEmptyState();
-    ui.status.textContent = '已清空输入。';
+    ui.status.textContent = dict.status?.cleared || 'Cleared.';
   });
 
   setEmptyState();

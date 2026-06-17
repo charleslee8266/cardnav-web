@@ -3,6 +3,7 @@
 文件说明: 渲染 CardNav 模型排行榜默认入口，服务端优先展示编程榜。
 */
 import ModelLeaderboardContent from '../components/ModelLeaderboardContent.astro';
+import { localizeModelLeaderboardGroups } from '../localized-display.js';
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildSeoContext } from '../seo.js';
@@ -10,21 +11,22 @@ import { publicSiteUrl } from '../site.js';
 import { formatBeijingRefreshTime, loadModelLeaderboards } from '../store.js';
 
 const rows = await loadModelLeaderboards();
-const groups = buildModelLeaderboardGroups(rows);
+const groups = localizeModelLeaderboardGroups(buildModelLeaderboardGroups(rows), Astro.locals.messages);
 const currentGroup = groups.find(group => group.taskSlug === 'coding') || groups[0] || null;
 const latestFetchedAt = rows.reduce<string | null>((latest, row) => {
   if (!latest) return row.fetchedAt;
   return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
 }, null);
-const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : '未记录';
+const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : Astro.locals.messages.labels.notRecorded;
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/model-leaderboard',
-  title: '模型排行榜',
-  description: '查看当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
+  title: Astro.locals.messages.leaderboard.seoTitle,
+  description: Astro.locals.messages.leaderboard.seoDescription,
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
+  locale: Astro.locals.locale,
 });
 ---
 

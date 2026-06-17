@@ -16,7 +16,8 @@ parent:
 - **网页与客户端直登**：优先选择可以直接在官网登录的“账密”格式，或带密码的“四段 RT”直登格式。
 - **工具与中转站导入**：对于交付为 session 或各类 JSON 配置的格式，通常更适合导入第三方中转软件或管理面板。
 
-## 账密 <!-- badge="最直接" -->
+## 账密
+<!-- badge="最直接" -->
 
 商家直接发邮箱和密码，通常可以直接网页或客户端登录。
 
@@ -28,7 +29,8 @@ parent:
 example@example.com | abc***XYZ
 ```
 
-## 四段 RT <!-- badge="可直登 / 可转换" -->
+## 四段 RT
+<!-- badge="可直登 / 可转换" -->
 
 一行里同时带账号、密码、`client_id` 和 `refresh_token`。
 
@@ -40,7 +42,8 @@ example@example.com | abc***XYZ
 example@example.com----abc***XYZ----cli***123----rt_abc***xyz
 ```
 
-## ChatGPT Session <!-- badge="会话 JSON" -->
+## ChatGPT Session
+<!-- badge="会话 JSON" -->
 
 已登录网页拿到的会话信息，不是普通账密。
 
@@ -61,7 +64,8 @@ example@example.com----abc***XYZ----cli***123----rt_abc***xyz
 }
 ```
 
-## Codex / CPA / Sub2API / Cockpit <!-- badge="工具导入格式" -->
+## Codex / CPA / Sub2API / Cockpit
+<!-- badge="工具导入格式" -->
 
 这类通常都是给工具、面板或中转程序导入用的 JSON。
 

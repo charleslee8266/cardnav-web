@@ -13,6 +13,7 @@
   };
 
   const axonHubMissingRefreshToken = '__missing_refresh_token__';
+  const messages = JSON.parse(document.querySelector('#session-converter-messages')?.textContent || '{}');
   const state = {
     format: 'Sub2API',
     accounts: [],
@@ -336,14 +337,14 @@
     try {
       document = JSON.parse(text);
     } catch (error) {
-      throw new Error(`JSON 解析失败：${error.message}`);
+      throw new Error((messages.jsonParseFailed || 'JSON parse failed: {message}').replace('{message}', error.message));
     }
     return findSessionObjects(document);
   }
 
   function convertOne(record, options = {}) {
     if (!isRecord(record)) {
-      throw new Error('session 不是 JSON 对象');
+      throw new Error(messages.sessionNotObject || 'Session is not a JSON object');
     }
 
     const accessToken = pickText(
@@ -357,7 +358,7 @@
       record.credentials?.access_token,
     );
     if (!accessToken) {
-      throw new Error('缺少 accessToken');
+      throw new Error(messages.missingAccessToken || 'Missing accessToken');
     }
 
     const sessionToken = pickText(
@@ -675,7 +676,7 @@
 
   function renderAccountRows() {
     if (!state.accounts.length) {
-      ui.accountRows.innerHTML = '<tr><td colspan="3" class="px-3 py-4 text-sm text-slate-500">暂无可转换账号。</td></tr>';
+      ui.accountRows.innerHTML = `<tr><td colspan="3" class="px-3 py-4 text-sm text-slate-500">${html(messages.noConvertibleAccounts || 'No convertible account.')}</td></tr>`;
       return;
     }
     ui.accountRows.innerHTML = state.accounts.map(item => `
@@ -711,7 +712,7 @@
     ui.statCount.textContent = String(state.accounts.length);
     ui.statErrors.textContent = String(state.rejected.length);
     ui.formatSelect.value = state.format;
-    ui.outputSubtitle.textContent = `当前输出为 ${formatNames[state.format]} 导入 JSON。`;
+    ui.outputSubtitle.textContent = (messages.outputSubtitle || 'Current output: {format} import JSON.').replace('{format}', formatNames[state.format]);
     ui.tokenNotice.hidden = !['cpa', 'cockpit', 'codex', 'axonhub', 'codexmanager'].includes(state.format);
     renderAccountRows();
     renderIssues();
@@ -742,7 +743,7 @@
         rejected.push({
           sourceName: source.sourceName,
           path: source.path,
-          reason: error instanceof Error ? error.message : '无法转换',
+          reason: error instanceof Error ? error.message : messages.cannotConvert || 'Cannot convert',
         });
       }
     });
@@ -750,7 +751,7 @@
       rejected.push({
         sourceName: '',
         path: '$',
-        reason: '未找到包含 accessToken 和 user/email 的 session 对象',
+        reason: messages.noSessionObject || 'No session object found',
       });
     }
     state.accounts = accounts;
@@ -773,7 +774,7 @@
       state.rejected = [{
         sourceName: '',
         path: '$',
-        reason: error instanceof Error ? error.message : 'JSON 解析失败',
+        reason: error instanceof Error ? error.message : messages.jsonParseFailed || 'JSON parse failed',
       }];
       refreshOutput();
     }
@@ -786,7 +787,7 @@
       state.rejected = [{
         sourceName: 'file-input',
         path: '',
-        reason: '没有选择 JSON 文件',
+        reason: messages.noJsonFile || 'No JSON file selected',
       }];
       refreshOutput();
       return;
@@ -800,14 +801,14 @@
         const parsed = JSON.parse(text);
         const found = findSessionObjects(parsed, sourceName);
         if (!found.length) {
-          rejected.push({ sourceName, path: '$', reason: '未找到包含 accessToken 和 user/email 的 session 对象' });
+          rejected.push({ sourceName, path: '$', reason: messages.noSessionObject || 'No session object found' });
         }
         sources.push(...found);
       } catch (error) {
         rejected.push({
           sourceName,
           path: '$',
-          reason: error instanceof Error ? error.message : '无法读取文件',
+          reason: error instanceof Error ? error.message : messages.cannotReadFile || 'Cannot read file',
         });
       }
     }
@@ -824,7 +825,7 @@
         rejected.push({
           sourceName: source.sourceName,
           path: source.path,
-          reason: error instanceof Error ? error.message : '无法转换',
+          reason: error instanceof Error ? error.message : messages.cannotConvert || 'Cannot convert',
         });
       }
     });
@@ -859,7 +860,7 @@
     }
     try {
       await navigator.clipboard.writeText(state.outputText);
-      setStatus(ui.outputStatus, '已复制到剪贴板。', 'ok');
+      setStatus(ui.outputStatus, messages.copied || 'Copied.', 'ok');
     } catch {
       const fallback = document.createElement('textarea');
       fallback.value = state.outputText;
@@ -870,7 +871,7 @@
       fallback.select();
       document.execCommand('copy');
       fallback.remove();
-      setStatus(ui.outputStatus, '已复制到剪贴板。', 'ok');
+      setStatus(ui.outputStatus, messages.copied || 'Copied.', 'ok');
     }
   }
 

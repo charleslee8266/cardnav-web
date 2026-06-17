@@ -14,7 +14,7 @@ export async function renderIpLocationMap(options) {
   const longitude = Number(options.location?.longitude);
   const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude);
   const mapCenter = hasCoordinates ? [longitude, latitude] : defaultCenter;
-  const locationText = formatLocation(options.location);
+  const locationText = formatLocation(options.location, options.messages);
   const styleUrl = getOpenFreeMapStyleUrl();
   const state = mapByElement.get(options.element) || createMapState(maplibre, options.element, mapCenter, hasCoordinates ? 8 : 1.2, styleUrl);
 
@@ -48,7 +48,7 @@ export async function renderIpLocationMap(options) {
   if (options.captionElement) {
     options.captionElement.textContent = hasCoordinates
       ? `${locationText} · ${formatCoordinate(latitude)}, ${formatCoordinate(longitude)}`
-      : options.emptyCaption || '暂无位置坐标。';
+      : options.emptyCaption || 'No coordinates.';
   }
 }
 
@@ -114,14 +114,14 @@ function createPopupHtml(params) {
   return `<div class="ip-purity-map-popup">${rows.join('')}</div>`;
 }
 
-function formatLocation(location) {
+function formatLocation(location, messages = {}) {
   const parts = [
     location?.countryCode,
     location?.region,
     location?.city,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(' · ') : 'IP 位置';
+  return parts.length > 0 ? parts.join(' · ') : messages.locationFallback || 'IP location';
 }
 
 function formatCoordinate(value) {

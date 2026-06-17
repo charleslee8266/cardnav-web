@@ -3,6 +3,7 @@
 文件说明: 渲染单个官方订阅套餐的独立 SSR 比价 URL。
 */
 import OfficialPriceContent from '../../components/OfficialPriceContent.astro';
+import { localizeOfficialPriceGroups } from '../../localized-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildOfficialPriceGroups, resolveOfficialPriceSlug } from '../../official-price.js';
 import { buildSeoContext } from '../../seo.js';
@@ -10,26 +11,27 @@ import { publicSiteUrl } from '../../site.js';
 import { formatBeijingRefreshTime, loadOfficialPrices } from '../../store.js';
 
 const rawPrices = await loadOfficialPrices();
-const groups = buildOfficialPriceGroups(rawPrices);
+const groups = localizeOfficialPriceGroups(buildOfficialPriceGroups(rawPrices), Astro.locals.locale);
 const currentGroup = resolveOfficialPriceSlug(Astro.params.slug || '', groups);
 
-if (!currentGroup) return Astro.redirect('/official-price', 302);
-if (Astro.params.slug !== currentGroup.urlSlug) return Astro.redirect(currentGroup.pathname, 301);
+if (!currentGroup) return Astro.redirect(Astro.locals.localizePath('/official-price'), 302);
+if (Astro.params.slug !== currentGroup.urlSlug) return Astro.redirect(Astro.locals.localizePath(currentGroup.pathname), 301);
 
 const latestFetchedAt = rawPrices.reduce<string | null>((latest, price) => {
   if (!price.fetchedAt) return latest;
   if (!latest) return price.fetchedAt;
   return new Date(price.fetchedAt).getTime() > new Date(latest).getTime() ? price.fetchedAt : latest;
 }, null);
-const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : '未记录';
+const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : Astro.locals.messages.labels.notRecorded;
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: currentGroup.pathname,
-  title: `${currentGroup.displayName} 官方订阅价格对比`,
-  description: `查看 ${currentGroup.displayName} 官方订阅在不同国家和地区的本地价格、币种和人民币折算结果，按折算价格由低到高对比。`,
+  title: `${currentGroup.displayName} ${Astro.locals.messages.officialPrice.titleSuffix}`,
+  description: Astro.locals.messages.officialPrice.dynamicDescription.replace('{displayName}', currentGroup.displayName),
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
+  locale: Astro.locals.locale,
 });
 ---
 

@@ -1,8 +1,9 @@
 /**
- * 文件说明: 在构建期扫描 guide 下的 Markdown 文档，生成向导列表、详情内容和站内跳转链接。
+ * 文件说明: 在构建期扫描 content/guide 下的 Markdown 文档，生成向导列表、详情内容和站内跳转链接。
  */
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
+import { defaultLocale, isLocale, type Locale } from './i18n/config.js';
 
 const cardnavSiteOrigin = 'https://cardnav.xyz';
 const guideUrlClickEventName = 'guide-url-click';
@@ -44,7 +45,7 @@ const markdownRenderer = new MarkdownIt({
   typographer: true,
 });
 
-const rawGuideMarkdownModules = import.meta.glob('../guide/*.md', {
+const rawGuideMarkdownModules = import.meta.glob('../content/guide/*/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -58,6 +59,7 @@ type FrontmatterData = {
 };
 
 type ParsedGuideDocument = {
+  locale: Locale;
   fileName: string;
   sourcePath: string;
   stem: string;
@@ -70,8 +72,21 @@ type ParsedGuideDocument = {
   directNextLink: GuideLinkRef | null;
 };
 
+type GuideCollection = {
+  renderedGuideArticles: RenderedGuideArticle[];
+  guideArticles: GuideArticle[];
+  defaultGuideArticle: RenderedGuideArticle | null;
+  guideNavItems: GuideNavItem[];
+};
+
 function fileNameFromModulePath(modulePath: string) {
   return modulePath.split('/').pop() || modulePath;
+}
+
+function localeFromModulePath(modulePath: string): Locale | null {
+  const match = modulePath.match(/\/content\/guide\/([^/]+)\//u);
+  const locale = match?.[1];
+  return locale && isLocale(locale) ? locale : null;
 }
 
 function stemFromFileName(fileName: string) {
@@ -243,21 +258,33 @@ function rewriteMarkdownLinks(markdown: string, slugByFileName: Map<string, stri
     });
 }
 
+function isExternalGuideHref(href: string) {
+  try {
+    const url = new URL(href, cardnavSiteOrigin);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== cardnavSiteOrigin;
+  } catch {
+    return false;
+  }
+}
+
+function externalGuideLinkAttributes(href: string) {
+  return isExternalGuideHref(href) ? ' target="_blank" rel="noopener noreferrer"' : '';
+}
+
 function rewriteRenderedHtmlLinks(html: string) {
   let processed = html.replace(/href="https:\/\/cardnav\.xyz([^"]*)"/gu, (_match, pathAndSuffix: string) => {
     const normalized = pathAndSuffix || '/';
     return `href="${normalized}"`;
   });
 
-  // Open links that do not target /guide or # in a new tab
   processed = processed.replace(/<a\s+([^>]*?)href="([^"]+)"([^>]*?)>/gu, (match, prefix, href, suffix) => {
-    if (href.startsWith('/guide') || href.startsWith('#')) {
+    if (!isExternalGuideHref(href)) {
       return match;
     }
     if (prefix.includes('target=') || suffix.includes('target=')) {
       return match;
     }
-    return `<a ${prefix}href="${href}"${suffix} target="_blank" rel="noopener noreferrer">`;
+    return `<a ${prefix}href="${href}"${suffix}${externalGuideLinkAttributes(href)}>`;
   });
 
   return processed;
@@ -338,8 +365,155 @@ function parseCommentAttributes(line: string) {
 type InlineMarkdownCard = {
   title: string;
   badge?: string;
+  icon?: string;
+  imageAspect?: string;
+  image?: string;
+  imageAlt?: string;
   markdown: string;
 };
+
+const guideCardIconPaths: Record<string, string> = {
+  api: '<path d="M7 8 3 12l4 4"/><path d="m17 8 4 4-4 4"/><path d="m14 4-4 16"/>',
+  bank: '<path d="m3 10 9-6 9 6"/><path d="M5 10v8"/><path d="M9 10v8"/><path d="M15 10v8"/><path d="M19 10v8"/><path d="M4 18h16"/>',
+  card: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',
+  cart: '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L20 8H6"/>',
+  cash: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v.01"/><path d="M18 15v.01"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  gift: '<path d="M20 12v8H4v-8"/><path d="M2 8h20v4H2z"/><path d="M12 8v12"/><path d="M12 8H8.5A2.5 2.5 0 1 1 11 5.5V8Z"/><path d="M12 8h3.5A2.5 2.5 0 1 0 13 5.5V8Z"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a13 13 0 0 1 0 18"/><path d="M12 3a13 13 0 0 0 0 18"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 8-8"/><path d="m15 8 2 2"/><path d="m17 6 2 2"/>',
+  model: '<path d="M12 3 4 7l8 4 8-4-8-4Z"/><path d="m4 12 8 4 8-4"/><path d="m4 17 8 4 8-4"/>',
+  phone: '<path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M11 18h2"/>',
+  support: '<path d="M4 12a8 8 0 0 1 16 0"/><path d="M4 12v4a2 2 0 0 0 2 2h2v-6H4Z"/><path d="M20 12v4a2 2 0 0 1-2 2h-2v-6h4Z"/><path d="M13 20h2a5 5 0 0 0 5-5"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/>',
+  route: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3a3 3 0 0 0 0-6h2a3 3 0 0 0 3-3V8"/>',
+  toolbox: '<path d="M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1"/><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 12h18"/><path d="M12 10v4"/>',
+  'shield-alert': '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8v5"/><path d="M12 17h.01"/>',
+  vpn: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/>',
+  vps: '<rect x="4" y="4" width="16" height="6" rx="2"/><rect x="4" y="14" width="16" height="6" rx="2"/><path d="M8 7h.01"/><path d="M8 17h.01"/>',
+};
+
+function renderGuideCardIcon(icon: string | undefined) {
+  if (!icon) {
+    return '';
+  }
+  const iconPath = guideCardIconPaths[icon];
+  if (!iconPath) {
+    return '';
+  }
+  return `<span class="guide-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg></span>`;
+}
+
+function renderGuideCardAction(label: string | undefined) {
+  if (!label) {
+    return '';
+  }
+  return `<span class="guide-card-action"><span>${escapeHtml(label)}</span><span aria-hidden="true">→</span></span>`;
+}
+
+function resolveGuideCardHref(href: string | undefined, slugByFileName: Map<string, string>) {
+  if (!href) {
+    return null;
+  }
+  if (href.startsWith('./') && href.endsWith('.md')) {
+    const fileName = href.replace('./', '');
+    const slug = slugByFileName.get(fileName);
+    return slug ? `/guide/${slug}` : href;
+  }
+  return href;
+}
+
+function normalizeGuideImageSrc(src: string) {
+  if (src.startsWith('../../../public/')) {
+    return `/${src.replace('../../../public/', '')}`;
+  }
+  if (src.startsWith('../../public/')) {
+    return `/${src.replace('../../public/', '')}`;
+  }
+  if (src.startsWith('../public/')) {
+    return `/${src.replace('../public/', '')}`;
+  }
+  if (src.startsWith('/')) {
+    return src;
+  }
+  return src;
+}
+
+function extractLeadingMarkdownImage(markdown: string) {
+  const lines = markdown.split(/\r?\n/u);
+  let imageLineIndex = -1;
+  for (let index = 0; index < lines.length; index += 1) {
+    if (lines[index].trim() === '') {
+      continue;
+    }
+    imageLineIndex = index;
+    break;
+  }
+  if (imageLineIndex === -1) {
+    return {
+      markdown,
+      image: undefined,
+      imageAlt: undefined,
+    };
+  }
+  const imageMatch = lines[imageLineIndex].trim().match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/u);
+  if (!imageMatch) {
+    return {
+      markdown,
+      image: undefined,
+      imageAlt: undefined,
+    };
+  }
+  lines.splice(imageLineIndex, 1);
+  return {
+    markdown: lines.join('\n').trim(),
+    image: normalizeGuideImageSrc(imageMatch[2]),
+    imageAlt: imageMatch[1],
+  };
+}
+
+function extractTrailingCardActionLink(markdown: string) {
+  const lines = markdown.split(/\r?\n/u);
+  let linkLineIndex = -1;
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    if (lines[index].trim() === '') {
+      continue;
+    }
+    linkLineIndex = index;
+    break;
+  }
+  if (linkLineIndex === -1) {
+    return {
+      markdown,
+      href: undefined,
+    };
+  }
+  const linkMatch = lines[linkLineIndex].trim().match(/^\[([^\]]+)\]\(([^)]+)\)$/u);
+  if (!linkMatch) {
+    return {
+      markdown,
+      href: undefined,
+    };
+  }
+  lines.splice(linkLineIndex, 1);
+  return {
+    markdown: lines.join('\n').trim(),
+    label: linkMatch[1],
+    href: linkMatch[2],
+  };
+}
+
+function normalizeGuideImageAspect(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.trim().replace(/\s+/gu, '');
+  const aspectMatch = normalized.match(/^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/u);
+  if (!aspectMatch) {
+    return null;
+  }
+  return `${aspectMatch[1]} / ${aspectMatch[2]}`;
+}
 
 function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<string, string>, sourcePage: string) {
   if (cards.length === 0) {
@@ -347,20 +521,39 @@ function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<s
   }
 
   const cardsHtml = cards.map(card => {
+    const extractedImage = extractLeadingMarkdownImage(card.markdown);
+    const extractedActionLink = extractTrailingCardActionLink(extractedImage.markdown);
+    const href = resolveGuideCardHref(extractedActionLink.href, slugByFileName);
+    const tagName = href ? 'a' : 'article';
+    const hrefAttr = href ? ` href="${escapeHtml(href)}"` : '';
+    const externalAttrs = href ? externalGuideLinkAttributes(href) : '';
+    const trackingAttrs = href ? ` ${buildGuideLinkTrackingAttributes(href, sourcePage)}` : '';
+    const cardClassName = href ? 'guide-card guide-card-clickable' : 'guide-card';
+    const iconHtml = renderGuideCardIcon(card.icon);
     const badgeHtml = card.badge
       ? `<span class="guide-badge">${escapeHtml(card.badge)}</span>`
       : '<span></span>';
+    const cardImage = card.image || extractedImage.image;
+    const cardImageAlt = card.imageAlt || extractedImage.imageAlt || card.title;
+    const imageAspect = normalizeGuideImageAspect(card.imageAspect);
+    const imageFrameStyle = imageAspect ? ` style="--guide-card-image-aspect: ${escapeHtml(imageAspect)}"` : '';
+    const imageHtml = cardImage
+      ? `<span class="guide-card-image-frame"${imageFrameStyle}><img src="${escapeHtml(cardImage)}" alt="${escapeHtml(cardImageAlt)}" loading="lazy" class="guide-card-image" /></span>`
+      : '';
 
     const bodyHtml = addGuideLinkTrackingToRenderedHtml(
-      renderMarkdownFragment(card.markdown, slugByFileName),
+      renderMarkdownFragment(extractedActionLink.markdown, slugByFileName),
       sourcePage,
     );
+    const actionHtml = renderGuideCardAction(extractedActionLink.label);
     return [
-      '<article class="guide-card">',
-      `<div class="guide-card-top">${badgeHtml}</div>`,
+      `<${tagName} class="${cardClassName}"${hrefAttr}${externalAttrs}${trackingAttrs}>`,
+      `<div class="guide-card-top">${badgeHtml}${iconHtml}</div>`,
+      imageHtml,
       `<h3 class="guide-card-title">${escapeHtml(card.title)}</h3>`,
       `<div class="guide-article">${bodyHtml}</div>`,
-      '</article>',
+      actionHtml,
+      `</${tagName}>`,
     ].join('');
   }).join('');
 
@@ -371,8 +564,8 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
   const lines = markdown.split(/\r?\n/u);
   const htmlParts: string[] = [];
   const introLines: string[] = [];
-  const sections: Array<{ title: string; badge?: string; isCard: boolean; bodyLines: string[] }> = [];
-  let currentSection: { title: string; badge?: string; isCard: boolean; bodyLines: string[] } | null = null;
+  const sections: Array<{ title: string; badge?: string; icon?: string; imageAspect?: string; image?: string; imageAlt?: string; isCard: boolean; bodyLines: string[] }> = [];
+  let currentSection: { title: string; badge?: string; icon?: string; imageAspect?: string; image?: string; imageAlt?: string; isCard: boolean; bodyLines: string[] } | null = null;
 
   const pushCurrentSection = () => {
     if (!currentSection) {
@@ -391,6 +584,10 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
       if (attrs) {
         currentSection.isCard = true;
         currentSection.badge = currentSection.badge || attrs.get('badge') || undefined;
+        currentSection.icon = currentSection.icon || attrs.get('icon') || undefined;
+        currentSection.imageAspect = currentSection.imageAspect || attrs.get('imageAspect') || undefined;
+        currentSection.image = currentSection.image || attrs.get('image') || undefined;
+        currentSection.imageAlt = currentSection.imageAlt || attrs.get('imageAlt') || undefined;
         currentSection.bodyLines.splice(commentLineIndex, 1);
       }
     }
@@ -409,6 +606,10 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
       currentSection = {
         title,
         badge: attrs?.get('badge') || undefined,
+        icon: attrs?.get('icon') || undefined,
+        imageAspect: attrs?.get('imageAspect') || undefined,
+        image: attrs?.get('image') || undefined,
+        imageAlt: attrs?.get('imageAlt') || undefined,
         isCard: commentMatch !== null,
         bodyLines: [],
       };
@@ -445,6 +646,10 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
       pendingCards.push({
         title: section.title,
         badge: section.badge,
+        icon: section.icon,
+        imageAspect: section.imageAspect,
+        image: section.image,
+        imageAlt: section.imageAlt,
         markdown: section.bodyLines.join('\n').trim(),
       });
       continue;
@@ -463,18 +668,26 @@ function renderDocumentHtmlWithInlineCards(markdown: string, slugByFileName: Map
 }
 
 const rawGuideDocuments: ParsedGuideDocument[] = Object.entries(rawGuideMarkdownModules)
-  .map(([modulePath, rawMarkdown]) => {
-    const fileName = fileNameFromModulePath(modulePath);
+  .flatMap(([modulePath, rawMarkdown]) => {
+    const locale = localeFromModulePath(modulePath);
+    if (!locale) {
+      return [];
+    }
+    return [[locale, modulePath, rawMarkdown] as const];
+  })
+  .map(([locale, sourcePath, sourceMarkdown]) => {
+    const fileName = fileNameFromModulePath(sourcePath);
     const stem = stemFromFileName(fileName);
     const slug = slugFromStem(stem);
     const fallbackTitle = slugFromStem(stem).replace(/-/gu, ' ');
-    const { content, data } = matter(rawMarkdown);
+    const { content, data } = matter(sourceMarkdown);
     const frontmatter = (data ?? {}) as FrontmatterData;
     const frontmatterTitle = asNonEmptyString(frontmatter.title);
     const frontmatterDescription = asNonEmptyString(frontmatter.description);
     return {
+      locale,
       fileName,
-      sourcePath: modulePath,
+      sourcePath,
       stem,
       slug,
       order: orderFromStem(stem),
@@ -492,81 +705,133 @@ const rawGuideDocuments: ParsedGuideDocument[] = Object.entries(rawGuideMarkdown
     return left.stem.localeCompare(right.stem, 'zh-Hans-CN');
   });
 
-const slugByFileName = new Map(rawGuideDocuments.map(item => [item.fileName, item.slug]));
-const documentBySlug = new Map(rawGuideDocuments.map(item => [item.slug, item]));
-const directParentBySlug = new Map(rawGuideDocuments.map(item => [item.slug, item.directParentLink]));
+function buildGuideCollection(localeDocuments: ParsedGuideDocument[]): GuideCollection {
+  const slugByFileName = new Map(localeDocuments.map(item => [item.fileName, item.slug]));
+  const documentBySlug = new Map(localeDocuments.map(item => [item.slug, item]));
+  const directParentBySlug = new Map(localeDocuments.map(item => [item.slug, item.directParentLink]));
 
-export const renderedGuideArticles: RenderedGuideArticle[] = rawGuideDocuments.map(item => {
-  const normalizedMarkdown = rewriteMarkdownLinks(item.markdown, slugByFileName);
+  const renderedGuideArticles: RenderedGuideArticle[] = localeDocuments.map(item => {
+    const normalizedMarkdown = rewriteMarkdownLinks(item.markdown, slugByFileName);
+
+    return {
+      slug: item.slug,
+      title: item.title,
+      description: item.description,
+      sourcePath: item.sourcePath,
+      order: item.order,
+      parentLink: resolveParentLink(item.slug, directParentBySlug, documentBySlug),
+      nextLink: (() => {
+        const nextSlug = item.directNextLink?.slug;
+        if (!nextSlug) {
+          return null;
+        }
+        const nextDocument = documentBySlug.get(nextSlug);
+        return {
+          slug: nextSlug,
+          title: item.directNextLink?.title || nextDocument?.title,
+        };
+      })(),
+      markdown: normalizedMarkdown,
+      html: renderDocumentHtmlWithInlineCards(
+        item.markdown,
+        slugByFileName,
+        normalizeGuideSourcePage(item.slug),
+      ),
+    };
+  });
+
+  const guideArticles: GuideArticle[] = renderedGuideArticles.map(({
+    slug,
+    title,
+    description,
+    sourcePath,
+    order,
+    parentLink,
+    nextLink,
+  }) => ({
+    slug,
+    title,
+    description,
+    sourcePath,
+    order,
+    parentLink,
+    nextLink,
+  }));
+
+  const articleBySlug = new Map(guideArticles.map(article => [article.slug, article]));
+  const childrenByParentSlug = new Map<string | null, ParsedGuideDocument[]>();
+
+  for (const item of localeDocuments) {
+    const parentSlug = item.directParentLink?.slug ?? null;
+    const existingChildren = childrenByParentSlug.get(parentSlug) ?? [];
+    existingChildren.push(item);
+    existingChildren.sort((left, right) => {
+      if (left.order !== right.order) {
+        return left.order - right.order;
+      }
+      return left.stem.localeCompare(right.stem, 'zh-Hans-CN');
+    });
+    childrenByParentSlug.set(parentSlug, existingChildren);
+  }
+
+  const guideNavItems: GuideNavItem[] = collectDescendants(null, childrenByParentSlug, 0).map(item => ({
+    article: articleBySlug.get(item.article.slug) ?? item.article,
+    depth: item.depth,
+  }));
 
   return {
-    slug: item.slug,
-    title: item.title,
-    description: item.description,
-    sourcePath: item.sourcePath,
-    order: item.order,
-    parentLink: resolveParentLink(item.slug, directParentBySlug, documentBySlug),
-    nextLink: (() => {
-      const nextSlug = item.directNextLink?.slug;
-      if (!nextSlug) {
-        return null;
-      }
-      const nextDocument = documentBySlug.get(nextSlug);
-      return {
-        slug: nextSlug,
-        title: item.directNextLink?.title || nextDocument?.title,
-      };
-    })(),
-    markdown: normalizedMarkdown,
-    html: renderDocumentHtmlWithInlineCards(
-      item.markdown,
-      slugByFileName,
-      normalizeGuideSourcePage(item.slug),
-    ),
+    renderedGuideArticles,
+    guideArticles,
+    defaultGuideArticle: renderedGuideArticles[0] ?? null,
+    guideNavItems,
   };
-});
+}
 
-export const guideArticles: GuideArticle[] = renderedGuideArticles.map(({
-  slug,
-  title,
-  description,
-  sourcePath,
-  order,
-  parentLink,
-  nextLink,
-}) => ({
-  slug,
-  title,
-  description,
-  sourcePath,
-  order,
-  parentLink,
-  nextLink,
-}));
-
-export const defaultGuideArticle = renderedGuideArticles[0] ?? null;
-
-const articleBySlug = new Map(guideArticles.map(article => [article.slug, article]));
-const childrenByParentSlug = new Map<string | null, ParsedGuideDocument[]>();
+const guideDocumentsByLocale = new Map<Locale, ParsedGuideDocument[]>();
 
 for (const item of rawGuideDocuments) {
-  const parentSlug = item.directParentLink?.slug ?? null;
-  const existingChildren = childrenByParentSlug.get(parentSlug) ?? [];
-  existingChildren.push(item);
-  existingChildren.sort((left, right) => {
+  const existingDocuments = guideDocumentsByLocale.get(item.locale) ?? [];
+  existingDocuments.push(item);
+  guideDocumentsByLocale.set(item.locale, existingDocuments);
+}
+
+function mergeGuideDocumentsWithDefault(localeDocuments: ParsedGuideDocument[]) {
+  const defaultDocuments = guideDocumentsByLocale.get(defaultLocale) ?? [];
+  const localeDocumentBySlug = new Map(localeDocuments.map(item => [item.slug, item]));
+  const defaultSlugSet = new Set(defaultDocuments.map(item => item.slug));
+  return [
+    ...defaultDocuments.map(item => localeDocumentBySlug.get(item.slug) ?? item),
+    ...localeDocuments.filter(item => !defaultSlugSet.has(item.slug)),
+  ].sort((left, right) => {
     if (left.order !== right.order) {
       return left.order - right.order;
     }
     return left.stem.localeCompare(right.stem, 'zh-Hans-CN');
   });
-  childrenByParentSlug.set(parentSlug, existingChildren);
 }
 
-export const guideNavItems: GuideNavItem[] = collectDescendants(null, childrenByParentSlug, 0).map(item => ({
-  article: articleBySlug.get(item.article.slug) ?? item.article,
-  depth: item.depth,
-}));
+const defaultGuideCollection = buildGuideCollection(guideDocumentsByLocale.get(defaultLocale) ?? []);
+const guideCollectionsByLocale = new Map<Locale, GuideCollection>([[defaultLocale, defaultGuideCollection]]);
 
-export function findGuideArticle(slug: string) {
-  return renderedGuideArticles.find(item => item.slug === slug) ?? null;
+for (const [locale, localeDocuments] of guideDocumentsByLocale) {
+  if (locale === defaultLocale) {
+    continue;
+  }
+  guideCollectionsByLocale.set(locale, buildGuideCollection(mergeGuideDocumentsWithDefault(localeDocuments)));
+}
+
+export const renderedGuideArticles = defaultGuideCollection.renderedGuideArticles;
+export const guideArticles = defaultGuideCollection.guideArticles;
+export const defaultGuideArticle = defaultGuideCollection.defaultGuideArticle;
+export const guideNavItems = defaultGuideCollection.guideNavItems;
+
+export function getGuideCollection(locale: Locale) {
+  return guideCollectionsByLocale.get(locale) ?? defaultGuideCollection;
+}
+
+export function findGuideArticle(slug: string, locale: Locale = defaultLocale) {
+  const localeCollection = getGuideCollection(locale);
+  return localeCollection.renderedGuideArticles.find(item => item.slug === slug)
+    ?? defaultGuideCollection.renderedGuideArticles.find(item => item.slug === slug)
+    ?? null;
 }

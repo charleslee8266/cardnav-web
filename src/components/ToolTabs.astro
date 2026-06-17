@@ -16,16 +16,18 @@ type Props = {
 };
 
 const { activeTab } = Astro.props;
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
 const tabs: ToolTab[] = [
   {
     key: 'session-converter',
-    label: 'Session 转换',
+    label: t.tools.sessionConverter.tabLabel,
     href: '/tools/session-converter',
-    badge: '本地转换',
+    badge: t.labels.localConvert,
   },
   {
     key: 'ip-purity',
-    label: 'IP 纯净度',
+    label: t.nav.ipPurity,
     href: '/tools/ip-purity',
     badge: 'IPv4',
   },
@@ -35,13 +37,13 @@ const tabs: ToolTab[] = [
 <section class="card bg-base-100 border border-base-300 shadow-sm">
   <div class="card-body p-4">
     <div class="tool-tablist-wrap">
-      <div role="tablist" class="tool-tablist tabs tabs-box" aria-label="工具集导航">
+      <div role="tablist" class="tool-tablist tabs tabs-box" aria-label={t.nav.tools}>
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
           return (
             <a
               role="tab"
-              href={tab.href}
+              href={linkTo(tab.href)}
               aria-current={isActive ? 'page' : undefined}
               class:list={[
                 'tool-tab tab',

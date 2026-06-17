@@ -6,13 +6,16 @@ import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 
+const linkTo = Astro.locals.localizePath;
+const t = Astro.locals.messages;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/tools/ip-purity',
-  title: 'IP 纯净度检测',
-  description: '检测目标 IP 的代理、VPN、Tor、机房和滥用风险信号，帮助你在注册、登录和支付前快速筛掉高风险出口。',
+  title: t.ipPurity.seoTitle,
+  description: t.ipPurity.seoDescription,
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
+  locale: Astro.locals.locale,
 });
 ---
 
@@ -20,10 +23,10 @@ const seo = buildSeoContext({
   <section class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body p-5">
       <div class="page-hero-wrap">
-        <h1 class="page-hero-title">IP 纯净度检测</h1>
-        <p class="page-hero-copy">页面会汇总代理、VPN、Tor、机房和滥用信号；你可以直接输入目标 IP，也可以留空后检测当前网络出口。</p>
+        <h1 class="page-hero-title">{t.ipPurity.title}</h1>
+        <p class="page-hero-copy">{t.ipPurity.description}</p>
         <div class="mt-4">
-          <a href="/guide/tool-ip-check" data-umami-event="guide-url-click" data-umami-event-source-page="/tools/ip-purity" data-umami-event-target-page="/guide/tool-ip-check" data-umami-event-url="/guide/tool-ip-check" class="link link-primary text-sm font-semibold">什么是 IP 纯净度？查看向导说明</a>
+          <a href={linkTo('/guide/tool-ip-check')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/tools/ip-purity')} data-umami-event-target-page={linkTo('/guide/tool-ip-check')} data-umami-event-url={linkTo('/guide/tool-ip-check')} class="link link-primary text-sm font-semibold">{t.ipPurity.guideLink}</a>
         </div>
       </div>
     </div>
@@ -34,43 +37,43 @@ const seo = buildSeoContext({
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">
         <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h3 class="text-base font-bold text-base-content">检测输入</h3>
+            <h3 class="text-base font-bold text-base-content">{t.ipPurity.inputTitle}</h3>
           </div>
         </div>
       </div>
       <div class="card-body p-5">
         <form id="ipPurityForm" class="flex flex-col gap-3" novalidate>
-          <label for="ipPurityInput" class="text-sm font-semibold text-base-content">IP 地址</label>
+          <label for="ipPurityInput" class="text-sm font-semibold text-base-content">{t.ipPurity.ipAddress}</label>
           <div class="flex flex-col gap-2 md:flex-row">
-            <input id="ipPurityInput" class="input input-bordered w-full font-mono" type="text" inputmode="text" autocomplete="off" placeholder="例如 8.8.8.8；留空则检测当前 IP" />
-            <button id="ipPuritySubmit" class="btn btn-primary md:min-w-28" type="submit">开始检测</button>
+            <input id="ipPurityInput" class="input input-bordered w-full font-mono" type="text" inputmode="text" autocomplete="off" placeholder={t.ipPurity.inputPlaceholder} />
+            <button id="ipPuritySubmit" class="btn btn-primary md:min-w-28" type="submit">{t.ipPurity.startCheck}</button>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button id="ipPurityDetectCurrent" class="btn btn-sm btn-outline btn-primary" type="button">检测当前 IP</button>
-            <button id="ipPurityClear" class="btn btn-sm btn-outline" type="button">清空</button>
+            <button id="ipPurityDetectCurrent" class="btn btn-sm btn-outline btn-primary" type="button">{t.ipPurity.detectCurrent}</button>
+            <button id="ipPurityClear" class="btn btn-sm btn-outline" type="button">{t.ipPurity.clear}</button>
           </div>
-          <p id="ipPurityStatus" class="tool-status-line text-sm text-base-content/75">页面加载后会自动检测当前 IP；手动输入后可切换为指定目标继续检测。</p>
+          <p id="ipPurityStatus" class="tool-status-line text-sm text-base-content/75">{t.ipPurity.initialStatus}</p>
         </form>
 
         <div id="ipPurityError" class="alert alert-error shadow-sm text-sm hidden"></div>
 
         <div class="grid gap-3 md:grid-cols-3">
           <article class="card bg-base-200 border border-base-300 p-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/55">纯净度</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/55">{t.ipPurity.purity}</p>
             <div class="mt-2 flex items-end gap-2">
               <strong id="ipPurityScore" class="text-4xl font-bold leading-none text-base-content">--</strong>
               <span class="pb-1 text-base-content/60">/ 100</span>
             </div>
-            <span id="ipPurityBadge" class="badge badge-ghost mt-3 w-fit">等待检测</span>
+            <span id="ipPurityBadge" class="badge badge-ghost mt-3 w-fit">{t.ipPurity.waiting}</span>
           </article>
           <article class="card bg-base-200 border border-base-300 p-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/55">检测 IP</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/55">{t.ipPurity.checkedIp}</p>
             <p id="ipPurityIp" class="mt-3 break-all font-mono text-lg font-semibold text-base-content">--</p>
             <p id="ipPurityCheckedAt" class="mt-2 text-xs text-base-content/60">--</p>
           </article>
           <article class="card bg-base-200 border border-base-300 p-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/55">综合结论</p>
-            <p id="ipPuritySummary" class="mt-3 text-sm leading-6 text-base-content/80">还没有检测结果。</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/55">{t.ipPurity.summary}</p>
+            <p id="ipPuritySummary" class="mt-3 text-sm leading-6 text-base-content/80">{t.ipPurity.emptySummary}</p>
           </article>
         </div>
       </div>
@@ -78,21 +81,21 @@ const seo = buildSeoContext({
 
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">
-        <h3 class="text-base font-bold text-base-content">基础网络信息</h3>
+        <h3 class="text-base font-bold text-base-content">{t.ipPurity.networkInfo}</h3>
       </div>
       <div class="card-body p-5">
         <div class="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           <dl class="ip-purity-facts-grid">
             <div class="ip-purity-fact-card">
-              <dt>国家 / 地区</dt>
+              <dt>{t.ipPurity.countryRegion}</dt>
               <dd id="ipPurityCountry">--</dd>
             </div>
             <div class="ip-purity-fact-card">
-              <dt>州 / 省</dt>
+              <dt>{t.ipPurity.region}</dt>
               <dd id="ipPurityRegion">--</dd>
             </div>
             <div class="ip-purity-fact-card">
-              <dt>城市</dt>
+              <dt>{t.ipPurity.city}</dt>
               <dd id="ipPurityCity">--</dd>
             </div>
             <div class="ip-purity-fact-card">
@@ -100,7 +103,7 @@ const seo = buildSeoContext({
               <dd id="ipPurityIsp">--</dd>
             </div>
             <div class="ip-purity-fact-card">
-              <dt>组织</dt>
+              <dt>{t.ipPurity.organization}</dt>
               <dd id="ipPurityOrg">--</dd>
             </div>
             <div class="ip-purity-fact-card">
@@ -108,11 +111,11 @@ const seo = buildSeoContext({
               <dd id="ipPurityAsn">--</dd>
             </div>
             <div class="ip-purity-fact-card">
-              <dt>网络类型</dt>
+              <dt>{t.ipPurity.networkType}</dt>
               <dd id="ipPurityNetworkType">--</dd>
             </div>
             <div class="ip-purity-fact-card">
-              <dt>坐标</dt>
+              <dt>{t.ipPurity.coordinates}</dt>
               <dd id="ipPurityCoordinates">--</dd>
             </div>
           </dl>
@@ -120,11 +123,11 @@ const seo = buildSeoContext({
           <section class="ip-purity-map-card" aria-labelledby="ipPurityMapTitle">
             <div>
               <div>
-                <h4 id="ipPurityMapTitle" class="text-sm font-bold text-base-content">位置地图</h4>
-                <p id="ipPurityMapCaption" class="mt-1 text-xs leading-5 text-base-content/60">检测完成后显示当前 IP 的大致归属位置。</p>
+                <h4 id="ipPurityMapTitle" class="text-sm font-bold text-base-content">{t.ipPurity.mapTitle}</h4>
+                <p id="ipPurityMapCaption" class="mt-1 text-xs leading-5 text-base-content/60">{t.ipPurity.mapCaption}</p>
               </div>
             </div>
-            <div id="ipPurityMap" class="ip-purity-map" role="img" aria-label="IP 归属位置地图"></div>
+            <div id="ipPurityMap" class="ip-purity-map" role="img" aria-label={t.ipPurity.mapAria}></div>
           </section>
         </div>
       </div>
@@ -134,7 +137,7 @@ const seo = buildSeoContext({
   <section class="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">
-        <h3 class="text-base font-bold text-base-content">风险信号</h3>
+        <h3 class="text-base font-bold text-base-content">{t.ipPurity.signals}</h3>
       </div>
       <div class="card-body p-5">
         <div id="ipPuritySignals" class="ip-purity-signals"></div>
@@ -143,7 +146,7 @@ const seo = buildSeoContext({
 
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">
-        <h3 class="text-base font-bold text-base-content">多方检测结果</h3>
+        <h3 class="text-base font-bold text-base-content">{t.ipPurity.sources}</h3>
       </div>
       <div class="card-body p-5">
         <div id="ipPuritySources" class="ip-purity-sources"></div>
@@ -154,8 +157,8 @@ const seo = buildSeoContext({
   <section class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body p-5">
       <div class="page-hero-wrap">
-        <h3 class="text-lg font-bold text-base-content">怎么理解这个结果</h3>
-        <p class="page-hero-copy">纯净度高不代表绝对安全，只代表当前公开数据里没有看到特别强的异常信号。注册、登录、绑卡和支付等高风控操作，仍建议结合地区一致性、账号历史和实际业务日志一起判断。</p>
+        <h3 class="text-lg font-bold text-base-content">{t.ipPurity.explainTitle}</h3>
+        <p class="page-hero-copy">{t.ipPurity.explainDescription}</p>
       </div>
     </div>
   </section>
@@ -163,26 +166,27 @@ const seo = buildSeoContext({
   <section class="grid gap-4 xl:grid-cols-3">
     <article class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body p-5">
-        <h3 class="text-base font-bold text-base-content">这页重点看什么</h3>
-        <p class="mt-2 text-sm leading-6 text-base-content/78">先看国家、组织、ASN 和网络类型是否符合你的预期，再看代理、VPN、Tor、机房和滥用记录这些强风险信号。</p>
+        <h3 class="text-base font-bold text-base-content">{t.ipPurity.focusTitle}</h3>
+        <p class="mt-2 text-sm leading-6 text-base-content/78">{t.ipPurity.focusDescription}</p>
       </div>
     </article>
     <article class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body p-5">
-        <h3 class="text-base font-bold text-base-content">什么情况要谨慎</h3>
-        <p class="mt-2 text-sm leading-6 text-base-content/78">如果显示数据中心、Tor、明显代理痕迹，或 Abuse/扫描器信号偏强，就不适合拿去做账号注册、支付或长期登录。</p>
+        <h3 class="text-base font-bold text-base-content">{t.ipPurity.cautionTitle}</h3>
+        <p class="mt-2 text-sm leading-6 text-base-content/78">{t.ipPurity.cautionDescription}</p>
       </div>
     </article>
     <article class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body p-5">
-        <h3 class="text-base font-bold text-base-content">结果不是最终判决</h3>
-        <p class="mt-2 text-sm leading-6 text-base-content/78">公开情报更适合快速初筛。真正影响风控的，往往还包括账号历史、地区一致性、浏览器环境和行为轨迹。</p>
+        <h3 class="text-base font-bold text-base-content">{t.ipPurity.notFinalTitle}</h3>
+        <p class="mt-2 text-sm leading-6 text-base-content/78">{t.ipPurity.notFinalDescription}</p>
       </div>
     </article>
   </section>
 
 </PublicPage>
 
+<script is:inline type="application/json" id="ip-purity-runtime-dict" set:html={JSON.stringify(t.ipPurity.runtime)}></script>
 <script>
   import '../../scripts/ip-purity.js';
 </script>

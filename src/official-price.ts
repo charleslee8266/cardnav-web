@@ -3,7 +3,7 @@
  */
 import type { PublicOfficialPriceRow } from './store.js';
 
-export type OfficialPriceGroup = {
+export type OfficialPriceGroup<Row extends PublicOfficialPriceRow = PublicOfficialPriceRow> = {
   key: string;
   appSlug: string;
   planSlug: string;
@@ -14,7 +14,7 @@ export type OfficialPriceGroup = {
   displayName: string;
   isDefault: boolean;
   displayOrder: number;
-  prices: PublicOfficialPriceRow[];
+  prices: Row[];
 };
 
 export function officialPricePathname(urlSlug: string) {
@@ -29,7 +29,7 @@ function isOfficialPriceGroupRow(price: PublicOfficialPriceRow) {
     && Boolean(price.displayName.trim());
 }
 
-export function resolveOfficialPriceSlug(slug: string, groups: OfficialPriceGroup[]) {
+export function resolveOfficialPriceSlug<Group extends OfficialPriceGroup>(slug: string, groups: Group[]) {
   const normalized = slug.trim().toLowerCase();
   return groups.find(group => group.urlSlug === normalized) || null;
 }
@@ -77,6 +77,6 @@ export function buildOfficialPriceGroups(rawPrices: PublicOfficialPriceRow[]): O
   );
 }
 
-export function getDefaultOfficialPriceGroup(groups: OfficialPriceGroup[]) {
+export function getDefaultOfficialPriceGroup<Group extends OfficialPriceGroup>(groups: Group[]) {
   return groups.find(group => group.isDefault) || groups[0] || null;
 }

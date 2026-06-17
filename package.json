@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0",
-    "build": "astro build",
+    "build": "astro build && node scripts/copy-content.mjs",
     "start": "node dist/server/entry.mjs",
     "typecheck": "astro check && tsc --noEmit"
   },
@@ -20,7 +20,7 @@
     "maplibre-gl": "^5.24.0",
     "markdown-it": "^14.2.0",
     "pg": "^8.21.0",
-    "vite": "8.0.16"
+    "vite": "7.3.2"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",
@@ -35,7 +35,7 @@
   "overrides": {
     "astro": {
       "esbuild": "0.28.1",
-      "vite": "8.0.16"
+      "vite": "7.3.2"
     },
     "volar-service-yaml": {
       "yaml-language-server": "1.23.0"

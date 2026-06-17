@@ -2,8 +2,13 @@
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
 import type { GuideArticle } from './guide.js';
+import { defaultLocale, localeLabels, supportedLocales, type Locale } from './i18n/config.js';
+import { getMessages } from './i18n/messages.js';
+import { getLocalePathInfo, localizePath } from './i18n/paths.js';
+import { localizeTaskLabel } from './localized-display.js';
 import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
+import { loadPageContent } from './page-content.js';
 
 export type PublicSeoRoute = {
   pathname: string;
@@ -13,68 +18,80 @@ export type PublicSeoRoute = {
   lastmod?: string;
 };
 
-export const staticPublicSeoRoutes: PublicSeoRoute[] = [
-  {
-    pathname: '/',
-    title: '卡网大全',
-    description: 'AI 大模型使用导航，汇总模型排行榜、官方订阅比价、AI 账号商家、库存、价格筛选、向导和工具入口。',
-    changefreq: 'daily',
-  },
-  {
-    pathname: '/model-leaderboard',
-    title: '模型排行榜',
-    description: '查看当前四类任务下的大模型能力排行榜，包括编程、创意写作、数学和文生图。',
-    changefreq: 'daily',
-  },
-  {
-    pathname: '/official-price',
-    title: '官方订阅比价',
-    description: '对比 ChatGPT Plus, Claude Pro, Gemini Advanced 等 AI 官方订阅在世界各地区（如美国、土耳其、日本等）的实时价格与汇率折算，助你选择最划算的购买区域。',
-    changefreq: 'daily',
-  },
-  {
-    pathname: '/tools',
-    title: '工具集',
-    description: '与 AI 账号、订阅和导入格式相关的小工具集合。',
-    changefreq: 'weekly',
-  },
-  {
-    pathname: '/tools/session-converter',
-    title: 'ChatGPT Session 转换工具',
-    description: '在浏览器本地转换 ChatGPT Web session、Codex auth.json 和 9Router OAuth JSON 等账号凭证格式。',
-    changefreq: 'monthly',
-  },
-  {
-    pathname: '/tools/ip-purity',
-    title: 'IP 纯净度检测',
-    description: '检测公网 IPv4 的代理、VPN、Tor、机房和滥用风险信号，帮助注册、登录和支付前筛掉高风险出口。',
-    changefreq: 'weekly',
-  },
-  {
-    pathname: '/guide',
-    title: '向导',
-    description: 'AI 账号购买、商家选择和虚拟商品下单前的判断方法。',
-    changefreq: 'weekly',
-  },
-  {
-    pathname: '/about',
-    title: '关于我们',
-    description: '了解卡网大全为什么会被做出来，以及它想为 AI 账号购买用户和商家解决什么问题。',
-    changefreq: 'monthly',
-  },
-  {
-    pathname: '/disclaimer',
-    title: '免责声明',
-    description: '第三方商家信息、价格库存、购买入口、合作展示和交易责任边界说明。',
-    changefreq: 'monthly',
-  },
-  {
-    pathname: '/privacy',
-    title: '隐私政策',
-    description: '访问统计、提交信息、第三方链接、联系方式和数据使用方式说明。',
-    changefreq: 'monthly',
-  },
-];
+function routePath(pathname: string, locale: Locale) {
+  return localizePath(pathname, locale);
+}
+
+export function getStaticPublicSeoRoutes(locale: Locale = defaultLocale): PublicSeoRoute[] {
+  const messages = getMessages(locale);
+  const aboutContent = loadPageContent('about', locale);
+  const disclaimerContent = loadPageContent('disclaimer', locale);
+  const privacyContent = loadPageContent('privacy', locale);
+  return [
+    {
+      pathname: routePath('/', locale),
+      title: messages.site.name,
+      description: messages.home.seoDescription,
+      changefreq: 'daily',
+    },
+    {
+      pathname: routePath('/model-leaderboard', locale),
+      title: messages.leaderboard.seoTitle,
+      description: messages.leaderboard.seoDescription,
+      changefreq: 'daily',
+    },
+    {
+      pathname: routePath('/official-price', locale),
+      title: messages.officialPrice.seoTitle,
+      description: messages.officialPrice.seoDescription,
+      changefreq: 'daily',
+    },
+    {
+      pathname: routePath('/tools', locale),
+      title: messages.tools.title,
+      description: messages.tools.seoDescription,
+      changefreq: 'weekly',
+    },
+    {
+      pathname: routePath('/tools/session-converter', locale),
+      title: messages.tools.sessionConverter.title,
+      description: messages.sessionConverter.seoDescription,
+      changefreq: 'monthly',
+    },
+    {
+      pathname: routePath('/tools/ip-purity', locale),
+      title: messages.ipPurity.title,
+      description: messages.ipPurity.seoDescription,
+      changefreq: 'weekly',
+    },
+    {
+      pathname: routePath('/guide', locale),
+      title: messages.nav.guide,
+      description: messages.guide.seoDescription,
+      changefreq: 'weekly',
+    },
+    {
+      pathname: routePath('/about', locale),
+      title: aboutContent.title,
+      description: aboutContent.description,
+      changefreq: 'monthly',
+    },
+    {
+      pathname: routePath('/disclaimer', locale),
+      title: disclaimerContent.title,
+      description: disclaimerContent.description,
+      changefreq: 'monthly',
+    },
+    {
+      pathname: routePath('/privacy', locale),
+      title: privacyContent.title,
+      description: privacyContent.description,
+      changefreq: 'monthly',
+    },
+  ];
+}
+
+export const staticPublicSeoRoutes: PublicSeoRoute[] = getStaticPublicSeoRoutes(defaultLocale);
 
 export const trainingCrawlerUserAgents = [
   'GPTBot',
@@ -97,16 +114,16 @@ export function resolvePublicUrl(baseUrlInput: string, pathname: string) {
   return new URL(pathname, `${normalizeBaseUrl(baseUrlInput)}/`).toString();
 }
 
-export async function loadGuideArticles() {
+export async function loadGuideArticles(locale: Locale = defaultLocale) {
   const guideModule = await import('./guide.js');
-  return guideModule.guideArticles;
+  return guideModule.getGuideCollection(locale).guideArticles;
 }
 
-export function getPublicSeoRoutes(guideRoutes: GuideArticle[] = []): PublicSeoRoute[] {
+export function getPublicSeoRoutes(guideRoutes: GuideArticle[] = [], locale: Locale = defaultLocale): PublicSeoRoute[] {
   return [
-    ...staticPublicSeoRoutes,
+    ...getStaticPublicSeoRoutes(locale),
     ...guideRoutes.map(article => ({
-      pathname: `/guide/${article.slug}`,
+      pathname: routePath(`/guide/${article.slug}`, locale),
       title: article.title,
       description: article.description,
       changefreq: 'monthly' as const,
@@ -114,34 +131,54 @@ export function getPublicSeoRoutes(guideRoutes: GuideArticle[] = []): PublicSeoR
   ];
 }
 
-export function buildOfficialPriceSeoRoutes(groups: OfficialPriceGroup[]): PublicSeoRoute[] {
+export function buildOfficialPriceSeoRoutes(groups: OfficialPriceGroup[], locale: Locale = defaultLocale): PublicSeoRoute[] {
+  const messages = getMessages(locale);
   return groups.map(group => ({
-    pathname: group.pathname,
-    title: `${group.displayName} 官方订阅价格对比`,
-    description: `查看 ${group.displayName} 官方订阅在不同国家和地区的本地价格、币种和人民币折算结果，按折算价格由低到高对比。`,
+    pathname: routePath(group.pathname, locale),
+    title: `${group.displayName} ${messages.officialPrice.titleSuffix}`,
+    description: messages.officialPrice.dynamicDescription.replace('{displayName}', group.displayName),
     changefreq: 'daily' as const,
   }));
 }
 
-export function buildModelLeaderboardSeoRoutes(groups: ModelLeaderboardGroup[]): PublicSeoRoute[] {
-  return groups.map(group => ({
-    pathname: group.pathname,
-    title: `${group.taskLabel}模型排行榜`,
-    description: `查看当前 ${group.taskLabel} 任务下的大模型能力排行榜，包括模型排名和评分。`,
-    changefreq: 'daily' as const,
-  }));
+export function buildModelLeaderboardSeoRoutes(groups: ModelLeaderboardGroup[], locale: Locale = defaultLocale): PublicSeoRoute[] {
+  const messages = getMessages(locale);
+  return groups.map(group => {
+    const displayName = localizeTaskLabel(group.taskSlug, messages);
+    return {
+      pathname: routePath(group.pathname, locale),
+      title: `${displayName}${messages.leaderboard.titleSuffix}`,
+      description: messages.leaderboard.dynamicDescription.replace('{taskLabel}', displayName),
+      changefreq: 'daily' as const,
+    };
+  });
 }
 
 export function getPublicSeoRoutesWithDynamicPages(params: {
   officialPriceGroups?: OfficialPriceGroup[];
   modelLeaderboardGroups?: ModelLeaderboardGroup[];
   guideRoutes?: GuideArticle[];
+  locale?: Locale;
 } = {}): PublicSeoRoute[] {
+  const locale = params.locale ?? defaultLocale;
   return normalizePublicSeoRoutes([
-    ...getPublicSeoRoutes(params.guideRoutes),
-    ...buildOfficialPriceSeoRoutes(params.officialPriceGroups ?? []),
-    ...buildModelLeaderboardSeoRoutes(params.modelLeaderboardGroups ?? []),
+    ...getPublicSeoRoutes(params.guideRoutes, locale),
+    ...buildOfficialPriceSeoRoutes(params.officialPriceGroups ?? [], locale),
+    ...buildModelLeaderboardSeoRoutes(params.modelLeaderboardGroups ?? [], locale),
   ]);
+}
+
+export function getPublicSeoRoutesForAllLocales(params: {
+  officialPriceGroups?: OfficialPriceGroup[];
+  modelLeaderboardGroups?: ModelLeaderboardGroup[];
+  guideRoutesByLocale?: Map<Locale, GuideArticle[]>;
+} = {}) {
+  return normalizePublicSeoRoutes(supportedLocales.flatMap(locale => getPublicSeoRoutesWithDynamicPages({
+    officialPriceGroups: params.officialPriceGroups,
+    modelLeaderboardGroups: params.modelLeaderboardGroups,
+    guideRoutes: params.guideRoutesByLocale?.get(locale) ?? [],
+    locale,
+  })));
 }
 
 export function normalizePublicSeoRoutes(routes: PublicSeoRoute[]) {
@@ -172,12 +209,42 @@ function escapeXml(input: string) {
   });
 }
 
+function buildSitemapAlternateLinks(baseUrlInput: string, route: PublicSeoRoute, routesByRoutePathname: Map<string, PublicSeoRoute[]>) {
+  const routePathname = getLocalePathInfo(route.pathname).routePathname;
+  const routeGroup = routesByRoutePathname.get(routePathname) ?? [];
+  const pathnameByLocale = new Map(routeGroup.map(item => {
+    const localePathInfo = getLocalePathInfo(item.pathname);
+    return [localePathInfo.locale, item.pathname] as const;
+  }));
+  const alternateLinks = supportedLocales
+    .flatMap(locale => {
+      const pathname = pathnameByLocale.get(locale);
+      if (!pathname) return [];
+      return [
+        `    <xhtml:link rel="alternate" hreflang="${escapeXml(localeLabels[locale].htmlLang)}" href="${escapeXml(resolvePublicUrl(baseUrlInput, pathname))}" />`,
+      ];
+    });
+  const defaultPathname = pathnameByLocale.get(defaultLocale);
+  if (defaultPathname) {
+    alternateLinks.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(resolvePublicUrl(baseUrlInput, defaultPathname))}" />`);
+  }
+  return alternateLinks;
+}
+
 export function buildSitemapXml(baseUrlInput: string, routes = getPublicSeoRoutes()) {
-  const items = normalizePublicSeoRoutes(routes)
+  const normalizedRoutes = normalizePublicSeoRoutes(routes);
+  const routesByRoutePathname = new Map<string, PublicSeoRoute[]>();
+  for (const route of normalizedRoutes) {
+    const routePathname = getLocalePathInfo(route.pathname).routePathname;
+    routesByRoutePathname.set(routePathname, [...(routesByRoutePathname.get(routePathname) ?? []), route]);
+  }
+
+  const items = normalizedRoutes
     .map(route => {
       const lines = [
         '  <url>',
         `    <loc>${escapeXml(resolvePublicUrl(baseUrlInput, route.pathname))}</loc>`,
+        ...buildSitemapAlternateLinks(baseUrlInput, route, routesByRoutePathname),
       ];
       if (route.lastmod) {
         lines.push(`    <lastmod>${escapeXml(route.lastmod)}</lastmod>`);
@@ -186,7 +253,7 @@ export function buildSitemapXml(baseUrlInput: string, routes = getPublicSeoRoute
       return lines.join('\n');
     })
     .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${items}\n</urlset>\n`;
 }
 
 export function buildSitemapTxt(baseUrlInput: string, routes = getPublicSeoRoutes()) {
@@ -216,13 +283,14 @@ export function buildRobotsTxt(baseUrlInput: string) {
 
 export function buildLlmsTxt(baseUrlInput: string, routes = getPublicSeoRoutes()) {
   const baseUrl = normalizeBaseUrl(baseUrlInput);
+  const messages = getMessages(defaultLocale);
   const routeLines = normalizePublicSeoRoutes(routes)
     .map(route => `- [${route.title}](${resolvePublicUrl(baseUrl, route.pathname)}): ${route.description}`)
     .join('\n');
   return [
-    '# CardNav / 卡网大全',
+    `# CardNav / ${messages.site.name}`,
     '',
-    '卡网大全是一个中文公开导航站点，聚合 AI 账号商家、商品、库存状态、价格、提交入口和购买前判断内容。',
+    messages.seo.llmsDescription,
     '',
     '## Important URLs',
     '',
@@ -235,7 +303,7 @@ export function buildLlmsTxt(baseUrlInput: string, routes = getPublicSeoRoutes()
     '',
     '## Crawler Policy',
     '',
-    'Public pages may be used for search indexing, citation, answer grounding, and user-requested retrieval. 卡网大全 does not authorize model-training or bulk dataset crawling; see robots.txt for crawler-specific rules.',
+    messages.seo.crawlerPolicy,
     '',
   ].join('\n');
 }

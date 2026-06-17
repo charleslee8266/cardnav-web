@@ -6,13 +6,16 @@ import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 
+const linkTo = Astro.locals.localizePath;
+const t = Astro.locals.messages;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/tools',
-  title: 'AI 订阅常用工具集合',
-  description: '汇总 IP 纯净度检测、 AI 账号、订阅、ChatGPT Session格式转换等常用工具，帮助你在实际使用前完成快速检查和本地处理。',
+  title: t.tools.seoTitle,
+  description: t.tools.seoDescription,
   imagePath: '/og-cardnav.svg',
   type: 'webpage',
+  locale: Astro.locals.locale,
 });
 ---
 
@@ -20,56 +23,56 @@ const seo = buildSeoContext({
   <section class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body p-5">
       <div class="page-hero-wrap">
-        <h1 class="page-hero-title">AI 订阅常用工具集合</h1>
-        <p class="page-hero-copy">账号相关的AI 订阅常用工具集合，目前包括网络工具和账号格式转换工具。</p>
+        <h1 class="page-hero-title">{t.tools.title}</h1>
+        <p class="page-hero-copy">{t.tools.description}</p>
       </div>
     </div>
   </section>
 
   <section class="grid gap-4 md:grid-cols-2">
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href="/tools/session-converter" data-umami-event="tool-entry-click" data-umami-event-name="ChatGPT Session 转换工具" data-umami-event-target-page="/tools/session-converter" data-umami-event-url="/tools/session-converter" class="block">
+      <a href={linkTo('/tools/session-converter')} data-umami-event="tool-entry-click" data-umami-event-name={t.tools.sessionConverter.title} data-umami-event-target-page={linkTo('/tools/session-converter')} data-umami-event-url={linkTo('/tools/session-converter')} class="block">
         <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-lg font-bold text-base-content">ChatGPT Session 转换工具</h3>
-          <span class="badge badge-ghost badge-sm font-medium">本地转换</span>
+          <h3 class="text-lg font-bold text-base-content">{t.tools.sessionConverter.title}</h3>
+          <span class="badge badge-ghost badge-sm font-medium">{t.labels.localConvert}</span>
         </div>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">把 ChatGPT Web session、CPA、Sub2API、Cockpit、Codex auth.json、9Router OAuth JSON 等转换成 CPA、Sub2API、Cockpit、Codex、AxonHub 或 Codex-Manager 可导入 JSON。</p>
-        <div class="mt-4 link link-primary font-semibold text-sm">打开工具 ➜</div>
+        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.tools.sessionConverter.description}</p>
+        <div class="mt-4 link link-primary font-semibold text-sm">{t.actions.openTool} ➜</div>
       </a>
     </article>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href="/tools/ip-purity" data-umami-event="tool-entry-click" data-umami-event-name="IP 纯净度检测" data-umami-event-target-page="/tools/ip-purity" data-umami-event-url="/tools/ip-purity" class="block">
+      <a href={linkTo('/tools/ip-purity')} data-umami-event="tool-entry-click" data-umami-event-name={t.tools.ipPurity.title} data-umami-event-target-page={linkTo('/tools/ip-purity')} data-umami-event-url={linkTo('/tools/ip-purity')} class="block">
         <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-lg font-bold text-base-content">IP 纯净度检测</h3>
-          <span class="badge badge-ghost badge-sm font-medium">在线检测</span>
+          <h3 class="text-lg font-bold text-base-content">{t.tools.ipPurity.title}</h3>
+          <span class="badge badge-ghost badge-sm font-medium">{t.labels.onlineCheck}</span>
         </div>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">检测公网 IPv4 的代理、VPN、Tor、机房和滥用风险信号，适合注册、登录和支付前先做快速初筛。</p>
-        <div class="mt-4 link link-primary font-semibold text-sm">打开工具 ➜</div>
+        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.tools.ipPurity.description}</p>
+        <div class="mt-4 link link-primary font-semibold text-sm">{t.actions.openTool} ➜</div>
       </a>
     </article>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href="https://codex.kedaya.xyz/" target="_blank" rel="noopener noreferrer" data-umami-event="tool-entry-click" data-umami-event-name="Codex 凭证助手" data-umami-event-url="https://codex.kedaya.xyz/" class="block">
+      <a href="https://codex.kedaya.xyz/" target="_blank" rel="noopener noreferrer" data-umami-event="tool-entry-click" data-umami-event-name={t.tools.codexHelper.title} data-umami-event-url="https://codex.kedaya.xyz/" class="block">
         <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-lg font-bold text-base-content">Codex 凭证助手</h3>
-          <span class="badge badge-ghost badge-sm font-medium">外部网站</span>
+          <h3 class="text-lg font-bold text-base-content">{t.tools.codexHelper.title}</h3>
+          <span class="badge badge-ghost badge-sm font-medium">{t.labels.externalSite}</span>
         </div>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">通过账号密码导入账号，并按目标格式导出 Codex 凭证数据。</p>
-        <p class="mt-2 text-xs leading-5 text-error font-medium">此工具来自外部网站，非本站提供，请自行承担使用风险。</p>
-        <div class="mt-4 link link-primary font-semibold text-sm">打开外部工具 ➜</div>
+        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.tools.codexHelper.description}</p>
+        <p class="mt-2 text-xs leading-5 text-error font-medium">{t.tools.externalRisk}</p>
+        <div class="mt-4 link link-primary font-semibold text-sm">{t.actions.openExternalTool} ➜</div>
       </a>
     </article>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href="https://mail.chatai.codes/" target="_blank" rel="noopener noreferrer" data-umami-event="tool-entry-click" data-umami-event-name="Outlook 快速取件" data-umami-event-url="https://mail.chatai.codes/" class="block">
+      <a href="https://mail.chatai.codes/" target="_blank" rel="noopener noreferrer" data-umami-event="tool-entry-click" data-umami-event-name={t.tools.outlookMail.title} data-umami-event-url="https://mail.chatai.codes/" class="block">
         <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-lg font-bold text-base-content">Outlook 快速取件</h3>
-          <span class="badge badge-ghost badge-sm font-medium">外部网站</span>
+          <h3 class="text-lg font-bold text-base-content">{t.tools.outlookMail.title}</h3>
+          <span class="badge badge-ghost badge-sm font-medium">{t.labels.externalSite}</span>
         </div>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">通过 IMAP OAuth2 和 Graph API 查询 Outlook 邮件，适合临时搜索和取件。</p>
-        <p class="mt-2 text-xs leading-5 text-error font-medium">此工具来自外部网站，非本站提供，请自行承担使用风险。</p>
-        <div class="mt-4 link link-primary font-semibold text-sm">打开外部工具 ➜</div>
+        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.tools.outlookMail.description}</p>
+        <p class="mt-2 text-xs leading-5 text-error font-medium">{t.tools.externalRisk}</p>
+        <div class="mt-4 link link-primary font-semibold text-sm">{t.actions.openExternalTool} ➜</div>
       </a>
     </article>
   </section>

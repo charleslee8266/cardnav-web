@@ -18,14 +18,17 @@ const {
   sourcePage,
 } = Astro.props;
 
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
 const guideUrlClickEventName = 'guide-url-click';
 
 function guideUrlClickAttrs(targetPage: string) {
+  const localizedTargetPage = linkTo(targetPage);
   return {
     'data-umami-event': guideUrlClickEventName,
-    'data-umami-event-source-page': sourcePage,
-    'data-umami-event-target-page': targetPage,
-    'data-umami-event-url': targetPage,
+    'data-umami-event-source-page': linkTo(sourcePage),
+    'data-umami-event-target-page': localizedTargetPage,
+    'data-umami-event-url': localizedTargetPage,
   };
 }
 
@@ -43,15 +46,21 @@ function buildBreadcrumbs(parentLink: GuideParentLink | null) {
 }
 
 const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
+
+function localizeRenderedGuideLinks(html: string) {
+  return html.replace(/href="(\/guide[^"]*)"/gu, (_match, href: string) => `href="${linkTo(href)}"`);
+}
+
+const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 ---
 
 <section class="guide-browser-grid h-full min-h-0 overflow-hidden grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
   <aside class="guide-sidebar card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
     <div class="border-b border-base-300 bg-base-200 px-4 py-3">
       <p class="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/60">Guide</p>
-      <h2 class="mt-1 text-lg font-bold text-base-content">全部文档</h2>
+      <h2 class="mt-1 text-lg font-bold text-base-content">{t.guide.allDocs}</h2>
     </div>
-    <nav aria-label="向导文档列表" class="guide-sidebar-scroll p-2">
+    <nav aria-label={t.guide.docListLabel} class="guide-sidebar-scroll p-2">
       <ul class="space-y-1">
         {navItems.map(item => {
           const article = item.article;
@@ -59,7 +68,7 @@ const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
           return (
             <li>
               <a
-                href={`/guide/${article.slug}`}
+                href={linkTo(`/guide/${article.slug}`)}
                 aria-current={isActive ? 'page' : undefined}
                 data-guide-current={isActive ? 'true' : undefined}
                 {...guideUrlClickAttrs(`/guide/${article.slug}`)}
@@ -86,15 +95,15 @@ const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
   </aside>
 
   <section class="guide-content-scroll min-w-0 space-y-4">
-    <nav aria-label="向导面包屑" class="guide-breadcrumbs rounded-2xl border border-base-300 bg-base-100 px-4 py-3 shadow-sm">
+    <nav aria-label={t.guide.breadcrumbsLabel} class="guide-breadcrumbs rounded-2xl border border-base-300 bg-base-100 px-4 py-3 shadow-sm">
       <ol class="guide-breadcrumb-list">
         <li>
-          <a href="/guide" {...guideUrlClickAttrs('/guide')}>向导</a>
+          <a href={linkTo('/guide')} {...guideUrlClickAttrs('/guide')}>{t.nav.guide}</a>
         </li>
         {breadcrumbs.map(item => (
           <li>
             <span aria-hidden="true" class="guide-breadcrumb-separator">/</span>
-            <a href={`/guide/${item.slug}`} {...guideUrlClickAttrs(`/guide/${item.slug}`)}>{item.title}</a>
+            <a href={linkTo(`/guide/${item.slug}`)} {...guideUrlClickAttrs(`/guide/${item.slug}`)}>{item.title}</a>
           </li>
         ))}
         <li aria-current="page">
@@ -106,19 +115,19 @@ const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
 
     <section class="guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
       <div class="guide-hero">
-        <p class="guide-eyebrow">向导指南</p>
+        <p class="guide-eyebrow">{t.guide.eyebrow}</p>
         <h1 class="guide-title">{currentArticle.title}</h1>
       </div>
-      <div class="guide-article guide-intro mt-6 p-0 border-0 bg-transparent text-base-content/90" set:html={currentArticle.html} />
+      <div class="guide-article guide-intro mt-6 p-0 border-0 bg-transparent text-base-content/90" set:html={localizedArticleHtml} />
     </section>
 
     {currentArticle.nextLink && (
       <a
-        href={`/guide/${currentArticle.nextLink.slug}`}
+        href={linkTo(`/guide/${currentArticle.nextLink.slug}`)}
         {...guideUrlClickAttrs(`/guide/${currentArticle.nextLink.slug}`)}
         class="guide-next-step block rounded-2xl border border-base-300 bg-base-100 px-5 py-4 shadow-sm no-underline transition duration-200 hover:border-primary/30 hover:bg-primary/[0.02] active:scale-[0.99]"
       >
-        <p class="guide-next-step-label">下一步</p>
+        <p class="guide-next-step-label">{t.guide.nextStep}</p>
         <span class="guide-next-step-link mt-2 inline-flex text-lg font-bold text-primary">
           {currentArticle.nextLink.title || currentArticle.nextLink.slug}
         </span>

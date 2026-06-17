@@ -88,26 +88,33 @@
 
 以下为向导内容的 Markdown 原始文档，推荐直接在 [官网](https://cardnav.xyz/guide) 阅读，以获得最佳排版与浏览体验。
 
+向导 Markdown 的卡片、frontmatter 和站内链接渲染规则见 [CardNav 向导 Markdown 渲染说明](../docs/guide-markdown-rendering.md)。
+
 | 向导 | 说明 |
 | --- | --- |
-| [开始向导](guide/000-start-here.md) | 从 Start here 开始，先确定模型、再选使用方式、再补齐工具与支付等准备项。 |
-| [一、选择你想使用的 AI 大模型](guide/100-choose-model.md) | 先判断你是要顶级模型能力，还是低门槛和低成本，再决定是否继续这条向导。 |
-| [二、选择 AI 订阅使用方式](guide/200-choose-usage-method.md) | 对比中转站、成品号、代充、自充、自建等五种大模型使用方式的门槛与风险，并提供详细操作路径。 |
-| [三、AI 订阅实操准备与选购避坑](guide/300-practical-prep.md) | 补齐网络与云主机配置、准备支付通道、了解订阅区域价差以及认识卡网和发货格式。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;[3.1 认识卡网与选购避坑](guide/310-merchant-overview.md) | 了解什么是虚拟商品卡网平台，以及如何安全选购海外大模型账号与服务。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[如何挑选靠谱商家](guide/311-choose-reliable-merchant.md) | 购买 AI 账号或虚拟商品时，从商品数量、热门覆盖、平台属性、支付渠道和社群活跃度等维度判断商家信任度。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[常见账号发货格式说明](guide/312-common-delivery-formats.md) | 先判断商家发的是账密、四段 RT，还是各种 JSON 凭证，再决定能不能直接登录或应该导入什么工具。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;[3.2 网络环境与主机准备](guide/320-network-env-overview.md) | 梳理独立注册、登录与付款时的网络配置、IP 风险控制及海外主机租用流程。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[科学上网与 VPN](guide/321-tool-vpn.md) | 解决地区访问限制，并尽量保证后续注册、登录和订阅时的地区与 IP 稳定匹配。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[云服务器推荐](guide/322-tool-vps.md) | 为自建节点或自建中转站准备更可控的海外主机环境。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[IP 纯净度检查](guide/323-tool-ip-check.md) | 在注册、登录和付款前，先粗略筛掉明显高风险的出口 IP。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[国外手机号验证](guide/324-tool-phone-verification.md) | 解决注册验证码和后续二次验证问题，避免一次性号码导致账号后续卡死。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;[3.3 国际支付与价差](guide/330-payment-overview.md) | 先看订阅的地区价格差异，再选择合适的国际支付渠道和防风控建议。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[订阅价格地区差异](guide/331-region-pricing-differences.md) | 同一个订阅套餐在不同国家和地区的定价可能差很多。对比不同地区的实际开销与支付门槛。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[App Store 支付](guide/332-payment-app-store.md) | 通过对应地区的 Apple ID 和礼品卡完成应用商店内订阅支付。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Google Play Store 支付](guide/333-payment-google-play.md) | 使用目标地区 Google 账号和 Google Play 完成应用内订阅支付。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;[3.4 认识 KYC 风控](guide/340-kyc-verification.md) | 了解什么是 KYC 身份认证风控，为什么以 Claude 为代表的平台容易触发，以及在没有海外身份时该如何应对。 |
-| [四、AI 订阅使用期间的风控与日常避坑](guide/400-daily-usage-risk.md) | 梳理海外大模型账号在日常使用期间常见的风控触发点与避坑建议。 |
+| [开始向导](content/guide/zh/000-start-here.md) | 从 Start here 开始，先确定模型、再选使用方式、再补齐工具与支付等准备项。 |
+| [一、选择你想使用的 AI 大模型](content/guide/zh/100-choose-model.md) | 先判断你是要顶级模型能力，还是低门槛和低成本，再决定是否继续这条向导。 |
+| [二、选择 AI 订阅使用方式](content/guide/zh/200-choose-usage-method.md) | 对比中转站、成品号、代充、自充、自建等五种大模型使用方式的门槛、风险和适用人群。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[2.1 AI 大模型 API 中转站](content/guide/zh/211-usage-api-relay.md) | 通过 API 中转站快速获得大模型调用能力，适合低门槛试用、多模型接入和轻量开发调试。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[2.2 AI 大模型成品账号购买与登录](content/guide/zh/212-usage-ready-account.md) | 购买已开通订阅的成品账号并直接登录，适合快速体验原生网页和客户端功能。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[2.3 AI 大模型自备账号第三方代充](content/guide/zh/213-usage-third-party-top-up.md) | 自己保留账号，由第三方商家代为开通或续费官方订阅，适合已有账号但无法自行付款的用户。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[2.4 AI 大模型官方订阅充值](content/guide/zh/214-usage-self-register.md) | 自己准备网络、手机号和支付通道，独立注册并订阅官方账号，适合长期重度用户。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[2.5 自建 AI 大模型中转站](content/guide/zh/215-usage-self-hosted-relay.md) | 购买官方额度并自建中转接口，适合有技术基础、需要团队共享和内部接入的用户。 |
+| [三、AI 订阅实操准备与选购避坑](content/guide/zh/300-practical-prep.md) | 补齐网络与云主机配置、准备支付通道、了解订阅区域价差以及认识卡网和发货格式。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.1 认识卡网与选购避坑](content/guide/zh/310-merchant-overview.md) | 了解什么是虚拟商品卡网平台，以及如何安全选购海外大模型账号与服务。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[如何挑选靠谱商家](content/guide/zh/311-choose-reliable-merchant.md) | 购买 AI 账号或虚拟商品时，从商品数量、热门覆盖、平台属性、支付渠道和社群活跃度等维度判断商家信任度。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[常见账号发货格式说明](content/guide/zh/312-common-delivery-formats.md) | 先判断商家发的是账密、四段 RT，还是各种 JSON 凭证，再决定能不能直接登录或应该导入什么工具。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.2 网络环境与主机准备](content/guide/zh/320-network-env-overview.md) | 梳理独立注册、登录与付款时的网络配置、IP 风险控制及海外主机租用流程。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[科学上网与 VPN](content/guide/zh/321-tool-vpn.md) | 解决地区访问限制，并尽量保证后续注册、登录和订阅时的地区与 IP 稳定匹配。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[云服务器推荐](content/guide/zh/322-tool-vps.md) | 为自建节点或自建中转站准备更可控的海外主机环境。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[IP 纯净度检查](content/guide/zh/323-tool-ip-check.md) | 在注册、登录和付款前，先粗略筛掉明显高风险的出口 IP。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[国外手机号验证](content/guide/zh/324-tool-phone-verification.md) | 解决注册验证码和后续二次验证问题，避免一次性号码导致账号后续卡死。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.3 国际支付与价差](content/guide/zh/330-payment-overview.md) | 先看订阅的地区价格差异，再选择合适的国际支付渠道和防风控建议。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[订阅价格地区差异](content/guide/zh/331-region-pricing-differences.md) | 同一个订阅套餐在不同国家和地区的定价可能差很多。对比不同地区的实际开销与支付门槛。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[App Store 支付](content/guide/zh/332-payment-app-store.md) | 通过对应地区的 Apple ID 和礼品卡完成应用商店内订阅支付。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Google Play Store 支付](content/guide/zh/333-payment-google-play.md) | 使用目标地区 Google 账号和 Google Play 完成应用内订阅支付。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[3.4 认识 KYC 风控](content/guide/zh/340-kyc-verification.md) | 了解什么是 KYC 身份认证风控，为什么以 Claude 为代表的平台容易触发，以及在没有海外身份时该如何应对。 |
+| [四、AI 订阅使用期间的风控与日常避坑](content/guide/zh/400-daily-usage-risk.md) | 梳理海外大模型账号在日常使用期间常见的风控触发点与避坑建议。 |
 
 ## 本地运行
 
@@ -144,7 +151,7 @@ npm run typecheck
 
 ```text
 cardnav-web/
-├── guide/                # 向导 Markdown 内容
+├── content/              # 向导、关于页、隐私政策等 Markdown 内容
 ├── public/               # favicon、OG 图和静态资源
 ├── src/pages/            # Astro 页面和 API 路由
 ├── src/scripts/          # 首页、工具页等前端交互脚本
