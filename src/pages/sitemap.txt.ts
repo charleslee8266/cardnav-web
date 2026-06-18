@@ -9,6 +9,8 @@ import { buildSitemapTxt, getPublicSeoRoutesForAllLocales, loadGuideArticles } f
 import { publicSiteUrl } from '../site.js';
 import { loadModelLeaderboards, loadOfficialPrices } from '../store.js';
 
+export const prerender = true;
+
 export const GET: APIRoute = async () => {
   const [officialPrices, modelLeaderboards, guideRouteEntries] = await Promise.all([
     loadOfficialPrices(),

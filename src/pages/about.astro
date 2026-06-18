@@ -3,9 +3,15 @@
 文件说明: 渲染 CardNav 公开站点的关于页面，介绍项目起点、服务对象和产品定位。
 */
 import PublicPage from '../layouts/PublicPage.astro';
+import PageContentArticle from '../components/PageContentArticle.astro';
 import { loadPageContent } from '../page-content.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
+import { applyStaticLocaleLocals } from '../static-locale.js';
+
+export const prerender = true;
+
+applyStaticLocaleLocals(Astro, undefined, '/about');
 
 const content = loadPageContent('about', Astro.locals.locale);
 const seo = buildSeoContext({
@@ -20,5 +26,5 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="about" showSponsors={false} {...seo}>
-  <article class="content-page rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7" set:html={content.html} />
+  <PageContentArticle content={content} />
 </PublicPage>

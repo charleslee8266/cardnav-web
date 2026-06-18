@@ -1,6 +1,8 @@
 /**
  * 文件说明: 加载并渲染公开站点普通 Markdown 内容页，供关于、隐私和免责声明复用。
  */
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
 import { defaultLocale, type Locale } from './i18n/config.js';
@@ -26,11 +28,50 @@ const markdownRenderer = new MarkdownIt({
   typographer: true,
 });
 
-const rawPageContentModules = import.meta.glob('../content/pages/*/*.md', {
+function isPageContentRoot(candidate: string) {
+  return existsSync(path.join(candidate, defaultLocale, 'about.md'));
+}
+
+function findPageContentRoot() {
+  const visited = new Set<string>();
+  let currentDir = process.cwd();
+  while (!visited.has(currentDir)) {
+    visited.add(currentDir);
+    const directCandidate = path.join(currentDir, 'content/pages');
+    if (isPageContentRoot(directCandidate)) return directCandidate;
+
+    for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+      const nestedCandidate = path.join(currentDir, entry.name, 'content/pages');
+      if (isPageContentRoot(nestedCandidate)) return nestedCandidate;
+    }
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) break;
+    currentDir = parentDir;
+  }
+  throw new Error('Unable to locate public page content markdown root');
+}
+
+function loadPageContentModulesFromFiles() {
+  const contentRoot = findPageContentRoot();
+  const modules: Record<string, string> = {};
+  for (const localeDirName of readdirSync(contentRoot, { withFileTypes: true })) {
+    if (!localeDirName.isDirectory()) continue;
+    const localeDir = path.join(contentRoot, localeDirName.name);
+    for (const fileName of readdirSync(localeDir)) {
+      if (!fileName.endsWith('.md')) continue;
+      modules[`../content/pages/${localeDirName.name}/${fileName}`] = readFileSync(path.join(localeDir, fileName), 'utf8');
+    }
+  }
+  return modules;
+}
+
+const rawPageContentModules = typeof import.meta.glob === 'function' ? import.meta.glob('../content/pages/*/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
-}) as Record<string, string>;
+}) as Record<string, string> : loadPageContentModulesFromFiles();
 
 function titleFromMarkdown(markdown: string, fallback: string) {
   const match = markdown.match(/^#\s+(.+)$/mu);

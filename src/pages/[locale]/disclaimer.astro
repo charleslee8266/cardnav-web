@@ -1,0 +1,41 @@
+---
+/*
+文件说明: 静态生成带语言前缀的 CardNav 免责声明页面。
+*/
+import PageContentArticle from '../../components/PageContentArticle.astro';
+import PublicPage from '../../layouts/PublicPage.astro';
+import { defaultLocale, supportedLocales } from '../../i18n/config.js';
+import { loadPageContent } from '../../page-content.js';
+import { buildSeoContext } from '../../seo.js';
+import { publicSiteUrl } from '../../site.js';
+import { applyStaticLocaleLocals } from '../../static-locale.js';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return supportedLocales
+    .filter(locale => locale !== defaultLocale)
+    .map(locale => ({
+      params: { locale },
+      props: { locale },
+    }));
+}
+
+const locale = Astro.props.locale;
+applyStaticLocaleLocals(Astro, locale, `/${locale}/disclaimer`);
+
+const content = loadPageContent('disclaimer', Astro.locals.locale);
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/disclaimer',
+  title: content.title,
+  description: content.description,
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+  locale: Astro.locals.locale,
+});
+---
+
+<PublicPage showSponsors={false} {...seo}>
+  <PageContentArticle content={content} />
+</PublicPage>
