@@ -3,6 +3,12 @@
 <h1 align="center">卡网大全 · CardNav</h1>
 
 <p align="center">
+  <strong>中文</strong> ·
+  <a href="README.en.md">English</a> ·
+  <a href="README.ru.md">Русский</a>
+</p>
+
+<p align="center">
   <strong>一站式 AI 大模型使用导航入口，帮用户把模型选择、官方订阅比价、第三方商家搜索、实用工具和使用向导放到同一个公开站点里。</strong><br/>
   面向 AI 订阅、账号、卡密、成品号、API/CDK 和相关工具用户，也面向希望被发现、被搜索、被合作的商家。
 </p>
@@ -88,7 +94,7 @@
 
 以下为向导内容的 Markdown 原始文档，推荐直接在 [官网](https://cardnav.xyz/guide) 阅读，以获得最佳排版与浏览体验。
 
-向导 Markdown 的卡片、frontmatter 和站内链接渲染规则见 [CardNav 向导 Markdown 渲染说明](../docs/guide-markdown-rendering.md)。
+向导 Markdown 的卡片、frontmatter 和站内链接渲染规则见 [CardNav 向导 Markdown 渲染说明](content/guide/README.md)。
 
 | 向导 | 说明 |
 | --- | --- |
