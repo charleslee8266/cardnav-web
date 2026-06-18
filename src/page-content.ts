@@ -1,9 +1,6 @@
 /**
  * 文件说明: 加载并渲染公开站点普通 Markdown 内容页，供关于、隐私和免责声明复用。
  */
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
 import { defaultLocale, type Locale } from './i18n/config.js';
@@ -29,11 +26,11 @@ const markdownRenderer = new MarkdownIt({
   typographer: true,
 });
 
-const rawPageContentModules = typeof import.meta.glob === 'function' ? import.meta.glob('../content/pages/*/*.md', {
+const rawPageContentModules = import.meta.glob('../content/pages/*/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
-}) as Record<string, string> : {};
+}) as Record<string, string>;
 
 function titleFromMarkdown(markdown: string, fallback: string) {
   const match = markdown.match(/^#\s+(.+)$/mu);
@@ -58,24 +55,9 @@ function modulePathFor(locale: Locale, slug: PageContentSlug) {
   return `../content/pages/${locale}/${slug}.md`;
 }
 
-function readPageContentFile(locale: Locale, slug: PageContentSlug) {
-  try {
-    return readFileSync(
-      path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'content', 'pages', locale, `${slug}.md`),
-      'utf8',
-    );
-  } catch (err) {
-    const error = err as NodeJS.ErrnoException;
-    if (error.code === 'ENOENT') return null;
-    throw err;
-  }
-}
-
 export function loadPageContent(slug: PageContentSlug, locale: Locale = defaultLocale): RenderedPageContent {
   const rawMarkdown = rawPageContentModules[modulePathFor(locale, slug)]
-    ?? rawPageContentModules[modulePathFor(defaultLocale, slug)]
-    ?? readPageContentFile(locale, slug)
-    ?? readPageContentFile(defaultLocale, slug);
+    ?? rawPageContentModules[modulePathFor(defaultLocale, slug)];
   if (!rawMarkdown) {
     throw new Error(`Missing page content markdown: ${slug}`);
   }

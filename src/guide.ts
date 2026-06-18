@@ -3,7 +3,7 @@
  */
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
-import { defaultLocale, isLocale, type Locale } from './i18n/config.js';
+import { defaultLocale, isLocale, supportedLocales, type Locale } from './i18n/config.js';
 
 const cardnavSiteOrigin = 'https://cardnav.xyz';
 const guideUrlClickEventName = 'guide-url-click';
@@ -802,4 +802,13 @@ export function findGuideArticle(slug: string, locale: Locale = defaultLocale) {
   return localeCollection.renderedGuideArticles.find(item => item.slug === slug)
     ?? defaultGuideCollection.renderedGuideArticles.find(item => item.slug === slug)
     ?? null;
+}
+
+export function getGuideStaticPaths() {
+  return supportedLocales.flatMap(locale =>
+    getGuideCollection(locale).renderedGuideArticles.map(article => ({
+      params: locale === defaultLocale ? { slug: article.slug } : { locale, slug: article.slug },
+      props: { locale, slug: article.slug },
+    })),
+  );
 }

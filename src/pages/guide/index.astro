@@ -7,6 +7,11 @@ import GuideBrowser from '../../components/GuideBrowser.astro';
 import { getGuideCollection } from '../../guide.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
+import { applyStaticLocaleLocals } from '../../static-locale.js';
+
+export const prerender = true;
+
+applyStaticLocaleLocals(Astro, undefined, '/guide');
 
 const {
   defaultGuideArticle,

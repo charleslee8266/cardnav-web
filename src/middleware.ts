@@ -18,11 +18,12 @@ function jsonResponse(payload: unknown, init: ResponseInit = {}) {
   });
 }
 
-export const onRequest = defineMiddleware(async (context, next) => {
-  const url = new URL(context.request.url);
-  const rewriteLocale = context.request.headers.get('x-cardnav-rewrite-locale');
-  const rewriteOriginalPathname = context.request.headers.get('x-cardnav-original-pathname');
-  const localePathInfo = getLocalePathInfo(url.pathname);
+function applyLocaleLocals(
+  context: Parameters<Parameters<typeof defineMiddleware>[0]>[0],
+  localePathInfo: ReturnType<typeof getLocalePathInfo>,
+  rewriteLocale?: string | null,
+  rewriteOriginalPathname?: string | null,
+) {
   const locale = rewriteLocale && isLocale(rewriteLocale) ? rewriteLocale : localePathInfo.locale;
   const hasLocalePrefix = localePathInfo.hasLocalePrefix || Boolean(rewriteLocale && isLocale(rewriteLocale));
   context.locals.locale = locale;
@@ -34,6 +35,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
     localizePath(pathname, locale, {
       prefixDefaultLocale: hasLocalePrefix,
     });
+}
+
+export const onRequest = defineMiddleware(async (context, next) => {
+  const url = new URL(context.request.url);
+  const localePathInfo = getLocalePathInfo(url.pathname);
+
+  if (context.isPrerendered) {
+    applyLocaleLocals(context, localePathInfo);
+    return next();
+  }
+
+  const rewriteLocale = context.request.headers.get('x-cardnav-rewrite-locale');
+  const rewriteOriginalPathname = context.request.headers.get('x-cardnav-original-pathname');
+  applyLocaleLocals(context, localePathInfo, rewriteLocale, rewriteOriginalPathname);
 
   if (context.request.method === 'POST' && url.pathname === '/api/submit') {
     const contentType = context.request.headers.get('content-type') ?? '';

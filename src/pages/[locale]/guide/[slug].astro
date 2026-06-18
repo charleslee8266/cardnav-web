@@ -1,0 +1,45 @@
+---
+/*
+文件说明: 静态生成带语言前缀的 CardNav 公开向导文章详情页。
+*/
+import PublicPage from '../../../layouts/PublicPage.astro';
+import GuideBrowser from '../../../components/GuideBrowser.astro';
+import { findGuideArticle, getGuideCollection, getGuideStaticPaths } from '../../../guide.js';
+import { defaultLocale } from '../../../i18n/config.js';
+import { buildSeoContext } from '../../../seo.js';
+import { publicSiteUrl } from '../../../site.js';
+import { applyStaticLocaleLocals } from '../../../static-locale.js';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return getGuideStaticPaths().filter(item => item.props.locale !== defaultLocale);
+}
+
+const locale = Astro.props.locale;
+const slug = Astro.props.slug || Astro.params.slug || '';
+applyStaticLocaleLocals(Astro, locale, `/${locale}/guide/${slug}`);
+
+const article = findGuideArticle(slug, Astro.locals.locale);
+if (!article) throw new Error(`Guide article not found: ${locale}/${slug}`);
+const guideCollection = getGuideCollection(Astro.locals.locale);
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: `/guide/${article.slug}`,
+  title: article.title,
+  description: article.description,
+  imagePath: '/og-cardnav.svg',
+  type: 'article',
+  locale: Astro.locals.locale,
+});
+---
+
+<PublicPage activeNav="guide" showSponsors={false} {...seo}>
+  <GuideBrowser
+    articles={guideCollection.guideArticles}
+    navItems={guideCollection.guideNavItems}
+    currentArticle={article}
+    sourcePage={`/guide/${article.slug}`}
+  />
+</PublicPage>

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0",
-    "build": "astro build && node scripts/copy-content.mjs",
+    "build": "astro build",
     "start": "node dist/server/entry.mjs",
     "typecheck": "astro check && tsc --noEmit"
   },
