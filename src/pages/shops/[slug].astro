@@ -1,0 +1,12 @@
+---
+/*
+文件说明: 渲染隐藏的快速搜索 SEO 入口页，复用商品页筛选体验并按 slug 初始化搜索词。
+*/
+import ShopsPage from '../shops.astro';
+import { quickPlanSearchTermForSlug } from '../../shop-plan-search.js';
+
+const term = quickPlanSearchTermForSlug(Astro.params.slug);
+if (!term) return Astro.redirect(Astro.locals.localizePath('/shops'), 302);
+---
+
+<ShopsPage seoSearchTerm={term} />

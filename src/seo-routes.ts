@@ -9,6 +9,7 @@ import { localizeTaskLabel } from './localized-display.js';
 import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
 import { loadPageContent } from './page-content.js';
+import { quickPlanSearchSeoPath, quickPlanSearchTerms } from './shop-plan-search.js';
 
 export type PublicSeoRoute = {
   pathname: string;
@@ -154,6 +155,16 @@ export function buildModelLeaderboardSeoRoutes(groups: ModelLeaderboardGroup[], 
   });
 }
 
+export function buildQuickPlanSearchSeoRoutes(locale: Locale = defaultLocale): PublicSeoRoute[] {
+  const messages = getMessages(locale);
+  return quickPlanSearchTerms.map(term => ({
+    pathname: routePath(quickPlanSearchSeoPath(term), locale),
+    title: messages.shops.searchResultsTitle.replace('{term}', term.label),
+    description: messages.shops.searchResultsDescription.replace('{term}', term.label),
+    changefreq: 'weekly' as const,
+  }));
+}
+
 export function getPublicSeoRoutesWithDynamicPages(params: {
   officialPriceGroups?: OfficialPriceGroup[];
   modelLeaderboardGroups?: ModelLeaderboardGroup[];
@@ -165,6 +176,7 @@ export function getPublicSeoRoutesWithDynamicPages(params: {
     ...getPublicSeoRoutes(params.guideRoutes, locale),
     ...buildOfficialPriceSeoRoutes(params.officialPriceGroups ?? [], locale),
     ...buildModelLeaderboardSeoRoutes(params.modelLeaderboardGroups ?? [], locale),
+    ...buildQuickPlanSearchSeoRoutes(locale),
   ]);
 }
 

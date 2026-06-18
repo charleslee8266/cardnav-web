@@ -4,16 +4,44 @@
 */
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildSeoContext } from '../seo.js';
+import { quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import shopsScriptUrl from '../scripts/index.js?url';
 import { loadDashboardData, loadPopularSearchTerms, type PublicProductRow } from '../store.js';
 
+type Props = {
+  seoSearchTerm?: QuickPlanSearchTerm | null;
+};
+
 const initialProductLimitValue = 10;
+const quickPlanVisibleLimit = 12;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
+const requestUrl = new URL(Astro.request.url);
+const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
+const initialSearchQuery = seoSearchTerm?.query ?? requestUrl.searchParams.get('q')?.trim() ?? '';
+const initialSort = seoSearchTerm ? 'price-asc' : requestUrl.searchParams.get('sort')?.trim() ?? '';
+const pageTitle = seoSearchTerm
+  ? t.shops.searchResultsTitle.replace('{term}', seoSearchTerm.label)
+  : t.shops.seoTitle;
+const pageDescription = seoSearchTerm
+  ? t.shops.searchResultsDescription.replace('{term}', seoSearchTerm.label)
+  : t.shops.seoDescription;
+const heroTitle = seoSearchTerm ? pageTitle : t.shops.title;
+const heroDescription = seoSearchTerm ? pageDescription : t.shops.description;
+const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
 const data = await loadDashboardData({ productLimit: initialProductLimitValue });
 const popularSearchTerms = (await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms])).terms;
 const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: seoPathname,
+  title: pageTitle,
+  description: pageDescription,
+  imagePath: '/og-cardnav.svg',
+  type: 'website',
+  locale: Astro.locals.locale,
+});
+const normalSeo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/shops',
   title: t.shops.seoTitle,
@@ -58,6 +86,10 @@ const shopsScriptMessages = {
   cancelMerchantFavorite: t.shops.cancelMerchantFavorite,
   inStock: t.labels.inStock,
   soldOut: t.labels.soldOut,
+  defaultPageTitle: normalSeo.pageTitle,
+  defaultHeroTitle: t.shops.title,
+  defaultHeroDescription: t.shops.description,
+  seoSearchQuery: seoSearchTerm?.query ?? '',
 };
 const flatSortColumns = [
   { key: 'productName', type: 'text', label: t.labels.product },
@@ -101,8 +133,8 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
       <div class="page-hero-shell">
         <div class="page-hero-main">
           <div class="page-hero-wrap">
-            <h1 class="page-hero-title">{t.shops.title}</h1>
-            <p class="page-hero-copy">{t.shops.description}</p>
+            <h1 id="shopPageHeroTitle" class="page-hero-title">{heroTitle}</h1>
+            <p id="shopPageHeroDescription" class="page-hero-copy">{heroDescription}</p>
             <p class="page-hero-note">{t.shops.note}</p>
           </div>
         </div>
@@ -128,8 +160,9 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
         <span>{t.labels.products}：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
         {data.latestRefreshTime && <span>{t.labels.latestRefresh}：{data.latestRefreshTime}</span>}
       </div>
-      <div class="w-full">
-        <input id="searchFilter" name="q" value="" class="input input-bordered w-full" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
+      <div class="relative w-full">
+        <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
+        <button id="advancedSearchHelp" type="button" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-xs font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={t.shops.advancedSearchLabel} data-tip={t.shops.advancedSearchTip}>i</button>
       </div>
       <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex flex-wrap items-center gap-4">
@@ -161,10 +194,10 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
           <div class="flex items-center gap-2">
             <span class="text-sm text-base-content/80">{t.shops.sort}</span>
             <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
-              <option value="default">{t.shops.defaultSort}</option>
-              <option value="price-asc">{t.shops.priceAsc}</option>
-              <option value="stock-desc">{t.shops.stockDesc}</option>
-              <option value="refresh-desc">{t.shops.refreshDesc}</option>
+              <option value="default" selected={!initialSort || initialSort === 'default'}>{t.shops.defaultSort}</option>
+              <option value="price-asc" selected={initialSort === 'price-asc'}>{t.shops.priceAsc}</option>
+              <option value="stock-desc" selected={initialSort === 'stock-desc'}>{t.shops.stockDesc}</option>
+              <option value="refresh-desc" selected={initialSort === 'refresh-desc'}>{t.shops.refreshDesc}</option>
               <option value="custom" hidden>{t.shops.headerSort}</option>
             </select>
           </div>
@@ -180,6 +213,13 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
             );
           })}
         </div>
+      </div>
+      <div id="quickPlanRow" class="flex flex-wrap items-center gap-2" aria-label={t.shops.quickPlanSearch}>
+        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">{t.shops.quickPlanSearch}</span>
+        {quickPlanSearchTerms.map((term, index) => (
+          <button type="button" class={`btn btn-outline btn-sm text-sm! rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200! ${index >= quickPlanVisibleLimit ? 'hidden' : ''}`} data-quick-plan-query={term.query} data-quick-plan-index={String(index)}>{term.label}</button>
+        ))}
+        <button id="quickPlanToggle" type="button" class="hidden" data-more-label={t.shops.moreQuickPlans} data-less-label={t.shops.lessQuickPlans}>{t.shops.moreQuickPlans}</button>
       </div>
     </form>
   </section>
@@ -226,38 +266,38 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
             const productFavoriteKey = `${item.siteName}#${productTitle}`;
             const siteFavoriteKey = item.siteId || item.siteName;
             return (
-              <tr class="flat-product-row hover">
-                <th scope="row" class="flat-row-index text-center text-base-content/50 font-bold"></th>
-                <td class="flat-product-cell font-medium">
+              <tr class="flat-product-row">
+                <th scope="row" class="flat-row-index"></th>
+                <td class="flat-product-cell">
                   <div class="cell-inline">
-                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`${t.shops.productFavorite} ${productTitle}`} aria-pressed="false" title={t.shops.productFavorite}>
-                      <span aria-hidden="true" class="text-sm">♡</span>
+                    <button type="button" class="favorite-toggle" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`${t.shops.productFavorite} ${productTitle}`} aria-pressed="false" title={t.shops.productFavorite}>
+                      <span aria-hidden="true">♡</span>
                     </button>
                     {item.productUrl ? (
-                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" class="product-link font-semibold" data-umami-event="product-click" data-umami-event-url={item.productUrl} data-umami-event-name={productTitle} data-product-click-site-id={item.siteId} data-product-click-url={item.productUrl} data-product-click-category={item.categoryName} data-product-click-name={item.name}>{item.name}</a>
+                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" class="product-link" data-umami-event="product-click" data-umami-event-url={item.productUrl} data-umami-event-name={productTitle} data-product-click-site-id={item.siteId} data-product-click-url={item.productUrl} data-product-click-category={item.categoryName} data-product-click-name={item.name}>{item.name}</a>
                     ) : (
-                      <span class="product-text text-base-content">{item.name}</span>
+                      <span class="product-text">{item.name}</span>
                     )}
                   </div>
                 </td>
-                <td class="flat-price-cell font-bold text-primary">{renderProductPrice(item)}</td>
+                <td class="flat-price-cell">{renderProductPrice(item)}</td>
                 <td class="flat-status-cell">
-                  <span class={`badge ${item.inStock ? 'badge-success badge-outline' : 'badge-ghost opacity-60'} badge-sm font-semibold`}>{productStockLabel(item)}</span>
+                  <span class={item.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out'}>{productStockLabel(item)}</span>
                 </td>
-                <td class="flat-category-cell text-base-content/80">{item.categoryName}</td>
+                <td class="flat-category-cell">{item.categoryName}</td>
                 <td class="flat-merchant-cell">
                   <div class="cell-inline">
-                    <button type="button" class="favorite-toggle btn btn-ghost btn-circle btn-xs text-base-content/30 hover:text-rose-500 hover:bg-rose-50 transition" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`${t.shops.merchantFavorite} ${item.siteName}`} aria-pressed="false" title={t.shops.merchantFavorite}>
-                      <span aria-hidden="true" class="text-sm">♡</span>
+                    <button type="button" class="favorite-toggle" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`${t.shops.merchantFavorite} ${item.siteName}`} aria-pressed="false" title={t.shops.merchantFavorite}>
+                      <span aria-hidden="true">♡</span>
                     </button>
                     {item.siteUrl ? (
-                      <a href={item.siteUrl} target="_blank" rel="noopener noreferrer" class="merchant-link merchant-text font-semibold" data-umami-event="merchant-click" data-umami-event-url={item.siteUrl} data-umami-event-name={item.siteName}>{item.siteName}</a>
+                      <a href={item.siteUrl} target="_blank" rel="noopener noreferrer" class="merchant-link merchant-text" data-umami-event="merchant-click" data-umami-event-url={item.siteUrl} data-umami-event-name={item.siteName}>{item.siteName}</a>
                     ) : (
-                      <span class="merchant-text text-base-content/90 font-semibold">{item.siteName}</span>
+                      <span class="merchant-text">{item.siteName}</span>
                     )}
                   </div>
                 </td>
-                <td class="flat-refresh-cell text-xs text-base-content/60">{item.refreshTime}</td>
+                <td class="flat-refresh-cell">{item.refreshTime}</td>
               </tr>
             );
           })}
