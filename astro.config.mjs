@@ -10,18 +10,6 @@ export default defineConfig({
   adapter: node({
     mode: 'standalone',
   }),
-  security: {
-    allowedDomains: [
-      {
-        protocol: 'https',
-        hostname: 'cardnav.xyz',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.cardnav.xyz',
-      },
-    ],
-  },
   vite: {
     plugins: [tailwindcss()],
     build: {
