@@ -2,7 +2,7 @@
  * 文件说明: 识别公开站点语言路径，并处理提交 API 请求。
  */
 import { defineMiddleware } from 'astro:middleware';
-import { isLocale } from './i18n/config.js';
+import { defaultLocale, isLocale } from './i18n/config.js';
 import { getMessages } from './i18n/messages.js';
 import { getLocalePathInfo, localizePath } from './i18n/paths.js';
 import { submitSiteUrl } from './store.js';
@@ -40,6 +40,11 @@ function applyLocaleLocals(
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const localePathInfo = getLocalePathInfo(url.pathname);
+
+  if (!context.isPrerendered && localePathInfo.hasLocalePrefix && localePathInfo.locale === defaultLocale) {
+    url.pathname = localePathInfo.routePathname;
+    return context.redirect(url.pathname + url.search, 301);
+  }
 
   if (context.isPrerendered) {
     applyLocaleLocals(context, localePathInfo);
