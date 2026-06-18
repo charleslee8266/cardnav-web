@@ -1,10 +1,8 @@
 ---
 title: "2.4 Официальная подписка и пополнение AI-модели"
 description: "Самостоятельно подготовьте сеть, телефон и платежный канал, зарегистрируйте и оплатите официальный аккаунт AI-модели, подходит долгосрочным интенсивным пользователям."
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-self-hosted-relay
+parent: choose-usage-method
+next: usage-self-hosted-relay
 ---
 # 2.4 Официальная подписка и пополнение AI-модели
 

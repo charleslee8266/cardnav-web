@@ -1,10 +1,8 @@
 ---
 title: "2.1 API-релейный сайт для AI-моделей"
 description: "Быстро получить возможность вызывать большие модели через API-релей, подходит для проб с низким порогом, подключения нескольких моделей и легкой разработки."
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-ready-account
+parent: choose-usage-method
+next: usage-ready-account
 ---
 # 2.1 API-релейный сайт для AI-моделей
 

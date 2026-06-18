@@ -1,10 +1,8 @@
 ---
 title: "3.4 认识 KYC 风控"
 description: "了解什么是 KYC 身份认证风控，为什么以 Claude 为代表的平台容易触发，以及在没有海外身份时该如何应对。"
-parent:
-  slug: practical-prep
-next:
-  slug: daily-usage-risk
+parent: practical-prep
+next: daily-usage-risk
 ---
 # 3.4 认识 KYC 风控
 

@@ -1,10 +1,8 @@
 ---
 title: "3.4 Понимание KYC-риск-контроля"
 description: "Разберитесь, что такое KYC-проверка личности, почему платформы вроде Claude легко ее запускают и как действовать без зарубежной личности."
-parent:
-  slug: practical-prep
-next:
-  slug: daily-usage-risk
+parent: practical-prep
+next: daily-usage-risk
 ---
 # 3.4 Понимание KYC-риск-контроля
 

@@ -1,8 +1,7 @@
 ---
 title: "Cloud server recommendations"
 description: "Prepare a more controllable overseas host environment for self-hosted nodes or self-hosted relay sites."
-parent:
-  slug: network-env-overview
+parent: network-env-overview
 ---
 # Cloud server recommendations
 

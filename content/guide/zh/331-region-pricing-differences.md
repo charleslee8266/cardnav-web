@@ -1,10 +1,8 @@
 ---
 title: "订阅价格地区差异"
 description: "同一个订阅套餐在不同国家和地区的定价可能差很多。对比不同地区的实际开销与支付门槛。"
-parent:
-  slug: payment-overview
-next:
-  slug: payment-app-store
+parent: payment-overview
+next: payment-app-store
 ---
 # 订阅价格地区差异
 

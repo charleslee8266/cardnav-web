@@ -1,10 +1,8 @@
 ---
 title: "2.1 AI large model API relay site"
 description: "Quickly obtain large model calling capability through an API relay site, suitable for low-barrier trials, multi-model access, and light development debugging."
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-ready-account
+parent: choose-usage-method
+next: usage-ready-account
 ---
 # 2.1 AI large model API relay site
 

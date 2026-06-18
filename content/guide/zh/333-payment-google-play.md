@@ -1,10 +1,8 @@
 ---
 title: "Google Play Store 支付"
 description: "使用目标地区 Google 账号和 Google Play 完成应用内订阅支付。"
-parent:
-  slug: payment-overview
-next:
-  slug: kyc-verification
+parent: payment-overview
+next: kyc-verification
 ---
 # Google Play Store 支付
 

@@ -1,10 +1,8 @@
 ---
 title: "2.4 AI 大模型官方订阅充值"
 description: "自己准备网络、手机号和支付通道，独立注册并订阅 AI 大模型官方账号，适合长期重度用户。"
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-self-hosted-relay
+parent: choose-usage-method
+next: usage-self-hosted-relay
 ---
 # 2.4 AI 大模型官方订阅充值
 

@@ -68,8 +68,8 @@ type ParsedGuideDocument = {
   markdown: string;
   title: string;
   description: string;
-  directParentLink: GuideParentLink | null;
-  directNextLink: GuideLinkRef | null;
+  directParentSlug: string | null;
+  directNextSlug: string | null;
 };
 
 type GuideCollection = {
@@ -106,65 +106,33 @@ function asNonEmptyString(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-function parseGuideParentLink(value: unknown): GuideParentLink | null {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-  const rawParent = value as Record<string, unknown>;
-  const slug = asNonEmptyString(rawParent.slug);
-  if (!slug) {
-    return null;
-  }
-  const title = asNonEmptyString(rawParent.title) ?? undefined;
-  const parent = parseGuideParentLink(rawParent.parent);
-  return {
-    slug,
-    title,
-    parent,
-  };
-}
-
-function parseGuideLinkRef(value: unknown): GuideLinkRef | null {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-  const rawLink = value as Record<string, unknown>;
-  const slug = asNonEmptyString(rawLink.slug);
-  if (!slug) {
-    return null;
-  }
-  const title = asNonEmptyString(rawLink.title) ?? undefined;
-  return {
-    slug,
-    title,
-  };
+function parseGuideSlugRef(value: unknown): string | null {
+  return asNonEmptyString(value);
 }
 
 function resolveParentLink(
   slug: string,
-  directParentBySlug: Map<string, GuideParentLink | null>,
+  directParentBySlug: Map<string, string | null>,
   documentBySlug: Map<string, ParsedGuideDocument>,
   visited = new Set<string>(),
 ): GuideParentLink | null {
-  const directParent = directParentBySlug.get(slug) ?? null;
-  if (!directParent) {
+  const parentSlug = directParentBySlug.get(slug) ?? null;
+  if (!parentSlug) {
     return null;
   }
-  const parentSlug = directParent.slug;
   if (visited.has(parentSlug)) {
     return {
       slug: parentSlug,
-      title: directParent.title,
+      title: documentBySlug.get(parentSlug)?.title,
       parent: null,
     };
   }
   const nextVisited = new Set(visited);
   nextVisited.add(slug);
   const parentDocument = documentBySlug.get(parentSlug);
-  const inheritedTitle = parentDocument?.title;
   return {
     slug: parentSlug,
-    title: directParent.title || inheritedTitle,
+    title: parentDocument?.title,
     parent: resolveParentLink(parentSlug, directParentBySlug, documentBySlug, nextVisited),
   };
 }
@@ -694,8 +662,8 @@ const rawGuideDocuments: ParsedGuideDocument[] = Object.entries(rawGuideMarkdown
       markdown: content,
       title: frontmatterTitle || titleFromMarkdown(content, fallbackTitle),
       description: frontmatterDescription || descriptionFromMarkdown(content),
-      directParentLink: parseGuideParentLink(frontmatter.parent),
-      directNextLink: parseGuideLinkRef(frontmatter.next),
+      directParentSlug: parseGuideSlugRef(frontmatter.parent),
+      directNextSlug: parseGuideSlugRef(frontmatter.next),
     };
   })
   .sort((left, right) => {
@@ -708,7 +676,7 @@ const rawGuideDocuments: ParsedGuideDocument[] = Object.entries(rawGuideMarkdown
 function buildGuideCollection(localeDocuments: ParsedGuideDocument[]): GuideCollection {
   const slugByFileName = new Map(localeDocuments.map(item => [item.fileName, item.slug]));
   const documentBySlug = new Map(localeDocuments.map(item => [item.slug, item]));
-  const directParentBySlug = new Map(localeDocuments.map(item => [item.slug, item.directParentLink]));
+  const directParentBySlug = new Map(localeDocuments.map(item => [item.slug, item.directParentSlug]));
 
   const renderedGuideArticles: RenderedGuideArticle[] = localeDocuments.map(item => {
     const normalizedMarkdown = rewriteMarkdownLinks(item.markdown, slugByFileName);
@@ -721,14 +689,14 @@ function buildGuideCollection(localeDocuments: ParsedGuideDocument[]): GuideColl
       order: item.order,
       parentLink: resolveParentLink(item.slug, directParentBySlug, documentBySlug),
       nextLink: (() => {
-        const nextSlug = item.directNextLink?.slug;
+        const nextSlug = item.directNextSlug;
         if (!nextSlug) {
           return null;
         }
         const nextDocument = documentBySlug.get(nextSlug);
         return {
           slug: nextSlug,
-          title: item.directNextLink?.title || nextDocument?.title,
+          title: nextDocument?.title,
         };
       })(),
       markdown: normalizedMarkdown,
@@ -762,7 +730,7 @@ function buildGuideCollection(localeDocuments: ParsedGuideDocument[]): GuideColl
   const childrenByParentSlug = new Map<string | null, ParsedGuideDocument[]>();
 
   for (const item of localeDocuments) {
-    const parentSlug = item.directParentLink?.slug ?? null;
+    const parentSlug = item.directParentSlug;
     const existingChildren = childrenByParentSlug.get(parentSlug) ?? [];
     existingChildren.push(item);
     existingChildren.sort((left, right) => {

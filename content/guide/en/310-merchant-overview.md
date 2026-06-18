@@ -1,8 +1,7 @@
 ---
 title: "3.1 Understand card shops and avoid purchase pitfalls"
 description: "Understand what a virtual goods card-shop platform is, and how to safely buy overseas large model accounts and services."
-parent:
-  slug: practical-prep
+parent: practical-prep
 ---
 # 3.1 Understand card shops and avoid purchase pitfalls
 

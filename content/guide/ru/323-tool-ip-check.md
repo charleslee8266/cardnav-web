@@ -1,8 +1,7 @@
 ---
 title: "Проверка чистоты IP"
 description: "Перед регистрацией, входом и оплатой сначала грубо отфильтруйте очевидно высокорисковые выходные IP."
-parent:
-  slug: network-env-overview
+parent: network-env-overview
 ---
 # Проверка чистоты IP
 

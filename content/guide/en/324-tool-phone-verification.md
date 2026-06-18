@@ -1,8 +1,7 @@
 ---
 title: "Overseas phone number verification"
 description: "Solve registration verification codes and later secondary verification problems, avoiding account lock-up caused by one-time numbers."
-parent:
-  slug: network-env-overview
+parent: network-env-overview
 ---
 # Overseas phone number verification
 

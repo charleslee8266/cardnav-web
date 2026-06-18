@@ -1,10 +1,8 @@
 ---
 title: "Subscription price differences by region"
 description: "The same subscription plan may have very different pricing in different countries and regions. Compare actual costs and payment barriers across regions."
-parent:
-  slug: payment-overview
-next:
-  slug: payment-app-store
+parent: payment-overview
+next: payment-app-store
 ---
 # Subscription price differences by region
 

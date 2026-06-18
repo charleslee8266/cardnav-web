@@ -1,10 +1,8 @@
 ---
 title: "2. Choose an AI subscription usage method"
 description: "Compare the barriers, risks, and suitable users of five large model usage methods: relay sites, ready-made accounts, top-ups, self top-ups, and self-hosting."
-parent:
-  slug: start-here
-next:
-  slug: practical-prep
+parent: start-here
+next: practical-prep
 ---
 # 2. Choose an AI subscription usage method
 

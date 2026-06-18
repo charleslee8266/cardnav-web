@@ -1,10 +1,8 @@
 ---
 title: "2.3 Third-party top-up for your own AI large model account"
 description: "Keep your own AI large model account, and have a third-party merchant activate or renew the official subscription for you, suitable for users who already have an account but cannot pay by themselves."
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-self-register
+parent: choose-usage-method
+next: usage-self-register
 ---
 # 2.3 Third-party top-up for your own AI large model account
 

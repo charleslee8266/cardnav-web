@@ -1,10 +1,8 @@
 ---
 title: "3. Practical AI subscription preparation and purchase pitfall avoidance"
 description: "Complete network and cloud host configuration, prepare payment channels, understand subscription regional price differences, and learn about card shops and delivery formats."
-parent:
-  slug: start-here
-next:
-  slug: daily-usage-risk
+parent: start-here
+next: daily-usage-risk
 ---
 # 3. Practical AI subscription preparation and purchase pitfall avoidance
 

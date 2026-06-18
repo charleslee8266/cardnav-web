@@ -1,10 +1,8 @@
 ---
 title: "2.1 AI 大模型 API 中转站"
 description: "通过 API 中转站快速获得大模型调用能力，适合低门槛试用、多模型接入和轻量开发调试。"
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-ready-account
+parent: choose-usage-method
+next: usage-ready-account
 ---
 # 2.1 AI 大模型 API 中转站
 

@@ -1,8 +1,7 @@
 ---
 title: "Start here"
 description: "Start from Start here, first decide on the model, then choose the usage method, then complete the preparation items such as tools and payment."
-next:
-  slug: choose-model
+next: choose-model
 ---
 # Start here
 

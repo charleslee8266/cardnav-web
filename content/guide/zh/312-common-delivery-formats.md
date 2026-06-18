@@ -1,8 +1,7 @@
 ---
 title: "常见账号发货格式说明"
 description: "先判断商家发的是账密、四段 RT，还是各种 JSON 凭证，再决定能不能直接登录或应该导入什么工具。"
-parent:
-  slug: merchant-overview
+parent: merchant-overview
 ---
 # 常见账号发货格式说明
 

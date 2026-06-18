@@ -1,10 +1,8 @@
 ---
 title: "2.5 Self-hosted AI large model relay site"
 description: "Purchase official AI large model quota and self-host a relay interface, suitable for users with technical foundations who need team sharing and internal access."
-parent:
-  slug: choose-usage-method
-next:
-  slug: practical-prep
+parent: choose-usage-method
+next: practical-prep
 ---
 # 2.5 Self-hosted AI large model relay site
 

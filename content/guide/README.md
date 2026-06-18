@@ -27,10 +27,8 @@ content/guide/<LANG>/
 ---
 title: "2.1 AI 大模型 API 中转站"
 description: "通过 API 中转站快速获得大模型调用能力，适合低门槛试用、多模型接入和轻量开发调试。"
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-ready-account
+parent: choose-usage-method
+next: usage-ready-account
 ---
 ```
 
@@ -40,12 +38,12 @@ next:
 type GuideFrontmatter = {
   title: string; // 页面标题，优先写完整语义，适合 SEO 和目录展示
   description: string; // 页面摘要，用于列表、SEO 描述和分享摘要
-  parent?: { slug: string }; // 上级文章，标题自动从目标文章读取
-  next?: { slug: string }; // 下一篇文章，标题自动从目标文章读取
+  parent?: string; // 上级文章 slug，标题自动从目标文章读取
+  next?: string; // 下一篇文章 slug，标题自动从目标文章读取
 };
 ```
 
-`title` 和 `description` 统一使用双引号，避免英文、俄文等内容里的 `: ` 触发 YAML 解析问题。`title` 应该是完整语义标题。章节页保留编号，例如 `2.1 AI 大模型 API 中转站`，不要只写 `API 中转站`。`parent` 和 `next` 只写 `slug`，标题由渲染逻辑自动读取目标文章的 `title`。
+`title` 和 `description` 统一使用双引号，避免英文、俄文等内容里的 `: ` 触发 YAML 解析问题。`title` 应该是完整语义标题。章节页保留编号，例如 `2.1 AI 大模型 API 中转站`，不要只写 `API 中转站`。`parent` 和 `next` 的字段值直接写目标文章 slug，标题由渲染逻辑自动读取目标文章的 `title`。
 
 ## 正文结构
 

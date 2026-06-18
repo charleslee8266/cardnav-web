@@ -1,8 +1,7 @@
 ---
 title: "VPN and proxy access"
 description: "Solve regional access restrictions, and try to ensure stable matching of region and IP during later registration, login, and subscription."
-parent:
-  slug: network-env-overview
+parent: network-env-overview
 ---
 # VPN and proxy access
 

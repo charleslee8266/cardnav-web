@@ -1,10 +1,8 @@
 ---
 title: "2.2 AI 大模型成品账号购买与登录"
 description: "购买已开通 AI 订阅的大模型成品账号并直接登录，适合快速体验原生网页和客户端功能。"
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-third-party-top-up
+parent: choose-usage-method
+next: usage-third-party-top-up
 ---
 # 2.2 AI 大模型成品账号购买与登录
 

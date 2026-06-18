@@ -1,8 +1,7 @@
 ---
 title: "4. Risk control and daily pitfall avoidance during AI subscription use"
 description: "Sort out common risk-control trigger points and pitfall avoidance advice during daily use of overseas large model accounts."
-parent:
-  slug: start-here
+parent: start-here
 ---
 # 4. Risk control and daily pitfall avoidance during AI subscription use
 

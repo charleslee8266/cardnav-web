@@ -1,10 +1,8 @@
 ---
 title: "Региональная разница цен подписки"
 description: "Один и тот же план подписки может сильно отличаться по цене в разных странах и регионах. Сравните фактические расходы и платежные пороги разных регионов."
-parent:
-  slug: payment-overview
-next:
-  slug: payment-app-store
+parent: payment-overview
+next: payment-app-store
 ---
 # Региональная разница цен подписки
 

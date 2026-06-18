@@ -1,8 +1,7 @@
 ---
 title: "3.1 认识卡网与选购避坑"
 description: "了解什么是虚拟商品卡网平台，以及如何安全选购海外大模型账号与服务。"
-parent:
-  slug: practical-prep
+parent: practical-prep
 ---
 # 3.1 认识卡网与选购避坑
 

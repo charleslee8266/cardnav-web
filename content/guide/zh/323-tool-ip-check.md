@@ -1,8 +1,7 @@
 ---
 title: "IP 纯净度检查"
 description: "在注册、登录和付款前，先粗略筛掉明显高风险的出口 IP。"
-parent:
-  slug: network-env-overview
+parent: network-env-overview
 ---
 # IP 纯净度检查
 

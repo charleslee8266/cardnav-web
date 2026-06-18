@@ -1,10 +1,8 @@
 ---
 title: "App Store 支付"
 description: "通过对应地区的 Apple ID 和礼品卡完成应用商店内订阅支付。"
-parent:
-  slug: payment-overview
-next:
-  slug: payment-google-play
+parent: payment-overview
+next: payment-google-play
 ---
 # App Store 支付
 

@@ -1,10 +1,8 @@
 ---
 title: "Оплата через App Store"
 description: "Через Apple ID и подарочную карту соответствующего региона выполните оплату подписки внутри магазина приложений."
-parent:
-  slug: payment-overview
-next:
-  slug: payment-google-play
+parent: payment-overview
+next: payment-google-play
 ---
 # Оплата через App Store
 

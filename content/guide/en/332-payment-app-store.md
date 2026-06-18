@@ -1,10 +1,8 @@
 ---
 title: "App Store payment"
 description: "Complete app store in-app subscription payment through an Apple ID and gift card in the corresponding region."
-parent:
-  slug: payment-overview
-next:
-  slug: payment-google-play
+parent: payment-overview
+next: payment-google-play
 ---
 # App Store payment
 

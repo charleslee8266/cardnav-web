@@ -1,8 +1,7 @@
 ---
 title: "3.2 网络环境与主机准备"
 description: "梳理独立注册、登录与付款时的网络配置、IP 风险控制及海外主机租用流程。"
-parent:
-  slug: practical-prep
+parent: practical-prep
 ---
 # 3.2 网络环境与主机准备
 

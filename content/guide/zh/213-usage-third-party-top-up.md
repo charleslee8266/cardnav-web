@@ -1,10 +1,8 @@
 ---
 title: "2.3 AI 大模型自备账号第三方代充"
 description: "自己保留 AI 大模型账号，由第三方商家代为开通或续费官方订阅，适合已有账号但无法自行付款的用户。"
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-self-register
+parent: choose-usage-method
+next: usage-self-register
 ---
 # 2.3 AI 大模型自备账号第三方代充
 

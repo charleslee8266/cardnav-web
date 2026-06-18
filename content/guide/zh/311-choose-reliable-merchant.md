@@ -1,8 +1,7 @@
 ---
 title: "如何挑选靠谱商家"
 description: "购买 AI 账号或虚拟商品时，从商品数量、热门覆盖、平台属性、支付渠道和社群活跃度等维度判断商家信任度。"
-parent:
-  slug: merchant-overview
+parent: merchant-overview
 ---
 # 如何挑选靠谱商家
 

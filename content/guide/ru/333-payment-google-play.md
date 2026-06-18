@@ -1,10 +1,8 @@
 ---
 title: "Оплата через Google Play Store"
 description: "Используйте Google-аккаунт целевого региона и Google Play для оплаты подписки внутри приложения."
-parent:
-  slug: payment-overview
-next:
-  slug: kyc-verification
+parent: payment-overview
+next: kyc-verification
 ---
 # Оплата через Google Play Store
 

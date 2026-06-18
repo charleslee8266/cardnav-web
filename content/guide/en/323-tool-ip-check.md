@@ -1,8 +1,7 @@
 ---
 title: "IP purity check"
 description: "Before registration, login, and payment, first roughly filter out obviously high-risk exit IPs."
-parent:
-  slug: network-env-overview
+parent: network-env-overview
 ---
 # IP purity check
 

@@ -1,8 +1,7 @@
 ---
 title: "3.2 Network environment and host preparation"
 description: "Sort out network configuration, IP risk control, and overseas host rental processes for independent registration, login, and payment."
-parent:
-  slug: practical-prep
+parent: practical-prep
 ---
 # 3.2 Network environment and host preparation
 

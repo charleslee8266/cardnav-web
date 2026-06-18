@@ -1,8 +1,7 @@
 ---
 title: "Common account delivery format explanation"
 description: "First judge whether the merchant delivers account/password, four-part RT, or various JSON credentials, then decide whether you can log in directly or what tool you should import into."
-parent:
-  slug: merchant-overview
+parent: merchant-overview
 ---
 # Common account delivery format explanation
 

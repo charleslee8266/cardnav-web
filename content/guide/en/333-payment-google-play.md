@@ -1,10 +1,8 @@
 ---
 title: "Google Play Store payment"
 description: "Use a target-region Google account and Google Play to complete in-app subscription payment."
-parent:
-  slug: payment-overview
-next:
-  slug: kyc-verification
+parent: payment-overview
+next: kyc-verification
 ---
 # Google Play Store payment
 

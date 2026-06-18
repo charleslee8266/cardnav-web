@@ -1,10 +1,8 @@
 ---
 title: "3.3 国际支付与价差"
 description: "先看订阅的地区价格差异，再选择合适的国际支付渠道和防风控建议。"
-parent:
-  slug: practical-prep
-next:
-  slug: region-pricing-differences
+parent: practical-prep
+next: region-pricing-differences
 ---
 # 3.3 国际支付与价差
 

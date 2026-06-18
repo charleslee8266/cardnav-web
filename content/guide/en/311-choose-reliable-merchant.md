@@ -1,8 +1,7 @@
 ---
 title: "How to choose a reliable merchant"
 description: "When buying AI accounts or virtual goods, judge merchant trustworthiness from dimensions such as product quantity, popular coverage, platform attributes, payment channels, and community activity."
-parent:
-  slug: merchant-overview
+parent: merchant-overview
 ---
 # How to choose a reliable merchant
 

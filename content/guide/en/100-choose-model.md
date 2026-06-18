@@ -1,10 +1,8 @@
 ---
 title: "1. Choose the AI large model you want to use"
 description: "First judge whether you want top model capability, or a low barrier and low cost, then decide whether to continue with this guide."
-parent:
-  slug: start-here
-next:
-  slug: choose-usage-method
+parent: start-here
+next: choose-usage-method
 ---
 # 1. Choose the AI large model you want to use
 

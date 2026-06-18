@@ -1,10 +1,8 @@
 ---
 title: "3.3 Международные платежи и разница цен"
 description: "Сначала посмотрите региональные различия цен подписки, затем выберите подходящий международный платежный канал и советы против риск-контроля."
-parent:
-  slug: practical-prep
-next:
-  slug: region-pricing-differences
+parent: practical-prep
+next: region-pricing-differences
 ---
 # 3.3 Международные платежи и разница цен
 

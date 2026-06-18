@@ -1,10 +1,8 @@
 ---
 title: "2.5 自建 AI 大模型中转站"
 description: "购买 AI 大模型官方额度并自建中转接口，适合有技术基础、需要团队共享和内部接入的用户。"
-parent:
-  slug: choose-usage-method
-next:
-  slug: practical-prep
+parent: choose-usage-method
+next: practical-prep
 ---
 # 2.5 自建 AI 大模型中转站
 

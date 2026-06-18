@@ -1,10 +1,8 @@
 ---
 title: "3.3 International payments and price differences"
 description: "First look at regional price differences for subscriptions, then choose suitable international payment channels and anti-risk-control advice."
-parent:
-  slug: practical-prep
-next:
-  slug: region-pricing-differences
+parent: practical-prep
+next: region-pricing-differences
 ---
 # 3.3 International payments and price differences
 

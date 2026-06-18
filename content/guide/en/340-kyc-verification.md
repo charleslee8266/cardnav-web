@@ -1,10 +1,8 @@
 ---
 title: "3.4 Understand KYC risk control"
 description: "Understand what KYC identity verification risk control is, why platforms represented by Claude easily trigger it, and how to respond when you do not have an overseas identity."
-parent:
-  slug: practical-prep
-next:
-  slug: daily-usage-risk
+parent: practical-prep
+next: daily-usage-risk
 ---
 # 3.4 Understand KYC risk control
 

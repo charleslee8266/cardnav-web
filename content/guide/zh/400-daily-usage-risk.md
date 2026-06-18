@@ -1,8 +1,7 @@
 ---
 title: "四、AI 订阅使用期间的风控与日常避坑"
 description: "梳理海外大模型账号在日常使用期间常见的风控触发点与避坑建议。"
-parent:
-  slug: start-here
+parent: start-here
 ---
 # 四、AI 订阅使用期间的风控与日常避坑
 

@@ -1,10 +1,8 @@
 ---
 title: "2.2 Покупка и вход в готовый аккаунт AI-модели"
 description: "Купить готовый аккаунт большой модели с активной AI-подпиской и напрямую войти, подходит для быстрого опыта нативного веба и клиента."
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-third-party-top-up
+parent: choose-usage-method
+next: usage-third-party-top-up
 ---
 # 2.2 Покупка и вход в готовый аккаунт AI-модели
 

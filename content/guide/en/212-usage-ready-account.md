@@ -1,10 +1,8 @@
 ---
 title: "2.2 AI large model ready-made account purchase and login"
 description: "Purchase a ready-made large model account with an activated AI subscription and log in directly, suitable for quickly experiencing native web and client features."
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-third-party-top-up
+parent: choose-usage-method
+next: usage-third-party-top-up
 ---
 # 2.2 AI large model ready-made account purchase and login
 

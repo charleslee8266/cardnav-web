@@ -1,10 +1,8 @@
 ---
 title: "2.4 AI large model official subscription top-up"
 description: "Prepare your own network, phone number, and payment channel, independently register and subscribe to an official AI large model account, suitable for long-term heavy users."
-parent:
-  slug: choose-usage-method
-next:
-  slug: usage-self-hosted-relay
+parent: choose-usage-method
+next: usage-self-hosted-relay
 ---
 # 2.4 AI large model official subscription top-up
 
