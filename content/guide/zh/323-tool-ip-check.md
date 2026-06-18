@@ -1,9 +1,8 @@
 ---
-title: IP 纯净度检查
-description: 在注册、登录和付款前，先粗略筛掉明显高风险的出口 IP。
+title: "IP 纯净度检查"
+description: "在注册、登录和付款前，先粗略筛掉明显高风险的出口 IP。"
 parent:
   slug: network-env-overview
-  title: 3.2 网络环境与主机准备
 ---
 # IP 纯净度检查
 

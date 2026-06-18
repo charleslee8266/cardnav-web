@@ -1,12 +1,10 @@
 ---
-title: 三、AI 订阅实操准备与选购避坑
-description: 补齐网络与云主机配置、准备支付通道、了解订阅区域价差以及认识卡网和发货格式。
+title: "三、AI 订阅实操准备与选购避坑"
+description: "补齐网络与云主机配置、准备支付通道、了解订阅区域价差以及认识卡网和发货格式。"
 parent:
   slug: start-here
-  title: 开始向导
 next:
   slug: daily-usage-risk
-  title: 四、AI 订阅使用期间的风控与日常避坑
 ---
 # 三、AI 订阅实操准备与选购避坑
 

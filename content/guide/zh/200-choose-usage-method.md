@@ -1,12 +1,10 @@
 ---
-title: 二、选择 AI 订阅使用方式
-description: 对比中转站、成品号、代充、自充、自建等五种大模型使用方式的门槛、风险和适用人群。
+title: "二、选择 AI 订阅使用方式"
+description: "对比中转站、成品号、代充、自充、自建等五种大模型使用方式的门槛、风险和适用人群。"
 parent:
   slug: start-here
-  title: 开始向导
 next:
   slug: practical-prep
-  title: 三、AI 订阅实操准备与选购避坑
 ---
 # 二、选择 AI 订阅使用方式
 

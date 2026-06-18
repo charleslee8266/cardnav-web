@@ -400,7 +400,6 @@ export const zhMessages = {
     seoDescription: 'AI 账号购买、商家选择和虚拟商品下单前的判断方法。',
     allDocs: '全部文档',
     docListLabel: '向导文档列表',
-    breadcrumbsLabel: '向导面包屑',
     eyebrow: '向导指南',
     nextStep: '下一步',
   },

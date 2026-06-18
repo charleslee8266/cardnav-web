@@ -1,12 +1,10 @@
 ---
-title: 2.4 AI 大模型官方订阅充值
-description: 自己准备网络、手机号和支付通道，独立注册并订阅 AI 大模型官方账号，适合长期重度用户。
+title: "2.4 AI 大模型官方订阅充值"
+description: "自己准备网络、手机号和支付通道，独立注册并订阅 AI 大模型官方账号，适合长期重度用户。"
 parent:
   slug: choose-usage-method
-  title: 二、选择 AI 订阅使用方式
 next:
   slug: usage-self-hosted-relay
-  title: 2.5 自建 AI 大模型中转站
 ---
 # 2.4 AI 大模型官方订阅充值
 
@@ -35,19 +33,19 @@ next:
 ## 准备清单
 
 ## 网络与 IP
-<!-- badge="准备清单" -->
+<!-- badge="准备清单" icon="vpn" -->
 
 - 准备干净、稳定的网络代理环境
 - 优先阅读 [科学上网与 VPN](./321-tool-vpn.md) 和 [IP 纯净度检查](./323-tool-ip-check.md)
 
 ## 手机号验证
-<!-- badge="准备清单" -->
+<!-- badge="准备清单" icon="phone" -->
 
 - 准备可接收验证码的海外手机号
 - 尽量避免一次性号码绑定长期核心账号，详情见 [国外手机号验证](./324-tool-phone-verification.md)
 
 ## 支付方式
-<!-- badge="准备清单" -->
+<!-- badge="准备清单" icon="card" -->
 
 - 根据目标平台选择支付方式
 - 可以先了解 [国际支付与价差](./330-payment-overview.md)、[App Store 支付](./332-payment-app-store.md) 和 [Google Play Store 支付](./333-payment-google-play.md)

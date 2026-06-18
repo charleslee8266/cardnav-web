@@ -1,12 +1,10 @@
 ---
-title: Google Play Store 支付
-description: 使用目标地区 Google 账号和 Google Play 完成应用内订阅支付。
+title: "Google Play Store 支付"
+description: "使用目标地区 Google 账号和 Google Play 完成应用内订阅支付。"
 parent:
   slug: payment-overview
-  title: 3.3 国际支付与价差
 next:
   slug: kyc-verification
-  title: 3.4 认识 KYC 风控
 ---
 # Google Play Store 支付
 

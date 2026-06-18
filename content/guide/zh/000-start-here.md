@@ -1,9 +1,8 @@
 ---
-title: 开始向导
-description: 从 Start here 开始，先确定模型、再选使用方式、再补齐工具与支付等准备项。
+title: "开始向导"
+description: "从 Start here 开始，先确定模型、再选使用方式、再补齐工具与支付等准备项。"
 next:
   slug: choose-model
-  title: 一、选择你想使用的 AI 大模型
 ---
 # 开始向导
 

@@ -1,9 +1,8 @@
 ---
-title: 常见账号发货格式说明
-description: 先判断商家发的是账密、四段 RT，还是各种 JSON 凭证，再决定能不能直接登录或应该导入什么工具。
+title: "常见账号发货格式说明"
+description: "先判断商家发的是账密、四段 RT，还是各种 JSON 凭证，再决定能不能直接登录或应该导入什么工具。"
 parent:
   slug: merchant-overview
-  title: 3.1 认识卡网与选购避坑
 ---
 # 常见账号发货格式说明
 
@@ -17,7 +16,7 @@ parent:
 - **工具与中转站导入**：对于交付为 session 或各类 JSON 配置的格式，通常更适合导入第三方中转软件或管理面板。
 
 ## 账密
-<!-- badge="最直接" -->
+<!-- badge="最直接" icon="key" -->
 
 商家直接发邮箱和密码，通常可以直接网页或客户端登录。
 
@@ -30,7 +29,7 @@ example@example.com | abc***XYZ
 ```
 
 ## 四段 RT
-<!-- badge="可直登 / 可转换" -->
+<!-- badge="可直登 / 可转换" icon="key" -->
 
 一行里同时带账号、密码、`client_id` 和 `refresh_token`。
 
@@ -43,7 +42,7 @@ example@example.com----abc***XYZ----cli***123----rt_abc***xyz
 ```
 
 ## ChatGPT Session
-<!-- badge="会话 JSON" -->
+<!-- badge="会话 JSON" icon="api" -->
 
 已登录网页拿到的会话信息，不是普通账密。
 
@@ -65,7 +64,7 @@ example@example.com----abc***XYZ----cli***123----rt_abc***xyz
 ```
 
 ## Codex / CPA / Sub2API / Cockpit
-<!-- badge="工具导入格式" -->
+<!-- badge="工具导入格式" icon="toolbox" -->
 
 这类通常都是给工具、面板或中转程序导入用的 JSON。
 

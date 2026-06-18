@@ -1,9 +1,8 @@
 ---
-title: 科学上网与 VPN
-description: 解决地区访问限制，并尽量保证后续注册、登录和订阅时的地区与 IP 稳定匹配。
+title: "科学上网与 VPN"
+description: "解决地区访问限制，并尽量保证后续注册、登录和订阅时的地区与 IP 稳定匹配。"
 parent:
   slug: network-env-overview
-  title: 3.2 网络环境与主机准备
 ---
 # 科学上网与 VPN
 

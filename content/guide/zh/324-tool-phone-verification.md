@@ -1,9 +1,8 @@
 ---
-title: 国外手机号验证
-description: 解决注册验证码和后续二次验证问题，避免一次性号码导致账号后续卡死。
+title: "国外手机号验证"
+description: "解决注册验证码和后续二次验证问题，避免一次性号码导致账号后续卡死。"
 parent:
   slug: network-env-overview
-  title: 3.2 网络环境与主机准备
 ---
 # 国外手机号验证
 

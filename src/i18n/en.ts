@@ -401,7 +401,6 @@ export const enMessages: Messages = {
     seoDescription: 'Practical judgment methods before buying AI accounts, choosing merchants, or ordering virtual products.',
     allDocs: 'All docs',
     docListLabel: 'Guide document list',
-    breadcrumbsLabel: 'Guide breadcrumbs',
     eyebrow: 'Guide',
     nextStep: 'Next step',
   },

@@ -1,12 +1,10 @@
 ---
-title: 一、选择你想使用的 AI 大模型
-description: 先判断你是要顶级模型能力，还是低门槛和低成本，再决定是否继续这条向导。
+title: "一、选择你想使用的 AI 大模型"
+description: "先判断你是要顶级模型能力，还是低门槛和低成本，再决定是否继续这条向导。"
 parent:
   slug: start-here
-  title: 开始向导
 next:
   slug: choose-usage-method
-  title: 二、选择 AI 订阅使用方式
 ---
 # 一、选择你想使用的 AI 大模型
 

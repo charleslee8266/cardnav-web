@@ -1,9 +1,8 @@
 ---
-title: 云服务器推荐
-description: 为自建节点或自建中转站准备更可控的海外主机环境。
+title: "云服务器推荐"
+description: "为自建节点或自建中转站准备更可控的海外主机环境。"
 parent:
   slug: network-env-overview
-  title: 3.2 网络环境与主机准备
 ---
 # 云服务器推荐
 

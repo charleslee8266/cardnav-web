@@ -401,7 +401,6 @@ export const ruMessages: Messages = {
     seoDescription: 'Практичные способы оценки перед покупкой AI-аккаунтов, выбором продавцов и заказом виртуальных товаров.',
     allDocs: 'Все документы',
     docListLabel: 'Список документов гайда',
-    breadcrumbsLabel: 'Навигационная цепочка гайда',
     eyebrow: 'Гайд',
     nextStep: 'Следующий шаг',
   },

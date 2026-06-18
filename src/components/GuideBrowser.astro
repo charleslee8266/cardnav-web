@@ -3,7 +3,7 @@
 文件说明: 渲染向导双栏浏览界面，左侧显示文档列表，右侧显示当前文档正文和赞助区。
 */
 import Sponsors from './Sponsors.astro';
-import type { GuideParentLink, GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
+import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
 
 type Props = {
   articles: GuideArticle[];
@@ -32,21 +32,6 @@ function guideUrlClickAttrs(targetPage: string) {
   };
 }
 
-function buildBreadcrumbs(parentLink: GuideParentLink | null) {
-  const chain: GuideParentLink[] = [];
-  let cursor = parentLink;
-  while (cursor) {
-    chain.unshift(cursor);
-    cursor = cursor.parent ?? null;
-  }
-  return chain.map(item => ({
-    slug: item.slug,
-    title: item.title?.trim() || item.slug,
-  }));
-}
-
-const breadcrumbs = buildBreadcrumbs(currentArticle.parentLink);
-
 function localizeRenderedGuideLinks(html: string) {
   return html.replace(/href="(\/guide[^"]*)"/gu, (_match, href: string) => `href="${linkTo(href)}"`);
 }
@@ -54,10 +39,22 @@ function localizeRenderedGuideLinks(html: string) {
 const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 ---
 
-<section class="guide-browser-grid h-full min-h-0 overflow-hidden grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
+<section class="guide-browser-grid h-full min-h-0 grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
   <aside class="guide-sidebar card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
-    <div class="border-b border-base-300 bg-base-200 px-4 py-3">
-      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/60">Guide</p>
+    <details class="guide-sidebar-disclosure">
+      <summary class="guide-sidebar-summary">
+        <span class="min-w-0">
+          <span class="guide-sidebar-kicker">Guide</span>
+          <span class="guide-sidebar-current">{currentArticle.title}</span>
+        </span>
+        <span class="guide-sidebar-summary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </span>
+      </summary>
+    </details>
+    <div class="guide-sidebar-header border-b border-base-300 bg-base-200 px-4 py-3">
       <h2 class="mt-1 text-lg font-bold text-base-content">{t.guide.allDocs}</h2>
     </div>
     <nav aria-label={t.guide.docListLabel} class="guide-sidebar-scroll p-2">
@@ -95,24 +92,6 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
   </aside>
 
   <section class="guide-content-scroll min-w-0 space-y-4">
-    <nav aria-label={t.guide.breadcrumbsLabel} class="guide-breadcrumbs rounded-2xl border border-base-300 bg-base-100 px-4 py-3 shadow-sm">
-      <ol class="guide-breadcrumb-list">
-        <li>
-          <a href={linkTo('/guide')} {...guideUrlClickAttrs('/guide')}>{t.nav.guide}</a>
-        </li>
-        {breadcrumbs.map(item => (
-          <li>
-            <span aria-hidden="true" class="guide-breadcrumb-separator">/</span>
-            <a href={linkTo(`/guide/${item.slug}`)} {...guideUrlClickAttrs(`/guide/${item.slug}`)}>{item.title}</a>
-          </li>
-        ))}
-        <li aria-current="page">
-          <span aria-hidden="true" class="guide-breadcrumb-separator">/</span>
-          <span class="guide-breadcrumb-current">{currentArticle.title}</span>
-        </li>
-      </ol>
-    </nav>
-
     <section class="guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
       <div class="guide-hero">
         <p class="guide-eyebrow">{t.guide.eyebrow}</p>
@@ -141,7 +120,14 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 <script is:inline>
   (() => {
     const currentLink = document.querySelector('[data-guide-current="true"]');
+    const disclosure = document.querySelector('.guide-sidebar-disclosure');
     if (!currentLink) return;
     currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    disclosure?.addEventListener('toggle', () => {
+      if (!disclosure.open) return;
+      requestAnimationFrame(() => {
+        currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      });
+    });
   })();
 </script>
