@@ -5,6 +5,7 @@
 import { telegramGroupUrl } from '../site.js';
 
 const t = Astro.locals.messages;
+const sponsorTokenPlusUrl = 'https://www.tokenplus.io/';
 const sponsorAnyRouterUrl = 'https://anyrouter.top/register?aff=JA5h';
 const sponsorPackyApiUrl = 'https://www.packyapi.com/register?aff=Nulo';
 const sponsorRightCodeUrl = 'https://www.right.codes/register?aff=84ba7fb0';
@@ -21,6 +22,17 @@ const sponsorPlan7c8gUrl = 'https://my.racknerd.com/aff.php?aff=20079&pid=956';
     <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="sponsor-lead-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.sponsors.becomeSponsor} class="sponsor-join-link">{t.sponsors.becomeSponsor}</a>
   </div>
   <div class="sponsor-grid">
+    <article class="sponsor-card">
+      <a href={sponsorTokenPlusUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorTokenPlusUrl} class="sponsor-main-link group">
+        <span class="sponsor-logo-frame sponsor-logo-frame-dark">
+          <img src="/tokenplus.png" alt={t.sponsors.tokenPlus.alt} width="225" height="60" loading="lazy" class="sponsor-logo sponsor-logo-inset" />
+        </span>
+        <span class="sponsor-name">
+          {t.sponsors.tokenPlus.name}
+        </span>
+        <span class="sponsor-copy">{t.sponsors.tokenPlus.description}</span>
+      </a>
+    </article>
     <article class="sponsor-card">
       <a href={sponsorAnyRouterUrl} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsorAnyRouterUrl} class="sponsor-main-link group">
         <span class="sponsor-logo-frame sponsor-logo-frame-padded">

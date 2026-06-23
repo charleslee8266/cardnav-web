@@ -414,6 +414,11 @@ export const ruMessages: Messages = {
   sponsors: {
     title: 'Спонсоры',
     becomeSponsor: 'Стать спонсором',
+    tokenPlus: {
+      alt: 'Логотип спонсора TokenPlus',
+      name: 'TokenPlus',
+      description: 'AI Resource & Service Linker Community.',
+    },
     anyRouter: {
       alt: 'Логотип спонсора AnyRouter',
       name: 'AnyRouter public-benefit site',

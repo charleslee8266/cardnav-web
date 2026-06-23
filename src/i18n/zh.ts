@@ -413,6 +413,11 @@ export const zhMessages = {
   sponsors: {
     title: '赞助商列表',
     becomeSponsor: '成为赞助商',
+    tokenPlus: {
+      alt: 'TokenPlus 赞助商标志',
+      name: 'TokenPlus',
+      description: 'AI资源与服务链接器',
+    },
     anyRouter: {
       alt: 'AnyRouter 赞助商标志',
       name: 'AnyRouter 公益站点',

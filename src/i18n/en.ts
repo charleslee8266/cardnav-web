@@ -414,6 +414,11 @@ export const enMessages: Messages = {
   sponsors: {
     title: 'Sponsors',
     becomeSponsor: 'Become a sponsor',
+    tokenPlus: {
+      alt: 'TokenPlus sponsor logo',
+      name: 'TokenPlus',
+      description: 'AI Resource & Service Linker Community.',
+    },
     anyRouter: {
       alt: 'AnyRouter sponsor logo',
       name: 'AnyRouter public-benefit site',

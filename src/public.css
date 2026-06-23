@@ -743,9 +743,17 @@
     @apply px-4;
   }
 
+  .sponsor-logo-frame-dark {
+    @apply bg-black px-3 py-2;
+  }
+
   .sponsor-logo,
   .sponsor-banner {
     @apply h-full w-full object-contain text-slate-950;
+  }
+
+  .sponsor-logo-inset {
+    @apply max-h-[82%] max-w-[88%];
   }
 
   .sponsor-logo[src$=".svg"] {
