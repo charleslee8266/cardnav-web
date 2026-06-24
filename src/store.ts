@@ -171,33 +171,33 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
         url,
         score,
         last_product_refresh_success_at
-      FROM sites
+      FROM shop_sites
       WHERE type = 'cardShop'
       ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
     : null;
   const productsResult = await db.query(`
     SELECT
-      products.site_id,
-      sites.name AS site_name,
-      sites.url AS site_url,
-      sites.score AS site_score,
-      sites.last_product_refresh_success_at AS site_product_refresh_success_at,
-      products.category_name,
-      products.name,
-      products.price,
-      products.price_number,
-      products.price_unit,
-      products.product_url,
-      products.stock,
-      products.in_stock,
-      products.click_count,
-      products.score,
-      products.refreshed_at
-    FROM products
-    INNER JOIN sites ON sites.id = products.site_id
-    WHERE sites.type = 'cardShop'
-    ORDER BY products.score DESC, sites.score DESC, products.in_stock DESC, products.refreshed_at DESC, products.category_name ASC, products.name ASC
+      shop_products.site_id,
+      shop_sites.name AS site_name,
+      shop_sites.url AS site_url,
+      shop_sites.score AS site_score,
+      shop_sites.last_product_refresh_success_at AS site_product_refresh_success_at,
+      shop_products.category_name,
+      shop_products.name,
+      shop_products.price,
+      shop_products.price_number,
+      shop_products.price_unit,
+      shop_products.product_url,
+      shop_products.stock,
+      shop_products.in_stock,
+      shop_products.click_count,
+      shop_products.score,
+      shop_products.refreshed_at
+    FROM shop_products
+    INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
+    WHERE shop_sites.type = 'cardShop'
+    ORDER BY shop_products.score DESC, shop_sites.score DESC, shop_products.in_stock DESC, shop_products.refreshed_at DESC, shop_products.category_name ASC, shop_products.name ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
 
@@ -255,13 +255,13 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
     SELECT
       COUNT(*) FILTER (WHERE type = 'cardShop')::INTEGER AS total_site_count,
       COALESCE((
-        SELECT COUNT(products.*)::INTEGER
-        FROM products
-        INNER JOIN sites ON sites.id = products.site_id
-        WHERE sites.type = 'cardShop'
+        SELECT COUNT(shop_products.*)::INTEGER
+        FROM shop_products
+        INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
+        WHERE shop_sites.type = 'cardShop'
       ), 0) AS total_product_count,
       MAX(last_product_refresh_success_at) FILTER (WHERE type = 'cardShop') AS latest_refreshed_at
-    FROM sites
+    FROM shop_sites
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
   const totalSiteCount = Number(summaryRow.total_site_count) || 0;
@@ -614,12 +614,12 @@ export async function submitSiteUrl(input: string) {
 
   const result = await getPool().query(
     `
-      INSERT INTO urls (url, status)
-      VALUES ($1, 'accepted')
+      INSERT INTO shop_sites (id, url, status, family, type)
+      VALUES (md5(regexp_replace(split_part($1, '#', 1), '/$', '') || $2), $1, 'accepted', 'unknown', 'unknown')
       ON CONFLICT (url) DO NOTHING
       RETURNING url
     `,
-    [url],
+    [url, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0'],
   );
   if (result.rows.length === 0) {
     return { ok: false as const, errorKey: 'duplicateUrl' satisfies SubmitSiteUrlErrorKey };
@@ -637,10 +637,10 @@ export async function recordSearchTerm(term: string, resultCount: number) {
 
   await getPool().query(
     `
-      INSERT INTO search_terms (term, total_count, result_count, last_seen_at)
+      INSERT INTO shop_search_terms (term, total_count, result_count, last_seen_at)
       VALUES ($1, 1, $2, now())
       ON CONFLICT (term) DO UPDATE SET
-        total_count = search_terms.total_count + 1,
+        total_count = shop_search_terms.total_count + 1,
         result_count = EXCLUDED.result_count,
         last_seen_at = now()
     `,
@@ -659,11 +659,11 @@ export async function recordProductClick(input: ProductClickInput) {
 
   const result = await getPool().query(
     `
-      UPDATE products
+      UPDATE shop_products
       SET click_count = click_count + 1
       WHERE ctid IN (
         SELECT ctid
-        FROM products
+        FROM shop_products
         WHERE site_id = $1
           AND (
             ($2 <> '' AND product_url = $2)
@@ -685,13 +685,13 @@ export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerm
   const runtimeResult = await db.query(
     `
       SELECT
-        search_terms.term,
-        search_terms.total_count,
-        search_terms.last_seen_at
-      FROM search_terms
-      WHERE search_terms.total_count > 0
-        AND search_terms.result_count > 0
-      ORDER BY search_terms.total_count DESC, search_terms.result_count DESC, search_terms.last_seen_at DESC, search_terms.term ASC
+        shop_search_terms.term,
+        shop_search_terms.total_count,
+        shop_search_terms.last_seen_at
+      FROM shop_search_terms
+      WHERE shop_search_terms.total_count > 0
+        AND shop_search_terms.result_count > 0
+      ORDER BY shop_search_terms.total_count DESC, shop_search_terms.result_count DESC, shop_search_terms.last_seen_at DESC, shop_search_terms.term ASC
       LIMIT $1
     `,
     [safeLimit],
@@ -716,10 +716,10 @@ export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerm
       )
       SELECT candidate_terms.term
       FROM candidate_terms
-      INNER JOIN products ON lower(products.category_name || ' ' || products.name) LIKE '%' || candidate_terms.normalized_term || '%'
-      INNER JOIN sites ON sites.id = products.site_id AND sites.type = 'cardShop'
+      INNER JOIN shop_products ON lower(shop_products.category_name || ' ' || shop_products.name) LIKE '%' || candidate_terms.normalized_term || '%'
+      INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id AND shop_sites.type = 'cardShop'
       GROUP BY candidate_terms.term, candidate_terms.ordinality
-      HAVING COUNT(products.*) > 0
+      HAVING COUNT(shop_products.*) > 0
       ORDER BY candidate_terms.ordinality ASC
       LIMIT $2
     `,
