@@ -1,6 +1,6 @@
 ---
 title: "Cloud server recommendations"
-description: "Prepare a more controllable overseas host environment for self-hosted nodes or self-hosted relay sites."
+description: "Prepare a more controllable overseas host environment for self-hosted nodes or self-hosted gateway sites."
 parent: network-env-overview
 ---
 # Cloud server recommendations
@@ -28,7 +28,7 @@ BandwagonHost is an established cloud host provider that has run stably for many
 ## RackNerd
 <!-- badge="Very cost-effective" icon="vps" -->
 
-RackNerd's advantage is cheapness. It is currently a very cost-effective merchant in the U.S. cloud host market. The cheapest 1C1G plan costs only $21.99 per year, although it is not an optimized route, but it is very economical for building a backup node or deploying a small Sub2API relay program.
+RackNerd's advantage is cheapness. It is currently a very cost-effective merchant in the U.S. cloud host market. The cheapest 1C1G plan costs only $21.99 per year, although it is not an optimized route, but it is very economical for building a backup node or deploying a small Sub2API gateway program.
 - **Entry-level cost-effective plan**: Only $21.99/year, configured as 1 core 1G. Refer to [1C1G plan order](https://my.racknerd.com/aff.php?aff=20079&pid=952).
 - **Mid-tier upgrade plan**: Only $35.99/year, configured as 2 cores 2G. Refer to [2C2G plan order](https://my.racknerd.com/aff.php?aff=20079&pid=953).
-- **High-configuration multi-core plan**: Can be used to run advanced programs such as relays. Refer to [3C4G to 7C8G plan overview](https://my.racknerd.com/aff.php?aff=20079&pid=954).
+- **High-configuration multi-core plan**: Can be used to run advanced programs such as gateways. Refer to [3C4G to 7C8G plan overview](https://my.racknerd.com/aff.php?aff=20079&pid=954).

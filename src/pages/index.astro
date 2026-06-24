@@ -55,7 +55,7 @@ const primaryCards = [
   {
     title: t.home.relayPathTitle,
     description: t.home.relayPathShortDescription,
-    href: '/llm-relay',
+    href: '/llm-gateway',
     action: t.home.openRelay,
     name: t.home.relayPathTitle,
     badge: t.nav.llmRelay,
@@ -164,14 +164,14 @@ const relayHighlights = relayData.sites.slice(0, 4).map(site => ({
   title: site.name,
   meta: site.displayModelFamilies.slice(0, 3).join(' / ') || site.host,
   value: site.modelCount > 0 ? t.home.relayModelCountLabel.replace('{count}', String(site.modelCount)) : t.home.noRelayModelData,
-  href: `/llm-relay/${site.slug}`,
+  href: `/llm-gateway/${site.slug}`,
 }));
 
 const relayModelHighlights = relayModelData.models.slice(0, 4).map(model => ({
   title: model.modelId,
   meta: model.modelFamily,
   value: t.home.relaySupportCountLabel.replace('{count}', String(model.supportSiteCount)),
-  href: `/llm-relay/models/${encodeURIComponent(model.modelId)}`,
+  href: `/llm-gateway/models/${encodeURIComponent(model.modelId)}`,
 }));
 
 const productHighlights = dashboardData.products.slice(0, 6).map(product => ({
@@ -245,10 +245,10 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 class="text-lg font-bold text-base-content">
-              <a href={linkTo('/llm-relay')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/llm-relay', t.home.openRelay)}>{t.home.relayHighlightsTitle}</a>
+              <a href={linkTo('/llm-gateway')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/llm-gateway', t.home.openRelay)}>{t.home.relayHighlightsTitle}</a>
             </h2>
           </div>
-          <a href={linkTo('/llm-relay')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/llm-relay', t.home.openRelay)}>{t.home.openRelay}</a>
+          <a href={linkTo('/llm-gateway')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/llm-gateway', t.home.openRelay)}>{t.home.openRelay}</a>
         </div>
         <div class="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
           <section class="min-w-0 rounded-lg bg-base-200/45 p-3">

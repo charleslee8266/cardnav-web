@@ -29,10 +29,10 @@ VPN or proxy solves the problem of "whether you can access," but what you truly 
 ## Overseas cloud server rental
 <!-- badge="Self-hosting base" icon="vps" -->
 
-If you plan to self-host nodes, deploy relay programs, or want a more controllable network environment, an overseas VPS is more suitable for long-term maintenance than ordinary shared proxies.
+If you plan to self-host nodes, deploy gateway programs, or want a more controllable network environment, an overseas VPS is more suitable for long-term maintenance than ordinary shared proxies.
 
 ### Suitable scenarios
-- Self-hosted proxy nodes or internal relay services
+- Self-hosted proxy nodes or internal gateway services
 - Small teams needing stable, independent, controllable network exits
 
 ### Notes

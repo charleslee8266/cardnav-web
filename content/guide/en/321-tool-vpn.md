@@ -19,7 +19,7 @@ The following recommended entries can first be tried with small amounts. After c
 ## SSRDOG
 <!-- badge="Proxy service" icon="vpn" -->
 
-SSRDOG is a mainstream relay service with a relatively long operating time. Its advantage is good overall stability, and its disadvantage is a relatively higher price. When using it, it is recommended to use its official client or the latest recommended client version.
+SSRDOG is a mainstream proxy service with a relatively long operating time. Its advantage is good overall stability, and its disadvantage is a relatively higher price. When using it, it is recommended to use its official client or the latest recommended client version.
 
 [Register](https://st2.hosbb.com/#/register?code=5xRWMG6f)
 

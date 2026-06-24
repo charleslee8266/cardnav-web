@@ -1,6 +1,6 @@
 ---
 title: "2. Choose an AI subscription usage method"
-description: "Compare the barriers, risks, and suitable users of five large model usage methods: relay sites, ready-made accounts, top-ups, self top-ups, and self-hosting."
+description: "Compare the barriers, risks, and suitable users of five large model usage methods: gateway sites, ready-made accounts, top-ups, self top-ups, and self-hosting."
 parent: start-here
 next: practical-prep
 ---
@@ -10,9 +10,9 @@ next: practical-prep
 
 Common paths for using top foreign large models can roughly be divided into five categories. There is no absolute good or bad among them. The key is what you care about more: convenience, saving money, stability, privacy, or long-term controllability.
 
-First judge the route by usage barrier and risk boundary: if you only want a quick trial, first look at relay sites or ready-made accounts; if you already have an account but are stuck at payment, focus on third-party top-ups; if you are preparing for long-term heavy use, then consider official subscription top-up or a self-hosted relay.
+First judge the route by usage barrier and risk boundary: if you only want a quick trial, first look at gateway sites or ready-made accounts; if you already have an account but are stuck at payment, focus on third-party top-ups; if you are preparing for long-term heavy use, then consider official subscription top-up or a self-hosted gateway.
 
-## 2.1 AI large model API relay site
+## 2.1 AI large model API gateway site
 <!-- badge="Fastest to start" icon="api" -->
 
 The service provider hosts account registration and payment, and you directly obtain an API Key to connect to third-party clients.
@@ -22,13 +22,13 @@ The service provider hosts account registration and payment, and you directly ob
 - Pay as you go, suitable for small trial amounts first
 
 ### Main risks
-- Conversation content will pass through the relay service provider
+- Conversation content will pass through the gateway provider
 - You need to guard against fake high-tier models, diluted service quality, and service providers disappearing
 
 ### Suitable users
 - Individual users and developers who debug code, have light non-confidential conversations, and want to quickly try multi-model APIs
 
-[Learn more](./211-usage-api-relay.md)
+[Learn more](./211-usage-api-gateway.md)
 
 ## 2.2 AI large model ready-made account purchase and login
 <!-- badge="Out of the box" icon="model" -->
@@ -84,10 +84,10 @@ Prepare your own overseas network, phone number, and payment channel, independen
 
 [Learn more](./214-usage-self-register.md)
 
-## 2.5 Self-hosted AI large model relay site
+## 2.5 Self-hosted AI large model gateway site
 <!-- badge="Technical sharing" icon="vps" -->
 
-Purchase official quota and use a reverse proxy program to self-host a relay interface, making it convenient for a team or friends to share quota usage.
+Purchase official quota and use a reverse proxy program to self-host a gateway interface, making it convenient for a team or friends to share quota usage.
 
 ### Core advantages
 - You can centrally manage quota and control usage costs
@@ -95,9 +95,9 @@ Purchase official quota and use a reverse proxy program to self-host a relay int
 
 ### Main risks
 - Continuous operations and maintenance are required
-- When multiple accounts or users share the same relay entry, it can easily trigger official anti-abuse risk control
+- When multiple accounts or users share the same gateway entry, it can easily trigger official anti-abuse risk control
 
 ### Suitable users
 - Small teams or geeks with technical foundations who want to build an internal dedicated large model gateway
 
-[Learn more](./215-usage-self-hosted-relay.md)
+[Learn more](./215-usage-self-hosted-gateway.md)

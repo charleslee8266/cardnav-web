@@ -17,7 +17,7 @@ The more I searched, the more I felt this should not be so exhausting. The origi
 
 For many users, the real question is not just "where can I buy an account." The real questions are:
 
-- Should I choose an official subscription, third-party top-up, ready-made account, API relay, or another method?
+- Should I choose an official subscription, third-party top-up, ready-made account, API gateway, or another method?
 - Which merchants are worth checking first, and which products are just different names for the same thing?
 - Which region has a better price, and is the payment path actually workable?
 - How should I judge network environment, IP, phone verification, and KYC risk in advance?

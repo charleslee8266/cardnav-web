@@ -8,7 +8,7 @@ next: daily-usage-risk
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-If you ultimately choose a path with a higher practical barrier, such as "registering and topping up yourself," "using third-party top-up," or "self-hosting a relay site," then before starting you need to prepare the corresponding environment tools and payment channels, and master the skills for preventing risks and choosing merchants.
+If you ultimately choose a path with a higher practical barrier, such as "registering and topping up yourself," "using third-party top-up," or "self-hosting a gateway site," then before starting you need to prepare the corresponding environment tools and payment channels, and master the skills for preventing risks and choosing merchants.
 
 First complete preparation in four directions: transaction risk, network environment, payment path, and identity risk control. If any one of them is not thought through, registration, payment, or later login may become unstable.
 
@@ -56,6 +56,6 @@ Some platforms trigger KYC identity verification during registration, login, or 
 ### Key judgments
 - **Trigger scenarios**: New account registration, card binding upgrade, frequent region switching, or abnormal login
 - **Verification requirements**: Whether documents, face scan, address proof, and other materials can genuinely be provided
-- **Alternative paths**: Whether you should switch to app store in-app purchase, API relay, or another lower-barrier solution
+- **Alternative paths**: Whether you should switch to app store in-app purchase, API gateway, or another lower-barrier solution
 
 [Learn more](./340-kyc-verification.md)

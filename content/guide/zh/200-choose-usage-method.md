@@ -28,7 +28,7 @@ next: practical-prep
 ### 适合人群
 - 调试代码、轻度非涉密对话、想快速体验多模型 API 的个人用户和开发者
 
-[点击了解详情](./211-usage-api-relay.md)
+[点击了解详情](./211-usage-api-gateway.md)
 
 ## 2.2 AI 大模型成品账号购买与登录
 <!-- badge="开箱即用" icon="model" -->
@@ -98,6 +98,6 @@ next: practical-prep
 - 多个账号或用户共享同一中转入口时，容易触发官方防滥用风控
 
 ### 适合人群
-- 有技术基础、想搭建内部专属大模型网关的小型团队或极客
+- 有技术基础、想搭建内部专属大模型中转站的小型团队或极客
 
-[点击了解详情](./215-usage-self-hosted-relay.md)
+[点击了解详情](./215-usage-self-hosted-gateway.md)

@@ -27,7 +27,7 @@ First judge whether you truly need top overseas models such as GPT, Claude, and 
 ## Step 2: Evaluate the large model usage method that suits you best
 <!-- badge="Then choose a path" icon="route" -->
 
-Between official website subscriptions, ready-made accounts, API relays, third-party top-ups, and self-hosted relays, choose the path that matches your budget, technical ability, and risk tolerance.
+Between official website subscriptions, ready-made accounts, API gateways, third-party top-ups, and self-hosted gateways, choose the path that matches your budget, technical ability, and risk tolerance.
 
 - **Core question**: Do you care more about a low barrier, stability, privacy, or controllability?
 

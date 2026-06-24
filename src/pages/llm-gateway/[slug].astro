@@ -11,14 +11,14 @@ const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const detail = await loadRelayDetail(Astro.params.slug || '');
 
-if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-relay'), 302);
+if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 302);
 
 const { site, prices } = detail;
-if (Astro.params.slug !== site.slug) return Astro.redirect(Astro.locals.localizePath(`/llm-relay/${site.slug}`), 301);
+if (Astro.params.slug !== site.slug) return Astro.redirect(Astro.locals.localizePath(`/llm-gateway/${site.slug}`), 301);
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
-  pathname: `/llm-relay/${site.slug}`,
+  pathname: `/llm-gateway/${site.slug}`,
   title: t.llmRelay.detailSeoTitle.replace('{name}', site.name),
   description: t.llmRelay.detailSeoDescription
     .replace('{name}', site.name)
@@ -64,7 +64,7 @@ function shortList(items: string[], limit = 10) {
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0 space-y-3">
           <div class="flex flex-wrap items-center gap-2">
-            <a href={linkTo('/llm-relay')} class="page-back-link">
+            <a href={linkTo('/llm-gateway')} class="page-back-link">
               <span class="page-back-icon" aria-hidden="true">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="m12 19-7-7 7-7"></path>

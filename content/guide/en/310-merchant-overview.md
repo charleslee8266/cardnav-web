@@ -37,6 +37,6 @@ Before ordering, first distinguish whether the merchant delivers account/passwor
 
 ### Core principle
 - **Direct login format**: First confirm whether it can directly log in on the official website or client
-- **Tool format**: JSON credentials are usually more suitable for importing into tools, panels, or relay programs
+- **Tool format**: JSON credentials are usually more suitable for importing into tools, panels, or gateway programs
 
 [Learn more](./312-common-delivery-formats.md)

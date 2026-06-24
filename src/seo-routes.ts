@@ -37,7 +37,7 @@ export function getStaticPublicSeoRoutes(locale: Locale = defaultLocale): Public
       changefreq: 'daily',
     },
     {
-      pathname: routePath('/llm-relay', locale),
+      pathname: routePath('/llm-gateway', locale),
       title: messages.llmRelay.seoTitle,
       description: messages.llmRelay.seoDescription,
       changefreq: 'daily',
@@ -177,7 +177,7 @@ export function buildRelaySeoRoutes(relaySites: PublicRelaySiteRow[], locale: Lo
   return relaySites
     .filter(site => site.slug)
     .map(site => ({
-      pathname: routePath(`/llm-relay/${site.slug}`, locale),
+      pathname: routePath(`/llm-gateway/${site.slug}`, locale),
       title: messages.llmRelay.detailSeoTitle.replace('{name}', site.name),
       description: messages.llmRelay.detailSeoDescription
         .replace('{name}', site.name)
@@ -191,7 +191,7 @@ export function buildRelaySeoRoutes(relaySites: PublicRelaySiteRow[], locale: Lo
 export function buildRelayModelSeoRoutes(relayModels: PublicRelayModelRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
   const messages = getMessages(locale);
   return relayModels.map(model => ({
-    pathname: routePath(`/llm-relay/models/${encodeURIComponent(model.modelId)}`, locale),
+    pathname: routePath(`/llm-gateway/models/${encodeURIComponent(model.modelId)}`, locale),
     title: messages.llmRelay.modelDetailSeoTitle.replace('{model}', model.modelId),
     description: messages.llmRelay.modelDetailSeoDescription.replace('{model}', model.modelId),
     changefreq: 'daily' as const,

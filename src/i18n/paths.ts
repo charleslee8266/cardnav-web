@@ -26,6 +26,11 @@ function normalizePathname(pathname: string) {
   return `${normalizedPathname}${suffix}`;
 }
 
+function isStaticAssetPath(pathname: string) {
+  if (/^\/(?:api|assets)(?:\/|$)/.test(pathname)) return true;
+  return /\.(?:avif|css|gif|ico|jpe?g|js|json|map|mp4|png|svg|txt|webmanifest|webp|woff2?)$/i.test(pathname);
+}
+
 export function getLocalePathInfo(pathnameInput: string): LocalePathInfo {
   const pathname = normalizePathname(pathnameInput);
   const { pathname: pathnameWithoutSuffix, suffix } = splitPathSuffix(pathname);
@@ -55,8 +60,7 @@ export function localizePath(
 ) {
   const pathname = normalizePathname(pathnameInput);
   const { pathname: pathnameWithoutSuffix, suffix } = splitPathSuffix(pathname);
-  if (/^\/(?:api|assets)(?:\/|$)/.test(pathnameWithoutSuffix)) return pathname;
-  if (pathnameWithoutSuffix.includes('.') && !pathnameWithoutSuffix.startsWith('/guide/')) return pathname;
+  if (isStaticAssetPath(pathnameWithoutSuffix)) return pathname;
   const routePathname = getLocalePathInfo(pathname).routePathname;
   const { pathname: routePathnameWithoutSuffix } = splitPathSuffix(routePathname);
   if (locale === defaultLocale && !options.prefixDefaultLocale) return routePathname;

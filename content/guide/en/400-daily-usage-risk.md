@@ -29,10 +29,10 @@ If multiple accounts share the same IP or the same batch of environments for a l
 - Free trials are usually stricter
 - Low-price ready-made accounts have higher uncertainty
 
-## Reverse proxies and relay tools not updated in time
+## Reverse proxies and gateway tools not updated in time
 <!-- badge="Toolchain risk" icon="toolbox" -->
 
-If reverse proxies, relay sites, or open-source clients are not updated for a long time, the risk will rise significantly. The response strategy is to update in time and not keep old versions running for a long time.
+If reverse proxies, gateway sites, or open-source clients are not updated for a long time, the risk will rise significantly. The response strategy is to update in time and not keep old versions running for a long time.
 
 - Security gateways keep upgrading
 - Old versions are more likely to expose signatures

@@ -101,11 +101,11 @@
 | [开始向导](content/guide/zh/000-start-here.md) | 从 Start here 开始，先确定模型、再选使用方式、再补齐工具与支付等准备项。 |
 | [一、选择你想使用的 AI 大模型](content/guide/zh/100-choose-model.md) | 先判断你是要顶级模型能力，还是低门槛和低成本，再决定是否继续这条向导。 |
 | [二、选择 AI 订阅使用方式](content/guide/zh/200-choose-usage-method.md) | 对比中转站、成品号、代充、自充、自建等五种大模型使用方式的门槛、风险和适用人群。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;[2.1 AI 大模型 API 中转站](content/guide/zh/211-usage-api-relay.md) | 通过 API 中转站快速获得大模型调用能力，适合低门槛试用、多模型接入和轻量开发调试。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[2.1 AI 大模型 API 中转站](content/guide/zh/211-usage-api-gateway.md) | 通过 API 中转站快速获得大模型调用能力，适合低门槛试用、多模型接入和轻量开发调试。 |
 | &nbsp;&nbsp;&nbsp;&nbsp;[2.2 AI 大模型成品账号购买与登录](content/guide/zh/212-usage-ready-account.md) | 购买已开通订阅的成品账号并直接登录，适合快速体验原生网页和客户端功能。 |
 | &nbsp;&nbsp;&nbsp;&nbsp;[2.3 AI 大模型自备账号第三方代充](content/guide/zh/213-usage-third-party-top-up.md) | 自己保留账号，由第三方商家代为开通或续费官方订阅，适合已有账号但无法自行付款的用户。 |
 | &nbsp;&nbsp;&nbsp;&nbsp;[2.4 AI 大模型官方订阅充值](content/guide/zh/214-usage-self-register.md) | 自己准备网络、手机号和支付通道，独立注册并订阅官方账号，适合长期重度用户。 |
-| &nbsp;&nbsp;&nbsp;&nbsp;[2.5 自建 AI 大模型中转站](content/guide/zh/215-usage-self-hosted-relay.md) | 购买官方额度并自建中转接口，适合有技术基础、需要团队共享和内部接入的用户。 |
+| &nbsp;&nbsp;&nbsp;&nbsp;[2.5 自建 AI 大模型中转站](content/guide/zh/215-usage-self-hosted-gateway.md) | 购买官方额度并自建中转接口，适合有技术基础、需要团队共享和内部接入的用户。 |
 | [三、AI 订阅实操准备与选购避坑](content/guide/zh/300-practical-prep.md) | 补齐网络与云主机配置、准备支付通道、了解订阅区域价差以及认识卡网和发货格式。 |
 | &nbsp;&nbsp;&nbsp;&nbsp;[3.1 认识卡网与选购避坑](content/guide/zh/310-merchant-overview.md) | 了解什么是虚拟商品卡网平台，以及如何安全选购海外大模型账号与服务。 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[如何挑选靠谱商家](content/guide/zh/311-choose-reliable-merchant.md) | 购买 AI 账号或虚拟商品时，从商品数量、热门覆盖、平台属性、支付渠道和社群活跃度等维度判断商家信任度。 |

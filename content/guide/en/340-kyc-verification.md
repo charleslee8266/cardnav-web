@@ -61,7 +61,7 @@ If you lack a real overseas identity, the most important thing is to avoid high-
 
 ### Optional paths
 - **App store in-app purchase**: Subscribe through App Store or Google Play to reduce the probability of directly triggering financial-level review by the model platform
-- **API relay site**: Directly consume APIs, avoiding underlying account registration, payment, and identity verification
+- **API gateway site**: Directly consume APIs, avoiding underlying account registration, payment, and identity verification
 - **Local models or low-barrier platforms**: If it is only daily Q&A and light development, you can first choose platforms where registration and payment are simpler
 
 ### Still note

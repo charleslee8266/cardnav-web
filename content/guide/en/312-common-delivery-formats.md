@@ -7,12 +7,12 @@ parent: merchant-overview
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-Although many merchants sell items all called "accounts," the actual delivered content is not the same. Some are account information that can be used directly for web login, while others are JSON configurations for relay panels, import tools, or scripts. Confirming the delivery format before ordering helps reduce understanding gaps and usage risks.
+Although many merchants sell items all called "accounts," the actual delivered content is not the same. Some are account information that can be used directly for web login, while others are JSON configurations for gateway panels, import tools, or scripts. Confirming the delivery format before ordering helps reduce understanding gaps and usage risks.
 
 You can first make a basic distinction:
 
 - **Direct web and client login**: Prefer the "account/password" format that can directly log in on the official website, or the "four-part RT" direct login format with a password.
-- **Tool and relay site import**: For formats delivered as session or various JSON configurations, they are usually more suitable for importing into third-party relay software or management panels.
+- **Tool and gateway site import**: For formats delivered as session or various JSON configurations, they are usually more suitable for importing into third-party gateway software or management panels.
 
 ## Account and password
 <!-- badge="Most direct" icon="key" -->
@@ -65,7 +65,7 @@ Session information obtained from an already logged-in web page, not ordinary ac
 ## Codex / CPA / Sub2API / Cockpit
 <!-- badge="Tool import format" icon="toolbox" -->
 
-These are usually JSON files for importing into tools, panels, or relay programs.
+These are usually JSON files for importing into tools, panels, or gateway programs.
 
 - Suitable for local tool import, batch management, and continued format conversion
 - Not suitable for people who only want direct web login
@@ -83,7 +83,7 @@ These are usually JSON files for importing into tools, panels, or relay programs
 
 If you receive `account/password` or `four-part RT`, usually first confirm whether direct login works, then decide whether to convert it into `Session` or another import format.
 
-If you receive JSON such as `Session`, `CPA`, `Sub2API`, or `Cockpit`, it is usually for tools or relay programs. First read the merchant's instructions, then decide how to import it.
+If you receive JSON such as `Session`, `CPA`, `Sub2API`, or `Cockpit`, it is usually for tools or gateway programs. First read the merchant's instructions, then decide how to import it.
 
 ## Order confirmation
 
