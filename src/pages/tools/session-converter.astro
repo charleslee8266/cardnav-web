@@ -8,6 +8,7 @@ import { buildSeoContext } from '../../seo.js';
 import highlightScriptUrl from '@highlightjs/cdn-assets/highlight.min.js?url';
 import highlightCssUrl from '@highlightjs/cdn-assets/styles/github.min.css?url';
 import highlightDarkCssUrl from '@highlightjs/cdn-assets/styles/github-dark.min.css?url';
+import pageWidgetsScriptUrl from '../../scripts/page-widgets.js?url';
 import sessionConverterScriptUrl from '../../scripts/session-converter.js?url';
 import { publicSiteUrl } from '../../site.js';
 
@@ -131,26 +132,5 @@ const seo = buildSeoContext({
   <script is:inline slot="scripts" defer src={highlightScriptUrl}></script>
   <script is:inline slot="scripts" type="application/json" id="session-converter-messages" set:html={JSON.stringify(t.sessionConverter.script)}></script>
   <script is:inline slot="scripts" defer src={sessionConverterScriptUrl}></script>
-  <script is:inline slot="scripts">
-    (function() {
-      const link = document.getElementById('hljs-theme');
-      if (!link) return;
-      const lightUrl = link.getAttribute('data-light');
-      const darkUrl = link.getAttribute('data-dark');
-      
-      function updateTheme() {
-        const theme = document.documentElement.getAttribute('data-theme');
-        const isDark = theme === 'dark';
-        link.setAttribute('href', isDark ? darkUrl : lightUrl);
-      }
-      
-      updateTheme();
-      
-      const observer = new MutationObserver(updateTheme);
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme']
-      });
-    })();
-  </script>
+  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>

@@ -6,6 +6,7 @@ import ModelLeaderboardContent from '../components/ModelLeaderboardContent.astro
 import { localizeModelLeaderboardGroups } from '../localized-display.js';
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
+import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { formatBeijingRefreshTime, loadModelLeaderboards } from '../store.js';
@@ -32,4 +33,5 @@ const seo = buildSeoContext({
 
 <PublicPage activeNav="model-leaderboard" {...seo}>
   <ModelLeaderboardContent groups={groups} currentGroup={currentGroup} updateTime={updateTime} />
+  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>

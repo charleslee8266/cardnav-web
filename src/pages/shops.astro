@@ -5,6 +5,7 @@
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildSeoContext } from '../seo.js';
 import { quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
+import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import shopsScriptUrl from '../scripts/index.js?url';
 import { loadDashboardData, loadPopularSearchTerms, type PublicProductRow } from '../store.js';
@@ -371,106 +372,5 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
   <script is:inline type="application/json" id="dashboard-data" set:html={dashboardJsonValue}></script>
   <script is:inline type="application/json" id="shops-messages" set:html={JSON.stringify(shopsScriptMessages)}></script>
   <script is:inline slot="scripts" defer src={shopsScriptUrl}></script>
-  <script slot="scripts" is:inline define:vars={{ submitMessages: { failed: t.submit.failed, success: t.submit.success } }}>
-    const shopSubmitDialog = document.querySelector('#shopSubmitDialog');
-    const openShopSubmitModalButton = document.querySelector('#openShopSubmitModal');
-    const submitForm = document.querySelector('#submitForm');
-    const urlInput = document.querySelector('#urlInput');
-    const clientError = document.querySelector('#clientError');
-    const submitError = document.querySelector('#submitError');
-    const submitSuccess = document.querySelector('#submitSuccess');
-    const submitButton = submitForm?.querySelector('button[type="submit"]');
-
-    function syncSubmitEventUrl() {
-      if (submitButton) submitButton.dataset.umamiEventUrl = urlInput?.value.trim() || '';
-    }
-
-    function isValidUrl(value) {
-      try {
-        const url = new URL(value.trim());
-        return url.protocol === 'http:' || url.protocol === 'https:';
-      } catch {
-        return false;
-      }
-    }
-
-    function hideServerMessages() {
-      submitError?.classList.add('hidden');
-      submitSuccess?.classList.add('hidden');
-      if (submitError) submitError.textContent = '';
-      if (submitSuccess) submitSuccess.textContent = '';
-    }
-
-    function showError(message) {
-      submitSuccess?.classList.add('hidden');
-      if (submitSuccess) submitSuccess.textContent = '';
-      if (submitError) {
-        submitError.textContent = message;
-        submitError.classList.remove('hidden');
-      }
-    }
-
-    function showSuccess(message) {
-      submitError?.classList.add('hidden');
-      if (submitError) submitError.textContent = '';
-      if (submitSuccess) {
-        submitSuccess.textContent = message;
-        submitSuccess.classList.remove('hidden');
-      }
-    }
-
-    openShopSubmitModalButton?.addEventListener('click', () => {
-      shopSubmitDialog?.showModal();
-      syncSubmitEventUrl();
-    });
-
-    submitForm?.addEventListener('submit', event => {
-      syncSubmitEventUrl();
-      hideServerMessages();
-      if (!isValidUrl(urlInput?.value || '')) {
-        event.preventDefault();
-        clientError?.classList.remove('hidden');
-        urlInput?.focus();
-        return;
-      }
-
-      event.preventDefault();
-      clientError?.classList.add('hidden');
-      if (submitButton) submitButton.disabled = true;
-
-      fetch(submitForm.action, {
-        method: 'POST',
-        body: JSON.stringify({ url: urlInput.value.trim() }),
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/json',
-          'x-requested-with': 'fetch',
-        },
-      })
-        .then(async response => {
-          const payload = await response.json().catch(() => null);
-          if (!response.ok || !payload || payload.ok !== true) {
-            showError(payload && payload.message ? payload.message : submitMessages.failed);
-            return;
-          }
-          urlInput.value = '';
-          syncSubmitEventUrl();
-          showSuccess(payload.message || submitMessages.success);
-        })
-        .catch(() => {
-          showError(submitMessages.failed);
-        })
-        .finally(() => {
-          if (submitButton) submitButton.disabled = false;
-        });
-    });
-
-    urlInput?.addEventListener('input', () => {
-      syncSubmitEventUrl();
-      clientError?.classList.add('hidden');
-      hideServerMessages();
-    });
-
-    syncSubmitEventUrl();
-  </script>
+  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>

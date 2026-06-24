@@ -6,6 +6,7 @@ import '../public.css';
 import Sponsors from '../components/Sponsors.astro';
 import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '../i18n/config.js';
 import { switchLocalePath } from '../i18n/paths.js';
+import publicShellScriptUrl from '../scripts/public-shell.js?url';
 import { githubRepoUrl, headerAdTagEnabled, telegramGroupUrl, xProfileUrl } from '../site.js';
 
 type Props = {
@@ -104,7 +105,6 @@ function siteLinkClickAttrs(url: string, name: string) {
 <html lang={htmlLang}>
 <head>
   <script is:inline>
-    // 立即执行以避免页面闪烁 (FOUC)
     (function () {
       const savedTheme = localStorage.getItem('theme');
       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -135,7 +135,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   {headerAdTagEnabled && (
     <>
       <script is:inline src="https://5gvci.com/act/files/tag.min.js?z=11107777" data-cfasync="false" async></script>
-      <script is:inline>(function(s){s.dataset.zone='11113650',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+      <meta data-header-ad-loader data-zone="11113650" data-src="https://nap5k.com/tag.min.js" />
     </>
   )}
 </head>
@@ -345,66 +345,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   </footer>
 )}
 
-	<script is:inline>
-	  (function () {
-	    const languageMenus = Array.from(document.querySelectorAll('[data-language-menu]'));
-	
-	    document.addEventListener('click', event => {
-	      languageMenus.forEach(menu => {
-	        if (menu instanceof HTMLDetailsElement && !menu.contains(event.target)) {
-	          menu.open = false;
-	        }
-	      });
-	    });
-	
-	    const toggleTargets = [
-      {
-        moonIcon: document.getElementById('themeMoonIcon'),
-        sunIcon: document.getElementById('themeSunIcon'),
-        toggleBtn: document.getElementById('themeToggle'),
-      },
-      {
-        moonIcon: document.getElementById('themeMoonIconDesktop'),
-        sunIcon: document.getElementById('themeSunIconDesktop'),
-        toggleBtn: document.getElementById('themeToggleDesktop'),
-      },
-    ].filter(target => target.moonIcon && target.sunIcon && target.toggleBtn);
-
-    if (toggleTargets.length === 0) return;
-
-    function getTheme() {
-      return document.documentElement.getAttribute('data-theme') || 'light';
-    }
-
-    function updateIcons(theme) {
-      toggleTargets.forEach(({ moonIcon, sunIcon }) => {
-        if (theme === 'dark') {
-          moonIcon.classList.add('hidden');
-          sunIcon.classList.remove('hidden');
-        } else {
-          sunIcon.classList.add('hidden');
-          moonIcon.classList.remove('hidden');
-        }
-      });
-      document.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
-    }
-
-    // 初始化图标状态
-    const currentTheme = getTheme();
-    updateIcons(currentTheme);
-
-    // 监听切换事件
-    toggleTargets.forEach(({ toggleBtn }) => {
-      toggleBtn.addEventListener('click', () => {
-        const nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', nextTheme);
-        localStorage.setItem('theme', nextTheme);
-        updateIcons(nextTheme);
-      });
-    });
-  })();
-</script>
-
+<script is:inline defer src={publicShellScriptUrl}></script>
 <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 <slot name="scripts" />
 </body>

@@ -7,6 +7,7 @@ import Sponsors from '../components/Sponsors.astro';
 import { localizeModelLeaderboardGroups, localizeOfficialPriceGroups } from '../localized-display.js';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildOfficialPriceGroups } from '../official-price.js';
+import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import {
@@ -428,19 +429,5 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
   </div>
 </PublicPage>
 
-<script is:inline define:vars={{ shopsPath: linkTo('/shops') }}>
-  const homeSearchForm = document.querySelector('[data-home-search-form]');
-  const homeSearchInput = homeSearchForm?.querySelector('[data-home-search-input]');
-  const homeSearchButton = homeSearchForm?.querySelector('[data-umami-event="home-search-submit"]');
-  const syncHomeSearchEvent = () => {
-    if (!homeSearchButton || !homeSearchInput) return;
-    const query = homeSearchInput.value.trim();
-    const targetPage = query ? `${shopsPath}?q=${encodeURIComponent(query)}` : shopsPath;
-    homeSearchButton.dataset.umamiEventQuery = query;
-    homeSearchButton.dataset.umamiEventUrl = targetPage;
-    homeSearchButton.dataset.umamiEventTargetPage = targetPage;
-  };
-  homeSearchInput?.addEventListener('input', syncHomeSearchEvent);
-  homeSearchForm?.addEventListener('submit', syncHomeSearchEvent);
-  syncHomeSearchEvent();
-</script>
+<script is:inline slot="scripts" type="application/json" id="home-search-config" set:html={JSON.stringify({ shopsPath: linkTo('/shops') })}></script>
+<script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>

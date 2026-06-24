@@ -3,6 +3,7 @@
 文件说明: 渲染向导双栏浏览界面，左侧显示文档列表，右侧显示当前文档正文和赞助区。
 */
 import Sponsors from './Sponsors.astro';
+import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
 
 type Props = {
@@ -116,18 +117,4 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
     <Sponsors />
   </section>
 </section>
-
-<script is:inline>
-  (() => {
-    const currentLink = document.querySelector('[data-guide-current="true"]');
-    const disclosure = document.querySelector('.guide-sidebar-disclosure');
-    if (!currentLink) return;
-    currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    disclosure?.addEventListener('toggle', () => {
-      if (!disclosure.open) return;
-      requestAnimationFrame(() => {
-        currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      });
-    });
-  })();
-</script>
+<script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>

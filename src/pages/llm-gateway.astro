@@ -7,6 +7,7 @@ import SortableTableHeader from '../components/SortableTableHeader.astro';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
+import gatewayHomeScriptUrl from '../scripts/llm-gateway-home.js?url';
 import sortableTablesScriptUrl from '../scripts/sortable-tables.js?url';
 
 const t = Astro.locals.messages;
@@ -105,8 +106,26 @@ function gatewayModelClickAttrs(model: { modelId: string; modelFamily: string })
 
 const modelFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.displayModelFamilies));
 const paymentFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.paymentMethods));
-const deferredSitesJson = JSON.stringify(deferredSites).replace(/</g, '\\u003c');
-const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c');
+const hasMoreSites = deferredSites.length > 0;
+const hasMoreModels = deferredModels.length > 0;
+const gatewayHomeConfig = {
+  gatewayLinkPrefix: linkTo('/llm-gateway'),
+  modelLinkPrefix: linkTo('/llm-gateway/models'),
+  sitesApi: `/api/llm-gateway/sites.json?offset=20&locale=${encodeURIComponent(Astro.locals.locale)}`,
+  modelsApi: `/api/llm-gateway/models.json?offset=20&locale=${encodeURIComponent(Astro.locals.locale)}`,
+  detailLabel: t.llmGateway.viewDetail,
+  openLabel: t.actions.open,
+  rankLabel: t.llmGateway.rank,
+  basicInfoLabel: t.llmGateway.basicInfo,
+  scoreLabel: t.labels.score,
+  supportedModelsLabel: t.llmGateway.supportedModels,
+  modelCountLabel: t.llmGateway.modelCount,
+  paymentMethodsLabel: t.llmGateway.paymentMethods,
+  paymentMethodLabels: t.llmGateway.paymentMethodLabels,
+  modelLabel: t.labels.model,
+  modelFamilyLabel: t.llmGateway.modelFamily,
+  supportedGatewayCountLabel: t.llmGateway.supportedGatewayCount,
+};
 ---
 
 <PublicPage activeNav="llm-gateway" {...seo}>
@@ -240,7 +259,7 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
             </table>
           </div>
           <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-site-empty>{t.llmGateway.filterEmpty}</div>
-          {deferredSites.length > 0 ? (
+          {hasMoreSites ? (
             <div class="border-t border-base-300 p-4 text-center">
               <button type="button" class="btn btn-outline btn-sm" data-gateway-load-more="sites">{t.llmGateway.loadMore}</button>
             </div>
@@ -280,196 +299,16 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
             </table>
           </div>
           <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-model-empty>{t.llmGateway.filterEmpty}</div>
-          {deferredModels.length > 0 ? (
+          {hasMoreModels ? (
             <div class="border-t border-base-300 p-4 text-center">
               <button type="button" class="btn btn-outline btn-sm" data-gateway-load-more="models">{t.llmGateway.loadMore}</button>
             </div>
           ) : null}
         </div>
       </div>
-      <script is:inline type="application/json" data-gateway-home-deferred-sites set:html={deferredSitesJson}></script>
-      <script is:inline type="application/json" data-gateway-home-deferred-models set:html={deferredModelsJson}></script>
     </section>
   )}
+  <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
   <script is:inline slot="scripts" defer src={sortableTablesScriptUrl}></script>
+  <script is:inline slot="scripts" defer src={gatewayHomeScriptUrl}></script>
 </PublicPage>
-
-<script is:inline define:vars={{ gatewayLinkPrefix: linkTo('/llm-gateway'), modelLinkPrefix: linkTo('/llm-gateway/models'), detailLabel: t.llmGateway.viewDetail, openLabel: t.actions.open, rankLabel: t.llmGateway.rank, basicInfoLabel: t.llmGateway.basicInfo, scoreLabel: t.labels.score, supportedModelsLabel: t.llmGateway.supportedModels, modelCountLabel: t.llmGateway.modelCount, paymentMethodsLabel: t.llmGateway.paymentMethods, paymentMethodLabels: t.llmGateway.paymentMethodLabels, modelLabel: t.labels.model, modelFamilyLabel: t.llmGateway.modelFamily, supportedGatewayCountLabel: t.llmGateway.supportedGatewayCount }}>
-  const gatewayHome = document.querySelector('[data-gateway-home]');
-  if (gatewayHome) {
-    let gatewayFilterTrackTimer = null;
-    let lastGatewayFilterTrackKey = '';
-    const trackGatewayEvent = (eventName, eventData = {}) => {
-      if (typeof window.umami?.track !== 'function') return;
-      window.umami.track(eventName, eventData);
-    };
-    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    }[character]));
-    const uniqueLabels = (items, limit) => {
-      const seen = new Set();
-      const labels = [];
-      for (const item of items || []) {
-        const label = String(item || '').trim();
-        const key = label.toLowerCase();
-        if (!label || seen.has(key)) continue;
-        seen.add(key);
-        labels.push(label);
-        if (limit && labels.length >= limit) break;
-      }
-      return labels;
-    };
-    const paymentLabel = key => paymentMethodLabels[key] || key;
-    const paymentIcon = key => {
-      const icons = {
-        alipay: { src: '/assets/payment-icons/alipay.svg', fallback: 'A' },
-        wechat: { src: '/assets/payment-icons/wechat.svg', fallback: 'W' },
-        visa: { src: '/assets/payment-icons/visa.svg', fallback: 'V' },
-        mastercard: { src: '/assets/payment-icons/mastercard.svg', fallback: 'M' },
-        stripe: { src: '/assets/payment-icons/stripe.svg', fallback: 'S' },
-        paypal: { src: '/assets/payment-icons/paypal.svg', fallback: 'P' },
-        tether: { src: '/assets/payment-icons/tether.svg', fallback: 'T' },
-        bitcoin: { src: '/assets/payment-icons/bitcoin.svg', fallback: 'B' },
-        applepay: { src: '/assets/payment-icons/applepay.svg', fallback: 'A' },
-        googlepay: { src: '/assets/payment-icons/googlepay.svg', fallback: 'G' },
-      };
-      return icons[key] || { src: null, fallback: String(key || '').trim().slice(0, 1).toUpperCase() };
-    };
-    const deferredSites = JSON.parse(gatewayHome.querySelector('[data-gateway-home-deferred-sites]')?.textContent || '[]');
-    const deferredModels = JSON.parse(gatewayHome.querySelector('[data-gateway-home-deferred-models]')?.textContent || '[]');
-    const formatPositiveScore = value => {
-      const numberValue = Number(value);
-      return Number.isFinite(numberValue) && numberValue > 0 ? numberValue.toFixed(2) : '-';
-    };
-    const gatewaySiteAttrs = site => {
-      const targetPage = `${gatewayLinkPrefix}/${site.slug}`;
-      return `data-umami-event="gateway-site-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
-    };
-    const gatewaySiteOpenAttrs = site => `data-umami-event="gateway-site-open-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-url="${escapeHtml(site.outboundUrl || site.url)}"`;
-    const gatewayModelAttrs = model => {
-      const targetPage = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
-      return `data-umami-event="gateway-model-click" data-umami-event-name="${escapeHtml(model.modelId)}" data-umami-event-family="${escapeHtml(model.modelFamily)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
-    };
-    const siteRowHtml = (site, index) => {
-      const families = uniqueLabels(site.displayModelFamilies, 8);
-      const payments = uniqueLabels(site.paymentMethods, 6);
-      const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelFamilies || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
-      return `<tr data-home-site-card data-search="${escapeHtml(search)}" data-families="${escapeHtml(families.map(item => item.toLowerCase()).join(','))}" data-payments="${escapeHtml(payments.join(','))}" data-original-order="${index}" data-sort-rank="${index + 1}" data-sort-name="${escapeHtml(site.name)}" data-sort-score="${Number(site.siteScore) || 0}" data-sort-families="${escapeHtml(families.join(' '))}" data-sort-model-count="${Number(site.modelCount) || 0}" data-sort-payments="${escapeHtml(payments.map(paymentLabel).join(' '))}">
-        <td data-label="${escapeHtml(rankLabel)}" class="font-mono text-sm text-primary">#${index + 1}</td>
-        <td data-label="${escapeHtml(basicInfoLabel)}"><div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between"><div class="min-w-0 space-y-2"><div class="flex flex-wrap items-center gap-2"><a href="${escapeHtml(`${gatewayLinkPrefix}/${site.slug}`)}" class="link link-hover break-words text-base font-semibold text-base-content" ${gatewaySiteAttrs(site)}>${escapeHtml(site.name)}</a>${site.displayFamily ? `<span class="badge badge-ghost font-medium">${escapeHtml(site.displayFamily)}</span>` : ''}</div>${site.summary ? `<p class="max-w-3xl text-sm leading-6 text-base-content/72">${escapeHtml(site.summary)}</p>` : ''}<div class="text-xs text-base-content/55"><span class="break-all">${escapeHtml(site.url)}</span></div></div><div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center"><a href="${escapeHtml(`${gatewayLinkPrefix}/${site.slug}`)}" class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${gatewaySiteAttrs(site)}>${escapeHtml(detailLabel)}</a><a href="${escapeHtml(site.outboundUrl || site.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${gatewaySiteOpenAttrs(site)}>${escapeHtml(openLabel)}</a></div></div></td>
-        <td data-label="${escapeHtml(scoreLabel)}" class="font-mono">${formatPositiveScore(site.siteScore)}</td>
-        <td data-label="${escapeHtml(supportedModelsLabel)}">${families.length ? `<div class="flex flex-wrap gap-1.5">${families.map(family => `<span class="badge badge-primary badge-outline badge-sm">${escapeHtml(family)}</span>`).join('')}</div>` : '<span class="text-base-content/35">-</span>'}</td>
-        <td data-label="${escapeHtml(modelCountLabel)}" class="font-mono">${site.modelCount > 0 ? site.modelCount : '-'}</td>
-        <td data-label="${escapeHtml(paymentMethodsLabel)}">${payments.length ? `<div class="flex flex-wrap gap-1.5">${payments.map(item => {
-          const icon = paymentIcon(item);
-          const label = paymentLabel(item);
-          return `<span class="payment-icon" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${icon.src ? `<img src="${escapeHtml(icon.src)}" alt="" loading="lazy" />` : escapeHtml(icon.fallback)}</span>`;
-        }).join('')}</div>` : '<span class="text-base-content/35">-</span>'}</td>
-      </tr>`;
-    };
-    const modelRowHtml = (model, index) => `<tr data-home-model-card data-search="${escapeHtml(`${model.modelId} ${model.modelFamily}`.toLowerCase())}" data-original-order="${index}" data-sort-rank="${index + 1}" data-sort-model="${escapeHtml(model.modelId)}" data-sort-family="${escapeHtml(model.modelFamily)}" data-sort-support-count="${Number(model.supportSiteCount) || 0}">
-      <td data-label="${escapeHtml(rankLabel)}" class="font-mono text-sm text-secondary">#${index + 1}</td>
-      <td data-label="${escapeHtml(modelLabel)}"><a href="${escapeHtml(`${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`)}" class="link link-hover break-words font-mono text-sm font-semibold text-base-content" ${gatewayModelAttrs(model)}>${escapeHtml(model.modelId)}</a></td>
-      <td data-label="${escapeHtml(modelFamilyLabel)}">${escapeHtml(model.modelFamily)}</td>
-      <td data-label="${escapeHtml(supportedGatewayCountLabel)}" class="font-mono">${model.supportSiteCount}</td>
-    </tr>`;
-    const applySiteFilters = ({ track = true } = {}) => {
-      const keyword = (gatewayHome.querySelector('[data-home-site-search]')?.value || '').trim().toLowerCase();
-      const selectedFamily = gatewayHome.querySelector('[data-home-site-family]')?.value || '';
-      const selectedPayment = gatewayHome.querySelector('[data-home-site-payment]')?.value || '';
-      let visibleCount = 0;
-      gatewayHome.querySelectorAll('[data-home-site-card]').forEach(card => {
-        const matchesKeyword = !keyword || (card.dataset.search || '').includes(keyword);
-        const matchesFamily = !selectedFamily || (card.dataset.families || '').split(',').includes(selectedFamily);
-        const matchesPayment = !selectedPayment || (card.dataset.payments || '').split(',').includes(selectedPayment);
-        const visible = matchesKeyword && matchesFamily && matchesPayment;
-        card.classList.toggle('hidden', !visible);
-        if (visible) visibleCount += 1;
-      });
-      gatewayHome.querySelector('[data-home-site-empty]')?.classList.toggle('hidden', visibleCount > 0);
-      if (track) scheduleGatewayFilterTrack('sites', {
-        query: keyword,
-        family: selectedFamily,
-        payment: selectedPayment,
-        visibleCount,
-      });
-    };
-    const applyModelFilters = ({ track = true } = {}) => {
-      const keyword = (gatewayHome.querySelector('[data-home-model-search]')?.value || '').trim().toLowerCase();
-      let visibleCount = 0;
-      gatewayHome.querySelectorAll('[data-home-model-card]').forEach(card => {
-        const visible = !keyword || (card.dataset.search || '').includes(keyword);
-        card.classList.toggle('hidden', !visible);
-        if (visible) visibleCount += 1;
-      });
-      gatewayHome.querySelector('[data-home-model-empty]')?.classList.toggle('hidden', visibleCount > 0);
-      if (track) scheduleGatewayFilterTrack('models', {
-        query: keyword,
-        visibleCount,
-      });
-    };
-    const scheduleGatewayFilterTrack = (tab, payload) => {
-      clearTimeout(gatewayFilterTrackTimer);
-      gatewayFilterTrackTimer = setTimeout(() => {
-        const eventData = { tab, ...payload };
-        const eventKey = JSON.stringify(eventData);
-        if (eventKey === lastGatewayFilterTrackKey) return;
-        lastGatewayFilterTrackKey = eventKey;
-        trackGatewayEvent('gateway-filter-change', eventData);
-      }, 600);
-    };
-    const showTab = tabName => {
-      gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
-        const active = tab.dataset.gatewayTab === tabName;
-        tab.classList.toggle('tool-tab-active', active);
-        tab.classList.toggle('tool-tab-inactive', !active);
-        tab.setAttribute('aria-selected', active ? 'true' : 'false');
-      });
-      gatewayHome.querySelectorAll('[data-gateway-panel]').forEach(panel => {
-        panel.hidden = panel.dataset.gatewayPanel !== tabName;
-      });
-      trackGatewayEvent('gateway-tab-click', { name: tabName });
-    };
-    const loadMore = type => {
-      const list = gatewayHome.querySelector(type === 'sites' ? '[data-gateway-home-sites-list]' : '[data-gateway-home-models-list]');
-      const button = gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`);
-      const rows = type === 'sites'
-        ? deferredSites.map((site, offset) => siteRowHtml(site, offset + 20))
-        : deferredModels.map((model, offset) => modelRowHtml(model, offset + 20));
-      if (rows.length) list?.insertAdjacentHTML('beforeend', rows.join(''));
-      button?.closest('div')?.remove();
-      window.initSortableTables?.(gatewayHome);
-      const table = list?.closest('[data-sortable-table]');
-      if (table) window.applySortableTableSort?.(table);
-      if (type === 'sites') applySiteFilters({ track: false });
-      else applyModelFilters({ track: false });
-      trackGatewayEvent('gateway-load-more-click', { name: type, loadedCount: rows.length });
-    };
-    gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
-      tab.addEventListener('click', () => showTab(tab.dataset.gatewayTab || 'sites'));
-    });
-    gatewayHome.querySelector('[data-home-site-search]')?.addEventListener('input', applySiteFilters);
-    gatewayHome.querySelector('[data-home-site-family]')?.addEventListener('change', applySiteFilters);
-    gatewayHome.querySelector('[data-home-site-payment]')?.addEventListener('change', applySiteFilters);
-    gatewayHome.querySelector('[data-home-model-search]')?.addEventListener('input', applyModelFilters);
-    gatewayHome.querySelectorAll('[data-gateway-load-more]').forEach(button => {
-      button.addEventListener('click', () => loadMore(button.dataset.gatewayLoadMore || 'sites'), { once: true });
-    });
-    gatewayHome.querySelectorAll('[data-sort-key]').forEach(button => {
-      button.addEventListener('click', () => {
-        const table = button.closest('[data-sortable-table]');
-        const panel = button.closest('[data-gateway-panel]');
-        const currentDirection = table?.dataset.sortDirection || 'none';
-        trackGatewayEvent('gateway-sort-click', {
-          tab: panel?.dataset.gatewayPanel || 'unknown',
-          key: button.dataset.sortKey || '',
-          direction: currentDirection === 'asc' ? 'desc' : 'asc',
-        });
-      });
-    });
-  }
-</script>
