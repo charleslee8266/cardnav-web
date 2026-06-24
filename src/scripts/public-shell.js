@@ -51,6 +51,7 @@ function initPublicShell() {
     toggleBtn.addEventListener('click', () => {
       const nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', nextTheme);
+      document.documentElement.style.colorScheme = nextTheme;
       localStorage.setItem('theme', nextTheme);
       updateIcons(nextTheme);
     });
