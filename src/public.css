@@ -468,6 +468,14 @@
     @apply bg-transparent p-0 text-inherit;
   }
 
+  .site-main-width {
+    @apply mx-auto w-full max-w-7xl;
+  }
+
+  .site-wide-width {
+    @apply mx-auto w-full max-w-[110rem];
+  }
+
   .guide-article > :first-child,
   .content-page > :first-child {
     @apply mt-0;
@@ -475,6 +483,10 @@
 
   .content-page h1 {
     @apply text-3xl font-bold tracking-normal text-base-content;
+  }
+
+  .content-page-banner {
+    @apply mb-6 block w-full rounded-lg border border-base-300 bg-base-200 object-cover;
   }
 
   .content-page h2 {
@@ -718,7 +730,7 @@
   }
 
   .sponsor-title {
-    @apply text-sm font-semibold text-base-content;
+    @apply text-lg font-bold text-base-content;
   }
 
   .sponsor-join-link {

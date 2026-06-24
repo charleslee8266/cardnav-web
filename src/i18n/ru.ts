@@ -400,6 +400,7 @@ export const ruMessages: Messages = {
       math: 'Математика',
       'text-to-image': 'Текст в изображение',
     },
+    loadMore: 'Показать еще',
     empty: 'Данных рейтинга пока нет. Загляните позже.',
   },
   officialPrice: {

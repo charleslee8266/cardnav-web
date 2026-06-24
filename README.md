@@ -9,13 +9,12 @@
 </p>
 
 <p align="center">
-  <strong>一站式 AI 大模型使用导航入口，帮用户把模型选择、官方订阅比价、第三方商家搜索、实用工具和使用向导放到同一个公开站点里。</strong><br/>
-  面向 AI 订阅、账号、卡密、成品号、API/CDK 和相关工具用户，也面向希望被发现、被搜索、被合作的商家。
+  <strong>一站式 AI 大模型账号购买导航。聚合 AI 中转站、卡网、官方订阅比价，还有模型排行、使用指南、实用工具，帮你少踩坑，少花钱。</strong>
 </p>
 
 <p align="center">
   <a href="https://cardnav.xyz">
-    <img src="https://img.shields.io/badge/Website-cardnav.xyz-2563eb?style=flat-square&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAHhlWElmTU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAIdpAAQAAAABAAAATgAAAAAAAABIAAAAAQAAAEgAAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAABigAwAEAAAAAQAAABgAAAAA0bpBmgAAAAlwSFlzAAALEwAACxMBAJqcGAAAA8xJREFUSA21VVtsFFUY%2Fua27e6sGijYK6217aY0gtm0FCQBoyY%2BqE%2FWpqFcVAKx8c0XfVAS%2B4RGC0kxMSQkllKg2lZMY0yICngDbUMkpFBbSqh1LWrt0uteujNz%2FM%2BZne1utysBwp%2FMnDPnv3z%2F7fwjMSLcR5Lvo21hWl0KEDMMjI0FEIlGIUlxLo9R7J2DVC2eBK%2Buo6S4KJVBXykAZ777Ee%2B3HMLwtRHEYgYZlWy7yWppGBI4QFaWCxtr%2FHj37TfhqyhLaEhODc7%2F3I%2FGV5swPT2Dgrxc6F6dhBxrTgjOyvVTSxcM3sLEZBBVlT58fvIT5JMNQRzANE3WsHMvezD3Ubbn9TdY4M9xNjs7d0fP1cEh9sxzdUxfVcI%2BOPgRNyuIh8fIa%2BZ%2F4mlWULaeDVwdtDl38W4%2F%2FhlbWehje8lJh0QNDNOEaVrQVBXZWdl2aHfx3vHS89i6uQaW6iHHRQntIvNMOx1DyML0l4MGei4bUBUJTZs0VBdl7miu8vU1E30BDb%2BOF2EuYqFnJ%2BDNSukip6C26xcDFtrOLwCahLMjMfTu9qDq4eVBuHOnhw0c%2BCZKnjI86VOhu8g60fIaxFA5RwM8LuD6vwwNx8K4EbS4ThoFphj6fzegkDxvLn%2BhmshIRgBhha7CllIFNWsUDARMNHREcHPGTqGDEphmqGsP4wdKUelKGS%2F6XdhUojjszBEICXLYR2k5sT0bpatl9N8w0HgijGDIBvljykLd0RD66HzNKhkd293oedmNunWL9%2Ff%2FI6B4oxRFBSl37nAjf4WEc0Mx7OkK49K4hXryXBjPkdC9y42NxbbnIr3xGG4DQFLxjNSS8vFGD3IekNF7xcCzh%2BfxC%2BW9iNLStcsDzr90eQDvNO%2FHp91f3D5FolstCWZSyp8qV9C2zQ2vS8LErIXChxRh3PF84Mpv2P9hK071fpUOIPqf2k2KX4gcXUJ5row88jiZXlir4nC9GzXFKroo38kF1TQNuscjBp%2BjI6qhKAoURYZBEzRKY5rTa3S5dtdqdrs60vG14XEV9fSkQgPhSJhusAVZXuSInZcmZ0V5GWbn5tD68RHc%2FOtvRMIhWAshRGmdD6U%2FkSVnQ8Mj6OjsFiPhsarKhEuJcf3ThT40vtIkQArz86DrHhKK326%2BOLWIH4lvZ0%2Fsyclb%2BGdiAmtpXJ%2FqbEuM6wQAh%2Fz27Pd4r6UVQ8PXwQdgkj5nLxKvk5hm8SMC5z%2BcDdV%2BNO97C5W%2B8oRsCgA%2FXYjFMDo6ZtfCmYAJ8cwb%2FsssfaQ4TSANIE3iHg8Wy32PhjKp%2Fwc46vDtLUqx1QAAAABJRU5ErkJggg%3D%3D" alt="CardNav website" />
+    <img src="https://img.shields.io/badge/Website-cardnav.xyz-2563eb?style=flat-square&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAHhlWElmTU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAIdpAAQAAAABAAAATgAAAAAAAABIAAAAAQAAAEgAAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAABigAwAEAAAAAQAAABgAAAAA0bpBmgAAAAlwSFlzAAALEwAACxMBAJqcGAAAA8xJREFUSA21VVtsFFUY%2Fua27e6sGijYK6217aY0gtm0FCQBoyY%2BqE%2FWpqFcVAKx8c0XfVAS%2B4RGC0kxMSQkllKg2lZMY0yICngDbUMkpFBbSqh1LWrt0uteujNz%2FM%2BZne1utysBwp%2FMnDPnv3z%2F7fwjMSLcR5Lvo21hWl0KEDMMjI0FEIlGIUlxLo9R7J2DVC2eBK%2Buo6S4KJVBXykAZ777Ee%2B3HMLwtRHEYgYZlWy7yWppGBI4QFaWCxtr%2FHj37TfhqyhLaEhODc7%2F3I%2FGV5swPT2Dgrxc6F6dhBxrTgjOyvVTSxcM3sLEZBBVlT58fvIT5JMNQRzANE3WsHMvezD3Ubbn9TdY4M9xNjs7d0fP1cEh9sxzdUxfVcI%2BOPgRNyuIh8fIa%2BZ%2F4mlWULaeDVwdtDl38W4%2F%2FhlbWehje8lJh0QNDNOEaVrQVBXZWdl2aHfx3vHS89i6uQaW6iHHRQntIvNMOx1DyML0l4MGei4bUBUJTZs0VBdl7miu8vU1E30BDb%2BOF2EuYqFnJ%2BDNSukip6C26xcDFtrOLwCahLMjMfTu9qDq4eVBuHOnhw0c%2BCZKnjI86VOhu8g60fIaxFA5RwM8LuD6vwwNx8K4EbS4ThoFphj6fzegkDxvLn%2BhmshIRgBhha7CllIFNWsUDARMNHREcHPGTqGDEphmqGsP4wdKUelKGS%2F6XdhUojjszBEICXLYR2k5sT0bpatl9N8w0HgijGDIBvljykLd0RD66HzNKhkd293oedmNunWL9%2Ff%2FI6B4oxRFBSl37nAjf4WEc0Mx7OkK49K4hXryXBjPkdC9y42NxbbnIr3xGG4DQFLxjNSS8vFGD3IekNF7xcCzh%2BfxC%2BW9iNLStcsDzr90eQDvNO%2FHp91f3D5FolstCWZSyp8qV9C2zQ2vS8LErIXChxRh3PF84Mpv2P9hK071fpUOIPqf2k2KX4gcXUJ5row88jiZXlir4nC9GzXFKroo38kF1TQNuscjBp%2BjI6qhKAoURYZBEzRKY5rTa3S5dtdqdrs60vG14XEV9fSkQgPhSJhusAVZXuSInZcmZ0V5GWbn5tD68RHc%2FOtvRMIhWAshRGmdD6U%2FkSVnQ8Mj6OjsFiPhsarKhEuJcf3ThT40vtIkQArz86DrHhKK326%2BOLWIH4lvZ0%2Fsyclb%2BGdiAmtpXJ%2FqbEuM6wQAh%2Fz27Pd4r6UVQ8PXwQdgkj5nLxKvk5hm8SMC5z%2BcDdV%2BNO97C5W%2B8oRsCgA%2FXYjFMDo6ZtfCmYAJ8cwb%2FsssfaQ4TSANIE3iHg8Wy32PhjKp%2Fwc46vDtLUqx1QAAAABJRU5ErkJggg%3D%3D" alt="卡网大全官网" />
   </a>
   <a href="https://t.me/cardnav_xyz_group">
     <img src="https://img.shields.io/badge/Telegram-%E7%BE%A4%E7%BB%84-26a5e4?style=flat-square&logo=telegram&logoColor=white" alt="Telegram 群组" />
@@ -26,7 +25,7 @@
 </p>
 
 <p align="center">
-  <a href="#产品故事">产品故事</a> ·
+  <a href="#产品简介">产品简介</a> ·
   <a href="#一站式能力">一站式能力</a> ·
   <a href="#面向用户">面向用户</a> ·
   <a href="#使用方式">使用方式</a> ·
@@ -39,23 +38,13 @@
 
 ---
 
-[卡网大全 (CardNav)](https://cardnav.xyz/) 是一个一站式 AI 大模型使用导航入口，按使用顺序把模型排行榜与选择、官方 AI 订阅比价、第三方 AI 卡网商家与商品搜索、实用工具和友好的向导页面放在同一个公开站点里，帮助小白用户先理清思路，判断用什么模型、选择哪种使用方式、哪里能找到相关服务、价格和库存大概怎样、下单前要注意哪些风险，再在使用过程中找到可以直接使用的辅助工具。
-
 ![](assets/screenshot.webp)
 
-## 产品故事
+## 产品简介
 
-卡网大全的起点并不复杂。很多人第一次想认真用 ChatGPT、Claude、Gemini、Grok、Cursor 这些服务时，真正卡住的不是“有没有这个产品”，而是“我到底该怎么开始”。模型怎么选，官方订阅怎么比，第三方渠道靠不靠谱，库存还在不在，网络、手机号、支付和地区差异会不会把事情搞复杂，这些问题常常一起冒出来。
+卡网大全把 AI 大模型账号、官方订阅、中转站、卡网商家、模型排行、使用指南和实用工具放在同一个公开入口里，帮助用户更快完成选型、比价、搜索和购买前判断。
 
-对于中国、俄罗斯等地区的用户来说，AI 账号购买不是“去官网付费”这么简单。你可能会遇到海外银行卡、地区价格、代订、共享账号、卡密 CDK、成品号、渠道批发、Telegram 群、闲鱼、卡网这些完全不同的购买路径。便宜渠道确实存在，但它们通常分散在卡网、群聊、个人收藏夹和各种代购页面里，而且每个渠道卖的东西、擅长的品类、库存稳定性都不一样。
-
-更现实的一点是，很多人并不是不想买官方订阅，而是确实买不起官网正价，或者觉得自己没有必要长期为最贵的官方方案买单。于是才会去找更便宜的 AI 账号购买渠道，去比较更低价的 ChatGPT Plus、Claude Pro 或 Gemini Pro 订阅方案。
-
-结果就是，用户想买一个 ChatGPT Plus、Claude Pro 或 Gemini Pro，可能要打开十几个网页，自己判断哪个有货、哪个最低、哪个商品名对应的到底是什么、哪个页面还有效。这个过程很低效，也很容易买贵、买错，或者点进去才发现商品已经缺货。
-
-我自己也是在这样的反复比较里，才意识到问题不在于信息少，而在于信息太散。商家页面、群聊、论坛、收藏夹、教程，各说各话。你想找一个能直接看、直接比、直接判断的地方，结果往往还是得自己拼。卡网大全就是想把这件事重新收拢一下，让用户先在一个地方把路看清楚，再决定要不要继续往下走。
-
-对商家来说，它也不是单纯的展示位。卡网大全还是一个公开的曝光入口，能让商家被搜索、被比较、被收藏，也能通过提交收录、赞助位和合作入口获得更清晰的展示路径。
+想了解卡网大全背后的故事，可以阅读 [关于卡网大全](https://cardnav.xyz/about)。
 
 ## 一站式能力
 
@@ -66,7 +55,7 @@
 | 模型排行榜 | 按编程、创意写作、数学、文生图等任务查看主流模型排行，先判断哪类模型更适合自己 |
 | 官方订阅比价 | 对比 ChatGPT、Claude、Gemini、Grok、Copilot、Kimi、X 等订阅在不同地区的价格和人民币折算，帮助用户先判断官方方案值不值得买、哪个地区更划算 |
 | 工具集 | 集中提供 ChatGPT Session 转换工具、IP 纯净度检测，以及 Codex 凭证助手、Outlook 快速取件等外部辅助工具，帮助用户在注册、登录、支付、导入和格式处理前先完成快速检查与处理 |
-| 商家提交与合作 | 提供商家提交、公开收录、赞助位和合作入口，让商家获得更清晰的展示和曝光路径 |
+| 商家提交与合作 | 提供商家提交、公开收录、赞助位和合作入口，让优质商家获得更清晰的展示和曝光路径 |
 
 ## 面向用户
 
@@ -75,7 +64,7 @@
 - 想查找 AI 账号、订阅、卡密、成品号或相关服务购买入口的人
 - 想先看商品库存、价格、商家活跃度，再决定是否进入具体站点的人
 - 想了解商家筛选、交付格式、网络环境、支付方式和风控注意事项的人
-- 想提交站点、获得收录、赞助展示或进一步合作的商家
+- 想提交站点、获得收录、争取优质曝光或进一步合作的商家
 
 ## 使用方式
 
@@ -86,7 +75,7 @@
 3. 需要第三方渠道时，再去首页搜商家、商品、库存和价格
 4. 下单前看看向导，把网络、支付、交付、KYC 和风控这几件事补齐
 5. 真到要操作时，再用 IP 纯净度检测、Session 转换这些工具
-6. 商家则可以通过提交入口进入收录流程，或者直接看合作曝光入口
+6. 优质商家可以通过提交入口进入收录流程，或者查看合作曝光入口
 
 ## 使用向导
 
@@ -94,7 +83,7 @@
 
 以下为向导内容的 Markdown 原始文档，推荐直接在 [官网](https://cardnav.xyz/guide) 阅读，以获得最佳排版与浏览体验。
 
-向导 Markdown 的卡片、frontmatter 和站内链接渲染规则见 [CardNav 向导 Markdown 渲染说明](content/guide/README.md)。
+向导 Markdown 的卡片、frontmatter 和站内链接渲染规则见 [卡网大全向导 Markdown 渲染说明](content/guide/README.md)。
 
 | 向导 | 说明 |
 | --- | --- |
@@ -182,6 +171,6 @@ cardnav-web/
 
 ## License
 
-卡网大全 CardNav 的软件代码使用 [GNU Affero General Public License v3.0](./LICENSE) 开源。
+卡网大全 (CardNav) 的软件代码使用 [GNU Affero General Public License v3.0](./LICENSE) 开源。
 
 `CardNav`、`卡网大全` 名称、Logo、域名、视觉品牌、线上生产数据、商家数据、商品数据、搜索数据、指南内容、截图和公开页面文案不随软件代码授权。Fork、二次开发或部署公开服务时，请阅读 [数据与内容授权](./DATA_LICENSE.md) 和 [品牌与商标政策](./TRADEMARKS.md)，并避免让用户误认为你的服务是官方网站。

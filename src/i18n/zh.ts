@@ -399,6 +399,7 @@ export const zhMessages = {
       math: '数学',
       'text-to-image': '文生图',
     },
+    loadMore: '加载更多',
     empty: '暂无排行榜数据，请稍后再查看。',
   },
   officialPrice: {

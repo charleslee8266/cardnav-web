@@ -5,9 +5,7 @@ description: Learn why CardNav was created and why it is growing from an AI shop
 
 # About CardNav
 
-CardNav started from a very practical problem. At first, I simply wanted to use AI more smoothly. When I tried to use overseas models such as GPT, Claude, and Gemini in a stable way, I quickly found that the hard part was not knowing that these models existed. The hard part was the whole path from learning and choosing to actually getting started.
-
-You may need to decide which model to use, which access method makes sense, and how to handle accounts, merchants, network environment, phone numbers, payments, regional limits, and risk controls. These issues rarely appear one by one. They often connect with each other and turn something that should be straightforward into something fragmented, complex, and time-consuming.
+CardNav is a one-stop guide to buying AI model accounts. It brings together AI gateways, card shops, official subscription price comparisons, model rankings, usage guides, and practical tools so users can decide what to use, how to buy it, and where to look while avoiding pitfalls and spending less.
 
 ## Why This Site Exists
 
@@ -35,17 +33,17 @@ As the site has evolved, it has become more than an AI shop directory. CardNav i
 - Official subscription price comparisons to show regional price differences and access costs
 - Structured guide content covering model choice, access paths, merchant screening, network setup, payment methods, and risk control
 - Practical tools such as IP purity checks and credential format conversion
-- Merchant submission, listing, and partnership entry points so the supply side also has a clearer public path
+- Merchant submission, listing, and partnership entry points so quality merchants also have a clearer public path
 
 In other words, CardNav is moving from "help you find merchants" toward "help you use AI more smoothly" across a fuller journey.
 
 ## Who It Serves
 
-CardNav first serves people who genuinely need AI but do not want to be repeatedly drained by fragmented information and high trial-and-error costs. At the beginning, I understood the problem mainly from the perspective of Chinese users. Later, I learned that this situation is not limited to China. Users in places such as Russia, Iran, and other countries or regions can also face clear barriers around access, registration, payment, and daily use.
+CardNav first serves people who genuinely need AI but do not want to be repeatedly drained by fragmented information and high trial-and-error costs. At first, I understood the problem mainly from the perspective of Chinese-speaking users. Later, I found that similar barriers around access, registration, payment, and daily use can also affect users in more countries and regions.
 
 That makes CardNav more than an information tool for Chinese users. It has room to grow into broader international scenarios and serve more people facing similar difficulties.
 
-CardNav also serves merchants. Merchants are not only data sources being listed; they are active participants in this ecosystem. A clearer public entry point helps users find information faster and helps merchants gain more stable exposure, listing paths, and partnership opportunities.
+CardNav also serves quality merchants. Merchants are not only data sources being listed; they are active participants in this ecosystem. A clearer public entry point helps users find information faster and helps merchants worth recommending gain more stable exposure, listing paths, and partnership opportunities.
 
 ## Where It Is Going
 
@@ -60,4 +58,4 @@ That is why CardNav will keep improving in these directions:
 - Reduce information gaps, trial-and-error costs, and repeated work during AI use
 - Make the site solve not only "where to buy" but also "how to use AI more smoothly"
 
-If the earlier CardNav was an entry point for discovering merchants, the future CardNav aims to become a genuinely useful one-stop AI entry point: helping users take fewer detours and helping merchants be seen more efficiently.
+If the earlier CardNav was an entry point for discovering merchants, the future CardNav aims to become a genuinely useful one-stop AI entry point: helping users take fewer detours and helping quality merchants be seen more efficiently.

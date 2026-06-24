@@ -279,9 +279,10 @@ function siteLinkClickAttrs(url: string, name: string) {
 <main class:list={[
   'grid w-full min-w-0 flex-1 grid-cols-[minmax(0,1fr)] content-start items-start gap-4 p-4 pt-16 md:pt-4',
   isGuidePage && 'min-h-0 h-full overflow-hidden grid-rows-[minmax(0,1fr)]',
+  activeNav !== 'home' && 'site-wide-width',
 ]}>
   {shouldShowHero && (
-    <section class="card mx-auto w-full max-w-7xl bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <section class="card site-main-width bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="card-body p-6">
         <div>
           <div class="hero-title-row flex items-center gap-3">

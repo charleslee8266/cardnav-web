@@ -400,6 +400,7 @@ export const enMessages: Messages = {
       math: 'Math',
       'text-to-image': 'Text to image',
     },
+    loadMore: 'Load more',
     empty: 'No leaderboard data yet. Please check back later.',
   },
   officialPrice: {

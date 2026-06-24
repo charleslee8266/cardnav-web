@@ -13,6 +13,20 @@ type Props = {
 const { groups, currentGroup, updateTime } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
+const initialRowCount = 30;
+const visibleRows = currentGroup?.rows.slice(0, initialRowCount) ?? [];
+const deferredRows = currentGroup?.rows.slice(initialRowCount).map(row => ({
+  rank: row.rank,
+  modelName: row.modelName,
+  score: row.score,
+})) ?? [];
+const deferredRowsJson = JSON.stringify(deferredRows).replace(/[<>&\u2028\u2029]/g, character => ({
+  '<': '\\u003C',
+  '>': '\\u003E',
+  '&': '\\u0026',
+  '\u2028': '\\u2028',
+  '\u2029': '\\u2029',
+}[character] || character));
 ---
 
 <section class="card bg-base-100 border border-base-300 shadow-sm">
@@ -47,7 +61,7 @@ const linkTo = Astro.locals.localizePath;
 )}
 
 {currentGroup && (
-  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-model-leaderboard>
     <div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
       <p class="text-sm font-bold text-base-content">{currentGroup.displayName}</p>
     </div>
@@ -60,8 +74,8 @@ const linkTo = Astro.locals.localizePath;
             <th scope="col" class="font-bold text-primary">{t.labels.score}</th>
           </tr>
         </thead>
-        <tbody>
-          {currentGroup.rows.map(item => (
+        <tbody data-model-leaderboard-body>
+          {visibleRows.map(item => (
             <tr class="hover">
               <td class="font-bold">
                 {item.rank <= 3 ? '#' + item.rank : item.rank}
@@ -78,6 +92,12 @@ const linkTo = Astro.locals.localizePath;
         </tbody>
       </table>
     </div>
+    {deferredRows.length > 0 ? (
+      <div class="border-t border-base-300 p-4 text-center">
+        <button type="button" class="btn btn-outline btn-sm" data-model-leaderboard-load-more>{t.leaderboard.loadMore}</button>
+      </div>
+    ) : null}
+    <script is:inline type="application/json" data-model-leaderboard-deferred set:html={deferredRowsJson}></script>
   </section>
 )}
 
@@ -86,3 +106,34 @@ const linkTo = Astro.locals.localizePath;
     <span>{t.leaderboard.empty}</span>
   </section>
 )}
+
+<script is:inline>
+  document.querySelectorAll('[data-model-leaderboard]').forEach(leaderboard => {
+    const button = leaderboard.querySelector('[data-model-leaderboard-load-more]');
+    if (!button) return;
+
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[character]));
+    const deferredRows = JSON.parse(leaderboard.querySelector('[data-model-leaderboard-deferred]')?.textContent || '[]');
+    const rowHtml = item => {
+      const rank = Number(item.rank);
+      const score = Number(item.score);
+      return `<tr class="hover">
+        <td class="font-bold">${rank <= 3 ? `#${rank}` : rank}</td>
+        <td class="font-semibold text-base-content break-all">${escapeHtml(item.modelName)}</td>
+        <td class="font-mono font-bold text-primary">${Number.isFinite(score) ? score.toFixed(2) : '-'}</td>
+      </tr>`;
+    };
+
+    button.addEventListener('click', () => {
+      const body = leaderboard.querySelector('[data-model-leaderboard-body]');
+      if (deferredRows.length) body?.insertAdjacentHTML('beforeend', deferredRows.map(rowHtml).join(''));
+      button.closest('div')?.remove();
+    }, { once: true });
+  });
+</script>

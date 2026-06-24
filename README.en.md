@@ -9,8 +9,7 @@
 </p>
 
 <p align="center">
-  <strong>A one-stop navigation hub for using AI models, bringing model selection, official subscription price comparison, third-party merchant search, practical tools, and usage guides into one public site.</strong><br/>
-  Built for users looking for AI subscriptions, accounts, activation codes, ready-made accounts, API/CDK products, and related tools, as well as merchants who want to be discovered, searched, and contacted for cooperation.
+  <strong>A one-stop guide to buying AI model accounts. It brings together AI gateways, card shops, official subscription price comparisons, model rankings, usage guides, and practical tools to help you avoid pitfalls and spend less.</strong>
 </p>
 
 <p align="center">
@@ -26,7 +25,7 @@
 </p>
 
 <p align="center">
-  <a href="#product-story">Product Story</a> ·
+  <a href="#overview">Overview</a> ·
   <a href="#all-in-one-capabilities">Capabilities</a> ·
   <a href="#who-it-is-for">Who It Is For</a> ·
   <a href="#how-to-use-it">How To Use It</a> ·
@@ -39,23 +38,13 @@
 
 ---
 
-[CardNav](https://cardnav.xyz/) is a one-stop navigation hub for using AI models. It brings model rankings and selection, official AI subscription price comparison, third-party AI card shop merchants and product search, practical tools, and friendly guide pages into one public site. It helps new users clarify what model to use, which usage method to choose, where to find related services, what prices and stock look like, what risks to check before placing an order, and which tools can help during actual use.
-
 ![](assets/screenshot.webp)
 
-## Product Story
+## Overview
 
-CardNav started from a simple problem. When people first try to seriously use services such as ChatGPT, Claude, Gemini, Grok, or Cursor, the real blocker is often not whether the product exists. It is how to get started. Which model should I choose? How should I compare official subscriptions? Are third-party channels reliable? Is the product still in stock? Will network access, phone numbers, payments, or regional differences make the process harder? These questions usually appear together.
+CardNav brings AI model accounts, official subscriptions, gateway services, card shop merchants, model rankings, usage guides, and practical tools into one public entry point so users can choose, compare, search, and make better pre-purchase decisions faster.
 
-For users in China, Russia, and similar regions, buying AI accounts is not as simple as paying on the official website. They may encounter overseas bank cards, regional pricing, delegated subscriptions, shared accounts, activation codes, ready-made accounts, wholesale channels, Telegram groups, Xianyu listings, and card shops. Cheaper channels do exist, but they are usually scattered across card shops, group chats, personal bookmarks, and reseller pages. Each channel also sells different products, specializes in different categories, and has different stock stability.
-
-More practically, many people do not reject official subscriptions. They simply cannot afford the official full price, or do not need to pay long term for the most expensive official plan. That is why they look for cheaper AI account purchase channels and compare lower-priced ChatGPT Plus, Claude Pro, or Gemini Pro subscription options.
-
-As a result, someone who wants to buy ChatGPT Plus, Claude Pro, or Gemini Pro may need to open more than a dozen pages and judge which one has stock, which one is cheapest, what each product name actually means, and whether the page is still valid. This is inefficient and makes it easy to overpay, buy the wrong thing, or discover only after clicking through that the product is out of stock.
-
-I went through the same repeated comparison process and realized that the issue was not a lack of information, but that the information was too scattered. Merchant pages, group chats, forums, bookmarks, and tutorials all speak separately. When you want one place where you can browse, compare, and judge directly, you often still have to piece everything together yourself. CardNav tries to gather that path back into one place so users can first see the route clearly, then decide whether to continue.
-
-For merchants, CardNav is not just a display slot. It is also a public discovery entrance where merchants can be searched, compared, and bookmarked, and where submission, sponsorship, and cooperation entries provide a clearer path for exposure.
+For more on the thinking behind CardNav and why it was created, read [About CardNav](content/pages/en/about.md).
 
 ## All-in-One Capabilities
 
@@ -66,7 +55,7 @@ For merchants, CardNav is not just a display slot. It is also a public discovery
 | Model rankings | View mainstream model rankings by tasks such as programming, creative writing, math, and text-to-image generation to judge which model category fits best |
 | Official subscription price comparison | Compare subscription prices and CNY conversions for ChatGPT, Claude, Gemini, Grok, Copilot, Kimi, X, and more across regions to judge whether an official plan is worth buying and which region is more cost-effective |
 | Toolset | Provides ChatGPT Session conversion, IP cleanliness checks, and external helper tools such as Codex credential assistant and Outlook quick pickup to help users complete quick checks and processing before registration, login, payment, import, or format conversion |
-| Merchant submission and cooperation | Provides merchant submission, public listing, sponsorship slots, and cooperation entrances so merchants can get clearer display and exposure paths |
+| Merchant submission and cooperation | Provides merchant submission, public listing, sponsorship slots, and cooperation entrances so quality merchants can get clearer display and exposure paths |
 
 ## Who It Is For
 
@@ -75,7 +64,7 @@ For merchants, CardNav is not just a display slot. It is also a public discovery
 - People looking for purchase entrances for AI accounts, subscriptions, activation codes, ready-made accounts, or related services
 - People who want to check stock, prices, and merchant activity before deciding whether to enter a specific site
 - People who want to understand merchant selection, delivery formats, network environments, payment methods, and risk-control precautions
-- Merchants who want to submit a site, get listed, sponsor a placement, or discuss further cooperation
+- Merchants who want to submit a site, get listed, earn quality exposure, or discuss further cooperation
 
 ## How To Use It
 
@@ -86,7 +75,7 @@ CardNav does not try to throw everything at you at once. It tries to put the ord
 3. When a third-party channel is needed, search merchants, products, stock, and prices on the homepage
 4. Before placing an order, read the guides to prepare network access, payment, delivery expectations, KYC, and risk-control basics
 5. When it is time to operate, use tools such as IP cleanliness checks and Session conversion
-6. Merchants can enter the listing flow through the submission entrance or view cooperation exposure options directly
+6. Quality merchants can enter the listing flow through the submission entrance or view cooperation exposure options directly
 
 ## Guides
 

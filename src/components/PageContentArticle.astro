@@ -3,12 +3,29 @@
 文件说明: 渲染公开站点 Markdown 内容页正文，供默认语言和带语言前缀的静态页面复用。
 */
 import type { RenderedPageContent } from '../page-content.js';
+import bannerImage from '../../assets/banner.webp';
 
 type Props = {
   content: RenderedPageContent;
+  showBanner?: boolean;
 };
 
-const { content } = Astro.props;
+const { content, showBanner = false } = Astro.props;
 ---
 
-<article class="content-page rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7" set:html={content.html} />
+<article class="content-page site-main-width rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7">
+  {
+    showBanner && (
+      <img
+        class="content-page-banner"
+        src={bannerImage.src}
+        width={bannerImage.width}
+        height={bannerImage.height}
+        alt="CardNav"
+        loading="eager"
+        decoding="async"
+      />
+    )
+  }
+  <Fragment set:html={content.html} />
+</article>

@@ -7,11 +7,13 @@ next: choose-model
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-If you are from mainland China, Russia, or other regions restricted by U.S. AI services, you will often run into problems with accounts, networks, phone numbers, and payment methods when registering for and using products such as ChatGPT, Claude, and Gemini.
+If you are preparing to use AI products such as ChatGPT, Claude, Gemini, Grok, Cursor, and more, especially from some restricted countries and regions, you will often run into many questions while registering an account or starting a subscription, such as accounts, networks, phone numbers, payment methods, and prices.
+
+There is plenty of information online, but it is often scattered across forums, group chats, fragmented blogs, merchant pages, and price pages. The details can be messy, and different sources do not always say the same thing.
 
 **The goal of this guide page set is to organize experience that was originally scattered across forums, group chats, and fragmented blogs into one clear path.**
 
-This guide set is not teaching you "one trick to solve everything." Instead, it first helps you judge: which model you actually want to use, how high a barrier you can accept, whether you are willing to take third-party risks, and whether you want to spend time setting up the environment yourself. Different choices have completely different costs, stability, and risks. Choosing the path first is more important than searching for tutorials first.
+This guide set aims to help you clarify the key questions in one pass: which model to use, which usage method to choose, what the price and preparation cost roughly look like, and where uncertainty may appear. Different choices have different costs, stability, and risks. Choosing the path first is more important than searching for tutorials first.
 
 We recommend starting with the following four steps:
 
