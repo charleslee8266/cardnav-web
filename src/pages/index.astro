@@ -293,10 +293,10 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
           </div>
           <a href={linkTo('/shops')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}</a>
         </div>
-        <form action={linkTo('/shops')} method="get" class="flex flex-col gap-3 rounded-lg border border-base-300 bg-base-100 p-3">
+        <form action={linkTo('/shops')} method="get" class="flex flex-col gap-3 rounded-lg border border-base-300 bg-base-100 p-3" data-home-search-form>
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <input name="q" type="search" class="input input-bordered w-full" placeholder={t.home.searchPlaceholder} autocomplete="off" />
-            <button type="submit" class="btn btn-primary shrink-0" data-umami-event="home-search-submit" data-umami-event-name={t.analytics.homeSearch} data-umami-event-target-page={linkTo('/shops')}>{t.actions.search}</button>
+            <input name="q" type="search" class="input input-bordered w-full" placeholder={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
+            <button type="submit" class="btn btn-primary shrink-0" data-umami-event="home-search-submit" data-umami-event-name={t.analytics.homeSearch} data-umami-event-query="" data-umami-event-target-page={linkTo('/shops')} data-umami-event-url={linkTo('/shops')}>{t.actions.search}</button>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-sm font-semibold uppercase tracking-wider text-base-content/65">{t.labels.popularSearch}</span>
@@ -425,3 +425,20 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
 
   <Sponsors />
 </PublicPage>
+
+<script is:inline define:vars={{ shopsPath: linkTo('/shops') }}>
+  const homeSearchForm = document.querySelector('[data-home-search-form]');
+  const homeSearchInput = homeSearchForm?.querySelector('[data-home-search-input]');
+  const homeSearchButton = homeSearchForm?.querySelector('[data-umami-event="home-search-submit"]');
+  const syncHomeSearchEvent = () => {
+    if (!homeSearchButton || !homeSearchInput) return;
+    const query = homeSearchInput.value.trim();
+    const targetPage = query ? `${shopsPath}?q=${encodeURIComponent(query)}` : shopsPath;
+    homeSearchButton.dataset.umamiEventQuery = query;
+    homeSearchButton.dataset.umamiEventUrl = targetPage;
+    homeSearchButton.dataset.umamiEventTargetPage = targetPage;
+  };
+  homeSearchInput?.addEventListener('input', syncHomeSearchEvent);
+  homeSearchForm?.addEventListener('submit', syncHomeSearchEvent);
+  syncHomeSearchEvent();
+</script>

@@ -74,6 +74,35 @@ function modelHref(modelId: string) {
   return linkTo(`/llm-gateway/models/${encodeURIComponent(modelId)}`);
 }
 
+function relaySiteClickAttrs(site: { name: string; slug: string; outboundUrl: string }) {
+  const targetPage = linkTo(`/llm-gateway/${site.slug}`);
+  return {
+    'data-umami-event': 'relay-site-click',
+    'data-umami-event-name': site.name,
+    'data-umami-event-target-page': targetPage,
+    'data-umami-event-url': targetPage,
+  };
+}
+
+function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
+  return {
+    'data-umami-event': 'relay-site-open-click',
+    'data-umami-event-name': site.name,
+    'data-umami-event-url': site.outboundUrl,
+  };
+}
+
+function relayModelClickAttrs(model: { modelId: string; modelFamily: string }) {
+  const targetPage = modelHref(model.modelId);
+  return {
+    'data-umami-event': 'relay-model-click',
+    'data-umami-event-name': model.modelId,
+    'data-umami-event-family': model.modelFamily,
+    'data-umami-event-target-page': targetPage,
+    'data-umami-event-url': targetPage,
+  };
+}
+
 const modelFilterOptions = collectFilterOptions(relayData.sites.map(site => site.displayModelFamilies));
 const paymentFilterOptions = collectFilterOptions(relayData.sites.map(site => site.paymentMethods));
 const deferredSitesJson = JSON.stringify(deferredSites).replace(/</g, '\\u003c');
@@ -172,15 +201,15 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
                       <div class="min-w-0 space-y-2">
                         <div class="flex flex-wrap items-center gap-2">
-                          <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover break-words text-base font-semibold text-base-content">{site.name}</a>
+                          <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover break-words text-base font-semibold text-base-content" {...relaySiteClickAttrs(site)}>{site.name}</a>
                           {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
                         </div>
                         {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
                         <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
                       </div>
                       <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
-                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">{t.llmRelay.viewDetail}</a>
-                        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">{t.actions.open}</a>
+                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteClickAttrs(site)}>{t.llmRelay.viewDetail}</a>
+                        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteOpenAttrs(site)}>{t.actions.open}</a>
                       </div>
                     </div>
                   </td>
@@ -241,7 +270,7 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
                   <tr data-home-model-card data-search={`${model.modelId} ${model.modelFamily}`.toLowerCase()} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelFamily} data-sort-support-count={String(model.supportSiteCount || 0)}>
                     <td data-label={t.llmRelay.rank} class="font-mono text-sm text-secondary">#{index + 1}</td>
                     <td data-label={t.labels.model}>
-                      <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-base-content">{model.modelId}</a>
+                      <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-base-content" {...relayModelClickAttrs(model)}>{model.modelId}</a>
                     </td>
                     <td data-label={t.llmRelay.modelFamily}>{model.modelFamily}</td>
                     <td data-label={t.llmRelay.supportedRelayCount} class="font-mono">{model.supportSiteCount}</td>
@@ -268,6 +297,12 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
 <script is:inline define:vars={{ relayLinkPrefix: linkTo('/llm-gateway'), modelLinkPrefix: linkTo('/llm-gateway/models'), detailLabel: t.llmRelay.viewDetail, openLabel: t.actions.open, rankLabel: t.llmRelay.rank, basicInfoLabel: t.llmRelay.basicInfo, scoreLabel: t.labels.score, supportedModelsLabel: t.llmRelay.supportedModels, modelCountLabel: t.llmRelay.modelCount, paymentMethodsLabel: t.llmRelay.paymentMethods, paymentMethodLabels: t.llmRelay.paymentMethodLabels, modelLabel: t.labels.model, modelFamilyLabel: t.llmRelay.modelFamily, supportedRelayCountLabel: t.llmRelay.supportedRelayCount }}>
   const relayHome = document.querySelector('[data-relay-home]');
   if (relayHome) {
+    let relayFilterTrackTimer = null;
+    let lastRelayFilterTrackKey = '';
+    const trackRelayEvent = (eventName, eventData = {}) => {
+      if (typeof window.umami?.track !== 'function') return;
+      window.umami.track(eventName, eventData);
+    };
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
       '&': '&amp;',
       '<': '&lt;',
@@ -310,13 +345,22 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
       const numberValue = Number(value);
       return Number.isFinite(numberValue) && numberValue > 0 ? numberValue.toFixed(2) : '-';
     };
+    const relaySiteAttrs = site => {
+      const targetPage = `${relayLinkPrefix}/${site.slug}`;
+      return `data-umami-event="relay-site-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
+    };
+    const relaySiteOpenAttrs = site => `data-umami-event="relay-site-open-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-url="${escapeHtml(site.outboundUrl || site.url)}"`;
+    const relayModelAttrs = model => {
+      const targetPage = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
+      return `data-umami-event="relay-model-click" data-umami-event-name="${escapeHtml(model.modelId)}" data-umami-event-family="${escapeHtml(model.modelFamily)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
+    };
     const siteRowHtml = (site, index) => {
       const families = uniqueLabels(site.displayModelFamilies, 8);
       const payments = uniqueLabels(site.paymentMethods, 6);
       const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelFamilies || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
       return `<tr data-home-site-card data-search="${escapeHtml(search)}" data-families="${escapeHtml(families.map(item => item.toLowerCase()).join(','))}" data-payments="${escapeHtml(payments.join(','))}" data-original-order="${index}" data-sort-rank="${index + 1}" data-sort-name="${escapeHtml(site.name)}" data-sort-score="${Number(site.siteScore) || 0}" data-sort-families="${escapeHtml(families.join(' '))}" data-sort-model-count="${Number(site.modelCount) || 0}" data-sort-payments="${escapeHtml(payments.map(paymentLabel).join(' '))}">
         <td data-label="${escapeHtml(rankLabel)}" class="font-mono text-sm text-primary">#${index + 1}</td>
-        <td data-label="${escapeHtml(basicInfoLabel)}"><div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between"><div class="min-w-0 space-y-2"><div class="flex flex-wrap items-center gap-2"><a href="${escapeHtml(`${relayLinkPrefix}/${site.slug}`)}" class="link link-hover break-words text-base font-semibold text-base-content">${escapeHtml(site.name)}</a>${site.displayFamily ? `<span class="badge badge-ghost font-medium">${escapeHtml(site.displayFamily)}</span>` : ''}</div>${site.summary ? `<p class="max-w-3xl text-sm leading-6 text-base-content/72">${escapeHtml(site.summary)}</p>` : ''}<div class="text-xs text-base-content/55"><span class="break-all">${escapeHtml(site.url)}</span></div></div><div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center"><a href="${escapeHtml(`${relayLinkPrefix}/${site.slug}`)}" class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">${escapeHtml(detailLabel)}</a><a href="${escapeHtml(site.outboundUrl || site.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">${escapeHtml(openLabel)}</a></div></div></td>
+        <td data-label="${escapeHtml(basicInfoLabel)}"><div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between"><div class="min-w-0 space-y-2"><div class="flex flex-wrap items-center gap-2"><a href="${escapeHtml(`${relayLinkPrefix}/${site.slug}`)}" class="link link-hover break-words text-base font-semibold text-base-content" ${relaySiteAttrs(site)}>${escapeHtml(site.name)}</a>${site.displayFamily ? `<span class="badge badge-ghost font-medium">${escapeHtml(site.displayFamily)}</span>` : ''}</div>${site.summary ? `<p class="max-w-3xl text-sm leading-6 text-base-content/72">${escapeHtml(site.summary)}</p>` : ''}<div class="text-xs text-base-content/55"><span class="break-all">${escapeHtml(site.url)}</span></div></div><div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center"><a href="${escapeHtml(`${relayLinkPrefix}/${site.slug}`)}" class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${relaySiteAttrs(site)}>${escapeHtml(detailLabel)}</a><a href="${escapeHtml(site.outboundUrl || site.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${relaySiteOpenAttrs(site)}>${escapeHtml(openLabel)}</a></div></div></td>
         <td data-label="${escapeHtml(scoreLabel)}" class="font-mono">${formatPositiveScore(site.siteScore)}</td>
         <td data-label="${escapeHtml(supportedModelsLabel)}">${families.length ? `<div class="flex flex-wrap gap-1.5">${families.map(family => `<span class="badge badge-primary badge-outline badge-sm">${escapeHtml(family)}</span>`).join('')}</div>` : '<span class="text-base-content/35">-</span>'}</td>
         <td data-label="${escapeHtml(modelCountLabel)}" class="font-mono">${site.modelCount > 0 ? site.modelCount : '-'}</td>
@@ -329,11 +373,11 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
     };
     const modelRowHtml = (model, index) => `<tr data-home-model-card data-search="${escapeHtml(`${model.modelId} ${model.modelFamily}`.toLowerCase())}" data-original-order="${index}" data-sort-rank="${index + 1}" data-sort-model="${escapeHtml(model.modelId)}" data-sort-family="${escapeHtml(model.modelFamily)}" data-sort-support-count="${Number(model.supportSiteCount) || 0}">
       <td data-label="${escapeHtml(rankLabel)}" class="font-mono text-sm text-secondary">#${index + 1}</td>
-      <td data-label="${escapeHtml(modelLabel)}"><a href="${escapeHtml(`${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`)}" class="link link-hover break-words font-mono text-sm font-semibold text-base-content">${escapeHtml(model.modelId)}</a></td>
+      <td data-label="${escapeHtml(modelLabel)}"><a href="${escapeHtml(`${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`)}" class="link link-hover break-words font-mono text-sm font-semibold text-base-content" ${relayModelAttrs(model)}>${escapeHtml(model.modelId)}</a></td>
       <td data-label="${escapeHtml(modelFamilyLabel)}">${escapeHtml(model.modelFamily)}</td>
       <td data-label="${escapeHtml(supportedRelayCountLabel)}" class="font-mono">${model.supportSiteCount}</td>
     </tr>`;
-    const applySiteFilters = () => {
+    const applySiteFilters = ({ track = true } = {}) => {
       const keyword = (relayHome.querySelector('[data-home-site-search]')?.value || '').trim().toLowerCase();
       const selectedFamily = relayHome.querySelector('[data-home-site-family]')?.value || '';
       const selectedPayment = relayHome.querySelector('[data-home-site-payment]')?.value || '';
@@ -347,8 +391,14 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
         if (visible) visibleCount += 1;
       });
       relayHome.querySelector('[data-home-site-empty]')?.classList.toggle('hidden', visibleCount > 0);
+      if (track) scheduleRelayFilterTrack('sites', {
+        query: keyword,
+        family: selectedFamily,
+        payment: selectedPayment,
+        visibleCount,
+      });
     };
-    const applyModelFilters = () => {
+    const applyModelFilters = ({ track = true } = {}) => {
       const keyword = (relayHome.querySelector('[data-home-model-search]')?.value || '').trim().toLowerCase();
       let visibleCount = 0;
       relayHome.querySelectorAll('[data-home-model-card]').forEach(card => {
@@ -357,6 +407,20 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
         if (visible) visibleCount += 1;
       });
       relayHome.querySelector('[data-home-model-empty]')?.classList.toggle('hidden', visibleCount > 0);
+      if (track) scheduleRelayFilterTrack('models', {
+        query: keyword,
+        visibleCount,
+      });
+    };
+    const scheduleRelayFilterTrack = (tab, payload) => {
+      clearTimeout(relayFilterTrackTimer);
+      relayFilterTrackTimer = setTimeout(() => {
+        const eventData = { tab, ...payload };
+        const eventKey = JSON.stringify(eventData);
+        if (eventKey === lastRelayFilterTrackKey) return;
+        lastRelayFilterTrackKey = eventKey;
+        trackRelayEvent('relay-filter-change', eventData);
+      }, 600);
     };
     const showTab = tabName => {
       relayHome.querySelectorAll('[data-relay-tab]').forEach(tab => {
@@ -368,6 +432,7 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
       relayHome.querySelectorAll('[data-relay-panel]').forEach(panel => {
         panel.hidden = panel.dataset.relayPanel !== tabName;
       });
+      trackRelayEvent('relay-tab-click', { name: tabName });
     };
     const loadMore = type => {
       const list = relayHome.querySelector(type === 'sites' ? '[data-relay-home-sites-list]' : '[data-relay-home-models-list]');
@@ -380,8 +445,9 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
       window.initSortableTables?.(relayHome);
       const table = list?.closest('[data-sortable-table]');
       if (table) window.applySortableTableSort?.(table);
-      if (type === 'sites') applySiteFilters();
-      else applyModelFilters();
+      if (type === 'sites') applySiteFilters({ track: false });
+      else applyModelFilters({ track: false });
+      trackRelayEvent('relay-load-more-click', { name: type, loadedCount: rows.length });
     };
     relayHome.querySelectorAll('[data-relay-tab]').forEach(tab => {
       tab.addEventListener('click', () => showTab(tab.dataset.relayTab || 'sites'));
@@ -392,6 +458,18 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
     relayHome.querySelector('[data-home-model-search]')?.addEventListener('input', applyModelFilters);
     relayHome.querySelectorAll('[data-relay-load-more]').forEach(button => {
       button.addEventListener('click', () => loadMore(button.dataset.relayLoadMore || 'sites'), { once: true });
+    });
+    relayHome.querySelectorAll('[data-sort-key]').forEach(button => {
+      button.addEventListener('click', () => {
+        const table = button.closest('[data-sortable-table]');
+        const panel = button.closest('[data-relay-panel]');
+        const currentDirection = table?.dataset.sortDirection || 'none';
+        trackRelayEvent('relay-sort-click', {
+          tab: panel?.dataset.relayPanel || 'unknown',
+          key: button.dataset.sortKey || '',
+          direction: currentDirection === 'asc' ? 'desc' : 'asc',
+        });
+      });
     });
   }
 </script>

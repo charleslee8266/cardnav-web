@@ -48,6 +48,26 @@ function firstFinite(values: Array<number | null>) {
   const value = values.find(item => typeof item === 'number' && Number.isFinite(item));
   return typeof value === 'number' ? value : '';
 }
+
+function relaySiteClickAttrs(site: { name: string; slug: string }) {
+  const targetPage = linkTo(`/llm-gateway/${site.slug}`);
+  return {
+    'data-umami-event': 'relay-site-click',
+    'data-umami-event-name': site.name,
+    'data-umami-event-source-model': model.modelId,
+    'data-umami-event-target-page': targetPage,
+    'data-umami-event-url': targetPage,
+  };
+}
+
+function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
+  return {
+    'data-umami-event': 'relay-site-open-click',
+    'data-umami-event-name': site.name,
+    'data-umami-event-source-model': model.modelId,
+    'data-umami-event-url': site.outboundUrl,
+  };
+}
 ---
 
 <PublicPage activeNav="llm-relay" {...seo}>
@@ -112,15 +132,15 @@ function firstFinite(values: Array<number | null>) {
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
                     <div class="min-w-0 space-y-2">
                       <div class="flex flex-wrap items-center gap-2">
-                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover text-base font-semibold text-base-content">{site.name}</a>
+                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover text-base font-semibold text-base-content" {...relaySiteClickAttrs(site)}>{site.name}</a>
                         {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
                       </div>
                       {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
                       <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
                     </div>
                     <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
-                      <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">{t.llmRelay.viewDetail}</a>
-                      <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">{t.actions.open}</a>
+                      <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteClickAttrs(site)}>{t.llmRelay.viewDetail}</a>
+                      <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteOpenAttrs(site)}>{t.actions.open}</a>
                     </div>
                   </div>
                 </td>
