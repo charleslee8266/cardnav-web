@@ -102,7 +102,7 @@ export const enMessages: Messages = {
     domain: 'cardnav.xyz',
     tagline: 'One-stop navigation for AI model account access',
     heroDescription:
-      'Not sure where to buy AI accounts cheaply and safely? CardNav brings together AI model rankings, official subscription channels, API gateways, third-party merchant comparisons, practical tools, risk checks, and guides so you can spend less and avoid common traps.',
+      'Not sure where to buy AI accounts at a lower price from more reliable sources? CardNav brings together AI gateway sites, third-party shops, official subscription price comparisons, plus model rankings, guides, and practical tools to help you avoid traps and spend less.',
   },
   nav: {
     openMenu: 'Open menu',
@@ -189,7 +189,7 @@ export const enMessages: Messages = {
   home: {
     seoTitle: 'CardNav - One-stop navigation for AI model account access',
     seoDescription:
-      'AI model rankings, official AI subscription channels, API gateways, third-party AI shop comparisons, practical tools, risk checks, and guides for GPT, Claude, Gemini, Cursor, Grok, and more.',
+      'AI gateway sites, third-party AI shops, official subscription price comparisons, model rankings, guides, and practical tools for GPT, Claude, Gemini, Cursor, Grok, and more.',
     guideTitle: 'Not sure where to start? Open the guide',
     guideDescription: 'Clarify model choices, access methods, and practical preparation before you buy.',
     guideSteps: [

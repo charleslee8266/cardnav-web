@@ -27,7 +27,7 @@ const seo = buildSeoContext({
   pathname: currentGroup.pathname,
   title: `${currentGroup.displayName}${Astro.locals.messages.leaderboard.titleSuffix}`,
   description: Astro.locals.messages.leaderboard.dynamicDescription.replace('{taskLabel}', currentGroup.displayName),
-  imagePath: '/og-cardnav.svg',
+  imagePath: '/og-cardnav.png',
   type: 'webpage',
   locale: Astro.locals.locale,
 });

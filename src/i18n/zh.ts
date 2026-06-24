@@ -101,7 +101,7 @@ export const zhMessages = {
     domain: 'cardnav.xyz',
     tagline: '一站式 AI 大模型账号购买导航',
     heroDescription:
-      '不知道 AI 账号去哪买便宜又靠谱？这里汇总 AI 大模型排行榜、官方 AI 订阅渠道、API 中转站、第三方 AI 卡网比价、实用工具、风险控制、使用指南，帮你少踩坑、少花钱。',
+      '不知道 AI 账号去哪买便宜又靠谱？这里聚合 AI 中转站、卡网、官方订阅比价，还有模型排行、使用指南、实用工具，帮你少踩坑，少花钱。',
   },
   nav: {
     openMenu: '打开菜单',
@@ -188,7 +188,7 @@ export const zhMessages = {
   home: {
     seoTitle: '卡网大全 - 一站式 AI 大模型账号购买导航',
     seoDescription:
-      '汇总 AI 大模型排行榜、官方 AI 订阅渠道、API 中转站、第三方 AI 卡网比价、实用工具、风险控制、使用指南，帮你少踩坑、少花钱。GPT，Claude，Gemini，Cursor，Grok 应有尽有。',
+      '聚合 AI 中转站、卡网、官方订阅比价，还有模型排行、使用指南、实用工具，帮你少踩坑，少花钱。GPT，Claude，Gemini，Cursor，Grok 应有尽有。',
     guideTitle: '不知道如何开始？点击进入向导',
     guideDescription: '从模型选择、使用方式到实践，先把思路理清楚。',
     guideSteps: [
