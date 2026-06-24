@@ -3,7 +3,7 @@
  */
 import 'dotenv/config';
 
-export const publicSiteUrl = process.env.SITE_URL || 'https://cardnav.xyz';
+export const publicSiteUrl = process.env.PUBLIC_SITE_URL || 'https://cardnav.xyz';
 export const telegramGroupUrl = 'https://t.me/cardnav_xyz_group';
 export const githubRepoUrl = 'https://github.com/charleslee8266/cardnav-web';
 export const xProfileUrl = 'https://x.com/CharlesLee8266';
