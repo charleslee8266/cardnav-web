@@ -47,7 +47,7 @@ export function buildSeoContext(input: SeoInput) {
     ogType: input.type === 'article' ? 'article' : 'website',
     ogUrl: canonicalUrl,
     ogImageUrl: resolveUrl(baseUrl, input.imagePath),
-    robots: input.noindex ? 'noindex,nofollow' : 'index,follow',
+    robots: input.noindex ? 'noindex,follow' : 'index,follow',
     jsonLd:
       input.type === 'website'
         ? {

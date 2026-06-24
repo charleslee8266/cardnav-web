@@ -20,6 +20,13 @@ export type PublicSeoRoute = {
   lastmod?: string;
 };
 
+export type PublicSitemapIndexEntry = {
+  pathname: string;
+  lastmod?: string;
+};
+
+export const gatewayModelSitemapLimit = 500;
+
 function routePath(pathname: string, locale: Locale) {
   return localizePath(pathname, locale);
 }
@@ -190,13 +197,25 @@ export function buildGatewaySeoRoutes(gatewaySites: PublicGatewaySiteRow[], loca
 
 export function buildGatewayModelSeoRoutes(gatewayModels: PublicGatewayModelRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
   const messages = getMessages(locale);
-  return gatewayModels.map(model => ({
+  return getIndexableGatewayModels(gatewayModels).map(model => ({
     pathname: routePath(`/llm-gateway/models/${encodeURIComponent(model.modelId)}`, locale),
     title: messages.llmGateway.modelDetailSeoTitle.replace('{model}', model.modelId),
     description: messages.llmGateway.modelDetailSeoDescription.replace('{model}', model.modelId),
     changefreq: 'daily' as const,
     lastmod: model.latestGatewayRefreshAt ?? undefined,
   }));
+}
+
+export function isIndexableGatewayModel(model: Pick<PublicGatewayModelRow, 'modelFamily' | 'supportSiteCount' | 'priceCount'>) {
+  return model.modelFamily !== 'Other'
+    && model.supportSiteCount >= 2
+    && model.priceCount >= 2;
+}
+
+export function getIndexableGatewayModels(gatewayModels: PublicGatewayModelRow[]) {
+  return gatewayModels
+    .filter(isIndexableGatewayModel)
+    .slice(0, gatewayModelSitemapLimit);
 }
 
 export function getPublicSeoRoutesWithDynamicPages(params: {
@@ -310,6 +329,23 @@ export function buildSitemapXml(baseUrlInput: string, routes = getPublicSeoRoute
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${items}\n</urlset>\n`;
 }
 
+export function buildSitemapIndexXml(baseUrlInput: string, entries: PublicSitemapIndexEntry[]) {
+  const items = entries
+    .map(entry => {
+      const lines = [
+        '  <sitemap>',
+        `    <loc>${escapeXml(resolvePublicUrl(baseUrlInput, entry.pathname))}</loc>`,
+      ];
+      if (entry.lastmod) {
+        lines.push(`    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`);
+      }
+      lines.push('  </sitemap>');
+      return lines.join('\n');
+    })
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`;
+}
+
 export function buildSitemapTxt(baseUrlInput: string, routes = getPublicSeoRoutes()) {
   return `${normalizePublicSeoRoutes(routes)
     .map(route => resolvePublicUrl(baseUrlInput, route.pathname))
@@ -330,7 +366,6 @@ export function buildRobotsTxt(baseUrlInput: string) {
       '',
     ]),
     `Sitemap: ${baseUrl}/sitemap.xml`,
-    `Sitemap: ${baseUrl}/sitemap.txt`,
     '',
   ].join('\n');
 }

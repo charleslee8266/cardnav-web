@@ -5,6 +5,7 @@
 import PublicPage from '../../../layouts/PublicPage.astro';
 import SortableTableHeader from '../../../components/SortableTableHeader.astro';
 import { buildSeoContext } from '../../../seo.js';
+import { isIndexableGatewayModel } from '../../../seo-routes.js';
 import { publicSiteUrl } from '../../../site.js';
 import { loadGatewayModelDetail } from '../../../store.js';
 import sortableTablesScriptUrl from '../../../scripts/sortable-tables.js?url';
@@ -28,6 +29,7 @@ const seo = buildSeoContext({
   imagePath: '/og-cardnav.png',
   type: 'webpage',
   locale: Astro.locals.locale,
+  noindex: !isIndexableGatewayModel(model),
 });
 
 function formatPositiveScore(value: number | null) {

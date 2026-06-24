@@ -6,13 +6,17 @@ import path from 'node:path';
 import { test } from 'node:test';
 import sharp from 'sharp';
 import {
+  buildGatewayModelSeoRoutes,
   buildQuickPlanSearchSeoRoutes,
   buildLlmsTxt,
   buildRobotsTxt,
+  buildSitemapIndexXml,
   buildSitemapTxt,
   buildSitemapXml,
+  gatewayModelSitemapLimit,
   getPublicSeoRoutes,
   getPublicSeoRoutesForAllLocales,
+  isIndexableGatewayModel,
   normalizePublicSeoRoutes,
   trainingCrawlerUserAgents,
 } from '../src/seo-routes.js';
@@ -58,6 +62,66 @@ test('cardnav-web sitemap, text sitemap and llms include every public SEO route'
   assert.match(sitemapXml, /<xhtml:link rel="alternate" hreflang="x-default" href="https:\/\/cardnav\.xyz\/" \/>/);
   assert.match(llmsTxt, /https:\/\/cardnav\.xyz\/en\): AI gateway sites/);
   assert.match(llmsTxt, /https:\/\/cardnav\.xyz\/ru\): AI-шлюзы/);
+});
+
+test('cardnav-web sitemap index points crawlers to split sitemap files', () => {
+  const sitemapIndex = buildSitemapIndexXml('https://cardnav.xyz', [
+    { pathname: '/sitemap-static.xml' },
+    { pathname: '/sitemap-guide.xml' },
+    { pathname: '/sitemap-official-price.xml' },
+    { pathname: '/sitemap-leaderboard.xml' },
+    { pathname: '/sitemap-gateway-sites.xml' },
+    { pathname: '/sitemap-gateway-models.xml' },
+  ]);
+
+  assert.match(sitemapIndex, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-static\.xml<\/loc>/);
+  assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-guide\.xml<\/loc>/);
+  assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-official-price\.xml<\/loc>/);
+  assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-leaderboard\.xml<\/loc>/);
+  assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-gateway-sites\.xml<\/loc>/);
+  assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-gateway-models\.xml<\/loc>/);
+});
+
+test('gateway model sitemap includes only higher-value model pages', () => {
+  const routes = buildGatewayModelSeoRoutes([
+    {
+      id: 'gpt-5',
+      modelId: 'gpt-5',
+      modelFamily: 'OpenAI',
+      supportSiteCount: 3,
+      priceCount: 4,
+      latestGatewayRefreshAt: '2026-06-24T10:00:00.000Z',
+      latestGatewayRefreshTime: '',
+    },
+    {
+      id: 'one-site-model',
+      modelId: 'one-site-model',
+      modelFamily: 'OpenAI',
+      supportSiteCount: 1,
+      priceCount: 4,
+      latestGatewayRefreshAt: null,
+      latestGatewayRefreshTime: '',
+    },
+    {
+      id: 'other-family-model',
+      modelId: 'other-family-model',
+      modelFamily: 'Other',
+      supportSiteCount: 4,
+      priceCount: 4,
+      latestGatewayRefreshAt: null,
+      latestGatewayRefreshTime: '',
+    },
+  ]);
+
+  const sitemapXml = buildSitemapXml('https://cardnav.xyz', routes);
+  assert.equal(routes.length, 1);
+  assert.match(sitemapXml, /\/llm-gateway\/models\/gpt-5/);
+  assert.doesNotMatch(sitemapXml, /one-site-model/);
+  assert.doesNotMatch(sitemapXml, /other-family-model/);
+  assert.equal(isIndexableGatewayModel({ modelFamily: 'OpenAI', supportSiteCount: 2, priceCount: 2 }), true);
+  assert.equal(isIndexableGatewayModel({ modelFamily: 'OpenAI', supportSiteCount: 1, priceCount: 2 }), false);
+  assert.equal(gatewayModelSitemapLimit, 500);
 });
 
 test('cardnav-web sitemap includes hidden quick plan SEO slug pages', () => {
@@ -127,7 +191,13 @@ test('cardnav-web robots allows indexing but blocks known model-training crawler
   assert.match(robotsTxt, /User-agent: \*/);
   assert.match(robotsTxt, /Allow: \//);
   assert.match(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap\.xml/);
-  assert.match(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap\.txt/);
+  assert.doesNotMatch(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap-static\.xml/);
+  assert.doesNotMatch(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap-guide\.xml/);
+  assert.doesNotMatch(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap-official-price\.xml/);
+  assert.doesNotMatch(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap-leaderboard\.xml/);
+  assert.doesNotMatch(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap-gateway-sites\.xml/);
+  assert.doesNotMatch(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap-gateway-models\.xml/);
+  assert.doesNotMatch(robotsTxt, /Sitemap: https:\/\/cardnav\.xyz\/sitemap\.txt/);
 
   for (const userAgent of trainingCrawlerUserAgents) {
     assert.match(robotsTxt, new RegExp(`User-agent: ${userAgent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\nDisallow: /`));
@@ -169,6 +239,20 @@ test('non-database public SEO routes build canonical metadata', () => {
   });
   assert.equal(englishSeo.canonicalUrl, 'https://cardnav.xyz/en/about');
   assert.equal(englishSeo.description, 'About CardNav.');
+});
+
+test('noindex pages keep links followable', () => {
+  const seo = buildSeoContext({
+    baseUrl: 'https://cardnav.xyz',
+    pathname: '/llm-gateway/models/low-value-model',
+    title: 'low-value-model gateway support',
+    description: 'Gateway support.',
+    imagePath: '/og-cardnav.png',
+    type: 'webpage',
+    noindex: true,
+  });
+
+  assert.equal(seo.robots, 'noindex,follow');
 });
 
 test('quick plan search SEO metadata uses slug canonical and alternates', () => {

@@ -67,11 +67,13 @@ function loadPageContentModulesFromFiles() {
   return modules;
 }
 
-const rawPageContentModules = typeof import.meta.glob === 'function' ? import.meta.glob('../content/pages/*/*.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-}) as Record<string, string> : loadPageContentModulesFromFiles();
+const rawPageContentModules = import.meta.env?.PROD
+  ? import.meta.glob('../content/pages/*/*.md', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }) as Record<string, string>
+  : loadPageContentModulesFromFiles();
 
 function titleFromMarkdown(markdown: string, fallback: string) {
   const match = markdown.match(/^#\s+(.+)$/mu);
