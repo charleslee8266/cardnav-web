@@ -6,21 +6,21 @@ import PublicPage from '../layouts/PublicPage.astro';
 import SortableTableHeader from '../components/SortableTableHeader.astro';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
-import { loadRelayModels, loadRelaySites } from '../store.js';
+import { loadGatewayModels, loadGatewaySites } from '../store.js';
 import sortableTablesScriptUrl from '../scripts/sortable-tables.js?url';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const [relayData, relayModelData] = await Promise.all([loadRelaySites(), loadRelayModels()]);
-const topSites = relayData.sites.slice(0, 20);
-const topModels = relayModelData.models.slice(0, 20);
-const deferredSites = relayData.sites.slice(20);
-const deferredModels = relayModelData.models.slice(20);
+const [gatewayData, gatewayModelData] = await Promise.all([loadGatewaySites(), loadGatewayModels()]);
+const topSites = gatewayData.sites.slice(0, 20);
+const topModels = gatewayModelData.models.slice(0, 20);
+const deferredSites = gatewayData.sites.slice(20);
+const deferredModels = gatewayModelData.models.slice(20);
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/llm-gateway',
-  title: t.llmRelay.seoTitle,
-  description: t.llmRelay.seoDescription,
+  title: t.llmGateway.seoTitle,
+  description: t.llmGateway.seoDescription,
   imagePath: '/og-cardnav.png',
   type: 'website',
   locale: Astro.locals.locale,
@@ -44,7 +44,7 @@ function collectFilterOptions(items: string[][]) {
   return uniqueLabels(items.flat()).sort((a, b) => a.localeCompare(b));
 }
 
-const paymentMethodLabels = t.llmRelay.paymentMethodLabels;
+const paymentMethodLabels = t.llmGateway.paymentMethodLabels;
 
 function paymentLabel(key: string): string {
   return paymentMethodLabels[key] || key;
@@ -74,28 +74,28 @@ function modelHref(modelId: string) {
   return linkTo(`/llm-gateway/models/${encodeURIComponent(modelId)}`);
 }
 
-function relaySiteClickAttrs(site: { name: string; slug: string; outboundUrl: string }) {
+function gatewaySiteClickAttrs(site: { name: string; slug: string; outboundUrl: string }) {
   const targetPage = linkTo(`/llm-gateway/${site.slug}`);
   return {
-    'data-umami-event': 'relay-site-click',
+    'data-umami-event': 'gateway-site-click',
     'data-umami-event-name': site.name,
     'data-umami-event-target-page': targetPage,
     'data-umami-event-url': targetPage,
   };
 }
 
-function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
+function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
   return {
-    'data-umami-event': 'relay-site-open-click',
+    'data-umami-event': 'gateway-site-open-click',
     'data-umami-event-name': site.name,
     'data-umami-event-url': site.outboundUrl,
   };
 }
 
-function relayModelClickAttrs(model: { modelId: string; modelFamily: string }) {
+function gatewayModelClickAttrs(model: { modelId: string; modelFamily: string }) {
   const targetPage = modelHref(model.modelId);
   return {
-    'data-umami-event': 'relay-model-click',
+    'data-umami-event': 'gateway-model-click',
     'data-umami-event-name': model.modelId,
     'data-umami-event-family': model.modelFamily,
     'data-umami-event-target-page': targetPage,
@@ -103,118 +103,118 @@ function relayModelClickAttrs(model: { modelId: string; modelFamily: string }) {
   };
 }
 
-const modelFilterOptions = collectFilterOptions(relayData.sites.map(site => site.displayModelFamilies));
-const paymentFilterOptions = collectFilterOptions(relayData.sites.map(site => site.paymentMethods));
+const modelFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.displayModelFamilies));
+const paymentFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.paymentMethods));
 const deferredSitesJson = JSON.stringify(deferredSites).replace(/</g, '\\u003c');
 const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c');
 ---
 
-<PublicPage activeNav="llm-relay" {...seo}>
+<PublicPage activeNav="llm-gateway" {...seo}>
   <section class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body p-5">
       <div class="page-hero-shell">
         <div class="page-hero-main">
           <div class="page-hero-wrap">
-            <h1 class="page-hero-title">{t.llmRelay.title}</h1>
-            <p class="page-hero-copy">{t.llmRelay.description}</p>
+            <h1 class="page-hero-title">{t.llmGateway.title}</h1>
+            <p class="page-hero-copy">{t.llmGateway.description}</p>
             <p class="page-hero-note">
-              {t.llmRelay.notePrefix}
-              <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="link link-primary font-medium" data-umami-event="relay-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmRelay.reportIssue}>{t.llmRelay.reportIssue}</a>
-              {t.llmRelay.noteSuffix}
+              {t.llmGateway.notePrefix}
+              <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="link link-primary font-medium" data-umami-event="gateway-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
+              {t.llmGateway.noteSuffix}
             </p>
           </div>
         </div>
         <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
           <div class="stat px-4 py-3">
-            <div class="stat-title text-xs">{t.llmRelay.listedSites}</div>
-            <div class="stat-value text-2xl text-primary">{relayData.totalSiteCount}</div>
+            <div class="stat-title text-xs">{t.llmGateway.listedSites}</div>
+            <div class="stat-value text-2xl text-primary">{gatewayData.totalSiteCount}</div>
           </div>
           <div class="stat px-4 py-3">
-            <div class="stat-title text-xs">{t.llmRelay.sitesWithPrices}</div>
-            <div class="stat-value text-2xl text-secondary">{relayData.sitesWithPricesCount}</div>
+            <div class="stat-title text-xs">{t.llmGateway.sitesWithPrices}</div>
+            <div class="stat-value text-2xl text-secondary">{gatewayData.sitesWithPricesCount}</div>
           </div>
           <div class="stat px-4 py-3">
-            <div class="stat-title text-xs">{t.llmRelay.modelRecords}</div>
-            <div class="stat-value text-2xl">{relayModelData.totalModelCount}</div>
+            <div class="stat-title text-xs">{t.llmGateway.modelRecords}</div>
+            <div class="stat-value text-2xl">{gatewayModelData.totalModelCount}</div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  {relayData.sites.length === 0 ? (
+  {gatewayData.sites.length === 0 ? (
     <section class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center">
-      <span>{t.llmRelay.empty}</span>
+      <span>{t.llmGateway.empty}</span>
     </section>
   ) : (
-    <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-relay-home>
+    <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-home>
       <div class="border-b border-base-300 bg-base-100 px-4 py-3">
         <div class="tool-tablist-wrap">
-          <div class="tool-tablist" role="tablist" aria-label={t.llmRelay.title}>
-            <button type="button" class="tool-tab tool-tab-active" role="tab" aria-selected="true" aria-controls="relaySitesPanel" id="relaySitesTab" data-relay-tab="sites">
-              {t.llmRelay.relayListTitle}
-              <span class="tool-tab-badge">{relayData.totalSiteCount}</span>
+          <div class="tool-tablist" role="tablist" aria-label={t.llmGateway.title}>
+            <button type="button" class="tool-tab tool-tab-active" role="tab" aria-selected="true" aria-controls="gatewaySitesPanel" id="gatewaySitesTab" data-gateway-tab="sites">
+              {t.llmGateway.gatewayListTitle}
+              <span class="tool-tab-badge">{gatewayData.totalSiteCount}</span>
             </button>
-            <button type="button" class="tool-tab tool-tab-inactive" role="tab" aria-selected="false" aria-controls="relayModelsPanel" id="relayModelsTab" data-relay-tab="models">
-              {t.llmRelay.modelListTitle}
-              <span class="tool-tab-badge">{relayModelData.totalModelCount}</span>
+            <button type="button" class="tool-tab tool-tab-inactive" role="tab" aria-selected="false" aria-controls="gatewayModelsPanel" id="gatewayModelsTab" data-gateway-tab="models">
+              {t.llmGateway.modelListTitle}
+              <span class="tool-tab-badge">{gatewayModelData.totalModelCount}</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div id="relaySitesPanel" role="tabpanel" aria-labelledby="relaySitesTab" data-relay-panel="sites">
+      <div id="gatewaySitesPanel" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites">
         <div class="card-body p-0">
-          <div class="relay-filter-grid grid gap-3 border-b border-base-300 p-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+          <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
             <label class="input input-bordered flex h-11 items-center gap-2">
-              <input data-home-site-search type="search" class="grow text-sm" placeholder={t.llmRelay.searchPlaceholder} />
+              <input data-home-site-search type="search" class="grow text-sm" placeholder={t.llmGateway.searchPlaceholder} />
             </label>
-            <select data-home-site-family class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmRelay.familyFilter}>
-              <option value="">{t.llmRelay.allFamilies}</option>
+            <select data-home-site-family class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.familyFilter}>
+              <option value="">{t.llmGateway.allFamilies}</option>
               {modelFilterOptions.map(model => <option value={model.toLowerCase()}>{model}</option>)}
             </select>
-            <select data-home-site-payment class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmRelay.paymentFilter}>
-              <option value="">{t.llmRelay.allPaymentMethods}</option>
+            <select data-home-site-payment class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.paymentFilter}>
+              <option value="">{t.llmGateway.allPaymentMethods}</option>
               {paymentFilterOptions.map(method => <option value={method}>{paymentLabel(method)}</option>)}
             </select>
           </div>
-          <div class="relay-table-scroll">
-            <table class="table table-zebra relay-home-table relay-site-table w-full table-fixed align-top border-collapse" data-sortable-table>
+          <div class="gateway-table-scroll">
+            <table class="table table-zebra gateway-home-table gateway-site-table w-full table-fixed align-top border-collapse" data-sortable-table>
               <thead class="bg-base-200 text-sm font-semibold text-base-content">
                 <tr>
-                  <SortableTableHeader label={t.llmRelay.rank} sortKey="rank" sortType="number" class="w-14" />
-                  <SortableTableHeader label={t.llmRelay.basicInfo} sortKey="name" class="w-[34%]" />
+                  <SortableTableHeader label={t.llmGateway.rank} sortKey="rank" sortType="number" class="w-14" />
+                  <SortableTableHeader label={t.llmGateway.basicInfo} sortKey="name" class="w-[34%]" />
                   <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-20" />
-                  <SortableTableHeader label={t.llmRelay.supportedModels} sortKey="families" class="w-[24%]" />
-                  <SortableTableHeader label={t.llmRelay.modelCount} sortKey="modelCount" sortType="number" class="w-20" />
-                  <SortableTableHeader label={t.llmRelay.paymentMethods} sortKey="payments" class="w-28" />
+                  <SortableTableHeader label={t.llmGateway.supportedModels} sortKey="families" class="w-[24%]" />
+                  <SortableTableHeader label={t.llmGateway.modelCount} sortKey="modelCount" sortType="number" class="w-20" />
+                  <SortableTableHeader label={t.llmGateway.paymentMethods} sortKey="payments" class="w-28" />
                 </tr>
               </thead>
-              <tbody data-relay-home-sites-list>
+              <tbody data-gateway-home-sites-list>
             {topSites.map((site, index) => {
               const families = uniqueLabels(site.displayModelFamilies, 8);
               const paymentMethods = uniqueLabels(site.paymentMethods, 6);
               return (
                 <tr data-home-site-card data-search={`${site.name} ${site.url} ${site.host} ${site.displayModelFamilies.join(' ')} ${site.paymentMethods.map(paymentLabel).join(' ')}`.toLowerCase()} data-families={families.map(item => item.toLowerCase()).join(',')} data-payments={paymentMethods.join(',')} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-name={site.name} data-sort-score={String(site.siteScore || 0)} data-sort-families={families.join(' ')} data-sort-model-count={String(site.modelCount || 0)} data-sort-payments={paymentMethods.map(paymentLabel).join(' ')}>
-                  <td data-label={t.llmRelay.rank} class="font-mono text-sm text-primary">#{index + 1}</td>
-                  <td data-label={t.llmRelay.basicInfo}>
+                  <td data-label={t.llmGateway.rank} class="font-mono text-sm text-primary">#{index + 1}</td>
+                  <td data-label={t.llmGateway.basicInfo}>
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
                       <div class="min-w-0 space-y-2">
                         <div class="flex flex-wrap items-center gap-2">
-                          <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover break-words text-base font-semibold text-base-content" {...relaySiteClickAttrs(site)}>{site.name}</a>
+                          <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover break-words text-base font-semibold text-base-content" {...gatewaySiteClickAttrs(site)}>{site.name}</a>
                           {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
                         </div>
                         {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
                         <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
                       </div>
                       <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
-                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteClickAttrs(site)}>{t.llmRelay.viewDetail}</a>
-                        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteOpenAttrs(site)}>{t.actions.open}</a>
+                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...gatewaySiteClickAttrs(site)}>{t.llmGateway.viewDetail}</a>
+                        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...gatewaySiteOpenAttrs(site)}>{t.actions.open}</a>
                       </div>
                     </div>
                   </td>
                   <td data-label={t.labels.score} class="font-mono">{formatPositiveScore(site.siteScore)}</td>
-                  <td data-label={t.llmRelay.supportedModels}>
+                  <td data-label={t.llmGateway.supportedModels}>
                     {families.length > 0 ? (
                       <div class="flex flex-wrap gap-1.5">
                         {families.map(family => <span class="badge badge-primary badge-outline badge-sm">{family}</span>)}
@@ -223,8 +223,8 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
                       <span class="text-base-content/35">-</span>
                     )}
                   </td>
-                  <td data-label={t.llmRelay.modelCount} class="font-mono">{site.modelCount > 0 ? site.modelCount : '-'}</td>
-                  <td data-label={t.llmRelay.paymentMethods}>{paymentMethods.length > 0 ? (
+                  <td data-label={t.llmGateway.modelCount} class="font-mono">{site.modelCount > 0 ? site.modelCount : '-'}</td>
+                  <td data-label={t.llmGateway.paymentMethods}>{paymentMethods.length > 0 ? (
                     <div class="flex flex-wrap gap-1.5">
                       {paymentMethods.map(method => {
                         const icon = paymentIcon(method);
@@ -239,67 +239,67 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
               </tbody>
             </table>
           </div>
-          <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-site-empty>{t.llmRelay.filterEmpty}</div>
+          <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-site-empty>{t.llmGateway.filterEmpty}</div>
           {deferredSites.length > 0 ? (
             <div class="border-t border-base-300 p-4 text-center">
-              <button type="button" class="btn btn-outline btn-sm" data-relay-load-more="sites">{t.llmRelay.loadMore}</button>
+              <button type="button" class="btn btn-outline btn-sm" data-gateway-load-more="sites">{t.llmGateway.loadMore}</button>
             </div>
           ) : null}
         </div>
       </div>
 
-      <div id="relayModelsPanel" role="tabpanel" aria-labelledby="relayModelsTab" data-relay-panel="models" hidden>
+      <div id="gatewayModelsPanel" role="tabpanel" aria-labelledby="gatewayModelsTab" data-gateway-panel="models" hidden>
         <div class="card-body p-0">
-          <div class="relay-filter-grid grid gap-3 border-b border-base-300 p-4">
+          <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4">
             <label class="input input-bordered flex h-11 items-center gap-2">
-              <input data-home-model-search type="search" class="grow text-sm" placeholder={t.llmRelay.modelSearchPlaceholder} />
+              <input data-home-model-search type="search" class="grow text-sm" placeholder={t.llmGateway.modelSearchPlaceholder} />
             </label>
           </div>
-          <div class="relay-table-scroll">
-            <table class="table table-zebra relay-home-table relay-model-table w-full table-fixed align-top border-collapse" data-sortable-table>
+          <div class="gateway-table-scroll">
+            <table class="table table-zebra gateway-home-table gateway-model-table w-full table-fixed align-top border-collapse" data-sortable-table>
               <thead class="bg-base-200 text-sm font-semibold text-base-content">
                 <tr>
-                  <SortableTableHeader label={t.llmRelay.rank} sortKey="rank" sortType="number" class="w-14" />
+                  <SortableTableHeader label={t.llmGateway.rank} sortKey="rank" sortType="number" class="w-14" />
                   <SortableTableHeader label={t.labels.model} sortKey="model" class="w-[48%]" />
-                  <SortableTableHeader label={t.llmRelay.modelFamily} sortKey="family" class="w-[24%]" />
-                  <SortableTableHeader label={t.llmRelay.supportedRelayCount} sortKey="supportCount" sortType="number" class="w-24" />
+                  <SortableTableHeader label={t.llmGateway.modelFamily} sortKey="family" class="w-[24%]" />
+                  <SortableTableHeader label={t.llmGateway.supportedGatewayCount} sortKey="supportCount" sortType="number" class="w-24" />
                 </tr>
               </thead>
-              <tbody data-relay-home-models-list>
+              <tbody data-gateway-home-models-list>
                 {topModels.map((model, index) => (
                   <tr data-home-model-card data-search={`${model.modelId} ${model.modelFamily}`.toLowerCase()} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelFamily} data-sort-support-count={String(model.supportSiteCount || 0)}>
-                    <td data-label={t.llmRelay.rank} class="font-mono text-sm text-secondary">#{index + 1}</td>
+                    <td data-label={t.llmGateway.rank} class="font-mono text-sm text-secondary">#{index + 1}</td>
                     <td data-label={t.labels.model}>
-                      <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-base-content" {...relayModelClickAttrs(model)}>{model.modelId}</a>
+                      <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-base-content" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
                     </td>
-                    <td data-label={t.llmRelay.modelFamily}>{model.modelFamily}</td>
-                    <td data-label={t.llmRelay.supportedRelayCount} class="font-mono">{model.supportSiteCount}</td>
+                    <td data-label={t.llmGateway.modelFamily}>{model.modelFamily}</td>
+                    <td data-label={t.llmGateway.supportedGatewayCount} class="font-mono">{model.supportSiteCount}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-model-empty>{t.llmRelay.filterEmpty}</div>
+          <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-model-empty>{t.llmGateway.filterEmpty}</div>
           {deferredModels.length > 0 ? (
             <div class="border-t border-base-300 p-4 text-center">
-              <button type="button" class="btn btn-outline btn-sm" data-relay-load-more="models">{t.llmRelay.loadMore}</button>
+              <button type="button" class="btn btn-outline btn-sm" data-gateway-load-more="models">{t.llmGateway.loadMore}</button>
             </div>
           ) : null}
         </div>
       </div>
-      <script is:inline type="application/json" data-relay-home-deferred-sites set:html={deferredSitesJson}></script>
-      <script is:inline type="application/json" data-relay-home-deferred-models set:html={deferredModelsJson}></script>
+      <script is:inline type="application/json" data-gateway-home-deferred-sites set:html={deferredSitesJson}></script>
+      <script is:inline type="application/json" data-gateway-home-deferred-models set:html={deferredModelsJson}></script>
     </section>
   )}
   <script is:inline slot="scripts" defer src={sortableTablesScriptUrl}></script>
 </PublicPage>
 
-<script is:inline define:vars={{ relayLinkPrefix: linkTo('/llm-gateway'), modelLinkPrefix: linkTo('/llm-gateway/models'), detailLabel: t.llmRelay.viewDetail, openLabel: t.actions.open, rankLabel: t.llmRelay.rank, basicInfoLabel: t.llmRelay.basicInfo, scoreLabel: t.labels.score, supportedModelsLabel: t.llmRelay.supportedModels, modelCountLabel: t.llmRelay.modelCount, paymentMethodsLabel: t.llmRelay.paymentMethods, paymentMethodLabels: t.llmRelay.paymentMethodLabels, modelLabel: t.labels.model, modelFamilyLabel: t.llmRelay.modelFamily, supportedRelayCountLabel: t.llmRelay.supportedRelayCount }}>
-  const relayHome = document.querySelector('[data-relay-home]');
-  if (relayHome) {
-    let relayFilterTrackTimer = null;
-    let lastRelayFilterTrackKey = '';
-    const trackRelayEvent = (eventName, eventData = {}) => {
+<script is:inline define:vars={{ gatewayLinkPrefix: linkTo('/llm-gateway'), modelLinkPrefix: linkTo('/llm-gateway/models'), detailLabel: t.llmGateway.viewDetail, openLabel: t.actions.open, rankLabel: t.llmGateway.rank, basicInfoLabel: t.llmGateway.basicInfo, scoreLabel: t.labels.score, supportedModelsLabel: t.llmGateway.supportedModels, modelCountLabel: t.llmGateway.modelCount, paymentMethodsLabel: t.llmGateway.paymentMethods, paymentMethodLabels: t.llmGateway.paymentMethodLabels, modelLabel: t.labels.model, modelFamilyLabel: t.llmGateway.modelFamily, supportedGatewayCountLabel: t.llmGateway.supportedGatewayCount }}>
+  const gatewayHome = document.querySelector('[data-gateway-home]');
+  if (gatewayHome) {
+    let gatewayFilterTrackTimer = null;
+    let lastGatewayFilterTrackKey = '';
+    const trackGatewayEvent = (eventName, eventData = {}) => {
       if (typeof window.umami?.track !== 'function') return;
       window.umami.track(eventName, eventData);
     };
@@ -339,20 +339,20 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
       };
       return icons[key] || { src: null, fallback: String(key || '').trim().slice(0, 1).toUpperCase() };
     };
-    const deferredSites = JSON.parse(relayHome.querySelector('[data-relay-home-deferred-sites]')?.textContent || '[]');
-    const deferredModels = JSON.parse(relayHome.querySelector('[data-relay-home-deferred-models]')?.textContent || '[]');
+    const deferredSites = JSON.parse(gatewayHome.querySelector('[data-gateway-home-deferred-sites]')?.textContent || '[]');
+    const deferredModels = JSON.parse(gatewayHome.querySelector('[data-gateway-home-deferred-models]')?.textContent || '[]');
     const formatPositiveScore = value => {
       const numberValue = Number(value);
       return Number.isFinite(numberValue) && numberValue > 0 ? numberValue.toFixed(2) : '-';
     };
-    const relaySiteAttrs = site => {
-      const targetPage = `${relayLinkPrefix}/${site.slug}`;
-      return `data-umami-event="relay-site-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
+    const gatewaySiteAttrs = site => {
+      const targetPage = `${gatewayLinkPrefix}/${site.slug}`;
+      return `data-umami-event="gateway-site-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
     };
-    const relaySiteOpenAttrs = site => `data-umami-event="relay-site-open-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-url="${escapeHtml(site.outboundUrl || site.url)}"`;
-    const relayModelAttrs = model => {
+    const gatewaySiteOpenAttrs = site => `data-umami-event="gateway-site-open-click" data-umami-event-name="${escapeHtml(site.name)}" data-umami-event-url="${escapeHtml(site.outboundUrl || site.url)}"`;
+    const gatewayModelAttrs = model => {
       const targetPage = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
-      return `data-umami-event="relay-model-click" data-umami-event-name="${escapeHtml(model.modelId)}" data-umami-event-family="${escapeHtml(model.modelFamily)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
+      return `data-umami-event="gateway-model-click" data-umami-event-name="${escapeHtml(model.modelId)}" data-umami-event-family="${escapeHtml(model.modelFamily)}" data-umami-event-target-page="${escapeHtml(targetPage)}" data-umami-event-url="${escapeHtml(targetPage)}"`;
     };
     const siteRowHtml = (site, index) => {
       const families = uniqueLabels(site.displayModelFamilies, 8);
@@ -360,7 +360,7 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
       const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelFamilies || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
       return `<tr data-home-site-card data-search="${escapeHtml(search)}" data-families="${escapeHtml(families.map(item => item.toLowerCase()).join(','))}" data-payments="${escapeHtml(payments.join(','))}" data-original-order="${index}" data-sort-rank="${index + 1}" data-sort-name="${escapeHtml(site.name)}" data-sort-score="${Number(site.siteScore) || 0}" data-sort-families="${escapeHtml(families.join(' '))}" data-sort-model-count="${Number(site.modelCount) || 0}" data-sort-payments="${escapeHtml(payments.map(paymentLabel).join(' '))}">
         <td data-label="${escapeHtml(rankLabel)}" class="font-mono text-sm text-primary">#${index + 1}</td>
-        <td data-label="${escapeHtml(basicInfoLabel)}"><div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between"><div class="min-w-0 space-y-2"><div class="flex flex-wrap items-center gap-2"><a href="${escapeHtml(`${relayLinkPrefix}/${site.slug}`)}" class="link link-hover break-words text-base font-semibold text-base-content" ${relaySiteAttrs(site)}>${escapeHtml(site.name)}</a>${site.displayFamily ? `<span class="badge badge-ghost font-medium">${escapeHtml(site.displayFamily)}</span>` : ''}</div>${site.summary ? `<p class="max-w-3xl text-sm leading-6 text-base-content/72">${escapeHtml(site.summary)}</p>` : ''}<div class="text-xs text-base-content/55"><span class="break-all">${escapeHtml(site.url)}</span></div></div><div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center"><a href="${escapeHtml(`${relayLinkPrefix}/${site.slug}`)}" class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${relaySiteAttrs(site)}>${escapeHtml(detailLabel)}</a><a href="${escapeHtml(site.outboundUrl || site.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${relaySiteOpenAttrs(site)}>${escapeHtml(openLabel)}</a></div></div></td>
+        <td data-label="${escapeHtml(basicInfoLabel)}"><div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between"><div class="min-w-0 space-y-2"><div class="flex flex-wrap items-center gap-2"><a href="${escapeHtml(`${gatewayLinkPrefix}/${site.slug}`)}" class="link link-hover break-words text-base font-semibold text-base-content" ${gatewaySiteAttrs(site)}>${escapeHtml(site.name)}</a>${site.displayFamily ? `<span class="badge badge-ghost font-medium">${escapeHtml(site.displayFamily)}</span>` : ''}</div>${site.summary ? `<p class="max-w-3xl text-sm leading-6 text-base-content/72">${escapeHtml(site.summary)}</p>` : ''}<div class="text-xs text-base-content/55"><span class="break-all">${escapeHtml(site.url)}</span></div></div><div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center"><a href="${escapeHtml(`${gatewayLinkPrefix}/${site.slug}`)}" class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${gatewaySiteAttrs(site)}>${escapeHtml(detailLabel)}</a><a href="${escapeHtml(site.outboundUrl || site.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" ${gatewaySiteOpenAttrs(site)}>${escapeHtml(openLabel)}</a></div></div></td>
         <td data-label="${escapeHtml(scoreLabel)}" class="font-mono">${formatPositiveScore(site.siteScore)}</td>
         <td data-label="${escapeHtml(supportedModelsLabel)}">${families.length ? `<div class="flex flex-wrap gap-1.5">${families.map(family => `<span class="badge badge-primary badge-outline badge-sm">${escapeHtml(family)}</span>`).join('')}</div>` : '<span class="text-base-content/35">-</span>'}</td>
         <td data-label="${escapeHtml(modelCountLabel)}" class="font-mono">${site.modelCount > 0 ? site.modelCount : '-'}</td>
@@ -373,16 +373,16 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
     };
     const modelRowHtml = (model, index) => `<tr data-home-model-card data-search="${escapeHtml(`${model.modelId} ${model.modelFamily}`.toLowerCase())}" data-original-order="${index}" data-sort-rank="${index + 1}" data-sort-model="${escapeHtml(model.modelId)}" data-sort-family="${escapeHtml(model.modelFamily)}" data-sort-support-count="${Number(model.supportSiteCount) || 0}">
       <td data-label="${escapeHtml(rankLabel)}" class="font-mono text-sm text-secondary">#${index + 1}</td>
-      <td data-label="${escapeHtml(modelLabel)}"><a href="${escapeHtml(`${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`)}" class="link link-hover break-words font-mono text-sm font-semibold text-base-content" ${relayModelAttrs(model)}>${escapeHtml(model.modelId)}</a></td>
+      <td data-label="${escapeHtml(modelLabel)}"><a href="${escapeHtml(`${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`)}" class="link link-hover break-words font-mono text-sm font-semibold text-base-content" ${gatewayModelAttrs(model)}>${escapeHtml(model.modelId)}</a></td>
       <td data-label="${escapeHtml(modelFamilyLabel)}">${escapeHtml(model.modelFamily)}</td>
-      <td data-label="${escapeHtml(supportedRelayCountLabel)}" class="font-mono">${model.supportSiteCount}</td>
+      <td data-label="${escapeHtml(supportedGatewayCountLabel)}" class="font-mono">${model.supportSiteCount}</td>
     </tr>`;
     const applySiteFilters = ({ track = true } = {}) => {
-      const keyword = (relayHome.querySelector('[data-home-site-search]')?.value || '').trim().toLowerCase();
-      const selectedFamily = relayHome.querySelector('[data-home-site-family]')?.value || '';
-      const selectedPayment = relayHome.querySelector('[data-home-site-payment]')?.value || '';
+      const keyword = (gatewayHome.querySelector('[data-home-site-search]')?.value || '').trim().toLowerCase();
+      const selectedFamily = gatewayHome.querySelector('[data-home-site-family]')?.value || '';
+      const selectedPayment = gatewayHome.querySelector('[data-home-site-payment]')?.value || '';
       let visibleCount = 0;
-      relayHome.querySelectorAll('[data-home-site-card]').forEach(card => {
+      gatewayHome.querySelectorAll('[data-home-site-card]').forEach(card => {
         const matchesKeyword = !keyword || (card.dataset.search || '').includes(keyword);
         const matchesFamily = !selectedFamily || (card.dataset.families || '').split(',').includes(selectedFamily);
         const matchesPayment = !selectedPayment || (card.dataset.payments || '').split(',').includes(selectedPayment);
@@ -390,8 +390,8 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
         card.classList.toggle('hidden', !visible);
         if (visible) visibleCount += 1;
       });
-      relayHome.querySelector('[data-home-site-empty]')?.classList.toggle('hidden', visibleCount > 0);
-      if (track) scheduleRelayFilterTrack('sites', {
+      gatewayHome.querySelector('[data-home-site-empty]')?.classList.toggle('hidden', visibleCount > 0);
+      if (track) scheduleGatewayFilterTrack('sites', {
         query: keyword,
         family: selectedFamily,
         payment: selectedPayment,
@@ -399,73 +399,73 @@ const deferredModelsJson = JSON.stringify(deferredModels).replace(/</g, '\\u003c
       });
     };
     const applyModelFilters = ({ track = true } = {}) => {
-      const keyword = (relayHome.querySelector('[data-home-model-search]')?.value || '').trim().toLowerCase();
+      const keyword = (gatewayHome.querySelector('[data-home-model-search]')?.value || '').trim().toLowerCase();
       let visibleCount = 0;
-      relayHome.querySelectorAll('[data-home-model-card]').forEach(card => {
+      gatewayHome.querySelectorAll('[data-home-model-card]').forEach(card => {
         const visible = !keyword || (card.dataset.search || '').includes(keyword);
         card.classList.toggle('hidden', !visible);
         if (visible) visibleCount += 1;
       });
-      relayHome.querySelector('[data-home-model-empty]')?.classList.toggle('hidden', visibleCount > 0);
-      if (track) scheduleRelayFilterTrack('models', {
+      gatewayHome.querySelector('[data-home-model-empty]')?.classList.toggle('hidden', visibleCount > 0);
+      if (track) scheduleGatewayFilterTrack('models', {
         query: keyword,
         visibleCount,
       });
     };
-    const scheduleRelayFilterTrack = (tab, payload) => {
-      clearTimeout(relayFilterTrackTimer);
-      relayFilterTrackTimer = setTimeout(() => {
+    const scheduleGatewayFilterTrack = (tab, payload) => {
+      clearTimeout(gatewayFilterTrackTimer);
+      gatewayFilterTrackTimer = setTimeout(() => {
         const eventData = { tab, ...payload };
         const eventKey = JSON.stringify(eventData);
-        if (eventKey === lastRelayFilterTrackKey) return;
-        lastRelayFilterTrackKey = eventKey;
-        trackRelayEvent('relay-filter-change', eventData);
+        if (eventKey === lastGatewayFilterTrackKey) return;
+        lastGatewayFilterTrackKey = eventKey;
+        trackGatewayEvent('gateway-filter-change', eventData);
       }, 600);
     };
     const showTab = tabName => {
-      relayHome.querySelectorAll('[data-relay-tab]').forEach(tab => {
-        const active = tab.dataset.relayTab === tabName;
+      gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
+        const active = tab.dataset.gatewayTab === tabName;
         tab.classList.toggle('tool-tab-active', active);
         tab.classList.toggle('tool-tab-inactive', !active);
         tab.setAttribute('aria-selected', active ? 'true' : 'false');
       });
-      relayHome.querySelectorAll('[data-relay-panel]').forEach(panel => {
-        panel.hidden = panel.dataset.relayPanel !== tabName;
+      gatewayHome.querySelectorAll('[data-gateway-panel]').forEach(panel => {
+        panel.hidden = panel.dataset.gatewayPanel !== tabName;
       });
-      trackRelayEvent('relay-tab-click', { name: tabName });
+      trackGatewayEvent('gateway-tab-click', { name: tabName });
     };
     const loadMore = type => {
-      const list = relayHome.querySelector(type === 'sites' ? '[data-relay-home-sites-list]' : '[data-relay-home-models-list]');
-      const button = relayHome.querySelector(`[data-relay-load-more="${type}"]`);
+      const list = gatewayHome.querySelector(type === 'sites' ? '[data-gateway-home-sites-list]' : '[data-gateway-home-models-list]');
+      const button = gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`);
       const rows = type === 'sites'
         ? deferredSites.map((site, offset) => siteRowHtml(site, offset + 20))
         : deferredModels.map((model, offset) => modelRowHtml(model, offset + 20));
       if (rows.length) list?.insertAdjacentHTML('beforeend', rows.join(''));
       button?.closest('div')?.remove();
-      window.initSortableTables?.(relayHome);
+      window.initSortableTables?.(gatewayHome);
       const table = list?.closest('[data-sortable-table]');
       if (table) window.applySortableTableSort?.(table);
       if (type === 'sites') applySiteFilters({ track: false });
       else applyModelFilters({ track: false });
-      trackRelayEvent('relay-load-more-click', { name: type, loadedCount: rows.length });
+      trackGatewayEvent('gateway-load-more-click', { name: type, loadedCount: rows.length });
     };
-    relayHome.querySelectorAll('[data-relay-tab]').forEach(tab => {
-      tab.addEventListener('click', () => showTab(tab.dataset.relayTab || 'sites'));
+    gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
+      tab.addEventListener('click', () => showTab(tab.dataset.gatewayTab || 'sites'));
     });
-    relayHome.querySelector('[data-home-site-search]')?.addEventListener('input', applySiteFilters);
-    relayHome.querySelector('[data-home-site-family]')?.addEventListener('change', applySiteFilters);
-    relayHome.querySelector('[data-home-site-payment]')?.addEventListener('change', applySiteFilters);
-    relayHome.querySelector('[data-home-model-search]')?.addEventListener('input', applyModelFilters);
-    relayHome.querySelectorAll('[data-relay-load-more]').forEach(button => {
-      button.addEventListener('click', () => loadMore(button.dataset.relayLoadMore || 'sites'), { once: true });
+    gatewayHome.querySelector('[data-home-site-search]')?.addEventListener('input', applySiteFilters);
+    gatewayHome.querySelector('[data-home-site-family]')?.addEventListener('change', applySiteFilters);
+    gatewayHome.querySelector('[data-home-site-payment]')?.addEventListener('change', applySiteFilters);
+    gatewayHome.querySelector('[data-home-model-search]')?.addEventListener('input', applyModelFilters);
+    gatewayHome.querySelectorAll('[data-gateway-load-more]').forEach(button => {
+      button.addEventListener('click', () => loadMore(button.dataset.gatewayLoadMore || 'sites'), { once: true });
     });
-    relayHome.querySelectorAll('[data-sort-key]').forEach(button => {
+    gatewayHome.querySelectorAll('[data-sort-key]').forEach(button => {
       button.addEventListener('click', () => {
         const table = button.closest('[data-sortable-table]');
-        const panel = button.closest('[data-relay-panel]');
+        const panel = button.closest('[data-gateway-panel]');
         const currentDirection = table?.dataset.sortDirection || 'none';
-        trackRelayEvent('relay-sort-click', {
-          tab: panel?.dataset.relayPanel || 'unknown',
+        trackGatewayEvent('gateway-sort-click', {
+          tab: panel?.dataset.gatewayPanel || 'unknown',
           key: button.dataset.sortKey || '',
           direction: currentDirection === 'asc' ? 'desc' : 'asc',
         });

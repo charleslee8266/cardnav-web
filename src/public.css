@@ -823,7 +823,7 @@
     @apply w-full max-w-full overflow-x-auto;
   }
 
-  .relay-table-scroll {
+  .gateway-table-scroll {
     @apply w-full max-w-full overflow-x-auto;
   }
 
@@ -831,11 +831,11 @@
     @apply min-w-[700px] w-full table-fixed border-collapse lg:min-w-[1020px];
   }
 
-  .relay-site-table {
+  .gateway-site-table {
     min-width: 920px;
   }
 
-  .relay-model-table {
+  .gateway-model-table {
     min-width: 680px;
   }
 
@@ -844,16 +844,16 @@
     @apply align-top border-r border-base-300 last:border-r-0;
   }
 
-  .relay-home-table th,
-  .relay-home-table td,
-  .relay-sites-table th,
-  .relay-sites-table td {
+  .gateway-home-table th,
+  .gateway-home-table td,
+  .gateway-sites-table th,
+  .gateway-sites-table td {
     @apply align-top border-r border-base-300 last:border-r-0;
     overflow-wrap: anywhere;
   }
 
-  .relay-home-table .badge,
-  .relay-sites-table .badge {
+  .gateway-home-table .badge,
+  .gateway-sites-table .badge {
     max-width: 100%;
     height: auto;
     min-height: 1.25rem;
@@ -864,68 +864,68 @@
     text-align: left;
   }
 
-  .relay-filter-grid > .input,
-  .relay-filter-grid > .select,
-  .relay-filter-grid > div {
+  .gateway-filter-grid > .input,
+  .gateway-filter-grid > .select,
+  .gateway-filter-grid > div {
     min-width: 0;
     width: 100%;
   }
 
-  .relay-filter-grid input {
+  .gateway-filter-grid input {
     min-width: 0;
   }
 
   @media (max-width: 767px) {
-    .relay-table-scroll {
+    .gateway-table-scroll {
       @apply overflow-visible px-3 py-3;
     }
 
-    .relay-site-table,
-    .relay-model-table {
+    .gateway-site-table,
+    .gateway-model-table {
       min-width: 0;
     }
 
-    .relay-home-table,
-    .relay-home-table thead,
-    .relay-home-table tbody,
-    .relay-home-table tr,
-    .relay-home-table td {
+    .gateway-home-table,
+    .gateway-home-table thead,
+    .gateway-home-table tbody,
+    .gateway-home-table tr,
+    .gateway-home-table td {
       display: block;
       width: 100%;
     }
 
-    .relay-home-table thead {
+    .gateway-home-table thead {
       @apply hidden;
     }
 
-    .relay-home-table {
+    .gateway-home-table {
       @apply border-separate border-spacing-0 bg-transparent;
     }
 
-    .relay-home-table tr {
+    .gateway-home-table tr {
       @apply mb-3 overflow-hidden rounded border border-base-300 bg-base-100;
     }
 
-    .relay-home-table tr.hidden {
+    .gateway-home-table tr.hidden {
       display: none;
     }
 
-    .relay-home-table td {
+    .gateway-home-table td {
       @apply border-r-0 border-b border-base-300 px-3 py-3 text-left last:border-b-0;
     }
 
-    .relay-home-table td::before {
+    .gateway-home-table td::before {
       content: attr(data-label);
       @apply mb-1 block text-[11px] font-semibold uppercase text-base-content/45;
     }
 
-    .relay-home-table td[data-label="排序"],
-    .relay-home-table td[data-label="Rank"],
-    .relay-home-table td[data-label="Порядок"] {
+    .gateway-home-table td[data-label="排序"],
+    .gateway-home-table td[data-label="Rank"],
+    .gateway-home-table td[data-label="Порядок"] {
       @apply bg-base-200/55;
     }
 
-    .relay-home-table td.text-right {
+    .gateway-home-table td.text-right {
       text-align: left;
     }
   }
@@ -935,8 +935,8 @@
     @apply align-middle;
   }
 
-  .relay-home-table thead .flat-sort-head,
-  .relay-sites-table thead .flat-sort-head {
+  .gateway-home-table thead .flat-sort-head,
+  .gateway-sites-table thead .flat-sort-head {
     padding: 0 !important;
     @apply align-middle;
   }
@@ -945,8 +945,8 @@
     @apply cursor-pointer select-none;
   }
 
-  .relay-home-table .flat-sort-head,
-  .relay-sites-table .flat-sort-head {
+  .gateway-home-table .flat-sort-head,
+  .gateway-sites-table .flat-sort-head {
     @apply cursor-pointer select-none;
   }
 

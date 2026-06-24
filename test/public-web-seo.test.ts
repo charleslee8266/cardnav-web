@@ -49,9 +49,9 @@ test('cardnav-web sitemap, text sitemap and llms include every public SEO route'
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/ru\/privacy<\/loc>/);
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/llm-gateway<\/loc>/);
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/en\/llm-gateway<\/loc>/);
-  assert.doesNotMatch(sitemapXml, /llm-relay/);
-  assert.doesNotMatch(sitemapTxt, /llm-relay/);
-  assert.doesNotMatch(llmsTxt, /llm-relay/);
+  assert.doesNotMatch(sitemapXml, /relay/);
+  assert.doesNotMatch(sitemapTxt, /relay/);
+  assert.doesNotMatch(llmsTxt, /relay/);
   assert.match(sitemapXml, /<xhtml:link rel="alternate" hreflang="zh-CN" href="https:\/\/cardnav\.xyz\/" \/>/);
   assert.match(sitemapXml, /<xhtml:link rel="alternate" hreflang="en" href="https:\/\/cardnav\.xyz\/en" \/>/);
   assert.match(sitemapXml, /<xhtml:link rel="alternate" hreflang="ru" href="https:\/\/cardnav\.xyz\/ru" \/>/);

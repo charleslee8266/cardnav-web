@@ -7,16 +7,16 @@ import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildOfficialPriceGroups } from '../official-price.js';
 import { buildSitemapTxt, getPublicSeoRoutesForAllLocales, loadGuideArticles } from '../seo-routes.js';
 import { publicSiteUrl } from '../site.js';
-import { loadModelLeaderboards, loadOfficialPrices, loadRelayModels, loadRelaySites } from '../store.js';
+import { loadModelLeaderboards, loadOfficialPrices, loadGatewayModels, loadGatewaySites } from '../store.js';
 
 export const prerender = true;
 
 export const GET: APIRoute = async () => {
-  const [officialPrices, modelLeaderboards, relayData, relayModelData, guideRouteEntries] = await Promise.all([
+  const [officialPrices, modelLeaderboards, gatewayData, gatewayModelData, guideRouteEntries] = await Promise.all([
     loadOfficialPrices(),
     loadModelLeaderboards(),
-    loadRelaySites(),
-    loadRelayModels(),
+    loadGatewaySites(),
+    loadGatewayModels(),
     Promise.all(supportedLocales.map(async locale => [locale, await loadGuideArticles(locale)] as const)),
   ]);
   const officialPriceGroups = buildOfficialPriceGroups(officialPrices);
@@ -24,8 +24,8 @@ export const GET: APIRoute = async () => {
   return new Response(buildSitemapTxt(publicSiteUrl, getPublicSeoRoutesForAllLocales({
     officialPriceGroups,
     modelLeaderboardGroups,
-    relaySites: relayData.sites,
-    relayModels: relayModelData.models,
+    gatewaySites: gatewayData.sites,
+    gatewayModels: gatewayModelData.models,
     guideRoutesByLocale: new Map(guideRouteEntries),
   })), {
     headers: {

@@ -10,7 +10,7 @@ import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
 import { loadPageContent } from './page-content.js';
 import { quickPlanSearchSeoPath, quickPlanSearchTerms } from './shop-plan-search.js';
-import type { PublicRelayModelRow, PublicRelaySiteRow } from './store.js';
+import type { PublicGatewayModelRow, PublicGatewaySiteRow } from './store.js';
 
 export type PublicSeoRoute = {
   pathname: string;
@@ -38,8 +38,8 @@ export function getStaticPublicSeoRoutes(locale: Locale = defaultLocale): Public
     },
     {
       pathname: routePath('/llm-gateway', locale),
-      title: messages.llmRelay.seoTitle,
-      description: messages.llmRelay.seoDescription,
+      title: messages.llmGateway.seoTitle,
+      description: messages.llmGateway.seoDescription,
       changefreq: 'daily',
     },
     {
@@ -172,38 +172,38 @@ export function buildQuickPlanSearchSeoRoutes(locale: Locale = defaultLocale): P
   }));
 }
 
-export function buildRelaySeoRoutes(relaySites: PublicRelaySiteRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
+export function buildGatewaySeoRoutes(gatewaySites: PublicGatewaySiteRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
   const messages = getMessages(locale);
-  return relaySites
+  return gatewaySites
     .filter(site => site.slug)
     .map(site => ({
       pathname: routePath(`/llm-gateway/${site.slug}`, locale),
-      title: messages.llmRelay.detailSeoTitle.replace('{name}', site.name),
-      description: messages.llmRelay.detailSeoDescription
+      title: messages.llmGateway.detailSeoTitle.replace('{name}', site.name),
+      description: messages.llmGateway.detailSeoDescription
         .replace('{name}', site.name)
         .replace('{modelCount}', String(site.modelCount))
         .replace('{priceCount}', String(site.priceCount)),
       changefreq: 'daily' as const,
-      lastmod: site.latestRelayRefreshAt ?? undefined,
+      lastmod: site.latestGatewayRefreshAt ?? undefined,
     }));
 }
 
-export function buildRelayModelSeoRoutes(relayModels: PublicRelayModelRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
+export function buildGatewayModelSeoRoutes(gatewayModels: PublicGatewayModelRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
   const messages = getMessages(locale);
-  return relayModels.map(model => ({
+  return gatewayModels.map(model => ({
     pathname: routePath(`/llm-gateway/models/${encodeURIComponent(model.modelId)}`, locale),
-    title: messages.llmRelay.modelDetailSeoTitle.replace('{model}', model.modelId),
-    description: messages.llmRelay.modelDetailSeoDescription.replace('{model}', model.modelId),
+    title: messages.llmGateway.modelDetailSeoTitle.replace('{model}', model.modelId),
+    description: messages.llmGateway.modelDetailSeoDescription.replace('{model}', model.modelId),
     changefreq: 'daily' as const,
-    lastmod: model.latestRelayRefreshAt ?? undefined,
+    lastmod: model.latestGatewayRefreshAt ?? undefined,
   }));
 }
 
 export function getPublicSeoRoutesWithDynamicPages(params: {
   officialPriceGroups?: OfficialPriceGroup[];
   modelLeaderboardGroups?: ModelLeaderboardGroup[];
-  relaySites?: PublicRelaySiteRow[];
-  relayModels?: PublicRelayModelRow[];
+  gatewaySites?: PublicGatewaySiteRow[];
+  gatewayModels?: PublicGatewayModelRow[];
   guideRoutes?: GuideArticle[];
   locale?: Locale;
 } = {}): PublicSeoRoute[] {
@@ -212,8 +212,8 @@ export function getPublicSeoRoutesWithDynamicPages(params: {
     ...getPublicSeoRoutes(params.guideRoutes, locale),
     ...buildOfficialPriceSeoRoutes(params.officialPriceGroups ?? [], locale),
     ...buildModelLeaderboardSeoRoutes(params.modelLeaderboardGroups ?? [], locale),
-    ...buildRelaySeoRoutes(params.relaySites ?? [], locale),
-    ...buildRelayModelSeoRoutes(params.relayModels ?? [], locale),
+    ...buildGatewaySeoRoutes(params.gatewaySites ?? [], locale),
+    ...buildGatewayModelSeoRoutes(params.gatewayModels ?? [], locale),
     ...buildQuickPlanSearchSeoRoutes(locale),
   ]);
 }
@@ -221,15 +221,15 @@ export function getPublicSeoRoutesWithDynamicPages(params: {
 export function getPublicSeoRoutesForAllLocales(params: {
   officialPriceGroups?: OfficialPriceGroup[];
   modelLeaderboardGroups?: ModelLeaderboardGroup[];
-  relaySites?: PublicRelaySiteRow[];
-  relayModels?: PublicRelayModelRow[];
+  gatewaySites?: PublicGatewaySiteRow[];
+  gatewayModels?: PublicGatewayModelRow[];
   guideRoutesByLocale?: Map<Locale, GuideArticle[]>;
 } = {}) {
   return normalizePublicSeoRoutes(supportedLocales.flatMap(locale => getPublicSeoRoutesWithDynamicPages({
     officialPriceGroups: params.officialPriceGroups,
     modelLeaderboardGroups: params.modelLeaderboardGroups,
-    relaySites: params.relaySites,
-    relayModels: params.relayModels,
+    gatewaySites: params.gatewaySites,
+    gatewayModels: params.gatewayModels,
     guideRoutes: params.guideRoutesByLocale?.get(locale) ?? [],
     locale,
   })));

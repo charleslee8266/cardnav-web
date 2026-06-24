@@ -13,7 +13,7 @@ export type PublicSiteRow = {
   score: number;
 };
 
-export type PublicRelaySiteRow = {
+export type PublicGatewaySiteRow = {
   id: string;
   slug: string;
   name: string;
@@ -39,11 +39,11 @@ export type PublicRelaySiteRow = {
   displayModelFamilies: string[];
   refreshStatus: string;
   refreshErrorType: string;
-  latestRelayRefreshAt: string | null;
-  latestRelayRefreshTime: string;
+  latestGatewayRefreshAt: string | null;
+  latestGatewayRefreshTime: string;
 };
 
-export type PublicRelayPriceRow = {
+export type PublicGatewayPriceRow = {
   modelId: string;
   unit: string;
   inputPrice: number | null;
@@ -52,32 +52,32 @@ export type PublicRelayPriceRow = {
   cacheOutputPrice: number | null;
 };
 
-export type PublicRelayModelRow = {
+export type PublicGatewayModelRow = {
   id: string;
   modelId: string;
   modelFamily: string;
   supportSiteCount: number;
   priceCount: number;
-  latestRelayRefreshAt: string | null;
-  latestRelayRefreshTime: string;
+  latestGatewayRefreshAt: string | null;
+  latestGatewayRefreshTime: string;
 };
 
-export type PublicRelayModelSiteRow = PublicRelaySiteRow & {
+export type PublicGatewayModelSiteRow = PublicGatewaySiteRow & {
   priceCountForModel: number;
   unitsForModel: string[];
-  pricesForModel: PublicRelayPriceRow[];
+  pricesForModel: PublicGatewayPriceRow[];
   latestModelRefreshAt: string | null;
   latestModelRefreshTime: string;
 };
 
-export type PublicRelayDetail = {
-  site: PublicRelaySiteRow;
-  prices: PublicRelayPriceRow[];
+export type PublicGatewayDetail = {
+  site: PublicGatewaySiteRow;
+  prices: PublicGatewayPriceRow[];
 };
 
-export type PublicRelayModelDetail = {
-  model: PublicRelayModelRow;
-  sites: PublicRelayModelSiteRow[];
+export type PublicGatewayModelDetail = {
+  model: PublicGatewayModelRow;
+  sites: PublicGatewayModelSiteRow[];
 };
 
 export type PublicProductRow = {
@@ -143,7 +143,7 @@ export function formatBeijingRefreshTime(input: string | null | undefined): stri
   return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}:${lookup.second}`;
 }
 
-function displayRelayFamily(family: string) {
+function displayGatewayFamily(family: string) {
   if (!family || family === 'unknown' || family === 'custom' || family.startsWith('custom-')) return '';
   const labels: Record<string, string> = {
     newApi: 'New API',
@@ -278,7 +278,7 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
   };
 }
 
-export async function loadRelaySites() {
+export async function loadGatewaySites() {
   const result = await getPool().query(`
     WITH price_summary AS (
       SELECT
@@ -287,26 +287,26 @@ export async function loadRelaySites() {
         COUNT(*)::INTEGER AS price_count,
         ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
         MAX(fetched_at) AS latest_price_fetched_at
-      FROM relay_model_prices
+      FROM gateway_model_prices
       GROUP BY site_id
     )
     SELECT
-      relay_sites.site_id AS id,
-      relay_sites.name AS site_name,
-      relay_sites.url,
-      relay_sites.family,
-      relay_sites.score,
-      relay_sites.availability_percent,
-      relay_sites.avg_success_latency_ms,
-      relay_sites.created_at,
-      relay_profiles.slug,
-      relay_profiles.host,
-      relay_profiles.name AS profile_name,
-      relay_profiles.weight,
-      relay_profiles.summary,
-      relay_profiles.invite_url,
-      relay_profiles.model_types,
-      relay_profiles.payment_methods,
+      gateway_sites.site_id AS id,
+      gateway_sites.name AS site_name,
+      gateway_sites.url,
+      gateway_sites.family,
+      gateway_sites.score,
+      gateway_sites.availability_percent,
+      gateway_sites.avg_success_latency_ms,
+      gateway_sites.created_at,
+      gateway_profiles.slug,
+      gateway_profiles.host,
+      gateway_profiles.name AS profile_name,
+      gateway_profiles.weight,
+      gateway_profiles.summary,
+      gateway_profiles.invite_url,
+      gateway_profiles.model_types,
+      gateway_profiles.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
       COALESCE(price_summary.price_count, 0) AS price_count,
       COALESCE(price_summary.model_families, ARRAY[]::text[]) AS model_families,
@@ -314,20 +314,20 @@ export async function loadRelaySites() {
         WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
           THEN price_summary.model_families
         ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(relay_profiles.model_types, '[]'::jsonb))
+          SELECT jsonb_array_elements_text(COALESCE(gateway_profiles.model_types, '[]'::jsonb))
         )
       END AS display_model_families,
-      price_summary.latest_price_fetched_at AS latest_relay_refresh_at
-    FROM relay_sites
-    INNER JOIN relay_profiles ON relay_profiles.url = relay_sites.url
-    LEFT JOIN price_summary ON price_summary.site_id = relay_sites.site_id
-    WHERE relay_sites.status = 'online' AND relay_sites.type = 'relay'
-    ORDER BY relay_sites.score DESC, relay_profiles.weight DESC, relay_sites.created_at DESC NULLS LAST, relay_sites.name ASC, relay_sites.site_id ASC
+      price_summary.latest_price_fetched_at AS latest_gateway_refresh_at
+    FROM gateway_sites
+    INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
+    LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
+    WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
+    ORDER BY gateway_sites.score DESC, gateway_profiles.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
   `);
 
-  const sites: PublicRelaySiteRow[] = result.rows.map(row => {
+  const sites: PublicGatewaySiteRow[] = result.rows.map(row => {
     const createdAt = row.created_at ? String(row.created_at) : null;
-    const latestRelayRefreshAt = row.latest_relay_refresh_at ? String(row.latest_relay_refresh_at) : null;
+    const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
     const family = row.family ? String(row.family) : '';
     const url = String(row.url);
     const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
@@ -339,7 +339,7 @@ export async function loadRelaySites() {
       outboundUrl: inviteUrl || url,
       host: row.host ? String(row.host) : hostFromUrl(url),
       family,
-      displayFamily: displayRelayFamily(family),
+      displayFamily: displayGatewayFamily(family),
       createdAt,
       createdTime: formatBeijingRefreshTime(createdAt),
       lastProductRefreshCompleteAt: null,
@@ -357,8 +357,8 @@ export async function loadRelaySites() {
       displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
       refreshStatus: '',
       refreshErrorType: '',
-      latestRelayRefreshAt,
-      latestRelayRefreshTime: formatBeijingRefreshTime(latestRelayRefreshAt),
+      latestGatewayRefreshAt,
+      latestGatewayRefreshTime: formatBeijingRefreshTime(latestGatewayRefreshAt),
     };
   });
 
@@ -371,37 +371,37 @@ export async function loadRelaySites() {
   };
 }
 
-export async function loadRelayModels() {
+export async function loadGatewayModels() {
   const result = await getPool().query(`
     SELECT
       prices.model_id,
       COALESCE(NULLIF(prices.model_family, ''), 'Other') AS model_family,
       COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count,
       COUNT(*)::INTEGER AS price_count,
-      MAX(prices.fetched_at) AS latest_relay_refresh_at,
-      MAX(relay_sites.score) AS max_site_score
-    FROM relay_model_prices prices
-    INNER JOIN relay_sites ON relay_sites.site_id = prices.site_id
-    INNER JOIN relay_profiles ON relay_profiles.url = relay_sites.url
-    WHERE relay_sites.status = 'online' AND relay_sites.type = 'relay'
+      MAX(prices.fetched_at) AS latest_gateway_refresh_at,
+      MAX(gateway_sites.score) AS max_site_score
+    FROM gateway_model_prices prices
+    INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
+    INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
+    WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
     GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
     ORDER BY
       COUNT(DISTINCT prices.site_id) DESC,
-      MAX(relay_sites.score) DESC NULLS LAST,
+      MAX(gateway_sites.score) DESC NULLS LAST,
       prices.model_id ASC
   `);
 
-  const models: PublicRelayModelRow[] = result.rows.map(row => {
+  const models: PublicGatewayModelRow[] = result.rows.map(row => {
     const modelId = String(row.model_id);
-    const latestRelayRefreshAt = row.latest_relay_refresh_at ? String(row.latest_relay_refresh_at) : null;
+    const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
     return {
       id: modelId,
       modelId,
       modelFamily: String(row.model_family || 'Other'),
       supportSiteCount: Number(row.support_site_count) || 0,
       priceCount: Number(row.price_count) || 0,
-      latestRelayRefreshAt,
-      latestRelayRefreshTime: formatBeijingRefreshTime(latestRelayRefreshAt),
+      latestGatewayRefreshAt,
+      latestGatewayRefreshTime: formatBeijingRefreshTime(latestGatewayRefreshAt),
     };
   });
 
@@ -412,9 +412,9 @@ export async function loadRelayModels() {
   };
 }
 
-export async function loadRelayDetail(slug: string): Promise<PublicRelayDetail | null> {
-  const relayData = await loadRelaySites();
-  const site = relayData.sites.find(item => item.slug === slug);
+export async function loadGatewayDetail(slug: string): Promise<PublicGatewayDetail | null> {
+  const gatewayData = await loadGatewaySites();
+  const site = gatewayData.sites.find(item => item.slug === slug);
   if (!site) return null;
 
   const priceResult = await getPool().query(`
@@ -425,7 +425,7 @@ export async function loadRelayDetail(slug: string): Promise<PublicRelayDetail |
       prices.output_price,
       prices.cache_input_price,
       prices.cache_output_price
-    FROM relay_model_prices prices
+    FROM gateway_model_prices prices
     WHERE prices.site_id = $1
     ORDER BY
       CASE prices.model_family
@@ -454,12 +454,12 @@ export async function loadRelayDetail(slug: string): Promise<PublicRelayDetail |
   };
 }
 
-export async function loadRelayModelDetail(pathId: string): Promise<PublicRelayModelDetail | null> {
+export async function loadGatewayModelDetail(pathId: string): Promise<PublicGatewayModelDetail | null> {
   const modelId = pathId.trim();
   if (!modelId) return null;
 
-  const relayModels = await loadRelayModels();
-  const model = relayModels.models.find(item => item.modelId === modelId);
+  const gatewayModels = await loadGatewayModels();
+  const model = gatewayModels.models.find(item => item.modelId === modelId);
   if (!model) return null;
 
   const result = await getPool().query(`
@@ -479,7 +479,7 @@ export async function loadRelayModelDetail(pathId: string): Promise<PublicRelayM
           ORDER BY unit ASC, input_price ASC NULLS LAST, output_price ASC NULLS LAST
         ) AS prices_for_model,
         MAX(fetched_at) AS latest_model_refresh_at
-      FROM relay_model_prices
+      FROM gateway_model_prices
       WHERE model_id = $1
       GROUP BY site_id
     ),
@@ -490,26 +490,26 @@ export async function loadRelayModelDetail(pathId: string): Promise<PublicRelayM
         COUNT(*)::INTEGER AS price_count,
         ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
         MAX(fetched_at) AS latest_price_fetched_at
-      FROM relay_model_prices
+      FROM gateway_model_prices
       GROUP BY site_id
     )
     SELECT
-      relay_sites.site_id AS id,
-      relay_sites.name AS site_name,
-      relay_sites.url,
-      relay_sites.family,
-      relay_sites.score,
-      relay_sites.availability_percent,
-      relay_sites.avg_success_latency_ms,
-      relay_sites.created_at,
-      relay_profiles.slug,
-      relay_profiles.host,
-      relay_profiles.name AS profile_name,
-      relay_profiles.weight,
-      relay_profiles.summary,
-      relay_profiles.invite_url,
-      relay_profiles.model_types,
-      relay_profiles.payment_methods,
+      gateway_sites.site_id AS id,
+      gateway_sites.name AS site_name,
+      gateway_sites.url,
+      gateway_sites.family,
+      gateway_sites.score,
+      gateway_sites.availability_percent,
+      gateway_sites.avg_success_latency_ms,
+      gateway_sites.created_at,
+      gateway_profiles.slug,
+      gateway_profiles.host,
+      gateway_profiles.name AS profile_name,
+      gateway_profiles.weight,
+      gateway_profiles.summary,
+      gateway_profiles.invite_url,
+      gateway_profiles.model_types,
+      gateway_profiles.payment_methods,
       COALESCE(site_price_summary.model_count, 0) AS model_count,
       COALESCE(site_price_summary.price_count, 0) AS price_count,
       COALESCE(site_price_summary.model_families, ARRAY[]::text[]) AS model_families,
@@ -517,27 +517,27 @@ export async function loadRelayModelDetail(pathId: string): Promise<PublicRelayM
         WHEN cardinality(COALESCE(site_price_summary.model_families, ARRAY[]::text[])) > 0
           THEN site_price_summary.model_families
         ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(relay_profiles.model_types, '[]'::jsonb))
+          SELECT jsonb_array_elements_text(COALESCE(gateway_profiles.model_types, '[]'::jsonb))
         )
       END AS display_model_families,
-      site_price_summary.latest_price_fetched_at AS latest_relay_refresh_at,
+      site_price_summary.latest_price_fetched_at AS latest_gateway_refresh_at,
       model_price_summary.price_count_for_model,
       COALESCE(model_price_summary.units_for_model, ARRAY[]::text[]) AS units_for_model,
       COALESCE(model_price_summary.prices_for_model, '[]'::jsonb) AS prices_for_model,
       model_price_summary.latest_model_refresh_at
     FROM model_price_summary
-    INNER JOIN relay_sites ON relay_sites.site_id = model_price_summary.site_id
-    INNER JOIN relay_profiles ON relay_profiles.url = relay_sites.url
-    LEFT JOIN site_price_summary ON site_price_summary.site_id = relay_sites.site_id
-    WHERE relay_sites.status = 'online' AND relay_sites.type = 'relay'
-    ORDER BY relay_sites.score DESC, relay_profiles.weight DESC, relay_sites.created_at DESC NULLS LAST, relay_sites.name ASC
+    INNER JOIN gateway_sites ON gateway_sites.site_id = model_price_summary.site_id
+    INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
+    LEFT JOIN site_price_summary ON site_price_summary.site_id = gateway_sites.site_id
+    WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
+    ORDER BY gateway_sites.score DESC, gateway_profiles.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC
   `, [modelId]);
 
   return {
     model,
     sites: result.rows.map(row => {
       const createdAt = row.created_at ? String(row.created_at) : null;
-      const latestRelayRefreshAt = row.latest_relay_refresh_at ? String(row.latest_relay_refresh_at) : null;
+      const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
       const latestModelRefreshAt = row.latest_model_refresh_at ? String(row.latest_model_refresh_at) : null;
       const family = row.family ? String(row.family) : '';
       const url = String(row.url);
@@ -550,7 +550,7 @@ export async function loadRelayModelDetail(pathId: string): Promise<PublicRelayM
         outboundUrl: inviteUrl || url,
         host: row.host ? String(row.host) : hostFromUrl(url),
         family,
-        displayFamily: displayRelayFamily(family),
+        displayFamily: displayGatewayFamily(family),
         createdAt,
         createdTime: formatBeijingRefreshTime(createdAt),
         lastProductRefreshCompleteAt: null,
@@ -568,8 +568,8 @@ export async function loadRelayModelDetail(pathId: string): Promise<PublicRelayM
         displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
         refreshStatus: '',
         refreshErrorType: '',
-        latestRelayRefreshAt,
-        latestRelayRefreshTime: formatBeijingRefreshTime(latestRelayRefreshAt),
+        latestGatewayRefreshAt,
+        latestGatewayRefreshTime: formatBeijingRefreshTime(latestGatewayRefreshAt),
         priceCountForModel: Number(row.price_count_for_model) || 0,
         unitsForModel: Array.isArray(row.units_for_model) ? row.units_for_model.map(String) : [],
         pricesForModel: Array.isArray(row.prices_for_model) ? row.prices_for_model.map((price: any) => ({

@@ -14,8 +14,8 @@ import {
   loadModelLeaderboards,
   loadOfficialPrices,
   loadPopularSearchTerms,
-  loadRelayModels,
-  loadRelaySites,
+  loadGatewayModels,
+  loadGatewaySites,
 } from '../store.js';
 
 const t = Astro.locals.messages;
@@ -25,15 +25,15 @@ const [
   popularSearchSnapshot,
   officialPrices,
   leaderboardRows,
-  relayData,
-  relayModelData,
+  gatewayData,
+  gatewayModelData,
 ] = await Promise.all([
   loadDashboardData({ productLimit: 6 }),
   loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]),
   loadOfficialPrices(),
   loadModelLeaderboards(),
-  loadRelaySites(),
-  loadRelayModels(),
+  loadGatewaySites(),
+  loadGatewayModels(),
 ]);
 const popularSearchTerms = popularSearchSnapshot.terms
   .map(term => term.trim())
@@ -53,12 +53,12 @@ const guideSourcePage = '/';
 
 const primaryCards = [
   {
-    title: t.home.relayPathTitle,
-    description: t.home.relayPathShortDescription,
+    title: t.home.gatewayPathTitle,
+    description: t.home.gatewayPathShortDescription,
     href: '/llm-gateway',
-    action: t.home.openRelay,
-    name: t.home.relayPathTitle,
-    badge: t.nav.llmRelay,
+    action: t.home.openGateway,
+    name: t.home.gatewayPathTitle,
+    badge: t.nav.llmGateway,
   },
   {
     title: t.home.shopPathTitle,
@@ -160,17 +160,17 @@ const modelHighlightGroups = localizeModelLeaderboardGroups(
     })),
   }));
 
-const relayHighlights = relayData.sites.slice(0, 4).map(site => ({
+const gatewayHighlights = gatewayData.sites.slice(0, 4).map(site => ({
   title: site.name,
   meta: site.displayModelFamilies.slice(0, 3).join(' / ') || site.host,
-  value: site.modelCount > 0 ? t.home.relayModelCountLabel.replace('{count}', String(site.modelCount)) : t.home.noRelayModelData,
+  value: site.modelCount > 0 ? t.home.gatewayModelCountLabel.replace('{count}', String(site.modelCount)) : t.home.noGatewayModelData,
   href: `/llm-gateway/${site.slug}`,
 }));
 
-const relayModelHighlights = relayModelData.models.slice(0, 4).map(model => ({
+const gatewayModelHighlights = gatewayModelData.models.slice(0, 4).map(model => ({
   title: model.modelId,
   meta: model.modelFamily,
-  value: t.home.relaySupportCountLabel.replace('{count}', String(model.supportSiteCount)),
+  value: t.home.gatewaySupportCountLabel.replace('{count}', String(model.supportSiteCount)),
   href: `/llm-gateway/models/${encodeURIComponent(model.modelId)}`,
 }));
 
@@ -245,16 +245,16 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 class="text-lg font-bold text-base-content">
-              <a href={linkTo('/llm-gateway')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/llm-gateway', t.home.openRelay)}>{t.home.relayHighlightsTitle}</a>
+              <a href={linkTo('/llm-gateway')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/llm-gateway', t.home.openGateway)}>{t.home.gatewayHighlightsTitle}</a>
             </h2>
           </div>
-          <a href={linkTo('/llm-gateway')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/llm-gateway', t.home.openRelay)}>{t.home.openRelay}</a>
+          <a href={linkTo('/llm-gateway')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/llm-gateway', t.home.openGateway)}>{t.home.openGateway}</a>
         </div>
         <div class="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
           <section class="min-w-0 rounded-lg bg-base-200/45 p-3">
-            <h3 class="text-sm font-bold text-base-content">{t.home.popularRelaySitesTitle}</h3>
+            <h3 class="text-sm font-bold text-base-content">{t.home.popularGatewaySitesTitle}</h3>
             <div class="mt-3 space-y-2">
-              {relayHighlights.map(item => (
+              {gatewayHighlights.map(item => (
                 <a href={linkTo(item.href)} class="flex items-center justify-between gap-3 rounded bg-base-100 px-3 py-2 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
                   <span class="min-w-0">
                     <span class="block truncate text-sm font-semibold text-base-content">{item.title}</span>
@@ -266,9 +266,9 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
             </div>
           </section>
           <section class="min-w-0 rounded-lg bg-base-200/45 p-3">
-            <h3 class="text-sm font-bold text-base-content">{t.home.popularRelayModelsTitle}</h3>
+            <h3 class="text-sm font-bold text-base-content">{t.home.popularGatewayModelsTitle}</h3>
             <div class="mt-3 space-y-2">
-              {relayModelHighlights.map(item => (
+              {gatewayModelHighlights.map(item => (
                 <a href={linkTo(item.href)} class="flex items-center justify-between gap-3 rounded bg-base-100 px-3 py-2 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
                   <span class="min-w-0">
                     <span class="block truncate text-sm font-semibold text-base-content">{item.title}</span>

@@ -6,13 +6,13 @@ import PublicPage from '../../../layouts/PublicPage.astro';
 import SortableTableHeader from '../../../components/SortableTableHeader.astro';
 import { buildSeoContext } from '../../../seo.js';
 import { publicSiteUrl } from '../../../site.js';
-import { loadRelayModelDetail } from '../../../store.js';
+import { loadGatewayModelDetail } from '../../../store.js';
 import sortableTablesScriptUrl from '../../../scripts/sortable-tables.js?url';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const rawModelIdParam = Astro.params.modelId || '';
-const detail = await loadRelayModelDetail(rawModelIdParam);
+const detail = await loadGatewayModelDetail(rawModelIdParam);
 
 if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 302);
 
@@ -23,8 +23,8 @@ if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.locali
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: `/llm-gateway/models/${canonicalModelPath}`,
-  title: t.llmRelay.modelDetailSeoTitle.replace('{model}', model.modelId),
-  description: t.llmRelay.modelDetailSeoDescription.replace('{model}', model.modelId),
+  title: t.llmGateway.modelDetailSeoTitle.replace('{model}', model.modelId),
+  description: t.llmGateway.modelDetailSeoDescription.replace('{model}', model.modelId),
   imagePath: '/og-cardnav.png',
   type: 'webpage',
   locale: Astro.locals.locale,
@@ -49,10 +49,10 @@ function firstFinite(values: Array<number | null>) {
   return typeof value === 'number' ? value : '';
 }
 
-function relaySiteClickAttrs(site: { name: string; slug: string }) {
+function gatewaySiteClickAttrs(site: { name: string; slug: string }) {
   const targetPage = linkTo(`/llm-gateway/${site.slug}`);
   return {
-    'data-umami-event': 'relay-site-click',
+    'data-umami-event': 'gateway-site-click',
     'data-umami-event-name': site.name,
     'data-umami-event-source-model': model.modelId,
     'data-umami-event-target-page': targetPage,
@@ -60,9 +60,9 @@ function relaySiteClickAttrs(site: { name: string; slug: string }) {
   };
 }
 
-function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
+function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
   return {
-    'data-umami-event': 'relay-site-open-click',
+    'data-umami-event': 'gateway-site-open-click',
     'data-umami-event-name': site.name,
     'data-umami-event-source-model': model.modelId,
     'data-umami-event-url': site.outboundUrl,
@@ -70,7 +70,7 @@ function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
 }
 ---
 
-<PublicPage activeNav="llm-relay" {...seo}>
+<PublicPage activeNav="llm-gateway" {...seo}>
   <section class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body p-5">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -82,23 +82,23 @@ function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
                 <path d="M19 12H5"></path>
               </svg>
             </span>
-            <span>{t.llmRelay.backToList}</span>
+            <span>{t.llmGateway.backToList}</span>
           </a>
           <div>
-            <h1 class="break-words font-mono text-2xl font-bold tracking-normal md:text-3xl">{t.llmRelay.modelDetailTitle.replace('{model}', model.modelId)}</h1>
-            <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/72">{t.llmRelay.modelDetailDescription}</p>
+            <h1 class="break-words font-mono text-2xl font-bold tracking-normal md:text-3xl">{t.llmGateway.modelDetailTitle.replace('{model}', model.modelId)}</h1>
+            <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/72">{t.llmGateway.modelDetailDescription}</p>
           </div>
         </div>
         <div class="grid grid-cols-1 gap-2 lg:min-w-[180px]">
           <div class="rounded border border-base-300 px-3 py-2">
-            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmRelay.supportedRelayCount}</div>
+            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.supportedGatewayCount}</div>
             <div class="font-mono text-xl font-bold text-primary">{model.supportSiteCount}</div>
           </div>
         </div>
       </div>
       <div class="mt-4 flex flex-wrap gap-2">
         <span class="badge badge-primary badge-outline">{model.modelFamily}</span>
-        {model.latestRelayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestRelayRefreshTime}</span> : null}
+        {model.latestGatewayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestGatewayRefreshTime}</span> : null}
       </div>
     </div>
   </section>
@@ -108,14 +108,14 @@ function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
       <table class="table table-zebra flat-product-table w-full align-top border-collapse" data-sortable-table>
         <thead class="bg-base-200 text-sm font-semibold text-base-content">
           <tr>
-            <SortableTableHeader label={t.llmRelay.rank} sortKey="rank" sortType="number" class="w-20" />
-            <SortableTableHeader label={t.llmRelay.basicInfo} sortKey="name" class="min-w-[360px]" />
+            <SortableTableHeader label={t.llmGateway.rank} sortKey="rank" sortType="number" class="w-20" />
+            <SortableTableHeader label={t.llmGateway.basicInfo} sortKey="name" class="min-w-[360px]" />
             <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-24 text-right" />
-            <SortableTableHeader label={t.llmRelay.unit} sortKey="unit" class="min-w-36" />
-            <SortableTableHeader label={t.llmRelay.inputPrice} sortKey="inputPrice" sortType="number" class="w-32 text-right" />
-            <SortableTableHeader label={t.llmRelay.outputPrice} sortKey="outputPrice" sortType="number" class="w-32 text-right" />
-            <SortableTableHeader label={t.llmRelay.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" class="w-32 text-right" />
-            <SortableTableHeader label={t.llmRelay.cacheOutputPrice} sortKey="cacheOutputPrice" sortType="number" class="w-32 text-right" />
+            <SortableTableHeader label={t.llmGateway.unit} sortKey="unit" class="min-w-36" />
+            <SortableTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" class="w-32 text-right" />
+            <SortableTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" class="w-32 text-right" />
+            <SortableTableHeader label={t.llmGateway.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" class="w-32 text-right" />
+            <SortableTableHeader label={t.llmGateway.cacheOutputPrice} sortKey="cacheOutputPrice" sortType="number" class="w-32 text-right" />
           </tr>
         </thead>
         <tbody>
@@ -132,15 +132,15 @@ function relaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
                     <div class="min-w-0 space-y-2">
                       <div class="flex flex-wrap items-center gap-2">
-                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover text-base font-semibold text-base-content" {...relaySiteClickAttrs(site)}>{site.name}</a>
+                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover text-base font-semibold text-base-content" {...gatewaySiteClickAttrs(site)}>{site.name}</a>
                         {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
                       </div>
                       {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
                       <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
                     </div>
                     <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
-                      <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteClickAttrs(site)}>{t.llmRelay.viewDetail}</a>
-                      <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...relaySiteOpenAttrs(site)}>{t.actions.open}</a>
+                      <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...gatewaySiteClickAttrs(site)}>{t.llmGateway.viewDetail}</a>
+                      <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...gatewaySiteOpenAttrs(site)}>{t.actions.open}</a>
                     </div>
                   </div>
                 </td>
