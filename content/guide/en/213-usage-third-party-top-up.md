@@ -52,7 +52,7 @@ Third-party top-up means: the account is still held by you, and the merchant use
 ## Practical steps
 
 1. First confirm that your account itself can log in normally, and that the email, secondary verification, and recovery methods are all in your own hands.
-2. Filter shops that provide top-up services on the [CardNav homepage](/) or merchant list.
+2. Filter shops that provide top-up services on the [CardNav homepage](https://cardnav.xyz/) or merchant list.
 3. Before purchasing, confirm the top-up method: whether a temporary password is required, whether a payment link is required, whether it is operated remotely, how long after-sales lasts, and how failure is handled.
 4. Prioritize merchants with clear explanations, stable contact methods, active communities, and explicit after-sales rules.
 5. After the top-up is completed, immediately check the subscription status, expiration time, and billing records.

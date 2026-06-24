@@ -20,4 +20,4 @@ Suitable times to do an IP check:
 - **When login anomalies appear**: When frequent human verification or even login errors occur, you should promptly check whether the current IP is polluted.
 - **Before payment subscription operations**: Before binding a bank card for payment, make sure the IP region highly matches the card's issuing location and has no high-fraud score.
 
-Use the detection tool directly: [IP purity check](/tools/ip-purity)
+Use the detection tool directly: [IP purity check](https://cardnav.xyz/tools/ip-purity)

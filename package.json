@@ -8,6 +8,7 @@
     "dev": "astro dev --host 0.0.0.0",
     "build": "astro build",
     "start": "node dist/server/entry.mjs",
+    "test": "node --import dotenv/config --import tsx --test test/**/*.test.ts",
     "typecheck": "astro check && tsc --noEmit"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "@types/pg": "^8.20.0",
     "daisyui": "^5.5.23",
     "tailwindcss": "^4.3.1",
+    "tsx": "^4.22.1",
     "typescript": "^6.0.3"
   },
   "overrides": {

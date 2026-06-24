@@ -3,9 +3,15 @@
  */
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
+import {
+  guideLinkTargetAttributes,
+  normalizeGuideHref,
+  normalizeGuideTargetPage,
+  rewriteGuideMarkdownLinks,
+  rewriteGuideRenderedHtmlLinks,
+} from './guide-link-rules.js';
 import { defaultLocale, isLocale, supportedLocales, type Locale } from './i18n/config.js';
 
-const cardnavSiteOrigin = 'https://cardnav.xyz';
 const guideUrlClickEventName = 'guide-url-click';
 
 export type GuideArticle = {
@@ -202,84 +208,8 @@ function descriptionFromMarkdown(markdown: string) {
   return paragraphLines.join(' ').trim();
 }
 
-function rewriteMarkdownLinks(markdown: string, slugByFileName: Map<string, string>) {
-  return markdown
-    .replace(/\]\((\.\/[^)#]+\.md)(#[^)]+)?\)/gu, (_match, relativePath: string, hash = '') => {
-      const fileName = relativePath.replace('./', '');
-      const slug = slugByFileName.get(fileName);
-      if (!slug) {
-        return `](${relativePath}${hash})`;
-      }
-      return `](/guide/${slug}${hash})`;
-    })
-    .replace(/\]\((https:\/\/cardnav\.xyz[^)\s]*)\)/gu, (_match, absoluteUrl: string) => {
-      try {
-        const url = new URL(absoluteUrl);
-        if (url.origin !== cardnavSiteOrigin) {
-          return `](${absoluteUrl})`;
-        }
-        const relativeUrl = `${url.pathname}${url.search}${url.hash}` || '/';
-        return `](${relativeUrl || '/'})`;
-      } catch {
-        return `](${absoluteUrl})`;
-      }
-    });
-}
-
-function isExternalGuideHref(href: string) {
-  try {
-    const url = new URL(href, cardnavSiteOrigin);
-    return (url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== cardnavSiteOrigin;
-  } catch {
-    return false;
-  }
-}
-
-function externalGuideLinkAttributes(href: string) {
-  return isExternalGuideHref(href) ? ' target="_blank" rel="noopener noreferrer"' : '';
-}
-
-function rewriteRenderedHtmlLinks(html: string) {
-  let processed = html.replace(/href="https:\/\/cardnav\.xyz([^"]*)"/gu, (_match, pathAndSuffix: string) => {
-    const normalized = pathAndSuffix || '/';
-    return `href="${normalized}"`;
-  });
-
-  processed = processed.replace(/<a\s+([^>]*?)href="([^"]+)"([^>]*?)>/gu, (match, prefix, href, suffix) => {
-    if (!isExternalGuideHref(href)) {
-      return match;
-    }
-    if (prefix.includes('target=') || suffix.includes('target=')) {
-      return match;
-    }
-    return `<a ${prefix}href="${href}"${suffix}${externalGuideLinkAttributes(href)}>`;
-  });
-
-  return processed;
-}
-
 function normalizeGuideSourcePage(slug: string) {
   return slug ? `/guide/${slug}` : '/guide';
-}
-
-function normalizeGuideTargetPage(href: string, sourcePage: string) {
-  if (href.startsWith('#')) {
-    return `${sourcePage}${href}`;
-  }
-
-  if (href.startsWith('/')) {
-    return href;
-  }
-
-  try {
-    const url = new URL(href, cardnavSiteOrigin);
-    if (url.origin === cardnavSiteOrigin) {
-      return `${url.pathname}${url.search}${url.hash}`;
-    }
-    return href;
-  } catch {
-    return href;
-  }
 }
 
 function buildGuideLinkTrackingAttributes(href: string, sourcePage: string) {
@@ -312,7 +242,7 @@ function escapeHtml(value: string) {
 }
 
 function renderMarkdownFragment(markdown: string, slugByFileName: Map<string, string>) {
-  return rewriteRenderedHtmlLinks(markdownRenderer.render(rewriteMarkdownLinks(markdown, slugByFileName)));
+  return rewriteGuideRenderedHtmlLinks(markdownRenderer.render(rewriteGuideMarkdownLinks(markdown, slugByFileName)));
 }
 
 function parseCommentAttributes(line: string) {
@@ -388,7 +318,7 @@ function resolveGuideCardHref(href: string | undefined, slugByFileName: Map<stri
     const slug = slugByFileName.get(fileName);
     return slug ? `/guide/${slug}` : href;
   }
-  return href;
+  return normalizeGuideHref(href);
 }
 
 function normalizeGuideImageSrc(src: string) {
@@ -494,7 +424,7 @@ function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<s
     const href = resolveGuideCardHref(extractedActionLink.href, slugByFileName);
     const tagName = href ? 'a' : 'article';
     const hrefAttr = href ? ` href="${escapeHtml(href)}"` : '';
-    const externalAttrs = href ? externalGuideLinkAttributes(href) : '';
+    const externalAttrs = extractedActionLink.href ? guideLinkTargetAttributes(extractedActionLink.href) : '';
     const trackingAttrs = href ? ` ${buildGuideLinkTrackingAttributes(href, sourcePage)}` : '';
     const cardClassName = href ? 'guide-card guide-card-clickable' : 'guide-card';
     const iconHtml = renderGuideCardIcon(card.icon);
@@ -679,7 +609,7 @@ function buildGuideCollection(localeDocuments: ParsedGuideDocument[]): GuideColl
   const directParentBySlug = new Map(localeDocuments.map(item => [item.slug, item.directParentSlug]));
 
   const renderedGuideArticles: RenderedGuideArticle[] = localeDocuments.map(item => {
-    const normalizedMarkdown = rewriteMarkdownLinks(item.markdown, slugByFileName);
+    const normalizedMarkdown = rewriteGuideMarkdownLinks(item.markdown, slugByFileName);
 
     return {
       slug: item.slug,
