@@ -73,10 +73,12 @@ function shortList(items: string[], limit = 10) {
               </span>
               <span>{t.llmRelay.backToList}</span>
             </a>
-            {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
           </div>
           <div>
-            <h1 class="text-2xl font-bold tracking-normal md:text-3xl">{site.name}</h1>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl font-bold tracking-normal md:text-3xl">{site.name}</h1>
+              {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
+            </div>
             <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/72">{site.summary || t.llmRelay.noProfile}</p>
           </div>
           <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-base-content/55">
