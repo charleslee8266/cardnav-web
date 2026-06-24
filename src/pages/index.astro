@@ -9,14 +9,33 @@ import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildOfficialPriceGroups } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
-import { loadDashboardData, loadModelLeaderboards, loadOfficialPrices, loadPopularSearchTerms } from '../store.js';
+import {
+  loadDashboardData,
+  loadModelLeaderboards,
+  loadOfficialPrices,
+  loadPopularSearchTerms,
+  loadRelayModels,
+  loadRelaySites,
+} from '../store.js';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const dashboardData = await loadDashboardData({ productLimit: 10 });
-const leaderboardRows = await loadModelLeaderboards();
-const officialPrices = await loadOfficialPrices();
-const popularSearchTerms = (await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms])).terms
+const [
+  dashboardData,
+  popularSearchSnapshot,
+  officialPrices,
+  leaderboardRows,
+  relayData,
+  relayModelData,
+] = await Promise.all([
+  loadDashboardData({ productLimit: 6 }),
+  loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]),
+  loadOfficialPrices(),
+  loadModelLeaderboards(),
+  loadRelaySites(),
+  loadRelayModels(),
+]);
+const popularSearchTerms = popularSearchSnapshot.terms
   .map(term => term.trim())
   .filter(Boolean);
 
@@ -30,34 +49,139 @@ const seo = buildSeoContext({
   locale: Astro.locals.locale,
 });
 
-const localizedLeaderboardGroups = localizeModelLeaderboardGroups(
-  buildModelLeaderboardGroups(leaderboardRows).map(group => ({
-    ...group,
-    rows: group.rows.slice(0, 3),
-  })),
-  t,
-);
+const guideSourcePage = '/';
+
+const primaryCards = [
+  {
+    title: t.home.relayPathTitle,
+    description: t.home.relayPathShortDescription,
+    href: '/llm-relay',
+    action: t.home.openRelay,
+    name: t.home.relayPathTitle,
+    badge: t.nav.llmRelay,
+  },
+  {
+    title: t.home.shopPathTitle,
+    description: t.home.shopPathShortDescription,
+    href: '/shops',
+    action: t.actions.openShops,
+    name: t.home.shopPathTitle,
+    badge: t.nav.shops,
+  },
+  {
+    title: t.home.officialPathTitle,
+    description: t.home.officialPathShortDescription,
+    href: '/official-price',
+    action: t.actions.openPricePage,
+    name: t.home.officialPathTitle,
+    badge: t.nav.officialPrice,
+  },
+];
+
+const secondaryCards = [
+  {
+    title: t.home.leaderboardPathTitle,
+    description: t.home.leaderboardPathShortDescription,
+    href: '/model-leaderboard',
+    action: t.actions.viewFullLeaderboard,
+    name: t.home.leaderboardPathTitle,
+    badge: t.nav.modelLeaderboard,
+    eventAttrs: homeCtaClickAttrs('/model-leaderboard', t.home.leaderboardPathTitle),
+  },
+  {
+    title: t.home.guidePathTitle,
+    description: t.home.guidePathShortDescription,
+    href: '/guide',
+    action: t.actions.openGuide,
+    name: t.home.guidePathTitle,
+    badge: t.nav.guide,
+    eventAttrs: guideUrlClickAttrs('/guide'),
+  },
+];
+
+const toolCards = [
+  {
+    title: t.tools.ipPurity.title,
+    description: t.home.ipToolDescription,
+    href: '/tools/ip-purity',
+  },
+  {
+    title: t.tools.sessionConverter.title,
+    description: t.home.sessionToolDescription,
+    href: '/tools/session-converter',
+  },
+];
+
+const guideHighlightSteps: Array<{ title: string; href: string }> = t.home.guideSteps;
 
 const officialPriceGroups = localizeOfficialPriceGroups(
   buildOfficialPriceGroups(officialPrices),
   Astro.locals.locale,
-)
-  .slice(0, 3)
+);
+type OfficialPriceHighlightGroup = (typeof officialPriceGroups)[number];
+const preferredOfficialPlans = [
+  { app: 'chatgpt', plan: 'plus' },
+  { app: 'gpt', plan: '20x' },
+  { app: 'claude', plan: 'pro' },
+  { app: 'claude', plan: '20x' },
+];
+const pickedOfficialKeys = new Set<string>();
+const officialPriceHighlights = preferredOfficialPlans
+  .map(({ app, plan }) => officialPriceGroups.find(group => {
+    const haystack = `${group.appSlug} ${group.planSlug} ${group.appName} ${group.planName} ${group.displayName} ${group.urlSlug}`.toLowerCase();
+    return haystack.includes(app) && haystack.includes(plan);
+  }))
+  .filter((group): group is OfficialPriceHighlightGroup => Boolean(group))
+  .filter(group => {
+    if (!group || pickedOfficialKeys.has(group.key)) return false;
+    pickedOfficialKeys.add(group.key);
+    return group.prices.length >= 3;
+  })
   .map(group => ({
-    ...group,
-    prices: group.prices.slice(0, 3),
+    title: group.displayName,
+    href: group.pathname,
+    prices: group.prices.slice(0, 3).map(price => ({
+      country: price.localizedCountryLabel,
+      localPrice: price.priceText,
+      equivalentPrice: price.equivalentPriceText,
+    })),
   }));
 
-const hotProducts = dashboardData.products.slice(0, 10).map(product => ({
-  ...product,
-  displayPrice: typeof product.priceNumber === 'number' && product.priceUnit
-    ? `${product.priceUnit}${String(product.priceNumber)}`
-    : product.price,
+const modelHighlightGroups = localizeModelLeaderboardGroups(
+  buildModelLeaderboardGroups(leaderboardRows),
+  t,
+)
+  .map(group => ({
+    title: group.displayName,
+    href: group.pathname,
+    rows: group.rows.slice(0, 3).map(row => ({
+      rank: row.rank,
+      modelName: row.modelName,
+    })),
+  }));
+
+const relayHighlights = relayData.sites.slice(0, 4).map(site => ({
+  title: site.name,
+  meta: site.displayModelFamilies.slice(0, 3).join(' / ') || site.host,
+  value: site.modelCount > 0 ? t.home.relayModelCountLabel.replace('{count}', String(site.modelCount)) : t.home.noRelayModelData,
+  href: `/llm-relay/${site.slug}`,
 }));
 
-const guideSteps: Array<{ title: string; href: string }> = [...t.home.guideSteps];
+const relayModelHighlights = relayModelData.models.slice(0, 4).map(model => ({
+  title: model.modelId,
+  meta: model.modelFamily,
+  value: t.home.relaySupportCountLabel.replace('{count}', String(model.supportSiteCount)),
+  href: `/llm-relay/models/${encodeURIComponent(model.modelId)}`,
+}));
 
-const guideSourcePage = '/';
+const productHighlights = dashboardData.products.slice(0, 6).map(product => ({
+  title: product.name,
+  meta: `${product.siteName} · ${product.categoryName}`,
+  value: typeof product.priceNumber === 'number' && product.priceUnit
+    ? `${product.priceUnit}${String(product.priceNumber)}`
+    : product.price,
+  href: `/shops?q=${encodeURIComponent(product.name)}`,
+}));
 
 function guideUrlClickAttrs(targetPage: string) {
   const localizedTargetPage = linkTo(targetPage);
@@ -82,168 +206,221 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
 ---
 
 <PublicPage activeNav="home" showSponsors={false} {...seo}>
-  <section class="card relative cursor-pointer bg-base-100 border border-base-300 shadow-sm overflow-hidden transition hover:border-primary/35 hover:shadow-md">
-    <a href={linkTo('/guide')} class="absolute inset-0 z-0" aria-label={t.actions.openGuide} {...guideUrlClickAttrs('/guide')}></a>
-    <div class="card-body p-4">
-      <div class="pointer-events-none relative z-10 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h2 class="text-xl font-bold text-base-content">{t.home.guideTitle}</h2>
-          <p class="mt-1 text-sm leading-6 text-base-content/75">{t.home.guideDescription}</p>
-        </div>
-        <a href={linkTo('/guide')} class="pointer-events-auto btn btn-outline btn-sm shrink-0" {...guideUrlClickAttrs('/guide')}>{t.actions.openGuide}</a>
+  <section class="mx-auto mt-4 w-full max-w-6xl">
+    <div class="mx-auto max-w-6xl">
+      <div class="mb-4">
+        <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.quickNavTitle}</h2>
       </div>
-      <div class="relative z-10 mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        {guideSteps.map((step, index) => (
-          <a href={linkTo(step.href)} class="rounded-lg border border-base-300 bg-base-100 px-3 py-2 no-underline transition hover:border-primary/35 hover:bg-base-200/50" {...guideUrlClickAttrs(step.href)}>
-            <span class="text-xs font-semibold text-primary">{t.home.stepLabel} {index + 1}</span>
-            <span class="mt-1 block text-sm font-bold text-base-content">{step.title}</span>
+      <div class="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-3">
+        {primaryCards.map(card => (
+          <a href={linkTo(card.href)} class="group flex min-w-0 flex-col rounded-lg border border-base-300 bg-base-100 p-4 no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...homeCtaClickAttrs(card.href, card.name)}>
+            <span class="badge badge-ghost badge-sm w-fit font-medium">{card.badge}</span>
+            <h3 class="mt-3 text-xl font-bold text-base-content">{card.title}</h3>
+            <p class="mt-2 flex-1 text-sm leading-6 text-base-content/72">{card.description}</p>
+            <span class="mt-4 text-sm font-semibold text-primary">{card.action}</span>
+          </a>
+        ))}
+      </div>
+
+      <div class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
+        {secondaryCards.map(card => (
+          <a href={linkTo(card.href)} class="group flex min-w-0 flex-col rounded-lg border border-base-300 bg-base-100 p-4 no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...card.eventAttrs}>
+            <span class="badge badge-ghost badge-sm w-fit font-medium">{card.badge}</span>
+            <h3 class="mt-3 text-xl font-bold text-base-content">{card.title}</h3>
+            <p class="mt-2 flex-1 text-sm leading-6 text-base-content/72">{card.description}</p>
+            <span class="mt-4 text-sm font-semibold text-primary">{card.action}</span>
           </a>
         ))}
       </div>
     </div>
   </section>
 
-  <section class="grid gap-3 xl:grid-cols-3">
-    <article class="order-2 card bg-base-100 border border-base-300 shadow-sm xl:order-1">
-      <div class="card-body p-5">
-        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+  <section class="mx-auto mt-4 grid w-full max-w-6xl grid-cols-[minmax(0,1fr)] gap-5">
+    <div>
+      <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.highlightsTitle}</h2>
+    </div>
+
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body gap-4 p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <h2 class="text-xl font-bold text-base-content">{t.home.leaderboardTitle}</h2>
-            <p class="text-sm leading-6 text-base-content/75">{t.home.leaderboardDescription}</p>
+            <h2 class="text-lg font-bold text-base-content">
+              <a href={linkTo('/llm-relay')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/llm-relay', t.home.openRelay)}>{t.home.relayHighlightsTitle}</a>
+            </h2>
           </div>
-          <a href={linkTo('/model-leaderboard')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/model-leaderboard', t.actions.viewFullLeaderboard)}>{t.actions.viewFullLeaderboard}</a>
+          <a href={linkTo('/llm-relay')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/llm-relay', t.home.openRelay)}>{t.home.openRelay}</a>
         </div>
-        <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-1">
-          {localizedLeaderboardGroups.map(group => (
-            <article class="rounded-2xl border border-base-300 bg-base-100 p-4">
-              <div class="flex items-center justify-between gap-3">
-                <h3 class="text-lg font-bold text-base-content">{group.displayName}</h3>
-                <span class="badge badge-ghost badge-sm font-medium">Top 3</span>
-              </div>
-              <div class="mt-3 space-y-3">
-                {group.rows.map(item => (
-                  <div class="flex items-center justify-between gap-3 rounded-xl bg-base-200/45 px-3 py-2">
-                    <div class="min-w-0">
-                      <p class="text-sm font-semibold text-base-content">#{item.rank} {item.modelName}</p>
-                    </div>
-                    <span class="text-sm font-mono font-bold text-primary">{item.score.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </article>
-
-    <article class="order-3 card bg-base-100 border border-base-300 shadow-sm xl:order-2">
-      <div class="card-body p-5">
-        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 class="text-xl font-bold text-base-content">{t.home.officialPriceTitle}</h2>
-            <p class="text-sm leading-6 text-base-content/75">{t.home.officialPriceDescription}</p>
-          </div>
-          <a href={linkTo('/official-price')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/official-price', t.actions.openPricePage)}>{t.actions.openPricePage}</a>
-        </div>
-        <div class="mt-3 space-y-3">
-          {officialPriceGroups.map(group => (
-            <section class="rounded-2xl border border-base-300 bg-base-100 p-4">
-              <div class="flex items-center justify-between gap-3">
-                <h3 class="text-base font-bold text-base-content">{group.appName} {group.planName}</h3>
-                <span class="badge badge-ghost badge-sm font-medium">{t.home.lowPriceRegions}</span>
-              </div>
-              <div class="mt-3 space-y-2">
-                {group.prices.map((item, index) => (
-                  <div class="flex items-center justify-between gap-3 rounded-xl bg-base-200/45 px-3 py-2">
-                    <div class="min-w-0">
-                      <p class="text-sm font-semibold text-base-content">#{index + 1} {item.localizedCountryLabel}</p>
-                      <p class="text-xs text-base-content/65">{item.countryCode} · {item.priceText}</p>
-                    </div>
-                    <p class="min-w-16 text-right text-sm font-bold text-primary">{item.equivalentPriceText}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
-    </article>
-
-    <article class="order-1 card bg-base-100 border border-base-300 shadow-sm xl:order-3">
-      <div class="card-body p-5">
-        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 class="text-xl font-bold text-base-content">{t.home.hotProductsTitle}</h2>
-            <p class="text-sm leading-6 text-base-content/75">{t.home.hotProductsDescription}</p>
-          </div>
-          <a href={linkTo('/shops')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}</a>
-        </div>
-
-        <div class="mt-3 space-y-3">
-          <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
-            <span>{t.labels.collectedSites}：<span class="font-bold text-primary">{dashboardData.totalSiteCount}</span></span>
-            <span>{t.labels.products}：<span class="font-bold text-primary">{dashboardData.totalProductCount}</span></span>
-            {dashboardData.latestRefreshTime && <span>{t.labels.latestRefresh}：{dashboardData.latestRefreshTime}</span>}
-          </div>
-
-          <form action={linkTo('/shops')} method="get" class="flex flex-col gap-3">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <input name="q" type="search" class="input input-bordered w-full" placeholder={t.home.searchPlaceholder} autocomplete="off" />
-              <button type="submit" class="btn btn-primary shrink-0" data-umami-event="home-search-submit" data-umami-event-name={t.analytics.homeSearch} data-umami-event-target-page={linkTo('/shops')}>{t.actions.search}</button>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">{t.labels.popularSearch}</span>
-              {popularSearchTerms.map(term => (
-                <a
-                  href={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`}
-                  class="btn btn-outline btn-sm rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
-                  data-umami-event="home-hot-search-click"
-                  data-umami-event-name={term}
-                  data-umami-event-target-page={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`}
-                  data-umami-event-url={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`}
-                >
-                  {term}
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
+          <section class="min-w-0 rounded-lg bg-base-200/45 p-3">
+            <h3 class="text-sm font-bold text-base-content">{t.home.popularRelaySitesTitle}</h3>
+            <div class="mt-3 space-y-2">
+              {relayHighlights.map(item => (
+                <a href={linkTo(item.href)} class="flex items-center justify-between gap-3 rounded bg-base-100 px-3 py-2 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
+                  <span class="min-w-0">
+                    <span class="block truncate text-sm font-semibold text-base-content">{item.title}</span>
+                    <span class="block truncate text-xs text-base-content/60">{item.meta}</span>
+                  </span>
+                  <span class="shrink-0 text-right text-xs font-semibold text-primary">{item.value}</span>
                 </a>
               ))}
             </div>
-          </form>
-
-          <div class="space-y-2">
-            {hotProducts.map(item => (
-              <div class="flex items-center justify-between gap-3 rounded-xl bg-base-200/45 px-3 py-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-base-content">{item.name}</p>
-                  <p class="text-xs text-base-content/65">{item.siteName} · {item.categoryName}</p>
-                </div>
-                <div class="text-right">
-                  <p class="text-sm font-bold text-primary">{item.displayPrice}</p>
-                  <p class="text-xs text-base-content/60">{item.inStock ? t.labels.inStock : t.labels.soldOut}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          </section>
+          <section class="min-w-0 rounded-lg bg-base-200/45 p-3">
+            <h3 class="text-sm font-bold text-base-content">{t.home.popularRelayModelsTitle}</h3>
+            <div class="mt-3 space-y-2">
+              {relayModelHighlights.map(item => (
+                <a href={linkTo(item.href)} class="flex items-center justify-between gap-3 rounded bg-base-100 px-3 py-2 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
+                  <span class="min-w-0">
+                    <span class="block truncate text-sm font-semibold text-base-content">{item.title}</span>
+                    <span class="block truncate text-xs text-base-content/60">{item.meta}</span>
+                  </span>
+                  <span class="shrink-0 text-right text-xs font-semibold text-primary">{item.value}</span>
+                </a>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
     </article>
-  </section>
 
-  <section class="grid gap-4 lg:grid-cols-2">
-    <a href={linkTo('/tools')} class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...homeCtaClickAttrs('/tools', t.actions.openTools)}>
-      <div class="card-body p-5">
-        <span class="badge badge-ghost badge-sm w-fit font-medium">{t.home.practicalTools}</span>
-        <h2 class="mt-2 text-xl font-bold text-base-content">{t.home.toolsTitle}</h2>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.home.toolsDescription}</p>
-        <span class="mt-4 text-sm font-semibold text-primary">{t.actions.openTools}</span>
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body gap-4 p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-base-content">
+              <a href={linkTo('/shops')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.home.productHighlightsTitle}</a>
+            </h2>
+          </div>
+          <a href={linkTo('/shops')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}</a>
+        </div>
+        <form action={linkTo('/shops')} method="get" class="flex flex-col gap-3 rounded-lg border border-base-300 bg-base-100 p-3">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <input name="q" type="search" class="input input-bordered w-full" placeholder={t.home.searchPlaceholder} autocomplete="off" />
+            <button type="submit" class="btn btn-primary shrink-0" data-umami-event="home-search-submit" data-umami-event-name={t.analytics.homeSearch} data-umami-event-target-page={linkTo('/shops')}>{t.actions.search}</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-semibold uppercase tracking-wider text-base-content/65">{t.labels.popularSearch}</span>
+            {popularSearchTerms.map(term => (
+              <a href={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} class="btn btn-outline btn-sm rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-umami-event="home-hot-search-click" data-umami-event-name={term} data-umami-event-target-page={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} data-umami-event-url={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`}>
+                {term}
+              </a>
+            ))}
+          </div>
+          <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
+            <span>{t.labels.collectedSites}: <span class="font-bold text-primary">{dashboardData.totalSiteCount}</span></span>
+            <span>{t.labels.products}: <span class="font-bold text-primary">{dashboardData.totalProductCount}</span></span>
+            {dashboardData.latestRefreshTime && <span>{t.labels.latestRefresh}: {dashboardData.latestRefreshTime}</span>}
+          </div>
+        </form>
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {productHighlights.map(item => (
+            <a href={linkTo(item.href)} class="flex min-w-0 items-center justify-between gap-3 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
+              <span class="block min-w-0 flex-1 max-w-full space-y-1 overflow-hidden">
+                <span class="block max-w-full truncate text-sm font-semibold leading-5 text-base-content">{item.title}</span>
+                <span class="block max-w-full truncate text-xs leading-5 text-base-content/60">{item.meta}</span>
+              </span>
+              <span class="shrink-0 text-right text-sm font-bold text-primary">{item.value}</span>
+            </a>
+          ))}
+        </div>
       </div>
-    </a>
-    <a href={linkTo('/guide')} class="card bg-base-100 border border-base-300 shadow-sm no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...guideUrlClickAttrs('/guide')}>
-      <div class="card-body p-5">
-        <span class="badge badge-ghost badge-sm w-fit font-medium">{t.home.buyingGuide}</span>
-        <h2 class="mt-2 text-xl font-bold text-base-content">{t.home.continueGuideTitle}</h2>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.home.continueGuideDescription}</p>
-        <span class="mt-4 text-sm font-semibold text-primary">{t.home.continueGuide}</span>
+    </article>
+
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body gap-4 p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-base-content">
+              <a href={linkTo('/official-price')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/official-price', t.actions.openPricePage)}>{t.home.officialHighlightsTitle}</a>
+            </h2>
+          </div>
+          <a href={linkTo('/official-price')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/official-price', t.actions.openPricePage)}>{t.actions.openPricePage}</a>
+        </div>
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {officialPriceHighlights.map(group => (
+            <a href={linkTo(group.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(group.href, group.title)}>
+              <h3 class="line-clamp-2 text-sm font-bold leading-5 text-base-content">{group.title}</h3>
+              <div class="mt-3 space-y-2">
+                {group.prices.map(price => (
+                  <div class="flex items-center justify-between gap-3 text-sm">
+                    <span class="min-w-0 truncate text-base-content/70">{price.country}</span>
+                    <span class="shrink-0 font-bold text-primary">{price.equivalentPrice}</span>
+                  </div>
+                ))}
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
-    </a>
+    </article>
+
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body gap-4 p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-base-content">
+              <a href={linkTo('/model-leaderboard')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/model-leaderboard', t.actions.viewFullLeaderboard)}>{t.home.modelHighlightsTitle}</a>
+            </h2>
+          </div>
+          <a href={linkTo('/model-leaderboard')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/model-leaderboard', t.actions.viewFullLeaderboard)}>{t.actions.viewFullLeaderboard}</a>
+        </div>
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {modelHighlightGroups.map(group => (
+            <a href={linkTo(group.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(group.href, group.title)}>
+              <h3 class="text-sm font-bold text-base-content">{group.title}</h3>
+              <div class="mt-3 space-y-2">
+                {group.rows.map(row => (
+                  <div class="text-sm">
+                    <span class="block truncate text-base-content">#{row.rank} {row.modelName}</span>
+                  </div>
+                ))}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </article>
+
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body gap-4 p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-base-content">
+              <a href={linkTo('/guide')} class="text-base-content no-underline hover:text-primary" {...guideUrlClickAttrs('/guide')}>{t.home.beginnerGuideTitle}</a>
+            </h2>
+          </div>
+          <a href={linkTo('/guide')} class="btn btn-outline btn-sm shrink-0" {...guideUrlClickAttrs('/guide')}>{t.actions.openGuide}</a>
+        </div>
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
+          {guideHighlightSteps.map(step => (
+            <a href={linkTo(step.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...guideUrlClickAttrs(step.href)}>
+              <span class="block truncate text-sm font-semibold text-base-content">{step.title}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </article>
+
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body gap-4 p-4">
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-base-content">
+              <a href={linkTo('/tools')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/tools', t.actions.openTools)}>{t.home.toolsTitle}</a>
+            </h2>
+          </div>
+          <a href={linkTo('/tools')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/tools', t.actions.openTools)}>{t.actions.openTools}</a>
+        </div>
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
+          {toolCards.map(tool => (
+            <a href={linkTo(tool.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(tool.href, tool.title)}>
+              <span class="block text-sm font-bold text-base-content">{tool.title}</span>
+              <span class="mt-1 block text-sm leading-6 text-base-content/70">{tool.description}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </article>
   </section>
 
   <Sponsors />

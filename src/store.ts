@@ -1,6 +1,5 @@
 /**
  * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
- * 对应文档: docs/specs/sorting-and-score.md
  */
 import 'dotenv/config';
 import pg from 'pg';
@@ -12,6 +11,73 @@ export type PublicSiteRow = {
   lastProductRefreshSuccessAt: string | null;
   lastProductRefreshSuccessTime: string;
   score: number;
+};
+
+export type PublicRelaySiteRow = {
+  id: string;
+  slug: string;
+  name: string;
+  url: string;
+  outboundUrl: string;
+  host: string;
+  family: string;
+  displayFamily: string;
+  createdAt: string | null;
+  createdTime: string;
+  lastProductRefreshCompleteAt: string | null;
+  lastProductRefreshCompleteTime: string;
+  siteScore: number | null;
+  availabilityPercent: number;
+  avgSuccessLatencyMs: number | null;
+  weight: number;
+  summary: string;
+  modelTypes: string[];
+  paymentMethods: string[];
+  modelCount: number;
+  priceCount: number;
+  modelFamilies: string[];
+  displayModelFamilies: string[];
+  refreshStatus: string;
+  refreshErrorType: string;
+  latestRelayRefreshAt: string | null;
+  latestRelayRefreshTime: string;
+};
+
+export type PublicRelayPriceRow = {
+  modelId: string;
+  unit: string;
+  inputPrice: number | null;
+  outputPrice: number | null;
+  cacheInputPrice: number | null;
+  cacheOutputPrice: number | null;
+};
+
+export type PublicRelayModelRow = {
+  id: string;
+  modelId: string;
+  modelFamily: string;
+  supportSiteCount: number;
+  priceCount: number;
+  latestRelayRefreshAt: string | null;
+  latestRelayRefreshTime: string;
+};
+
+export type PublicRelayModelSiteRow = PublicRelaySiteRow & {
+  priceCountForModel: number;
+  unitsForModel: string[];
+  pricesForModel: PublicRelayPriceRow[];
+  latestModelRefreshAt: string | null;
+  latestModelRefreshTime: string;
+};
+
+export type PublicRelayDetail = {
+  site: PublicRelaySiteRow;
+  prices: PublicRelayPriceRow[];
+};
+
+export type PublicRelayModelDetail = {
+  model: PublicRelayModelRow;
+  sites: PublicRelayModelSiteRow[];
 };
 
 export type PublicProductRow = {
@@ -75,6 +141,21 @@ export function formatBeijingRefreshTime(input: string | null | undefined): stri
   const parts = beijingDateFormatter.formatToParts(date);
   const lookup = Object.fromEntries(parts.map(part => [part.type, part.value]));
   return `${lookup.year}-${lookup.month}-${lookup.day} ${lookup.hour}:${lookup.minute}:${lookup.second}`;
+}
+
+function displayRelayFamily(family: string) {
+  if (!family || family === 'unknown' || family.startsWith('custom-')) return '';
+  const labels: Record<string, string> = {
+    newApi: 'New API',
+    sub2Api: 'Sub2API',
+    oneApi: 'One API',
+    rixApi: 'Rix API',
+    voApi: 'VoAPI',
+    veloera: 'Veloera',
+    anyRouter: 'AnyRouter',
+    metapi: 'MetAPI',
+  };
+  return labels[family] ?? family;
 }
 
 export async function loadDashboardData(options: { productLimit?: number } = {}) {
@@ -195,6 +276,323 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
     latestRefreshTime: formatBeijingRefreshTime(latestRefreshedAt),
     isPartial: totalProductCount > products.length,
   };
+}
+
+export async function loadRelaySites() {
+  const result = await getPool().query(`
+    WITH price_summary AS (
+      SELECT
+        site_id,
+        COUNT(DISTINCT model_id)::INTEGER AS model_count,
+        COUNT(*)::INTEGER AS price_count,
+        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
+        MAX(fetched_at) AS latest_price_fetched_at
+      FROM relay_model_prices
+      GROUP BY site_id
+    )
+    SELECT
+      relay_sites.site_id AS id,
+      relay_sites.name AS site_name,
+      relay_sites.url,
+      relay_sites.family,
+      relay_sites.score,
+      relay_sites.availability_percent,
+      relay_sites.avg_success_latency_ms,
+      relay_sites.created_at,
+      relay_profiles.slug,
+      relay_profiles.host,
+      relay_profiles.name AS profile_name,
+      relay_profiles.weight,
+      relay_profiles.summary,
+      relay_profiles.invite_url,
+      relay_profiles.model_types,
+      relay_profiles.payment_methods,
+      COALESCE(price_summary.model_count, 0) AS model_count,
+      COALESCE(price_summary.price_count, 0) AS price_count,
+      COALESCE(price_summary.model_families, ARRAY[]::text[]) AS model_families,
+      CASE
+        WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
+          THEN price_summary.model_families
+        ELSE ARRAY(
+          SELECT jsonb_array_elements_text(COALESCE(relay_profiles.model_types, '[]'::jsonb))
+        )
+      END AS display_model_families,
+      price_summary.latest_price_fetched_at AS latest_relay_refresh_at
+    FROM relay_sites
+    INNER JOIN relay_profiles ON relay_profiles.url = relay_sites.url
+    LEFT JOIN price_summary ON price_summary.site_id = relay_sites.site_id
+    WHERE relay_sites.status = 'online' AND relay_sites.type = 'relay'
+    ORDER BY relay_sites.score DESC, relay_profiles.weight DESC, relay_sites.created_at DESC NULLS LAST, relay_sites.name ASC, relay_sites.site_id ASC
+  `);
+
+  const sites: PublicRelaySiteRow[] = result.rows.map(row => {
+    const createdAt = row.created_at ? String(row.created_at) : null;
+    const latestRelayRefreshAt = row.latest_relay_refresh_at ? String(row.latest_relay_refresh_at) : null;
+    const family = row.family ? String(row.family) : '';
+    const url = String(row.url);
+    const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
+    return {
+      id: String(row.id || ''),
+      slug: String(row.slug || ''),
+      name: row.profile_name ? String(row.profile_name) : String(row.site_name),
+      url,
+      outboundUrl: inviteUrl || url,
+      host: row.host ? String(row.host) : hostFromUrl(url),
+      family,
+      displayFamily: displayRelayFamily(family),
+      createdAt,
+      createdTime: formatBeijingRefreshTime(createdAt),
+      lastProductRefreshCompleteAt: null,
+      lastProductRefreshCompleteTime: '',
+      siteScore: Number(row.score) || 0,
+      availabilityPercent: Number(row.availability_percent) || 0,
+      avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
+      weight: Number(row.weight) || 0,
+      summary: String(row.summary || ''),
+      modelTypes: Array.isArray(row.model_types) ? row.model_types.map(String) : [],
+      paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
+      modelCount: Number(row.model_count) || 0,
+      priceCount: Number(row.price_count) || 0,
+      modelFamilies: Array.isArray(row.model_families) ? row.model_families.map(String) : [],
+      displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
+      refreshStatus: '',
+      refreshErrorType: '',
+      latestRelayRefreshAt,
+      latestRelayRefreshTime: formatBeijingRefreshTime(latestRelayRefreshAt),
+    };
+  });
+
+  return {
+    sites,
+    totalSiteCount: sites.length,
+    sitesWithPricesCount: sites.filter(site => site.priceCount > 0).length,
+    totalModelCount: sites.reduce((sum, site) => sum + site.modelCount, 0),
+    totalPriceCount: sites.reduce((sum, site) => sum + site.priceCount, 0),
+  };
+}
+
+export async function loadRelayModels() {
+  const result = await getPool().query(`
+    SELECT
+      prices.model_id,
+      COALESCE(NULLIF(prices.model_family, ''), 'Other') AS model_family,
+      COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count,
+      COUNT(*)::INTEGER AS price_count,
+      MAX(prices.fetched_at) AS latest_relay_refresh_at,
+      MAX(relay_sites.score) AS max_site_score
+    FROM relay_model_prices prices
+    INNER JOIN relay_sites ON relay_sites.site_id = prices.site_id
+    INNER JOIN relay_profiles ON relay_profiles.url = relay_sites.url
+    WHERE relay_sites.status = 'online' AND relay_sites.type = 'relay'
+    GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
+    ORDER BY
+      COUNT(DISTINCT prices.site_id) DESC,
+      MAX(relay_sites.score) DESC NULLS LAST,
+      prices.model_id ASC
+  `);
+
+  const models: PublicRelayModelRow[] = result.rows.map(row => {
+    const modelId = String(row.model_id);
+    const latestRelayRefreshAt = row.latest_relay_refresh_at ? String(row.latest_relay_refresh_at) : null;
+    return {
+      id: modelId,
+      modelId,
+      modelFamily: String(row.model_family || 'Other'),
+      supportSiteCount: Number(row.support_site_count) || 0,
+      priceCount: Number(row.price_count) || 0,
+      latestRelayRefreshAt,
+      latestRelayRefreshTime: formatBeijingRefreshTime(latestRelayRefreshAt),
+    };
+  });
+
+  return {
+    models,
+    totalModelCount: models.length,
+    totalSupportCount: models.reduce((sum, model) => sum + model.supportSiteCount, 0),
+  };
+}
+
+export async function loadRelayDetail(slug: string): Promise<PublicRelayDetail | null> {
+  const relayData = await loadRelaySites();
+  const site = relayData.sites.find(item => item.slug === slug);
+  if (!site) return null;
+
+  const priceResult = await getPool().query(`
+    SELECT
+      prices.model_id,
+      prices.unit,
+      prices.input_price,
+      prices.output_price,
+      prices.cache_input_price,
+      prices.cache_output_price
+    FROM relay_model_prices prices
+    WHERE prices.site_id = $1
+    ORDER BY
+      CASE prices.model_family
+        WHEN 'GPT' THEN 1
+        WHEN 'Claude' THEN 2
+        WHEN 'Gemini' THEN 3
+        WHEN 'Qwen' THEN 4
+        WHEN 'Grok' THEN 5
+        ELSE 20
+      END ASC,
+      prices.model_id ASC,
+      prices.unit ASC
+    LIMIT 80
+  `, [site.id]);
+
+  return {
+    site,
+    prices: priceResult.rows.map(row => ({
+      modelId: String(row.model_id),
+      unit: String(row.unit || ''),
+      inputPrice: row.input_price == null ? null : Number(row.input_price),
+      outputPrice: row.output_price == null ? null : Number(row.output_price),
+      cacheInputPrice: row.cache_input_price == null ? null : Number(row.cache_input_price),
+      cacheOutputPrice: row.cache_output_price == null ? null : Number(row.cache_output_price),
+    })),
+  };
+}
+
+export async function loadRelayModelDetail(pathId: string): Promise<PublicRelayModelDetail | null> {
+  const modelId = pathId.trim();
+  if (!modelId) return null;
+
+  const relayModels = await loadRelayModels();
+  const model = relayModels.models.find(item => item.modelId === modelId);
+  if (!model) return null;
+
+  const result = await getPool().query(`
+    WITH model_price_summary AS (
+      SELECT
+        site_id,
+        COUNT(*)::INTEGER AS price_count_for_model,
+        ARRAY_AGG(DISTINCT unit ORDER BY unit) FILTER (WHERE unit <> '') AS units_for_model,
+        jsonb_agg(
+          jsonb_build_object(
+            'unit', unit,
+            'inputPrice', input_price,
+            'outputPrice', output_price,
+            'cacheInputPrice', cache_input_price,
+            'cacheOutputPrice', cache_output_price
+          )
+          ORDER BY unit ASC, input_price ASC NULLS LAST, output_price ASC NULLS LAST
+        ) AS prices_for_model,
+        MAX(fetched_at) AS latest_model_refresh_at
+      FROM relay_model_prices
+      WHERE model_id = $1
+      GROUP BY site_id
+    ),
+    site_price_summary AS (
+      SELECT
+        site_id,
+        COUNT(DISTINCT model_id)::INTEGER AS model_count,
+        COUNT(*)::INTEGER AS price_count,
+        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
+        MAX(fetched_at) AS latest_price_fetched_at
+      FROM relay_model_prices
+      GROUP BY site_id
+    )
+    SELECT
+      relay_sites.site_id AS id,
+      relay_sites.name AS site_name,
+      relay_sites.url,
+      relay_sites.family,
+      relay_sites.score,
+      relay_sites.availability_percent,
+      relay_sites.avg_success_latency_ms,
+      relay_sites.created_at,
+      relay_profiles.slug,
+      relay_profiles.host,
+      relay_profiles.name AS profile_name,
+      relay_profiles.weight,
+      relay_profiles.summary,
+      relay_profiles.invite_url,
+      relay_profiles.model_types,
+      relay_profiles.payment_methods,
+      COALESCE(site_price_summary.model_count, 0) AS model_count,
+      COALESCE(site_price_summary.price_count, 0) AS price_count,
+      COALESCE(site_price_summary.model_families, ARRAY[]::text[]) AS model_families,
+      CASE
+        WHEN cardinality(COALESCE(site_price_summary.model_families, ARRAY[]::text[])) > 0
+          THEN site_price_summary.model_families
+        ELSE ARRAY(
+          SELECT jsonb_array_elements_text(COALESCE(relay_profiles.model_types, '[]'::jsonb))
+        )
+      END AS display_model_families,
+      site_price_summary.latest_price_fetched_at AS latest_relay_refresh_at,
+      model_price_summary.price_count_for_model,
+      COALESCE(model_price_summary.units_for_model, ARRAY[]::text[]) AS units_for_model,
+      COALESCE(model_price_summary.prices_for_model, '[]'::jsonb) AS prices_for_model,
+      model_price_summary.latest_model_refresh_at
+    FROM model_price_summary
+    INNER JOIN relay_sites ON relay_sites.site_id = model_price_summary.site_id
+    INNER JOIN relay_profiles ON relay_profiles.url = relay_sites.url
+    LEFT JOIN site_price_summary ON site_price_summary.site_id = relay_sites.site_id
+    WHERE relay_sites.status = 'online' AND relay_sites.type = 'relay'
+    ORDER BY relay_sites.score DESC, relay_profiles.weight DESC, relay_sites.created_at DESC NULLS LAST, relay_sites.name ASC
+  `, [modelId]);
+
+  return {
+    model,
+    sites: result.rows.map(row => {
+      const createdAt = row.created_at ? String(row.created_at) : null;
+      const latestRelayRefreshAt = row.latest_relay_refresh_at ? String(row.latest_relay_refresh_at) : null;
+      const latestModelRefreshAt = row.latest_model_refresh_at ? String(row.latest_model_refresh_at) : null;
+      const family = row.family ? String(row.family) : '';
+      const url = String(row.url);
+      const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
+      return {
+        id: String(row.id || ''),
+        slug: String(row.slug || ''),
+        name: row.profile_name ? String(row.profile_name) : String(row.site_name),
+        url,
+        outboundUrl: inviteUrl || url,
+        host: row.host ? String(row.host) : hostFromUrl(url),
+        family,
+        displayFamily: displayRelayFamily(family),
+        createdAt,
+        createdTime: formatBeijingRefreshTime(createdAt),
+        lastProductRefreshCompleteAt: null,
+        lastProductRefreshCompleteTime: '',
+        siteScore: Number(row.score) || 0,
+        availabilityPercent: Number(row.availability_percent) || 0,
+        avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
+        weight: Number(row.weight) || 0,
+        summary: String(row.summary || ''),
+        modelTypes: Array.isArray(row.model_types) ? row.model_types.map(String) : [],
+        paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
+        modelCount: Number(row.model_count) || 0,
+        priceCount: Number(row.price_count) || 0,
+        modelFamilies: Array.isArray(row.model_families) ? row.model_families.map(String) : [],
+        displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
+        refreshStatus: '',
+        refreshErrorType: '',
+        latestRelayRefreshAt,
+        latestRelayRefreshTime: formatBeijingRefreshTime(latestRelayRefreshAt),
+        priceCountForModel: Number(row.price_count_for_model) || 0,
+        unitsForModel: Array.isArray(row.units_for_model) ? row.units_for_model.map(String) : [],
+        pricesForModel: Array.isArray(row.prices_for_model) ? row.prices_for_model.map((price: any) => ({
+          modelId,
+          unit: String(price.unit || ''),
+          inputPrice: price.inputPrice == null ? null : Number(price.inputPrice),
+          outputPrice: price.outputPrice == null ? null : Number(price.outputPrice),
+          cacheInputPrice: price.cacheInputPrice == null ? null : Number(price.cacheInputPrice),
+          cacheOutputPrice: price.cacheOutputPrice == null ? null : Number(price.cacheOutputPrice),
+        })) : [],
+        latestModelRefreshAt,
+        latestModelRefreshTime: formatBeijingRefreshTime(latestModelRefreshAt),
+      };
+    }),
+  };
+}
+
+function hostFromUrl(input: string) {
+  try {
+    return new URL(input).hostname;
+  } catch {
+    return input;
+  }
 }
 
 export function normalizeSearchText(value: string) {

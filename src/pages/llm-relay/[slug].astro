@@ -1,0 +1,162 @@
+---
+/*
+文件说明: 渲染单个 AI 大模型 API 中转站详情页，展示模型覆盖和价格记录。
+*/
+import PublicPage from '../../layouts/PublicPage.astro';
+import { buildSeoContext } from '../../seo.js';
+import { publicSiteUrl } from '../../site.js';
+import { loadRelayDetail } from '../../store.js';
+
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
+const detail = await loadRelayDetail(Astro.params.slug || '');
+
+if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-relay'), 302);
+
+const { site, prices } = detail;
+if (Astro.params.slug !== site.slug) return Astro.redirect(Astro.locals.localizePath(`/llm-relay/${site.slug}`), 301);
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: `/llm-relay/${site.slug}`,
+  title: t.llmRelay.detailSeoTitle.replace('{name}', site.name),
+  description: t.llmRelay.detailSeoDescription
+    .replace('{name}', site.name)
+    .replace('{modelCount}', String(site.modelCount))
+    .replace('{priceCount}', String(site.priceCount)),
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+  locale: Astro.locals.locale,
+});
+
+function formatPrice(value: number | null) {
+  return value === null || !Number.isFinite(value) ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+}
+
+function formatPositiveScore(value: number | null) {
+  return value === null || !Number.isFinite(value) || value <= 0 ? '-' : value.toFixed(2);
+}
+
+function formatAvailabilityPercent(value: number) {
+  if (!Number.isFinite(value) || value < 0) return '-';
+  return `${Math.min(100, value).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+}
+
+function formatLatencySeconds(value: number | null) {
+  if (value === null || !Number.isFinite(value) || value < 0) return '-';
+  return `${(value / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} s`;
+}
+
+function displayPriceUnit(unit: string) {
+  if (unit === '1M_tokens' || unit === 'quota_ratio') return '$ / 1M tokens';
+  if (unit === 'call') return 'per call';
+  return unit || '-';
+}
+
+function shortList(items: string[], limit = 10) {
+  return items.slice(0, limit);
+}
+---
+
+<PublicPage activeNav="llm-relay" {...seo}>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 space-y-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <a href={linkTo('/llm-relay')} class="page-back-link">
+              <span class="page-back-icon" aria-hidden="true">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 19-7-7 7-7"></path>
+                  <path d="M19 12H5"></path>
+                </svg>
+              </span>
+              <span>{t.llmRelay.backToList}</span>
+            </a>
+            {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold tracking-normal md:text-3xl">{site.name}</h1>
+            <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/72">{site.summary || t.llmRelay.noProfile}</p>
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-base-content/55">
+            <span class="break-all">{site.url}</span>
+            <span>{t.llmRelay.createdAt}: {site.createdTime || t.labels.notRecorded}</span>
+            <span>{t.labels.latestRefresh}: {site.latestRelayRefreshTime || t.labels.notRecorded}</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[420px]">
+          <div class="rounded border border-base-300 px-3 py-2">
+            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmRelay.modelCount}</div>
+            <div class="font-mono text-xl font-bold text-primary">{site.modelCount}</div>
+          </div>
+          <div class="rounded border border-base-300 px-3 py-2">
+            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmRelay.priceCount}</div>
+            <div class="font-mono text-xl font-bold">{site.priceCount}</div>
+          </div>
+          <div class="rounded border border-base-300 px-3 py-2">
+            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.labels.score}</div>
+            <div class="font-mono text-xl font-bold">{formatPositiveScore(site.siteScore)}</div>
+          </div>
+          <div class="rounded border border-base-300 px-3 py-2">
+            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmRelay.availability}</div>
+            <div class="font-mono text-xl font-bold text-secondary">{formatAvailabilityPercent(site.availabilityPercent)}</div>
+          </div>
+          <div class="rounded border border-base-300 px-3 py-2">
+            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmRelay.averageLatency}</div>
+            <div class="font-mono text-xl font-bold">{formatLatencySeconds(site.avgSuccessLatencyMs)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2">
+        {shortList(site.modelFamilies, 12).map(family => <span class="badge badge-primary badge-outline">{family}</span>)}
+      </div>
+      <div class="mt-4">
+        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">{t.actions.open}</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5">
+        <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="text-lg font-semibold">{t.llmRelay.priceSummaryTitle}</h2>
+            <p class="text-sm leading-6 text-base-content/65">{t.llmRelay.priceSummaryDescription}</p>
+          </div>
+        </div>
+        <div class="mt-3 overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>{t.labels.model}</th>
+                <th>{t.llmRelay.unit}</th>
+                <th>{t.llmRelay.inputPrice}</th>
+                <th>{t.llmRelay.outputPrice}</th>
+                <th>{t.llmRelay.cacheInputPrice}</th>
+                <th>{t.llmRelay.cacheOutputPrice}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {prices.length > 0 ? prices.map(price => (
+                <tr>
+                  <td class="min-w-48">
+                    <div class="font-mono text-xs text-base-content">{price.modelId}</div>
+                  </td>
+                  <td>{displayPriceUnit(price.unit)}</td>
+                  <td class="font-mono">{formatPrice(price.inputPrice)}</td>
+                  <td class="font-mono">{formatPrice(price.outputPrice)}</td>
+                  <td class="font-mono">{formatPrice(price.cacheInputPrice)}</td>
+                  <td class="font-mono">{formatPrice(price.cacheOutputPrice)}</td>
+                </tr>
+              )) : (
+                <tr><td colspan="6" class="text-center text-base-content/55">{t.llmRelay.noPriceData}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</PublicPage>

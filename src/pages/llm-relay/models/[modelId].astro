@@ -1,0 +1,161 @@
+---
+/*
+文件说明: 渲染单个 AI 模型的中转站支持详情页，按中转站排序分数展示可用 relay。
+*/
+import PublicPage from '../../../layouts/PublicPage.astro';
+import SortableTableHeader from '../../../components/SortableTableHeader.astro';
+import { buildSeoContext } from '../../../seo.js';
+import { publicSiteUrl } from '../../../site.js';
+import { loadRelayModelDetail } from '../../../store.js';
+import sortableTablesScriptUrl from '../../../scripts/sortable-tables.js?url';
+
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
+const rawModelIdParam = Astro.params.modelId || '';
+const detail = await loadRelayModelDetail(rawModelIdParam);
+
+if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-relay'), 302);
+
+const { model, sites } = detail;
+const canonicalModelPath = encodeURIComponent(model.modelId);
+if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(`/llm-relay/models/${canonicalModelPath}`), 301);
+
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: `/llm-relay/models/${canonicalModelPath}`,
+  title: t.llmRelay.modelDetailSeoTitle.replace('{model}', model.modelId),
+  description: t.llmRelay.modelDetailSeoDescription.replace('{model}', model.modelId),
+  imagePath: '/og-cardnav.svg',
+  type: 'webpage',
+  locale: Astro.locals.locale,
+});
+
+function formatPositiveScore(value: number | null) {
+  return value === null || !Number.isFinite(value) || value <= 0 ? '-' : value.toFixed(2);
+}
+
+function formatPrice(value: number | null) {
+  return value === null || !Number.isFinite(value) ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+}
+
+function displayPriceUnit(unit: string) {
+  if (unit === '1M_tokens' || unit === 'quota_ratio') return '$ / 1M tokens';
+  if (unit === 'call') return 'per call';
+  return unit || '-';
+}
+
+function firstFinite(values: Array<number | null>) {
+  const value = values.find(item => typeof item === 'number' && Number.isFinite(item));
+  return typeof value === 'number' ? value : '';
+}
+---
+
+<PublicPage activeNav="llm-relay" {...seo}>
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 space-y-3">
+          <a href={linkTo('/llm-relay')} class="page-back-link">
+            <span class="page-back-icon" aria-hidden="true">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 19-7-7 7-7"></path>
+                <path d="M19 12H5"></path>
+              </svg>
+            </span>
+            <span>{t.llmRelay.backToList}</span>
+          </a>
+          <div>
+            <h1 class="break-words font-mono text-2xl font-bold tracking-normal md:text-3xl">{t.llmRelay.modelDetailTitle.replace('{model}', model.modelId)}</h1>
+            <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/72">{t.llmRelay.modelDetailDescription}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-2 lg:min-w-[180px]">
+          <div class="rounded border border-base-300 px-3 py-2">
+            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmRelay.supportedRelayCount}</div>
+            <div class="font-mono text-xl font-bold text-primary">{model.supportSiteCount}</div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <span class="badge badge-primary badge-outline">{model.modelFamily}</span>
+        {model.latestRelayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestRelayRefreshTime}</span> : null}
+      </div>
+    </div>
+  </section>
+
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <div class="product-table-scroll">
+      <table class="table table-zebra flat-product-table w-full align-top border-collapse" data-sortable-table>
+        <thead class="bg-base-200 text-sm font-semibold text-base-content">
+          <tr>
+            <SortableTableHeader label={t.llmRelay.rank} sortKey="rank" sortType="number" class="w-20" />
+            <SortableTableHeader label={t.llmRelay.basicInfo} sortKey="name" class="min-w-[360px]" />
+            <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-24 text-right" />
+            <SortableTableHeader label={t.llmRelay.unit} sortKey="unit" class="min-w-36" />
+            <SortableTableHeader label={t.llmRelay.inputPrice} sortKey="inputPrice" sortType="number" class="w-32 text-right" />
+            <SortableTableHeader label={t.llmRelay.outputPrice} sortKey="outputPrice" sortType="number" class="w-32 text-right" />
+            <SortableTableHeader label={t.llmRelay.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" class="w-32 text-right" />
+            <SortableTableHeader label={t.llmRelay.cacheOutputPrice} sortKey="cacheOutputPrice" sortType="number" class="w-32 text-right" />
+          </tr>
+        </thead>
+        <tbody>
+          {sites.map((site, index) => {
+            const unitSortValue = site.pricesForModel.map(price => displayPriceUnit(price.unit)).join(' ');
+            const inputSortValue = firstFinite(site.pricesForModel.map(price => price.inputPrice));
+            const outputSortValue = firstFinite(site.pricesForModel.map(price => price.outputPrice));
+            const cacheInputSortValue = firstFinite(site.pricesForModel.map(price => price.cacheInputPrice));
+            const cacheOutputSortValue = firstFinite(site.pricesForModel.map(price => price.cacheOutputPrice));
+            return (
+              <tr data-sort-rank={String(index + 1)} data-sort-name={site.name} data-sort-score={String(site.siteScore || 0)} data-sort-unit={unitSortValue} data-sort-input-price={String(inputSortValue)} data-sort-output-price={String(outputSortValue)} data-sort-cache-input-price={String(cacheInputSortValue)} data-sort-cache-output-price={String(cacheOutputSortValue)}>
+                <td class="font-mono text-sm text-primary">#{index + 1}</td>
+                <td>
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
+                    <div class="min-w-0 space-y-2">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <a href={linkTo(`/llm-relay/${site.slug}`)} class="link link-hover text-base font-semibold text-base-content">{site.name}</a>
+                        {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
+                      </div>
+                      {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
+                      <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
+                    </div>
+                    <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
+                      <a href={linkTo(`/llm-relay/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">{t.llmRelay.viewDetail}</a>
+                      <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none">{t.actions.open}</a>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-right font-mono">{formatPositiveScore(site.siteScore)}</td>
+                <td>
+                  <div class="space-y-1">
+                    {site.pricesForModel.length > 0 ? site.pricesForModel.map(price => <div>{displayPriceUnit(price.unit)}</div>) : <span class="text-base-content/35">-</span>}
+                  </div>
+                </td>
+                <td class="text-right font-mono">
+                  <div class="space-y-1">
+                    {site.pricesForModel.length > 0 ? site.pricesForModel.map(price => <div>{formatPrice(price.inputPrice)}</div>) : <span class="text-base-content/35">-</span>}
+                  </div>
+                </td>
+                <td class="text-right font-mono">
+                  <div class="space-y-1">
+                    {site.pricesForModel.length > 0 ? site.pricesForModel.map(price => <div>{formatPrice(price.outputPrice)}</div>) : <span class="text-base-content/35">-</span>}
+                  </div>
+                </td>
+                <td class="text-right font-mono">
+                  <div class="space-y-1">
+                    {site.pricesForModel.length > 0 ? site.pricesForModel.map(price => <div>{formatPrice(price.cacheInputPrice)}</div>) : <span class="text-base-content/35">-</span>}
+                  </div>
+                </td>
+                <td class="text-right font-mono">
+                  <div class="space-y-1">
+                    {site.pricesForModel.length > 0 ? site.pricesForModel.map(price => <div>{formatPrice(price.cacheOutputPrice)}</div>) : <span class="text-base-content/35">-</span>}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <script is:inline slot="scripts" defer src={sortableTablesScriptUrl}></script>
+</PublicPage>

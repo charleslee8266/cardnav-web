@@ -22,6 +22,7 @@ type Props = {
   alternateUrls?: { locale: Locale; hreflang: string; url: string }[];
   xDefaultUrl?: string;
   showSponsors?: boolean;
+  showHomeHero?: boolean;
 };
 
 const {
@@ -38,6 +39,7 @@ const {
   alternateUrls = [],
   xDefaultUrl,
   showSponsors = true,
+  showHomeHero = true,
 } = Astro.props;
 
 const t = Astro.locals.messages;
@@ -46,18 +48,25 @@ const inactiveClass = 'nav-top-tab shrink-0 text-sm md:text-base font-semibold t
 const activeClass = 'nav-top-tab nav-top-tab-active shrink-0 text-sm md:text-base font-semibold text-primary';
 const mobilePrimaryTabClass = 'nav-top-tab nav-top-tab-mobile shrink-0 text-xs font-semibold text-base-content/85 hover:text-primary';
 const mobileMoreLinkClass = 'rounded-lg px-2.5 py-2 text-xs font-semibold text-base-content/85 transition hover:bg-base-200 hover:text-primary';
-const shouldShowHero = activeNav === 'home';
+const shouldShowHero = activeNav === 'home' && showHomeHero;
 const isGuidePage = activeNav === 'guide';
 const primaryNavItems = [
   { key: 'home', href: '/', label: t.nav.home },
-  { key: 'guide', href: '/guide', label: t.nav.guide },
+  { key: 'llm-relay', href: '/llm-relay', label: t.nav.llmRelay },
   { key: 'shops', href: '/shops', label: t.nav.shops },
-  { key: 'model-leaderboard', href: '/model-leaderboard', label: t.nav.modelLeaderboard },
   { key: 'official-price', href: '/official-price', label: t.nav.officialPrice },
+  { key: 'model-leaderboard', href: '/model-leaderboard', label: t.nav.modelLeaderboard },
+  { key: 'guide', href: '/guide', label: t.nav.guide },
   { key: 'tools', href: '/tools', label: t.nav.tools },
   { key: 'ip-purity', href: '/tools/ip-purity', label: t.nav.ipPurity },
 ];
-const mobilePrimaryNavItems = primaryNavItems.filter(item => ['home', 'shops', 'model-leaderboard', 'official-price'].includes(item.key));
+const mobilePrimaryNavItems = [
+  { key: 'llm-relay', href: '/llm-relay', label: t.nav.mobileLlmRelay },
+  { key: 'shops', href: '/shops', label: t.nav.mobileShops },
+  { key: 'official-price', href: '/official-price', label: t.nav.mobileOfficialPrice },
+  { key: 'model-leaderboard', href: '/model-leaderboard', label: t.nav.mobileModelLeaderboard },
+  { key: 'guide', href: '/guide', label: t.nav.mobileGuide },
+];
 const footerLinks = [
   { href: '/about', label: t.nav.about },
   { href: '/disclaimer', label: t.nav.disclaimer },
@@ -134,8 +143,8 @@ function siteLinkClickAttrs(url: string, name: string) {
   'bg-base-200 text-base-content text-[15px] font-sans antialiased',
   isGuidePage ? 'h-dvh overflow-hidden' : 'min-h-screen',
 ]}>
-<header class="fixed inset-x-0 top-0 z-40 border-b border-base-300 bg-base-100/90 backdrop-blur md:sticky">
-  <nav class="flex h-12 items-center gap-1 px-2 md:hidden">
+<header class="fixed inset-x-0 top-0 z-40 max-w-full overflow-visible border-b border-base-300 bg-base-100/90 backdrop-blur md:sticky">
+  <nav class="flex h-12 max-w-full items-center gap-1 overflow-visible px-2 md:hidden">
     <details class="dropdown dropdown-bottom">
       <summary class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/85 hover:bg-base-200" aria-label={t.nav.openMenu} title={t.nav.openMenu}>
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -153,7 +162,7 @@ function siteLinkClickAttrs(url: string, name: string) {
         <li><a href={xProfileUrl} target="_blank" rel="noopener noreferrer" class={mobileMoreLinkClass} {...siteLinkClickAttrs(xProfileUrl, 'Header X @CharlesLee8266')}>{t.external.xProfile}</a></li>
       </ul>
     </details>
-    <div class="mobile-nav-scroll min-w-0 flex-1 overflow-x-auto">
+    <div class="mobile-nav-scroll min-w-0 w-0 flex-1 overflow-x-auto">
       <div role="tablist" class="flex w-max items-center gap-0 pr-0.5">
         {mobilePrimaryNavItems.map(item => (
           <a role="tab" href={linkTo(item.href)} class={activeNav === item.key ? mobilePrimaryTabClass + ' nav-top-tab-active' : mobilePrimaryTabClass} {...navClickAttrs(linkTo(item.href), item.label)}>{item.label}</a>
@@ -268,11 +277,11 @@ function siteLinkClickAttrs(url: string, name: string) {
 </header>
 
 <main class:list={[
-  'grid w-full flex-1 content-start items-start gap-4 p-4 pt-16 md:pt-4',
+  'grid w-full min-w-0 flex-1 grid-cols-[minmax(0,1fr)] content-start items-start gap-4 p-4 pt-16 md:pt-4',
   isGuidePage && 'min-h-0 h-full overflow-hidden grid-rows-[minmax(0,1fr)]',
 ]}>
   {shouldShowHero && (
-    <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <section class="card mx-auto w-full max-w-6xl bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="card-body p-6">
         <div>
           <div class="hero-title-row flex items-center gap-3">

@@ -1,0 +1,33 @@
+---
+/*
+文件说明: 渲染 可排序数据表格使用的可排序表头，视觉样式复用卡网商品表。
+*/
+type Props = {
+  label: string;
+  sortKey: string;
+  sortType?: 'text' | 'number';
+  class?: string;
+};
+
+const { label, sortKey, sortType = 'text', class: className = '' } = Astro.props;
+---
+
+<th scope="col" class={`flat-sort-head ${className}`} aria-sort="none">
+  <button type="button" class="flat-sort-button" data-sort-key={sortKey} data-sort-type={sortType}>
+    <span class="flat-sort-label">{label}</span>
+    <span class="sort-indicator" aria-hidden="true">
+      <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m7 15 5 5 5-5"></path>
+        <path d="m7 9 5-5 5 5"></path>
+      </svg>
+      <svg class="sort-icon sort-icon-asc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m5 12 7-7 7 7"></path>
+        <path d="M12 19V5"></path>
+      </svg>
+      <svg class="sort-icon sort-icon-desc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14"></path>
+        <path d="m19 12-7 7-7-7"></path>
+      </svg>
+    </span>
+  </button>
+</th>

@@ -582,6 +582,14 @@
     @apply mt-1 text-xs leading-5 text-base-content/55;
   }
 
+  .page-back-link {
+    @apply inline-flex w-fit items-center gap-2 rounded-md border border-base-300 bg-transparent px-2.5 py-2 text-sm font-semibold text-base-content transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .page-back-icon {
+    @apply inline-flex h-5 w-5 shrink-0 items-center justify-center text-base-content transition-colors;
+  }
+
   .tool-tablist-wrap {
     @apply overflow-x-auto;
   }
@@ -815,8 +823,20 @@
     @apply w-full max-w-full overflow-x-auto;
   }
 
+  .relay-table-scroll {
+    @apply w-full max-w-full overflow-x-auto;
+  }
+
   .flat-product-table {
     @apply min-w-[700px] w-full table-fixed border-collapse lg:min-w-[1020px];
+  }
+
+  .relay-site-table {
+    min-width: 920px;
+  }
+
+  .relay-model-table {
+    min-width: 680px;
   }
 
   .flat-product-table th,
@@ -824,12 +844,109 @@
     @apply align-top border-r border-base-300 last:border-r-0;
   }
 
+  .relay-home-table th,
+  .relay-home-table td,
+  .relay-sites-table th,
+  .relay-sites-table td {
+    @apply align-top border-r border-base-300 last:border-r-0;
+    overflow-wrap: anywhere;
+  }
+
+  .relay-home-table .badge,
+  .relay-sites-table .badge {
+    max-width: 100%;
+    height: auto;
+    min-height: 1.25rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.15;
+    text-align: left;
+  }
+
+  .relay-filter-grid > .input,
+  .relay-filter-grid > .select,
+  .relay-filter-grid > div {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .relay-filter-grid input {
+    min-width: 0;
+  }
+
+  @media (max-width: 767px) {
+    .relay-table-scroll {
+      @apply overflow-visible px-3 py-3;
+    }
+
+    .relay-site-table,
+    .relay-model-table {
+      min-width: 0;
+    }
+
+    .relay-home-table,
+    .relay-home-table thead,
+    .relay-home-table tbody,
+    .relay-home-table tr,
+    .relay-home-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .relay-home-table thead {
+      @apply hidden;
+    }
+
+    .relay-home-table {
+      @apply border-separate border-spacing-0 bg-transparent;
+    }
+
+    .relay-home-table tr {
+      @apply mb-3 overflow-hidden rounded border border-base-300 bg-base-100;
+    }
+
+    .relay-home-table tr.hidden {
+      display: none;
+    }
+
+    .relay-home-table td {
+      @apply border-r-0 border-b border-base-300 px-3 py-3 text-left last:border-b-0;
+    }
+
+    .relay-home-table td::before {
+      content: attr(data-label);
+      @apply mb-1 block text-[11px] font-semibold uppercase text-base-content/45;
+    }
+
+    .relay-home-table td[data-label="排序"],
+    .relay-home-table td[data-label="Rank"],
+    .relay-home-table td[data-label="Порядок"] {
+      @apply bg-base-200/55;
+    }
+
+    .relay-home-table td.text-right {
+      text-align: left;
+    }
+  }
+
   .flat-product-table thead .flat-sort-head {
     padding: 0 !important;
     @apply align-middle;
   }
 
+  .relay-home-table thead .flat-sort-head,
+  .relay-sites-table thead .flat-sort-head {
+    padding: 0 !important;
+    @apply align-middle;
+  }
+
   .flat-product-table .flat-sort-head {
+    @apply cursor-pointer select-none;
+  }
+
+  .relay-home-table .flat-sort-head,
+  .relay-sites-table .flat-sort-head {
     @apply cursor-pointer select-none;
   }
 
@@ -856,6 +973,14 @@
 
   .sort-icon {
     @apply hidden h-4 w-4;
+  }
+
+  .payment-icon {
+    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-base-300 bg-base-100 text-xs font-bold text-base-content/75;
+  }
+
+  .payment-icon img {
+    @apply h-4 w-4 object-contain;
   }
 
   .flat-sort-button:not([data-sort-direction="asc"]):not([data-sort-direction="desc"]) .sort-icon-none,
