@@ -5,7 +5,70 @@ import { defineMiddleware } from 'astro:middleware';
 import { defaultLocale, isLocale } from './i18n/config.js';
 import { getMessages } from './i18n/messages.js';
 import { getLocalePathInfo, localizePath } from './i18n/paths.js';
+import {
+  publicBrandAssetCacheControl,
+  publicDevHtmlCacheControl,
+  publicHtmlCacheControl,
+  publicStaticAssetCacheControl,
+} from './public-data-cache.js';
 import { submitSiteUrl } from './store.js';
+
+const brandAssetPathPattern = /^\/(favicon\.(?:webp|png)|og-cardnav\.(?:webp|png)|rightcode\.webp)$/;
+
+function looksLikePublicPagePath(pathname: string) {
+  if (pathname.startsWith('/api/') || pathname.startsWith('/_astro/')) return false;
+  if (/\.[a-z0-9]+$/i.test(pathname)) return false;
+  return true;
+}
+
+function isPublicHtmlResponse(pathname: string, contentType: string | null) {
+  if (!looksLikePublicPagePath(pathname)) return false;
+  // Astro SSR 在 middleware 之后才可能补上 Content-Type，不能只依赖响应头判断。
+  return !contentType || contentType.includes('text/html');
+}
+
+function isDevRuntime() {
+  return !import.meta.env.PROD;
+}
+
+function applyPublicResponseHeaders(pathname: string, response: Response, method: string) {
+  const headers = new Headers(response.headers);
+  if (method === 'GET' || method === 'HEAD') {
+    const cacheControl = resolvePublicResponseCacheControl(
+      pathname,
+      headers.get('content-type'),
+    );
+    if (cacheControl && (isDevRuntime() || !headers.has('cache-control'))) {
+      headers.set('Cache-Control', cacheControl);
+      if (!isDevRuntime() && cacheControl.includes('public')) {
+        headers.set('Vary', 'Accept-Encoding');
+      }
+    }
+  }
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function resolvePublicResponseCacheControl(pathname: string, contentType: string | null) {
+  if (!isPublicHtmlResponse(pathname, contentType)) {
+    return null;
+  }
+  if (isDevRuntime()) {
+    return publicDevHtmlCacheControl;
+  }
+  if (pathname.startsWith('/_astro/')) {
+    return publicStaticAssetCacheControl;
+  }
+  if (brandAssetPathPattern.test(pathname)) {
+    return publicBrandAssetCacheControl;
+  }
+  return publicHtmlCacheControl;
+}
 
 function jsonResponse(payload: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(payload), {
@@ -73,11 +136,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const headers = new Headers(context.request.headers);
     headers.set('x-cardnav-rewrite-locale', localePathInfo.locale);
     headers.set('x-cardnav-original-pathname', localePathInfo.pathname);
-    return context.rewrite(new Request(rewrittenUrl, {
+    const response = await context.rewrite(new Request(rewrittenUrl, {
       headers,
       method: context.request.method,
     }));
+    return applyPublicResponseHeaders(localePathInfo.pathname, response, context.request.method);
   }
 
-  return next();
+  const response = await next();
+  return applyPublicResponseHeaders(url.pathname, response, context.request.method);
 });

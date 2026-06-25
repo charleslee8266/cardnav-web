@@ -9,7 +9,7 @@ export type QuickPlanSearchTerm = {
 
 export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
   { label: 'GPT Free', query: 'gpt free|普号|白号', slug: 'gpt-free' },
-  // { label: 'GPT Go', query: 'gpt go' },
+  // { label: 'GPT Go', query: 'gpt go', slug: 'gpt-go' },
   { label: 'GPT Plus', query: 'gpt plus -free|普号', slug: 'gpt-plus' },
   { label: 'GPT Pro 5x', query: 'gpt pro 5x', slug: 'gpt-pro-5x' },
   { label: 'GPT Pro 20x', query: 'gpt pro 20x', slug: 'gpt-pro-20x' },
@@ -18,13 +18,13 @@ export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
   { label: 'Claude Max 5x', query: 'claude 5x', slug: 'claude-max-5x' },
   { label: 'Claude Max 20x', query: 'claude 20x|200', slug: 'claude-max-20x' },
 
-  // { label: 'Gemini AI Plus', query: 'gemini plus' },
+  // { label: 'Gemini AI Plus', query: 'gemini plus', slug: 'gemini-ai-plus' },
   { label: 'Gemini AI Pro', query: 'gemini pro', slug: 'gemini-ai-pro' },
   { label: 'Gemini AI Ultra', query: 'gemini ultra', slug: 'gemini-ai-ultra' },
 
   // { label: 'Grok SuperGrok Lite', query: 'grok lite' },
   { label: 'SuperGrok', query: 'supergrok', slug: 'supergrok' },
-  // { label: 'SuperGrok Heavy', query: 'grok heavy' },
+  // { label: 'SuperGrok Heavy', query: 'grok heavy', slug: 'supergrok-heavy' },
   { label: 'X Premium', query: 'X Premium', slug: 'x-premium' },
   // { label: 'X Premium+', query: 'X Premium+|X Premium Plus' },
 

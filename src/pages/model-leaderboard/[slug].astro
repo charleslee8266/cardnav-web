@@ -5,19 +5,26 @@
 import ModelLeaderboardContent from '../../components/ModelLeaderboardContent.astro';
 import { localizeModelLeaderboardGroups } from '../../localized-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
-import { buildModelLeaderboardGroups } from '../../model-leaderboard.js';
+import { buildModelLeaderboardGroupsForActiveTask } from '../../model-leaderboard.js';
 import pageWidgetsScriptUrl from '../../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
-import { formatBeijingRefreshTime, loadModelLeaderboards } from '../../store.js';
+import { formatBeijingRefreshTime, loadModelLeaderboardRowsForTask, loadModelLeaderboardTaskSlugs } from '../../store.js';
 
-const rows = await loadModelLeaderboards();
-const groups = localizeModelLeaderboardGroups(buildModelLeaderboardGroups(rows), Astro.locals.messages);
-const currentGroup = groups.find(group => group.taskSlug === Astro.params.slug) || null;
+const taskSlug = Astro.params.slug || '';
+const [taskSlugs, activeRows] = await Promise.all([
+  loadModelLeaderboardTaskSlugs(),
+  loadModelLeaderboardRowsForTask(taskSlug),
+]);
+const groups = localizeModelLeaderboardGroups(
+  buildModelLeaderboardGroupsForActiveTask(taskSlugs, activeRows, taskSlug),
+  Astro.locals.messages,
+);
+const currentGroup = groups.find(group => group.taskSlug === taskSlug) || null;
 
 if (!currentGroup) return Astro.redirect(Astro.locals.localizePath('/model-leaderboard'), 302);
 
-const latestFetchedAt = rows.reduce<string | null>((latest, row) => {
+const latestFetchedAt = activeRows.reduce<string | null>((latest, row) => {
   if (!latest) return row.fetchedAt;
   return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
 }, null);
@@ -30,6 +37,10 @@ const seo = buildSeoContext({
   description: Astro.locals.messages.leaderboard.dynamicDescription.replace('{taskLabel}', currentGroup.displayName),
   imagePath: '/og-cardnav.png',
   type: 'webpage',
+  breadcrumbs: [
+    { name: Astro.locals.messages.nav.modelLeaderboard, pathname: '/model-leaderboard' },
+    { name: currentGroup.displayName, pathname: currentGroup.pathname },
+  ],
   locale: Astro.locals.locale,
 });
 ---

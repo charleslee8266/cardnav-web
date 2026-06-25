@@ -4,6 +4,8 @@
 import 'dotenv/config';
 
 export const publicSiteUrl = process.env.PUBLIC_SITE_URL || 'https://cardnav.xyz';
+export const defaultSeoImagePath = '/og-cardnav.webp';
+export const indexNowKey = process.env.INDEXNOW_KEY || 'cardnavxyzindexnow2026';
 export const telegramGroupUrl = 'https://t.me/cardnav_xyz_group';
 export const githubRepoUrl = 'https://github.com/charleslee8266/cardnav-web';
 export const xProfileUrl = 'https://x.com/CharlesLee8266';

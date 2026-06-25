@@ -1,3 +1,5 @@
+import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-display.ts';
+
 (() => {
   const gatewayHome = document.querySelector('[data-gateway-home]');
   if (!gatewayHome) return;
@@ -12,43 +14,8 @@
     window.umami.track(eventName, eventData);
   }
 
-  function uniqueLabels(items, limit) {
-    const seen = new Set();
-    const labels = [];
-    for (const item of items || []) {
-      const label = String(item || '').trim();
-      const key = label.toLowerCase();
-      if (!label || seen.has(key)) continue;
-      seen.add(key);
-      labels.push(label);
-      if (limit && labels.length >= limit) break;
-    }
-    return labels;
-  }
-
   function paymentLabel(key) {
     return paymentMethodLabels[key] || key;
-  }
-
-  function paymentIcon(key) {
-    const icons = {
-      alipay: { src: '/assets/payment-icons/alipay.svg', fallback: 'A' },
-      wechat: { src: '/assets/payment-icons/wechat.svg', fallback: 'W' },
-      visa: { src: '/assets/payment-icons/visa.svg', fallback: 'V' },
-      mastercard: { src: '/assets/payment-icons/mastercard.svg', fallback: 'M' },
-      stripe: { src: '/assets/payment-icons/stripe.svg', fallback: 'S' },
-      paypal: { src: '/assets/payment-icons/paypal.svg', fallback: 'P' },
-      tether: { src: '/assets/payment-icons/tether.svg', fallback: 'T' },
-      bitcoin: { src: '/assets/payment-icons/bitcoin.svg', fallback: 'B' },
-      applepay: { src: '/assets/payment-icons/applepay.svg', fallback: 'A' },
-      googlepay: { src: '/assets/payment-icons/googlepay.svg', fallback: 'G' },
-    };
-    return icons[key] || { src: null, fallback: String(key || '').trim().slice(0, 1).toUpperCase() };
-  }
-
-  function formatPositiveScore(value) {
-    const numberValue = Number(value);
-    return Number.isFinite(numberValue) && numberValue > 0 ? numberValue.toFixed(2) : '-';
   }
 
   function el(tagName, className, text) {

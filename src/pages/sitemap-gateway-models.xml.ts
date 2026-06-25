@@ -2,6 +2,7 @@
  * 文件说明: 运行时读取中转站模型数据，只把高价值模型详情页写入 sitemap。
  */
 import type { APIRoute } from 'astro';
+import { publicSitemapCacheControl } from '../public-data-cache.js';
 import { supportedLocales } from '../i18n/config.js';
 import { buildGatewayModelSeoRoutes, buildSitemapXml, normalizePublicSeoRoutes } from '../seo-routes.js';
 import { publicSiteUrl } from '../site.js';
@@ -13,7 +14,7 @@ export const GET: APIRoute = async () => {
   return new Response(buildSitemapXml(publicSiteUrl, routes), {
     headers: {
       'content-type': 'application/xml; charset=utf-8',
-      'cache-control': 'public, max-age=3600',
+      'cache-control': publicSitemapCacheControl,
     },
   });
 };

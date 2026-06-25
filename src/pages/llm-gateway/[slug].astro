@@ -2,6 +2,15 @@
 /*
 文件说明: 渲染单个 AI 大模型 API 中转站详情页，展示模型覆盖和价格记录。
 */
+import PageHero from '../../components/PageHero.astro';
+import {
+  displayPriceUnit,
+  formatAvailabilityPercent,
+  formatLatencySeconds,
+  formatPositiveScore,
+  formatPrice,
+  shortList,
+} from '../../gateway-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
@@ -26,32 +35,12 @@ const seo = buildSeoContext({
     .replace('{priceCount}', String(site.priceCount)),
   imagePath: '/og-cardnav.png',
   type: 'webpage',
+  breadcrumbs: [
+    { name: t.nav.llmGateway, pathname: '/llm-gateway' },
+    { name: site.name, pathname: `/llm-gateway/${site.slug}` },
+  ],
   locale: Astro.locals.locale,
 });
-
-function formatPrice(value: number | null) {
-  return value === null || !Number.isFinite(value) ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 6 });
-}
-
-function formatPositiveScore(value: number | null) {
-  return value === null || !Number.isFinite(value) || value <= 0 ? '-' : value.toFixed(2);
-}
-
-function formatAvailabilityPercent(value: number) {
-  if (!Number.isFinite(value) || value < 0) return '-';
-  return `${Math.min(100, value).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
-}
-
-function formatLatencySeconds(value: number | null) {
-  if (value === null || !Number.isFinite(value) || value < 0) return '-';
-  return `${(value / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} s`;
-}
-
-function displayPriceUnit(unit: string) {
-  if (unit === '1M_tokens' || unit === 'quota_ratio') return '$ / 1M tokens';
-  if (unit === 'call') return 'per call';
-  return unit || '-';
-}
 
 function modelHref(modelId: string) {
   return linkTo(`/llm-gateway/models/${encodeURIComponent(modelId)}`);
@@ -76,63 +65,48 @@ function gatewayModelClickAttrs(modelId: string) {
   };
 }
 
-function shortList(items: string[], limit = 10) {
-  return items.slice(0, limit);
-}
 ---
 
 <PublicPage activeNav="llm-gateway" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div class="min-w-0 space-y-3">
-          <div class="flex flex-wrap items-center gap-2">
-            <a href={linkTo('/llm-gateway')} class="page-back-link">
-              <span class="page-back-icon" aria-hidden="true">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m12 19-7-7 7-7"></path>
-                  <path d="M19 12H5"></path>
-                </svg>
-              </span>
-              <span>{t.llmGateway.backToList}</span>
-            </a>
-          </div>
-          <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-2xl font-bold tracking-normal md:text-3xl">{site.name}</h1>
-              {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
-            </div>
-            <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/72">{site.summary || t.llmGateway.noProfile}</p>
-          </div>
-          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-base-content/55">
-            <span class="break-all">{site.url}</span>
-            <span>{t.llmGateway.createdAt}: {site.createdTime || t.labels.notRecorded}</span>
-            <span>{t.labels.latestRefresh}: {site.latestGatewayRefreshTime || t.labels.notRecorded}</span>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[420px]">
-          <div class="rounded border border-base-300 px-3 py-2">
-            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.modelCount}</div>
-            <div class="font-mono text-xl font-bold text-primary">{site.modelCount}</div>
-          </div>
-          <div class="rounded border border-base-300 px-3 py-2">
-            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.priceCount}</div>
-            <div class="font-mono text-xl font-bold">{site.priceCount}</div>
-          </div>
-          <div class="rounded border border-base-300 px-3 py-2">
-            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.labels.score}</div>
-            <div class="font-mono text-xl font-bold">{formatPositiveScore(site.siteScore)}</div>
-          </div>
-          <div class="rounded border border-base-300 px-3 py-2">
-            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.availability}</div>
-            <div class="font-mono text-xl font-bold text-secondary">{formatAvailabilityPercent(site.availabilityPercent)}</div>
-          </div>
-          <div class="rounded border border-base-300 px-3 py-2">
-            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.averageLatency}</div>
-            <div class="font-mono text-xl font-bold">{formatLatencySeconds(site.avgSuccessLatencyMs)}</div>
-          </div>
-        </div>
+  <PageHero
+    title={site.name}
+    description={site.summary || t.llmGateway.noProfile}
+    backHref="/llm-gateway"
+    backLabel={t.llmGateway.backToList}
+    copyClass="max-w-4xl"
+  >
+    <div slot="title" class="flex flex-wrap items-center gap-2">
+      <h1 class="page-hero-title mt-0">{site.name}</h1>
+      {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
+    </div>
+    <div slot="meta" class="page-hero-meta">
+      <span class="break-all">{site.url}</span>
+      <span>{t.llmGateway.createdAt}: {site.createdTime || t.labels.notRecorded}</span>
+      <span>{t.labels.latestRefresh}: {site.latestGatewayRefreshTime || t.labels.notRecorded}</span>
+    </div>
+    <div slot="aside" class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[420px]">
+      <div class="rounded border border-base-300 px-3 py-2">
+        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.modelCount}</div>
+        <div class="font-mono text-xl font-bold text-primary">{site.modelCount}</div>
       </div>
+      <div class="rounded border border-base-300 px-3 py-2">
+        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.priceCount}</div>
+        <div class="font-mono text-xl font-bold">{site.priceCount}</div>
+      </div>
+      <div class="rounded border border-base-300 px-3 py-2">
+        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.labels.score}</div>
+        <div class="font-mono text-xl font-bold">{formatPositiveScore(site.siteScore)}</div>
+      </div>
+      <div class="rounded border border-base-300 px-3 py-2">
+        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.availability}</div>
+        <div class="font-mono text-xl font-bold text-secondary">{formatAvailabilityPercent(site.availabilityPercent)}</div>
+      </div>
+      <div class="rounded border border-base-300 px-3 py-2">
+        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.averageLatency}</div>
+        <div class="font-mono text-xl font-bold">{formatLatencySeconds(site.avgSuccessLatencyMs)}</div>
+      </div>
+    </div>
+    <div slot="footer">
       <div class="mt-4 flex flex-wrap gap-2">
         {shortList(site.modelFamilies, 12).map(family => <span class="badge badge-primary badge-outline">{family}</span>)}
       </div>
@@ -140,7 +114,7 @@ function shortList(items: string[], limit = 10) {
         <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" {...gatewaySiteOpenAttrs()}>{t.actions.open}</a>
       </div>
     </div>
-  </section>
+  </PageHero>
 
   <section>
     <div class="card bg-base-100 border border-base-300 shadow-sm">
@@ -155,12 +129,12 @@ function shortList(items: string[], limit = 10) {
           <table class="table table-sm">
             <thead>
               <tr>
-                <th>{t.labels.model}</th>
-                <th>{t.llmGateway.unit}</th>
-                <th>{t.llmGateway.inputPrice}</th>
-                <th>{t.llmGateway.outputPrice}</th>
-                <th>{t.llmGateway.cacheInputPrice}</th>
-                <th>{t.llmGateway.cacheOutputPrice}</th>
+                <th scope="col">{t.labels.model}</th>
+                <th scope="col">{t.llmGateway.unit}</th>
+                <th scope="col">{t.llmGateway.inputPrice}</th>
+                <th scope="col">{t.llmGateway.outputPrice}</th>
+                <th scope="col">{t.llmGateway.cacheInputPrice}</th>
+                <th scope="col">{t.llmGateway.cacheOutputPrice}</th>
               </tr>
             </thead>
             <tbody>

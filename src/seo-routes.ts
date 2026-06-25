@@ -137,6 +137,8 @@ export async function loadGuideArticles(locale: Locale = defaultLocale) {
 export function getPublicSeoRoutes(guideRoutes: GuideArticle[] = [], locale: Locale = defaultLocale): PublicSeoRoute[] {
   return [
     ...getStaticPublicSeoRoutes(locale),
+    ...buildShopSeoRoutes(undefined, locale),
+    ...buildQuickPlanSearchSeoRoutes(locale),
     ...guideRoutes.map(article => ({
       pathname: routePath(`/guide/${article.slug}`, locale),
       title: article.title,
@@ -167,6 +169,17 @@ export function buildModelLeaderboardSeoRoutes(groups: ModelLeaderboardGroup[], 
       changefreq: 'daily' as const,
     };
   });
+}
+
+export function buildShopSeoRoutes(lastmod?: string, locale: Locale = defaultLocale): PublicSeoRoute[] {
+  const messages = getMessages(locale);
+  return [{
+    pathname: routePath('/shops', locale),
+    title: messages.shops.seoTitle,
+    description: messages.shops.seoDescription,
+    changefreq: 'daily' as const,
+    lastmod,
+  }];
 }
 
 export function buildQuickPlanSearchSeoRoutes(locale: Locale = defaultLocale): PublicSeoRoute[] {
@@ -233,7 +246,6 @@ export function getPublicSeoRoutesWithDynamicPages(params: {
     ...buildModelLeaderboardSeoRoutes(params.modelLeaderboardGroups ?? [], locale),
     ...buildGatewaySeoRoutes(params.gatewaySites ?? [], locale),
     ...buildGatewayModelSeoRoutes(params.gatewayModels ?? [], locale),
-    ...buildQuickPlanSearchSeoRoutes(locale),
   ]);
 }
 

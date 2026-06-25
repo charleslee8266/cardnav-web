@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 CardNav 公开工具集合页，作为多个小工具的统一入口。
 */
+import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
@@ -20,14 +21,7 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="tools" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="page-hero-wrap">
-        <h1 class="page-hero-title">{t.tools.title}</h1>
-        <p class="page-hero-copy">{t.tools.description}</p>
-      </div>
-    </div>
-  </section>
+  <PageHero title={t.tools.title} description={t.tools.description} />
 
   <section class="grid gap-4 md:grid-cols-2">
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">

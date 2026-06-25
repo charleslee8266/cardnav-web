@@ -3,6 +3,7 @@
 文件说明: 渲染 Session 转换工具页，承载本地 JSON 输入、输出格式选择、预览、复制和下载操作。
 参考资料: GPTSession2CPAandSub2API 行为逻辑
 */
+import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
 import highlightScriptUrl from '@highlightjs/cdn-assets/highlight.min.js?url';
@@ -27,19 +28,17 @@ const seo = buildSeoContext({
 <PublicPage activeNav="tools" showSponsors={false} {...seo}>
   <link slot="head" id="hljs-theme" rel="stylesheet" href={highlightCssUrl} data-light={highlightCssUrl} data-dark={highlightDarkCssUrl} />
 
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div class="page-hero-wrap flex-1">
-          <h1 class="page-hero-title mt-0">{t.sessionConverter.title}</h1>
-          <p class="page-hero-copy">{t.sessionConverter.description}</p>
-        </div>
-        <div class="alert border border-error/25 bg-error/5 py-2 px-3 rounded-md text-left text-xs font-semibold text-error lg:max-w-xl shrink-0">
-          <span class="leading-relaxed">{t.sessionConverter.sensitiveNotice}</span>
-        </div>
-      </div>
+  <PageHero
+    title={t.sessionConverter.title}
+    description={t.sessionConverter.description}
+    backHref="/tools"
+    backLabel={t.tools.backToList}
+    compact
+  >
+    <div slot="aside" class="alert border border-error/25 bg-error/5 py-2 px-3 rounded-md text-left text-xs font-semibold text-error lg:max-w-xl shrink-0">
+      <span class="leading-relaxed">{t.sessionConverter.sensitiveNotice}</span>
     </div>
-  </section>
+  </PageHero>
   <section class="session-converter-grid grid gap-4 xl:grid-cols-2">
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" aria-labelledby="session-input-title">
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">

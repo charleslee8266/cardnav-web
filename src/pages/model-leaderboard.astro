@@ -5,16 +5,23 @@
 import ModelLeaderboardContent from '../components/ModelLeaderboardContent.astro';
 import { localizeModelLeaderboardGroups } from '../localized-display.js';
 import PublicPage from '../layouts/PublicPage.astro';
-import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
+import { buildModelLeaderboardGroupsForActiveTask } from '../model-leaderboard.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
-import { formatBeijingRefreshTime, loadModelLeaderboards } from '../store.js';
+import { formatBeijingRefreshTime, loadModelLeaderboardRowsForTask, loadModelLeaderboardTaskSlugs } from '../store.js';
 
-const rows = await loadModelLeaderboards();
-const groups = localizeModelLeaderboardGroups(buildModelLeaderboardGroups(rows), Astro.locals.messages);
-const currentGroup = groups.find(group => group.taskSlug === 'coding') || groups[0] || null;
-const latestFetchedAt = rows.reduce<string | null>((latest, row) => {
+const activeTaskSlug = 'coding';
+const [taskSlugs, activeRows] = await Promise.all([
+  loadModelLeaderboardTaskSlugs(),
+  loadModelLeaderboardRowsForTask(activeTaskSlug),
+]);
+const groups = localizeModelLeaderboardGroups(
+  buildModelLeaderboardGroupsForActiveTask(taskSlugs, activeRows, activeTaskSlug),
+  Astro.locals.messages,
+);
+const currentGroup = groups.find(group => group.taskSlug === activeTaskSlug) || groups[0] || null;
+const latestFetchedAt = activeRows.reduce<string | null>((latest, row) => {
   if (!latest) return row.fetchedAt;
   return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
 }, null);

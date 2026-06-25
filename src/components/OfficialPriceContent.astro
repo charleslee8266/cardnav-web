@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染官方订阅比价页的服务端 HTML 内容，包括套餐导航和当前套餐价格表。
 */
+import PageHero from './PageHero.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
 
 type Props = {
@@ -34,22 +35,17 @@ function countryFlag(countryCode: string): CountryFlag {
 }
 ---
 
-<section class="card bg-base-100 border border-base-300 shadow-sm">
-  <div class="card-body p-5">
-    <div class="page-hero-wrap">
-      <h1 class="page-hero-title">
-        {currentGroup ? `${currentGroup.displayName} ${t.officialPrice.titleSuffix}` : t.officialPrice.title}
-      </h1>
-      <p class="page-hero-copy">
-        {t.officialPrice.description}
-      </p>
-      <p class="mt-2 text-xs leading-5 text-base-content/60">
-        {t.officialPrice.note}
-      </p>
-    </div>
-    {updateTime && <p class="mt-1.5 text-xs text-base-content/60">{t.labels.latestRefreshBeijing}：{updateTime}</p>}
-  </div>
-</section>
+<PageHero
+  title={currentGroup ? `${currentGroup.displayName} ${t.officialPrice.titleSuffix}` : t.officialPrice.title}
+  description={t.officialPrice.description}
+>
+  <p slot="note" class="page-hero-note">{t.officialPrice.note}</p>
+  {updateTime && (
+    <p slot="meta" class="page-hero-meta">
+      <span>{t.labels.latestRefreshBeijing}：{updateTime}</span>
+    </p>
+  )}
+</PageHero>
 
 {groups.length > 0 && (
   <nav class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label={t.officialPrice.navLabel}>

@@ -49,3 +49,25 @@ export function buildModelLeaderboardGroups(rows: PublicModelLeaderboardRow[]): 
       return a.taskSlug.localeCompare(b.taskSlug, 'zh-Hans-CN', { numeric: true });
     });
 }
+
+export function buildModelLeaderboardGroupsForActiveTask(
+  taskSlugs: string[],
+  activeRows: PublicModelLeaderboardRow[],
+  activeTaskSlug: string,
+): ModelLeaderboardGroup[] {
+  const normalizedActiveTask = activeTaskSlug.trim().toLowerCase();
+  return taskSlugs
+    .map(taskSlug => ({
+      taskSlug,
+      displayName: taskSlug,
+      pathname: modelLeaderboardPathname(taskSlug),
+      rows: taskSlug === normalizedActiveTask
+        ? activeRows.slice().sort((a, b) => a.rank - b.rank)
+        : [],
+    }))
+    .sort((a, b) => {
+      const orderDiff = orderedIndex(taskOrder, a.taskSlug) - orderedIndex(taskOrder, b.taskSlug);
+      if (orderDiff !== 0) return orderDiff;
+      return a.taskSlug.localeCompare(b.taskSlug, 'zh-Hans-CN', { numeric: true });
+    });
+}

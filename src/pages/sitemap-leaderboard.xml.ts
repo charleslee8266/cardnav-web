@@ -2,6 +2,7 @@
  * 文件说明: 运行时读取模型排行榜数据，生成排行榜详情页 sitemap。
  */
 import type { APIRoute } from 'astro';
+import { publicSitemapCacheControl } from '../public-data-cache.js';
 import { supportedLocales } from '../i18n/config.js';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildModelLeaderboardSeoRoutes, buildSitemapXml, normalizePublicSeoRoutes } from '../seo-routes.js';
@@ -16,7 +17,7 @@ export const GET: APIRoute = async () => {
   return new Response(buildSitemapXml(publicSiteUrl, routes), {
     headers: {
       'content-type': 'application/xml; charset=utf-8',
-      'cache-control': 'public, max-age=3600',
+      'cache-control': publicSitemapCacheControl,
     },
   });
 };

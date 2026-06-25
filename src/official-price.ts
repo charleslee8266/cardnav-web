@@ -1,7 +1,7 @@
 /**
  * 文件说明: 根据数据库里的官方订阅价格元数据构建公开页分组和 URL 解析。
  */
-import type { PublicOfficialPriceRow } from './store.js';
+import type { PublicOfficialPriceCatalogRow, PublicOfficialPriceRow } from './store.js';
 
 export type OfficialPriceGroup<Row extends PublicOfficialPriceRow = PublicOfficialPriceRow> = {
   key: string;
@@ -42,6 +42,25 @@ export function sortOfficialPriceGroups(groups: OfficialPriceGroup[]) {
   });
 }
 
+export function matchOfficialPriceCatalogEntries(
+  catalog: PublicOfficialPriceCatalogRow[],
+  preferredPlans: { app: string; plan: string }[],
+) {
+  const pickedKeys = new Set<string>();
+  return preferredPlans
+    .map(({ app, plan }) => catalog.find(entry => {
+      const haystack = `${entry.appSlug} ${entry.planSlug} ${entry.appName} ${entry.planName} ${entry.displayName} ${entry.urlSlug}`.toLowerCase();
+      return haystack.includes(app) && haystack.includes(plan);
+    }))
+    .filter((entry): entry is PublicOfficialPriceCatalogRow => Boolean(entry))
+    .filter(entry => {
+      const key = `${entry.appSlug}:${entry.planSlug}`;
+      if (pickedKeys.has(key)) return false;
+      pickedKeys.add(key);
+      return true;
+    });
+}
+
 export function buildOfficialPriceGroups(rawPrices: PublicOfficialPriceRow[]): OfficialPriceGroup[] {
   const groupMap = new Map<string, OfficialPriceGroup>();
 
@@ -79,4 +98,31 @@ export function buildOfficialPriceGroups(rawPrices: PublicOfficialPriceRow[]): O
 
 export function getDefaultOfficialPriceGroup<Group extends OfficialPriceGroup>(groups: Group[]) {
   return groups.find(group => group.isDefault) || groups[0] || null;
+}
+
+type OfficialPriceCatalogEntry = {
+  appSlug: string;
+  planSlug: string;
+  urlSlug: string;
+  appName: string;
+  planName: string;
+  displayName: string;
+  isDefault: boolean;
+  displayOrder: number;
+};
+
+export function buildOfficialPriceGroupsForActiveSlug(
+  catalog: OfficialPriceCatalogEntry[],
+  activePrices: PublicOfficialPriceRow[],
+  activeUrlSlug: string,
+): OfficialPriceGroup[] {
+  const normalizedActiveSlug = activeUrlSlug.trim().toLowerCase();
+  return sortOfficialPriceGroups(catalog.map(entry => ({
+    key: `${entry.appSlug}:${entry.planSlug}`,
+    ...entry,
+    pathname: officialPricePathname(entry.urlSlug),
+    prices: entry.urlSlug.trim().toLowerCase() === normalizedActiveSlug
+      ? activePrices.slice().sort((a, b) => a.cnyPrice - b.cnyPrice)
+      : [],
+  })));
 }

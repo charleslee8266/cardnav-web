@@ -3,6 +3,7 @@
  */
 import type { APIRoute } from 'astro';
 import { supportedLocales } from '../i18n/config.js';
+import { publicSitemapCacheControl } from '../public-data-cache.js';
 import { buildLlmsTxt, getPublicSeoRoutes, loadGuideArticles, normalizePublicSeoRoutes } from '../seo-routes.js';
 import { publicSiteUrl } from '../site.js';
 
@@ -15,7 +16,7 @@ export const GET: APIRoute = async () => {
   return new Response(buildLlmsTxt(publicSiteUrl, routes), {
     headers: {
       'content-type': 'text/plain; charset=utf-8',
-      'cache-control': 'public, max-age=3600',
+      'cache-control': publicSitemapCacheControl,
     },
   });
 };

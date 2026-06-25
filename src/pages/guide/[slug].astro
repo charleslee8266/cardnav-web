@@ -31,6 +31,10 @@ const seo = buildSeoContext({
   description: article.description,
   imagePath: '/og-cardnav.png',
   type: 'article',
+  breadcrumbs: [
+    { name: Astro.locals.messages.nav.guide, pathname: '/guide' },
+    { name: article.title, pathname: `/guide/${article.slug}` },
+  ],
   locale: Astro.locals.locale,
 });
 ---

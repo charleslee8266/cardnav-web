@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染模型排行榜页的服务端 HTML 内容，包括任务导航和当前任务榜单。
 */
+import PageHero from './PageHero.astro';
 import type { LocalizedModelLeaderboardGroup } from '../localized-display.js';
 
 type Props = {
@@ -21,21 +22,14 @@ const leaderboardApiUrl = currentGroup
   : '';
 ---
 
-<section class="card bg-base-100 border border-base-300 shadow-sm">
-  <div class="card-body p-5">
-    <div class="page-hero-wrap">
-      <h1 class="page-hero-title">
-        {currentGroup ? `${currentGroup.displayName}${t.leaderboard.titleSuffix}` : t.leaderboard.title}
-      </h1>
-      <p class="page-hero-copy">
-        {t.leaderboard.description}
-      </p>
-    </div>
-    <div class="flex flex-wrap items-center gap-3 text-xs text-base-content/60">
-      <span>{t.labels.latestRefreshBeijing}：{updateTime}</span>
-    </div>
-  </div>
-</section>
+<PageHero
+  title={currentGroup ? `${currentGroup.displayName}${t.leaderboard.titleSuffix}` : t.leaderboard.title}
+  description={t.leaderboard.description}
+>
+  <p slot="meta" class="page-hero-meta">
+    <span>{t.labels.latestRefreshBeijing}：{updateTime}</span>
+  </p>
+</PageHero>
 
 {groups.length > 0 && (
   <nav class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label={t.leaderboard.taskNavLabel}>

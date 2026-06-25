@@ -2,19 +2,21 @@
 /*
 文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
 */
+import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildSeoContext } from '../seo.js';
 import { quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
+import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
 import shopsScriptUrl from '../scripts/index.js?url';
-import { loadDashboardData, loadPopularSearchTerms, type PublicProductRow } from '../store.js';
+import { loadShopProductsData, loadPopularSearchTerms } from '../store.js';
 
 type Props = {
   seoSearchTerm?: QuickPlanSearchTerm | null;
 };
 
-const initialProductLimitValue = 10;
+const initialProductLimitValue = 40;
 const quickPlanVisibleLimit = 12;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -31,15 +33,56 @@ const pageDescription = seoSearchTerm
 const heroTitle = seoSearchTerm ? pageTitle : t.shops.title;
 const heroDescription = seoSearchTerm ? pageDescription : t.shops.description;
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
-const data = await loadDashboardData({ productLimit: initialProductLimitValue });
+const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
+const data = await loadShopProductsData({ productLimit: initialProductLimitValue });
 const popularSearchTerms = (await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms])).terms;
+const renderedProducts = data.products.map(product => ({
+  categoryName: product.categoryName,
+  name: product.name,
+  priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
+  priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
+  productUrl: product.productUrl,
+  stock: product.stock,
+  inStock: product.inStock,
+  refreshedAt: product.refreshedAt || null,
+  refreshTime: product.refreshTime || '',
+  clickCount: product.clickCount || 0,
+  siteId: product.siteId || '',
+  siteName: product.siteName || '',
+  siteUrl: product.siteUrl || '',
+  siteProductRefreshSuccessAt: product.siteProductRefreshSuccessAt || null,
+  siteProductRefreshSuccessTime: product.siteProductRefreshSuccessTime || '',
+  score: product.score || 0,
+}));
+const shopBreadcrumbs = seoSearchTerm
+  ? [
+      { name: t.shops.title, pathname: '/shops' },
+      { name: seoSearchTerm.label, pathname: seoPathname },
+    ]
+  : [{ name: t.shops.title, pathname: '/shops' }];
+const shopListItems = renderedProducts.slice(0, 20).map((product, index) => ({
+  name: `${product.categoryName} - ${product.name}`,
+  url: product.productUrl,
+  position: index + 1,
+}));
+const shopProductSchemaItems = renderedProducts.slice(0, 20).map(product => ({
+  name: `${product.categoryName} - ${product.name}`,
+  url: product.productUrl,
+  price: typeof product.priceNumber === 'number' && Number.isFinite(product.priceNumber) ? product.priceNumber : undefined,
+  priceCurrency: product.priceUnit === '$' ? 'USD' : 'CNY',
+  availability: product.inStock ? 'InStock' as const : 'OutOfStock' as const,
+}));
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: seoPathname,
   title: pageTitle,
   description: pageDescription,
   imagePath: '/og-cardnav.png',
-  type: 'website',
+  type: 'webpage',
+  noindex: hasNonCanonicalQuery,
+  breadcrumbs: shopBreadcrumbs,
+  listItems: shopListItems,
+  products: shopProductSchemaItems,
   locale: Astro.locals.locale,
 });
 const normalSeo = buildSeoContext({
@@ -60,27 +103,18 @@ const renderedSites = data.sites.map(site => ({
   lastProductRefreshSuccessTime: site.lastProductRefreshSuccessTime || '',
   score: site.score || 0,
 }));
-const renderedProducts = data.products.map(product => ({
-  categoryName: product.categoryName,
-  name: product.name,
-  priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
-  priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
-  productUrl: product.productUrl,
-  stock: product.stock,
-  inStock: product.inStock,
-  refreshedAt: product.refreshedAt || null,
-  refreshTime: product.refreshTime || '',
-  clickCount: product.clickCount || 0,
-  siteId: product.siteId || '',
-  siteName: product.siteName || '',
-  siteUrl: product.siteUrl || '',
-  siteProductRefreshSuccessAt: product.siteProductRefreshSuccessAt || null,
-  siteProductRefreshSuccessTime: product.siteProductRefreshSuccessTime || '',
-  score: product.score || 0,
-}));
 const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
 const shopsScriptMessages = {
-  ...t.shops.script,
+  loading: t.shops.script.loading,
+  displaySummary: t.shops.script.displaySummary,
+  stockPrefix: t.shops.script.stockPrefix,
+  latestRefreshPrefix: t.shops.script.latestRefreshPrefix,
+  noData: t.shops.script.noData,
+  ascending: t.shops.script.ascending,
+  descending: t.shops.script.descending,
+  currentSort: t.shops.script.currentSort,
+  clickSort: t.shops.script.clickSort,
+  merchantViewScriptUrl: shopsMerchantViewScriptUrl,
   productFavorite: t.shops.productFavorite,
   merchantFavorite: t.shops.merchantFavorite,
   cancelProductFavorite: t.shops.cancelProductFavorite,
@@ -91,6 +125,15 @@ const shopsScriptMessages = {
   defaultHeroTitle: t.shops.title,
   defaultHeroDescription: t.shops.description,
   seoSearchQuery: seoSearchTerm?.query ?? '',
+  tableLabels: {
+    sequence: t.labels.sequence,
+    product: t.labels.product,
+    price: t.labels.price,
+    stock: t.labels.stock,
+    category: t.labels.category,
+    merchant: t.labels.merchant,
+    latestRefresh: t.labels.latestRefresh,
+  },
 };
 const flatSortColumns = [
   { key: 'productName', type: 'text', label: t.labels.product },
@@ -100,7 +143,7 @@ const flatSortColumns = [
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
 ];
-const dashboardJsonValue = JSON.stringify({
+const shopProductsJsonValue = JSON.stringify({
   sites: renderedSites,
   products: renderedProducts,
   totalSiteCount: data.totalSiteCount,
@@ -115,34 +158,27 @@ const dashboardJsonValue = JSON.stringify({
   '\u2028': '\\u2028',
   '\u2029': '\\u2029',
 })[character] || character);
-
-function productStockLabel(product: Pick<PublicProductRow, 'stock' | 'inStock'>) {
-  return typeof product.stock === 'number' && product.stock > 0 ? product.stock : (product.inStock ? t.labels.inStock : t.labels.soldOut);
-}
-
-function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'priceUnit'>) {
-  if (typeof product.priceNumber === 'number' && typeof product.priceUnit === 'string' && product.priceUnit) {
-    return `${product.priceUnit}${String(product.priceNumber)}`;
-  }
-  return '';
-}
 ---
 
 <PublicPage activeNav="shops" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="page-hero-shell">
-        <div class="page-hero-main">
-          <div class="page-hero-wrap">
-            <h1 id="shopPageHeroTitle" class="page-hero-title">{heroTitle}</h1>
-            <p id="shopPageHeroDescription" class="page-hero-copy">{heroDescription}</p>
-            <p class="page-hero-note">{t.shops.note}</p>
-          </div>
-        </div>
-        <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-md shrink-0" data-umami-event="shop-submit-open-click" data-umami-event-name={t.shops.submitMerchant}>{t.shops.submitMerchant}</button>
-      </div>
-    </div>
-  </section>
+  <PageHero
+    title={heroTitle}
+    description={heroDescription}
+    titleId="shopPageHeroTitle"
+    descriptionId="shopPageHeroDescription"
+  >
+    <p slot="note" class="page-hero-note">{t.shops.note}</p>
+    <button
+      slot="aside"
+      id="openShopSubmitModal"
+      type="button"
+      class="btn btn-primary btn-md shrink-0"
+      data-umami-event="shop-submit-open-click"
+      data-umami-event-name={t.shops.submitMerchant}
+    >
+      {t.shops.submitMerchant}
+    </button>
+  </PageHero>
 
   <section>
     <a href={linkTo('/guide/choose-reliable-merchant')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/shops')} data-umami-event-target-page={linkTo('/guide/choose-reliable-merchant')} data-umami-event-url={linkTo('/guide/choose-reliable-merchant')} class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
@@ -165,43 +201,39 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
         <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
         <button id="advancedSearchHelp" type="button" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-xs font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={t.shops.advancedSearchLabel} data-tip={t.shops.advancedSearchTip}>i</button>
       </div>
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div class="flex flex-wrap items-center gap-4">
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>{t.shops.matchCategory}</span>
-          </label>
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>{t.shops.matchMerchant}</span>
-          </label>
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>{t.shops.showSoldOut}</span>
-          </label>
-          <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-            <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-            <span>{t.shops.groupByMerchant}</span>
-          </label>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+          <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+          <span>{t.shops.matchCategory}</span>
+        </label>
+        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+          <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+          <span>{t.shops.matchMerchant}</span>
+        </label>
+        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+          <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+          <span>{t.shops.showSoldOut}</span>
+        </label>
+        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
+          <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+          <span>{t.shops.groupByMerchant}</span>
+        </label>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span class="text-sm text-base-content/80">{t.labels.price}</span>
+          <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" aria-describedby="priceFilterHint" />
+          <span class="text-xs text-base-content/40">~</span>
+          <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" aria-describedby="priceFilterHint" />
+          <span id="priceFilterHint" class="w-full text-xs text-base-content/50 sm:w-auto">{t.shops.priceFilterHint}</span>
         </div>
-
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-base-content/80">{t.labels.price}</span>
-            <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" />
-            <span class="text-xs text-base-content/40">~</span>
-            <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-base-content/80">{t.shops.sort}</span>
-            <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
-              <option value="default" selected={!initialSort || initialSort === 'default'}>{t.shops.defaultSort}</option>
-              <option value="price-asc" selected={initialSort === 'price-asc'}>{t.shops.priceAsc}</option>
-              <option value="stock-desc" selected={initialSort === 'stock-desc'}>{t.shops.stockDesc}</option>
-              <option value="refresh-desc" selected={initialSort === 'refresh-desc'}>{t.shops.refreshDesc}</option>
-              <option value="custom" hidden>{t.shops.headerSort}</option>
-            </select>
-          </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-base-content/80">{t.shops.sort}</span>
+          <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
+            <option value="default" selected={!initialSort || initialSort === 'default'}>{t.shops.defaultSort}</option>
+            <option value="price-asc" selected={initialSort === 'price-asc'}>{t.shops.priceAsc}</option>
+            <option value="stock-desc" selected={initialSort === 'stock-desc'}>{t.shops.stockDesc}</option>
+            <option value="refresh-desc" selected={initialSort === 'refresh-desc'}>{t.shops.refreshDesc}</option>
+            <option value="custom" hidden>{t.shops.headerSort}</option>
+          </select>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -225,8 +257,8 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
     </form>
   </section>
 
-  <section id="emptyState" class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center hidden">
-    <span>{t.shops.emptyState}</span>
+  <section id="emptyState" class="shops-empty-state hidden" aria-live="polite">
+    <p>{t.shops.emptyState}</p>
   </section>
 
   <section id="flatProductView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
@@ -261,48 +293,7 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
           </tr>
         </thead>
 
-        <tbody id="flatProductRows">
-          {renderedProducts.map(item => {
-            const productTitle = `${item.categoryName}-${item.name}`;
-            const productFavoriteKey = `${item.siteName}#${productTitle}`;
-            const siteFavoriteKey = item.siteId || item.siteName;
-            return (
-              <tr class="flat-product-row">
-                <th scope="row" class="flat-row-index"></th>
-                <td class="flat-product-cell">
-                  <div class="cell-inline">
-                    <button type="button" class="favorite-toggle" data-favorite-kind="product" data-favorite-key={productFavoriteKey} aria-label={`${t.shops.productFavorite} ${productTitle}`} aria-pressed="false" title={t.shops.productFavorite}>
-                      <span aria-hidden="true">♡</span>
-                    </button>
-                    {item.productUrl ? (
-                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" class="product-link" data-umami-event="product-click" data-umami-event-url={item.productUrl} data-umami-event-name={productTitle} data-product-click-site-id={item.siteId} data-product-click-url={item.productUrl} data-product-click-category={item.categoryName} data-product-click-name={item.name}>{item.name}</a>
-                    ) : (
-                      <span class="product-text">{item.name}</span>
-                    )}
-                  </div>
-                </td>
-                <td class="flat-price-cell">{renderProductPrice(item)}</td>
-                <td class="flat-status-cell">
-                  <span class={item.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out'}>{productStockLabel(item)}</span>
-                </td>
-                <td class="flat-category-cell">{item.categoryName}</td>
-                <td class="flat-merchant-cell">
-                  <div class="cell-inline">
-                    <button type="button" class="favorite-toggle" data-favorite-kind="site" data-favorite-key={siteFavoriteKey} aria-label={`${t.shops.merchantFavorite} ${item.siteName}`} aria-pressed="false" title={t.shops.merchantFavorite}>
-                      <span aria-hidden="true">♡</span>
-                    </button>
-                    {item.siteUrl ? (
-                      <a href={item.siteUrl} target="_blank" rel="noopener noreferrer" class="merchant-link merchant-text" data-umami-event="merchant-click" data-umami-event-url={item.siteUrl} data-umami-event-name={item.siteName}>{item.siteName}</a>
-                    ) : (
-                      <span class="merchant-text">{item.siteName}</span>
-                    )}
-                  </div>
-                </td>
-                <td class="flat-refresh-cell">{item.refreshTime}</td>
-              </tr>
-            );
-          })}
-        </tbody>
+        <tbody id="flatProductRows"></tbody>
       </table>
     </div>
   </section>
@@ -326,10 +317,13 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
       <section class="card bg-base-100 shadow-none">
         <div class="card-body p-5">
           <div class="flex items-start justify-between gap-4">
-            <div class="page-hero-wrap">
-              <h2 class="page-hero-title mt-0">{t.shops.submitMerchant}</h2>
-              <p class="page-hero-copy">{t.shops.submitDescription}</p>
-            </div>
+            <PageHero
+              title={t.shops.submitMerchant}
+              description={t.shops.submitDescription}
+              heading="h2"
+              compact
+              wrapCard={false}
+            />
             <form method="dialog">
               <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.shops.closeSubmitDialog}>✕</button>
             </form>
@@ -369,8 +363,8 @@ function renderProductPrice(product: Pick<PublicProductRow, 'priceNumber' | 'pri
     </form>
   </dialog>
 
-  <script is:inline type="application/json" id="dashboard-data" set:html={dashboardJsonValue}></script>
+  <script is:inline type="application/json" id="shop-products-data" set:html={shopProductsJsonValue}></script>
   <script is:inline type="application/json" id="shops-messages" set:html={JSON.stringify(shopsScriptMessages)}></script>
-  <script is:inline slot="scripts" defer src={shopsScriptUrl}></script>
+  <script is:inline slot="scripts" type="module" src={shopsScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>

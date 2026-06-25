@@ -2,6 +2,7 @@
  * 文件说明: 验证 cardnav-web 公开 SEO 入口、可索引页面和 crawler 策略。
  */
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import sharp from 'sharp';
@@ -20,7 +21,9 @@ import {
   normalizePublicSeoRoutes,
   trainingCrawlerUserAgents,
 } from '../src/seo-routes.js';
+import { matchOfficialPriceCatalogEntries } from '../src/official-price.js';
 import { buildSeoContext } from '../src/seo.js';
+import { indexNowKey } from '../src/site.js';
 import { localizePath, switchLocalePath } from '../src/i18n/paths.js';
 import { quickPlanSearchPath, quickPlanSearchSeoPath, quickPlanSearchTerms } from '../src/shop-plan-search.js';
 
@@ -53,6 +56,8 @@ test('cardnav-web sitemap, text sitemap and llms include every public SEO route'
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/ru\/privacy<\/loc>/);
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/llm-gateway<\/loc>/);
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/en\/llm-gateway<\/loc>/);
+  assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/shops<\/loc>/);
+  assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/en\/shops<\/loc>/);
   assert.doesNotMatch(sitemapXml, /relay/);
   assert.doesNotMatch(sitemapTxt, /relay/);
   assert.doesNotMatch(llmsTxt, /relay/);
@@ -72,6 +77,7 @@ test('cardnav-web sitemap index points crawlers to split sitemap files', () => {
     { pathname: '/sitemap-leaderboard.xml' },
     { pathname: '/sitemap-gateway-sites.xml' },
     { pathname: '/sitemap-gateway-models.xml' },
+    { pathname: '/sitemap-shops.xml' },
   ]);
 
   assert.match(sitemapIndex, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
@@ -81,6 +87,7 @@ test('cardnav-web sitemap index points crawlers to split sitemap files', () => {
   assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-leaderboard\.xml<\/loc>/);
   assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-gateway-sites\.xml<\/loc>/);
   assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-gateway-models\.xml<\/loc>/);
+  assert.match(sitemapIndex, /<loc>https:\/\/cardnav\.xyz\/sitemap-shops\.xml<\/loc>/);
 });
 
 test('gateway model sitemap includes only higher-value model pages', () => {
@@ -204,12 +211,106 @@ test('cardnav-web robots allows indexing but blocks known model-training crawler
   }
 });
 
-test('cardnav-web serves its own Open Graph image asset', async () => {
-  const metadata = await sharp(path.join(publicWebRoot, 'public/og-cardnav.png')).metadata();
+test('cardnav-web serves its own Open Graph image assets', async () => {
+  const pngMetadata = await sharp(path.join(publicWebRoot, 'public/og-cardnav.png')).metadata();
+  const webpMetadata = await sharp(path.join(publicWebRoot, 'public/og-cardnav.webp')).metadata();
 
-  assert.equal(metadata.format, 'png');
-  assert.equal(metadata.width, 1200);
-  assert.equal(metadata.height, 630);
+  assert.equal(pngMetadata.format, 'png');
+  assert.equal(pngMetadata.width, 1200);
+  assert.equal(pngMetadata.height, 630);
+  assert.equal(webpMetadata.format, 'webp');
+  assert.equal(webpMetadata.width, 1200);
+  assert.equal(webpMetadata.height, 630);
+});
+
+test('seo context prefers webp Open Graph image for default asset', () => {
+  const seo = buildSeoContext({
+    baseUrl: 'https://cardnav.xyz',
+    pathname: '/shops',
+    title: '卡网商品',
+    description: '商品页。',
+    imagePath: '/og-cardnav.png',
+    type: 'webpage',
+  });
+
+  assert.match(seo.ogImageUrl, /\/og-cardnav\.webp$/);
+});
+
+test('seo context includes Organization structured data', () => {
+  const seo = buildSeoContext({
+    baseUrl: 'https://cardnav.xyz',
+    pathname: '/',
+    title: '卡网大全',
+    description: '首页。',
+    imagePath: '/og-cardnav.png',
+    type: 'website',
+  });
+
+  const graph = (seo.jsonLd as { '@graph': Array<Record<string, unknown>> })['@graph'];
+  const organizationNode = graph.find(node => node['@type'] === 'Organization');
+  assert.ok(organizationNode);
+  assert.equal(organizationNode.name, '卡网大全');
+  assert.match(String(organizationNode.logo), /\/favicon\.webp$/);
+});
+
+test('IndexNow key file is available for search engine submission', () => {
+  const keyFile = path.join(publicWebRoot, 'public', `${indexNowKey}.txt`);
+  const content = fs.readFileSync(keyFile, 'utf8').trim();
+  assert.equal(content, indexNowKey);
+});
+
+test('homepage official price matcher keeps preferred plan order', () => {
+  const catalog = [
+    {
+      appSlug: 'claude',
+      planSlug: 'pro',
+      urlSlug: 'claude-pro',
+      appName: 'Claude',
+      planName: 'Pro',
+      displayName: 'Claude Pro',
+      isDefault: false,
+      displayOrder: 20,
+    },
+    {
+      appSlug: 'chatgpt',
+      planSlug: 'plus',
+      urlSlug: 'chatgpt-plus',
+      appName: 'ChatGPT',
+      planName: 'Plus',
+      displayName: 'ChatGPT Plus',
+      isDefault: true,
+      displayOrder: 10,
+    },
+  ];
+  const matched = matchOfficialPriceCatalogEntries(catalog, [
+    { app: 'chatgpt', plan: 'plus' },
+    { app: 'claude', plan: 'pro' },
+  ]);
+  assert.deepEqual(matched.map(entry => entry.urlSlug), ['chatgpt-plus', 'claude-pro']);
+});
+
+test('shops product schema emits Product nodes with Offer data', () => {
+  const seo = buildSeoContext({
+    baseUrl: 'https://cardnav.xyz',
+    pathname: '/shops',
+    title: '卡网商品',
+    description: '商品页。',
+    imagePath: '/og-cardnav.png',
+    type: 'webpage',
+    products: [{
+      name: 'GPT Plus',
+      url: 'https://example.com/product',
+      price: 18,
+      priceCurrency: 'CNY',
+      availability: 'InStock',
+    }],
+  });
+
+  const graph = (seo.jsonLd as { '@graph': Array<Record<string, unknown>> })['@graph'];
+  const productNode = graph.find(node => node['@type'] === 'Product');
+  assert.ok(productNode);
+  assert.equal((productNode.offers as { '@type': string })['@type'], 'Offer');
+  assert.equal((productNode.offers as { price: string }).price, '18');
 });
 
 test('non-database public SEO routes build canonical metadata', () => {
@@ -225,7 +326,7 @@ test('non-database public SEO routes build canonical metadata', () => {
     assert.equal(seo.canonicalUrl, new URL(route.pathname, 'https://cardnav.xyz/').toString(), route.pathname);
     assert.equal(seo.robots, 'index,follow', route.pathname);
     assert.equal(seo.description, route.description, route.pathname);
-    assert.match(seo.ogImageUrl, /\/og-cardnav\.png$/, route.pathname);
+    assert.match(seo.ogImageUrl, /\/og-cardnav\.webp$/, route.pathname);
   }
 
   const englishSeo = buildSeoContext({
@@ -253,6 +354,63 @@ test('noindex pages keep links followable', () => {
   });
 
   assert.equal(seo.robots, 'noindex,follow');
+});
+
+test('homepage website schema includes SearchAction', () => {
+  const seo = buildSeoContext({
+    baseUrl: 'https://cardnav.xyz',
+    pathname: '/',
+    title: '卡网大全',
+    description: '导航站点。',
+    imagePath: '/og-cardnav.png',
+    type: 'website',
+    enableSiteSearch: true,
+  });
+
+  const graph = (seo.jsonLd as { '@graph': Array<Record<string, unknown>> })['@graph'];
+  const websiteNode = graph.find(node => node['@type'] === 'WebSite');
+  assert.ok(websiteNode);
+  assert.equal((websiteNode.potentialAction as { '@type': string })['@type'], 'SearchAction');
+  assert.match(String((websiteNode.potentialAction as { target: { urlTemplate: string } }).target.urlTemplate), /\/shops\?q=\{search_term_string\}$/);
+});
+
+test('detail pages can include breadcrumb structured data', () => {
+  const seo = buildSeoContext({
+    baseUrl: 'https://cardnav.xyz',
+    pathname: '/shops/gpt-plus',
+    title: 'GPT Plus 相关商品搜索结果',
+    description: '相关搜索结果。',
+    imagePath: '/og-cardnav.png',
+    type: 'webpage',
+    breadcrumbs: [
+      { name: '卡网商品', pathname: '/shops' },
+      { name: 'GPT Plus', pathname: '/shops/gpt-plus' },
+    ],
+  });
+
+  const graph = (seo.jsonLd as { '@graph': Array<Record<string, unknown>> })['@graph'];
+  const breadcrumbNode = graph.find(node => node['@type'] === 'BreadcrumbList');
+  assert.ok(breadcrumbNode);
+  assert.equal((breadcrumbNode.itemListElement as Array<{ position: number }>)[1].position, 2);
+});
+
+test('shops query pages should use noindex while keeping canonical /shops', () => {
+  const seo = buildSeoContext({
+    baseUrl: 'https://cardnav.xyz',
+    pathname: '/shops',
+    title: '卡网商品',
+    description: '商品搜索结果。',
+    imagePath: '/og-cardnav.png',
+    type: 'website',
+    noindex: true,
+  });
+
+  assert.equal(seo.robots, 'noindex,follow');
+  assert.equal(seo.canonicalUrl, 'https://cardnav.xyz/shops');
+  assert.equal(seo.ogLocale, 'zh_CN');
+  assert.equal(seo.ogImageWidth, 1200);
+  assert.equal(seo.ogImageHeight, 630);
+  assert.equal(seo.ogSiteName, '卡网大全');
 });
 
 test('quick plan search SEO metadata uses slug canonical and alternates', () => {

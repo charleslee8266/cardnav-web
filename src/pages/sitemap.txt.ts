@@ -3,6 +3,7 @@
  */
 import type { APIRoute } from 'astro';
 import { supportedLocales } from '../i18n/config.js';
+import { publicSitemapCacheControl } from '../public-data-cache.js';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildOfficialPriceGroups } from '../official-price.js';
 import {
@@ -10,7 +11,6 @@ import {
   buildGatewaySeoRoutes,
   buildModelLeaderboardSeoRoutes,
   buildOfficialPriceSeoRoutes,
-  buildQuickPlanSearchSeoRoutes,
   buildSitemapTxt,
   getPublicSeoRoutes,
   loadGuideArticles,
@@ -32,7 +32,6 @@ export const GET: APIRoute = async () => {
   const guideRoutesByLocale = new Map(guideRouteEntries);
   const routes = normalizePublicSeoRoutes(supportedLocales.flatMap(locale => [
     ...getPublicSeoRoutes(guideRoutesByLocale.get(locale) ?? [], locale),
-    ...buildQuickPlanSearchSeoRoutes(locale),
     ...buildOfficialPriceSeoRoutes(officialPriceGroups, locale),
     ...buildModelLeaderboardSeoRoutes(modelLeaderboardGroups, locale),
     ...buildGatewaySeoRoutes(gatewayData.sites, locale),
@@ -41,7 +40,7 @@ export const GET: APIRoute = async () => {
   return new Response(buildSitemapTxt(publicSiteUrl, routes), {
     headers: {
       'content-type': 'text/plain; charset=utf-8',
-      'cache-control': 'public, max-age=3600',
+      'cache-control': publicSitemapCacheControl,
     },
   });
 };

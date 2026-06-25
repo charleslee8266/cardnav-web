@@ -269,6 +269,7 @@ export const ruMessages: Messages = {
     searchPlaceholder: 'Ищите товары. Несколько ключевых слов разделяйте пробелами',
     advancedSearchLabel: 'Подсказка по расширенному поиску',
     advancedSearchTip: 'Расширенный поиск: пробел означает все слова, | — любое слово, - исключает слова. Пример: A B|C -D|E',
+    priceFilterHint: 'Фильтр по эквиваленту в CNY; цены в USD конвертируются автоматически',
     matchCategory: 'По категории',
     matchMerchant: 'По продавцу',
     showSoldOut: 'Показывать товары без наличия',
@@ -427,6 +428,7 @@ export const ruMessages: Messages = {
     seoDescription: 'Проверка чистоты IP, инструменты для AI-аккаунтов и подписок, конвертация ChatGPT Session и локальная обработка перед использованием.',
     title: 'Инструменты для AI-подписок',
     description: 'Частые инструменты для AI-подписок и аккаунтов: сейчас доступны сетевые проверки и конвертация форматов аккаунтов.',
+    backToList: 'К списку инструментов',
     sessionConverter: {
       title: 'Конвертер ChatGPT Session',
       tabLabel: 'Session',

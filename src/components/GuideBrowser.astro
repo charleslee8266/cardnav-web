@@ -115,6 +115,14 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
     )}
 
     <Sponsors />
+
+    <nav class="guide-mini-footer flex flex-wrap items-center justify-center gap-2 border-t border-base-300 pt-4 text-xs text-base-content/60" aria-label={t.nav.about}>
+      <a href={linkTo('/about')} class="link link-hover font-semibold text-base-content/75">{t.nav.about}</a>
+      <span aria-hidden="true">|</span>
+      <a href={linkTo('/disclaimer')} class="link link-hover font-semibold text-base-content/75">{t.nav.disclaimer}</a>
+      <span aria-hidden="true">|</span>
+      <a href={linkTo('/privacy')} class="link link-hover font-semibold text-base-content/75">{t.nav.privacy}</a>
+    </nav>
   </section>
 </section>
 <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>

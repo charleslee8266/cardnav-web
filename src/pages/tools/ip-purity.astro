@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 IP 纯净度工具页，提供 IP 输入、自动识别、纯净度评分和多源风险信号
 */
+import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
@@ -19,18 +20,18 @@ const seo = buildSeoContext({
 });
 ---
 
-<PublicPage activeNav="ip-purity" showSponsors={false} {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="page-hero-wrap">
-        <h1 class="page-hero-title">{t.ipPurity.title}</h1>
-        <p class="page-hero-copy">{t.ipPurity.description}</p>
-        <div class="mt-4">
-          <a href={linkTo('/guide/tool-ip-check')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/tools/ip-purity')} data-umami-event-target-page={linkTo('/guide/tool-ip-check')} data-umami-event-url={linkTo('/guide/tool-ip-check')} class="link link-primary text-sm font-semibold">{t.ipPurity.guideLink}</a>
-        </div>
-      </div>
+<PublicPage activeNav="tools" showSponsors={false} {...seo}>
+  <PageHero
+    title={t.ipPurity.title}
+    description={t.ipPurity.description}
+    backHref="/tools"
+    backLabel={t.tools.backToList}
+    compact
+  >
+    <div slot="actions" class="mt-4">
+      <a href={linkTo('/guide/tool-ip-check')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/tools/ip-purity')} data-umami-event-target-page={linkTo('/guide/tool-ip-check')} data-umami-event-url={linkTo('/guide/tool-ip-check')} class="link link-primary text-sm font-semibold">{t.ipPurity.guideLink}</a>
     </div>
-  </section>
+  </PageHero>
 
   <section class="ip-purity-grid grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">

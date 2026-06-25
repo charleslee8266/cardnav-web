@@ -5,15 +5,20 @@
 import OfficialPriceContent from '../components/OfficialPriceContent.astro';
 import { localizeOfficialPriceGroups } from '../localized-display.js';
 import PublicPage from '../layouts/PublicPage.astro';
-import { buildOfficialPriceGroups, getDefaultOfficialPriceGroup } from '../official-price.js';
+import { buildOfficialPriceGroupsForActiveSlug, getDefaultOfficialPriceGroup } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
-import { loadOfficialPrices, formatBeijingRefreshTime } from '../store.js';
+import { formatBeijingRefreshTime, loadOfficialPriceCatalog, loadOfficialPricesByUrlSlug } from '../store.js';
 
-const rawPrices = await loadOfficialPrices();
-const groups = localizeOfficialPriceGroups(buildOfficialPriceGroups(rawPrices), Astro.locals.locale);
+const catalog = await loadOfficialPriceCatalog();
+const defaultEntry = catalog.find(entry => entry.isDefault) || catalog[0] || null;
+const activePrices = defaultEntry ? await loadOfficialPricesByUrlSlug(defaultEntry.urlSlug) : [];
+const groups = localizeOfficialPriceGroups(
+  buildOfficialPriceGroupsForActiveSlug(catalog, activePrices, defaultEntry?.urlSlug || ''),
+  Astro.locals.locale,
+);
 const currentGroup = getDefaultOfficialPriceGroup(groups);
-const latestFetchedAt = rawPrices.reduce<string | null>((latest, price) => {
+const latestFetchedAt = activePrices.reduce<string | null>((latest, price) => {
   if (!price.fetchedAt) return latest;
   if (!latest) return price.fetchedAt;
   return new Date(price.fetchedAt).getTime() > new Date(latest).getTime() ? price.fetchedAt : latest;

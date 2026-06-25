@@ -2,8 +2,16 @@
 /*
 文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示前二十名并支持本地加载更多。
 */
+import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import SortableTableHeader from '../components/SortableTableHeader.astro';
+import {
+  collectFilterOptions,
+  formatPositiveScore,
+  paymentIcon,
+  paymentLabel,
+  uniqueLabels,
+} from '../gateway-display.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
@@ -27,49 +35,8 @@ const seo = buildSeoContext({
   locale: Astro.locals.locale,
 });
 
-function uniqueLabels(items: string[], limit?: number) {
-  const seen = new Set<string>();
-  const labels: string[] = [];
-  for (const item of items) {
-    const label = item.trim();
-    const key = label.toLowerCase();
-    if (!label || seen.has(key)) continue;
-    seen.add(key);
-    labels.push(label);
-    if (limit && labels.length >= limit) break;
-  }
-  return labels;
-}
-
-function collectFilterOptions(items: string[][]) {
-  return uniqueLabels(items.flat()).sort((a, b) => a.localeCompare(b));
-}
-
 const paymentMethodLabels = t.llmGateway.paymentMethodLabels;
-
-function paymentLabel(key: string): string {
-  return paymentMethodLabels[key] || key;
-}
-
-function paymentIcon(key: string): { src: string | null; fallback: string } {
-  const icons: Record<string, { src: string; fallback: string }> = {
-    alipay: { src: '/assets/payment-icons/alipay.svg', fallback: 'A' },
-    wechat: { src: '/assets/payment-icons/wechat.svg', fallback: 'W' },
-    visa: { src: '/assets/payment-icons/visa.svg', fallback: 'V' },
-    mastercard: { src: '/assets/payment-icons/mastercard.svg', fallback: 'M' },
-    stripe: { src: '/assets/payment-icons/stripe.svg', fallback: 'S' },
-    paypal: { src: '/assets/payment-icons/paypal.svg', fallback: 'P' },
-    tether: { src: '/assets/payment-icons/tether.svg', fallback: 'T' },
-    bitcoin: { src: '/assets/payment-icons/bitcoin.svg', fallback: 'B' },
-    applepay: { src: '/assets/payment-icons/applepay.svg', fallback: 'A' },
-    googlepay: { src: '/assets/payment-icons/googlepay.svg', fallback: 'G' },
-  };
-  return icons[key] || { src: null, fallback: key.trim().slice(0, 1).toUpperCase() };
-}
-
-function formatPositiveScore(value: number | null) {
-  return value === null || !Number.isFinite(value) || value <= 0 ? '-' : value.toFixed(2);
-}
+const paymentLabelFor = (key: string) => paymentLabel(key, paymentMethodLabels);
 
 function modelHref(modelId: string) {
   return linkTo(`/llm-gateway/models/${encodeURIComponent(modelId)}`);
@@ -129,37 +96,27 @@ const gatewayHomeConfig = {
 ---
 
 <PublicPage activeNav="llm-gateway" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="page-hero-shell">
-        <div class="page-hero-main">
-          <div class="page-hero-wrap">
-            <h1 class="page-hero-title">{t.llmGateway.title}</h1>
-            <p class="page-hero-copy">{t.llmGateway.description}</p>
-            <p class="page-hero-note">
-              {t.llmGateway.notePrefix}
-              <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="link link-primary font-medium" data-umami-event="gateway-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
-              {t.llmGateway.noteSuffix}
-            </p>
-          </div>
-        </div>
-        <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
-          <div class="stat px-4 py-3">
-            <div class="stat-title text-xs">{t.llmGateway.listedSites}</div>
-            <div class="stat-value text-2xl text-primary">{gatewayData.totalSiteCount}</div>
-          </div>
-          <div class="stat px-4 py-3">
-            <div class="stat-title text-xs">{t.llmGateway.sitesWithPrices}</div>
-            <div class="stat-value text-2xl text-secondary">{gatewayData.sitesWithPricesCount}</div>
-          </div>
-          <div class="stat px-4 py-3">
-            <div class="stat-title text-xs">{t.llmGateway.modelRecords}</div>
-            <div class="stat-value text-2xl">{gatewayModelData.totalModelCount}</div>
-          </div>
-        </div>
+  <PageHero title={t.llmGateway.title} description={t.llmGateway.description}>
+    <p slot="note" class="page-hero-note">
+      {t.llmGateway.notePrefix}
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="link link-primary font-medium" data-umami-event="gateway-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
+      {t.llmGateway.noteSuffix}
+    </p>
+    <div slot="aside" class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
+      <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">{t.llmGateway.listedSites}</div>
+        <div class="stat-value text-2xl text-primary">{gatewayData.totalSiteCount}</div>
+      </div>
+      <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">{t.llmGateway.sitesWithPrices}</div>
+        <div class="stat-value text-2xl text-secondary">{gatewayData.sitesWithPricesCount}</div>
+      </div>
+      <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">{t.llmGateway.modelRecords}</div>
+        <div class="stat-value text-2xl">{gatewayModelData.totalModelCount}</div>
       </div>
     </div>
-  </section>
+  </PageHero>
 
   {gatewayData.sites.length === 0 ? (
     <section class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center">
@@ -194,7 +151,7 @@ const gatewayHomeConfig = {
             </select>
             <select data-home-site-payment class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.paymentFilter}>
               <option value="">{t.llmGateway.allPaymentMethods}</option>
-              {paymentFilterOptions.map(method => <option value={method}>{paymentLabel(method)}</option>)}
+              {paymentFilterOptions.map(method => <option value={method}>{paymentLabelFor(method)}</option>)}
             </select>
           </div>
           <div class="gateway-table-scroll">
@@ -214,7 +171,7 @@ const gatewayHomeConfig = {
               const families = uniqueLabels(site.displayModelFamilies, 8);
               const paymentMethods = uniqueLabels(site.paymentMethods, 6);
               return (
-                <tr data-home-site-card data-search={`${site.name} ${site.url} ${site.host} ${site.displayModelFamilies.join(' ')} ${site.paymentMethods.map(paymentLabel).join(' ')}`.toLowerCase()} data-families={families.map(item => item.toLowerCase()).join(',')} data-payments={paymentMethods.join(',')} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-name={site.name} data-sort-score={String(site.siteScore || 0)} data-sort-families={families.join(' ')} data-sort-model-count={String(site.modelCount || 0)} data-sort-payments={paymentMethods.map(paymentLabel).join(' ')}>
+                <tr data-home-site-card data-search={`${site.name} ${site.url} ${site.host} ${site.displayModelFamilies.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase()} data-families={families.map(item => item.toLowerCase()).join(',')} data-payments={paymentMethods.join(',')} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-name={site.name} data-sort-score={String(site.siteScore || 0)} data-sort-families={families.join(' ')} data-sort-model-count={String(site.modelCount || 0)} data-sort-payments={paymentMethods.map(paymentLabelFor).join(' ')}>
                   <td data-label={t.llmGateway.rank} class="font-mono text-sm text-primary">#{index + 1}</td>
                   <td data-label={t.llmGateway.basicInfo}>
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
@@ -247,7 +204,7 @@ const gatewayHomeConfig = {
                     <div class="flex flex-wrap gap-1.5">
                       {paymentMethods.map(method => {
                         const icon = paymentIcon(method);
-                        const label = paymentLabel(method);
+                        const label = paymentLabelFor(method);
                         return <span class="payment-icon" title={label} aria-label={label}>{icon.src ? <img src={icon.src} alt="" loading="lazy" /> : icon.fallback}</span>;
                       })}
                     </div>

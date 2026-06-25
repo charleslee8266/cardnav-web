@@ -269,6 +269,7 @@ export const enMessages: Messages = {
     searchPlaceholder: 'Search products. Separate multiple keywords with spaces',
     advancedSearchLabel: 'Advanced search help',
     advancedSearchTip: 'Advanced search: spaces mean all terms, | means any term, and - excludes terms. Example: A B|C -D|E',
+    priceFilterHint: 'Filtered by CNY equivalent; USD prices are converted automatically',
     matchCategory: 'Match category',
     matchMerchant: 'Match merchant',
     showSoldOut: 'Show sold-out products',
@@ -427,6 +428,7 @@ export const enMessages: Messages = {
     seoDescription: 'IP purity checks, AI account and subscription utilities, and ChatGPT Session format conversion tools for quick pre-use checks and local processing.',
     title: 'AI subscription tools',
     description: 'Common tools for AI subscription and account workflows, currently including network checks and account format conversion.',
+    backToList: 'Back to tools',
     sessionConverter: {
       title: 'ChatGPT Session converter',
       tabLabel: 'Session converter',

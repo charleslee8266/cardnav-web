@@ -268,6 +268,7 @@ export const zhMessages = {
     searchPlaceholder: '搜索商品，多个关键词用空格隔开',
     advancedSearchLabel: '高级搜索说明',
     advancedSearchTip: '高级搜索：空格表示同时包含，| 表示任一匹配，- 表示排除。例：A B|C -D|E',
+    priceFilterHint: '按人民币等值筛选，美元价格会自动换算',
     matchCategory: '匹配分类',
     matchMerchant: '匹配商家',
     showSoldOut: '显示无货商品',
@@ -426,6 +427,7 @@ export const zhMessages = {
     seoDescription: '汇总 IP 纯净度检测、 AI 账号、订阅、ChatGPT Session格式转换等常用工具，帮助你在实际使用前完成快速检查和本地处理。',
     title: 'AI 订阅常用工具集合',
     description: '账号相关的AI 订阅常用工具集合，目前包括网络工具和账号格式转换工具。',
+    backToList: '返回工具列表',
     sessionConverter: {
       title: 'ChatGPT Session 转换工具',
       tabLabel: 'Session 转换',

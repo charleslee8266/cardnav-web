@@ -2,6 +2,8 @@
 /*
 文件说明: 渲染单个 AI 模型的中转站支持详情页，按中转站排序分数展示可用站点。
 */
+import PageHero from '../../../components/PageHero.astro';
+import { displayPriceUnit, formatPositiveScore, formatPrice } from '../../../gateway-display.js';
 import PublicPage from '../../../layouts/PublicPage.astro';
 import SortableTableHeader from '../../../components/SortableTableHeader.astro';
 import { buildSeoContext } from '../../../seo.js';
@@ -30,21 +32,11 @@ const seo = buildSeoContext({
   type: 'webpage',
   locale: Astro.locals.locale,
   noindex: !isIndexableGatewayModel(model),
+  breadcrumbs: [
+    { name: t.nav.llmGateway, pathname: '/llm-gateway' },
+    { name: model.modelId, pathname: `/llm-gateway/models/${canonicalModelPath}` },
+  ],
 });
-
-function formatPositiveScore(value: number | null) {
-  return value === null || !Number.isFinite(value) || value <= 0 ? '-' : value.toFixed(2);
-}
-
-function formatPrice(value: number | null) {
-  return value === null || !Number.isFinite(value) ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 6 });
-}
-
-function displayPriceUnit(unit: string) {
-  if (unit === '1M_tokens' || unit === 'quota_ratio') return '$ / 1M tokens';
-  if (unit === 'call') return 'per call';
-  return unit || '-';
-}
 
 function firstFinite(values: Array<number | null>) {
   const value = values.find(item => typeof item === 'number' && Number.isFinite(item));
@@ -73,37 +65,25 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
 ---
 
 <PublicPage activeNav="llm-gateway" {...seo}>
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div class="min-w-0 space-y-3">
-          <a href={linkTo('/llm-gateway')} class="page-back-link">
-            <span class="page-back-icon" aria-hidden="true">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m12 19-7-7 7-7"></path>
-                <path d="M19 12H5"></path>
-              </svg>
-            </span>
-            <span>{t.llmGateway.backToList}</span>
-          </a>
-          <div>
-            <h1 class="break-words font-mono text-2xl font-bold tracking-normal md:text-3xl">{t.llmGateway.modelDetailTitle.replace('{model}', model.modelId)}</h1>
-            <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/72">{t.llmGateway.modelDetailDescription}</p>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 gap-2 lg:min-w-[180px]">
-          <div class="rounded border border-base-300 px-3 py-2">
-            <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.supportedGatewayCount}</div>
-            <div class="font-mono text-xl font-bold text-primary">{model.supportSiteCount}</div>
-          </div>
-        </div>
-      </div>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <span class="badge badge-primary badge-outline">{model.modelFamily}</span>
-        {model.latestGatewayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestGatewayRefreshTime}</span> : null}
+  <PageHero
+    title={t.llmGateway.modelDetailTitle.replace('{model}', model.modelId)}
+    description={t.llmGateway.modelDetailDescription}
+    backHref="/llm-gateway"
+    backLabel={t.llmGateway.backToList}
+    titleClass="break-words font-mono"
+    copyClass="max-w-4xl"
+  >
+    <div slot="aside" class="grid grid-cols-1 gap-2 lg:min-w-[180px]">
+      <div class="rounded border border-base-300 px-3 py-2">
+        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.supportedGatewayCount}</div>
+        <div class="font-mono text-xl font-bold text-primary">{model.supportSiteCount}</div>
       </div>
     </div>
-  </section>
+    <div slot="footer" class="mt-4 flex flex-wrap gap-2">
+      <span class="badge badge-primary badge-outline">{model.modelFamily}</span>
+      {model.latestGatewayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestGatewayRefreshTime}</span> : null}
+    </div>
+  </PageHero>
 
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
     <div class="product-table-scroll">

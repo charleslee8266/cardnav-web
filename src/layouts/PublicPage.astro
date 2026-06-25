@@ -17,6 +17,12 @@ type Props = {
   robots: string;
   ogUrl: string;
   ogImageUrl: string;
+  ogImageAlt: string;
+  ogImageWidth: number;
+  ogImageHeight: number;
+  ogSiteName: string;
+  ogLocale: string;
+  ogLocaleAlternates: string[];
   ogType: string;
   jsonLd: Record<string, unknown>;
   htmlLang?: string;
@@ -34,6 +40,12 @@ const {
   robots,
   ogUrl,
   ogImageUrl,
+  ogImageAlt,
+  ogImageWidth,
+  ogImageHeight,
+  ogSiteName,
+  ogLocale,
+  ogLocaleAlternates = [],
   ogType,
   jsonLd,
   htmlLang = getLocaleHtmlLang(Astro.locals.locale),
@@ -59,9 +71,9 @@ const primaryNavItems = [
   { key: 'model-leaderboard', href: '/model-leaderboard', label: t.nav.modelLeaderboard },
   { key: 'guide', href: '/guide', label: t.nav.guide },
   { key: 'tools', href: '/tools', label: t.nav.tools },
-  { key: 'ip-purity', href: '/tools/ip-purity', label: t.nav.ipPurity },
 ];
 const mobilePrimaryNavItems = [
+  { key: 'home', href: '/', label: t.nav.home },
   { key: 'llm-gateway', href: '/llm-gateway', label: t.nav.mobileLlmGateway },
   { key: 'shops', href: '/shops', label: t.nav.mobileShops },
   { key: 'official-price', href: '/official-price', label: t.nav.mobileOfficialPrice },
@@ -118,22 +130,31 @@ function siteLinkClickAttrs(url: string, name: string) {
   <meta name="color-scheme" content="light dark" />
   <meta name="description" content={description} />
   <meta name="robots" content={robots} />
+  <link rel="icon" type="image/webp" href="/favicon.webp" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="canonical" href={canonicalUrl} />
+  <link rel="preconnect" href="https://stats.cardnav.xyz" crossorigin />
   {alternateUrls.map(item => <link rel="alternate" hreflang={item.hreflang} href={item.url} />)}
   {xDefaultUrl && <link rel="alternate" hreflang="x-default" href={xDefaultUrl} />}
   <meta property="og:type" content={ogType} />
   <meta property="og:title" content={pageTitle} />
   <meta property="og:description" content={description} />
   <meta property="og:url" content={ogUrl} />
+  <meta property="og:site_name" content={ogSiteName} />
+  <meta property="og:locale" content={ogLocale} />
+  {ogLocaleAlternates.map(locale => <meta property="og:locale:alternate" content={locale} />)}
   <meta property="og:image" content={ogImageUrl} />
+  <meta property="og:image:width" content={String(ogImageWidth)} />
+  <meta property="og:image:height" content={String(ogImageHeight)} />
+  <meta property="og:image:alt" content={ogImageAlt} />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={pageTitle} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={ogImageUrl} />
-  <slot name="head" />
+  <meta name="twitter:image:alt" content={ogImageAlt} />
   <title>{pageTitle}</title>
-  <script is:inline defer src="https://stats.cardnav.xyz/script.js" data-website-id="f708ee4d-be15-48e0-9eb8-344da355f150"></script>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <slot name="head" />
   {headerAdTagEnabled && (
     <>
       <script is:inline src="https://5gvci.com/act/files/tag.min.js?z=11107777" data-cfasync="false" async></script>
@@ -348,7 +369,7 @@ function siteLinkClickAttrs(url: string, name: string) {
 )}
 
 <script is:inline defer src={publicShellScriptUrl}></script>
-<script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+<script is:inline defer src="https://stats.cardnav.xyz/script.js" data-website-id="f708ee4d-be15-48e0-9eb8-344da355f150"></script>
 <slot name="scripts" />
 </body>
 </html>

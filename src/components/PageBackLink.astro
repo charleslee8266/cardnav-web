@@ -1,0 +1,21 @@
+---
+/*
+文件说明: 公开页详情 Hero 的返回链接，样式与中转站详情页保持一致。
+*/
+type Props = {
+  href: string;
+  label: string;
+};
+
+const { href, label } = Astro.props;
+---
+
+<a href={href} class="page-back-link">
+  <span class="page-back-icon" aria-hidden="true">
+    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 19-7-7 7-7"></path>
+      <path d="M19 12H5"></path>
+    </svg>
+  </span>
+  <span>{label}</span>
+</a>

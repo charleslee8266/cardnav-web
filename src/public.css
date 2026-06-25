@@ -831,6 +831,10 @@
   }
 
   /* 首页及大表格列宽微调 */
+  .shops-empty-state {
+    @apply mx-auto my-8 max-w-md px-4 text-center text-sm text-base-content/55;
+  }
+
   .product-table-scroll {
     @apply w-full max-w-full overflow-x-auto;
   }
@@ -888,6 +892,55 @@
   }
 
   @media (max-width: 767px) {
+    .product-table-scroll {
+      @apply overflow-visible px-3 py-3;
+    }
+
+    .flat-product-table {
+      min-width: 0;
+    }
+
+    .flat-product-table,
+    .flat-product-table thead,
+    .flat-product-table tbody,
+    .flat-product-table tr,
+    .flat-product-table th,
+    .flat-product-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .flat-product-table thead {
+      @apply hidden;
+    }
+
+    .flat-product-table {
+      @apply border-separate border-spacing-0 bg-transparent;
+    }
+
+    .flat-product-table tr.flat-product-row {
+      @apply mb-3 overflow-hidden rounded border border-base-300 bg-base-100;
+    }
+
+    .flat-product-table tr.flat-product-row.hidden {
+      display: none;
+    }
+
+    .flat-product-table th.flat-row-index,
+    .flat-product-table td {
+      @apply border-r-0 border-b border-base-300 px-3 py-3 text-left last:border-b-0;
+    }
+
+    .flat-product-table th.flat-row-index::before,
+    .flat-product-table td::before {
+      content: attr(data-label);
+      @apply mb-1 block text-[11px] font-semibold uppercase text-base-content/45;
+    }
+
+    .flat-product-table th.flat-row-index {
+      @apply bg-base-200/55;
+    }
+
     .gateway-table-scroll {
       @apply overflow-visible px-3 py-3;
     }

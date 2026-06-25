@@ -3,6 +3,7 @@
  */
 import 'dotenv/config';
 import pg from 'pg';
+import { withPublicDataCache } from './public-data-cache.js';
 
 export type PublicSiteRow = {
   id: string;
@@ -130,7 +131,12 @@ function getPool() {
   if (pool) return pool;
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error('DATABASE_URL is required');
-  pool = new pg.Pool({ connectionString });
+  pool = new pg.Pool({
+    connectionString,
+    max: 12,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
+  });
   return pool;
 }
 
@@ -158,7 +164,70 @@ function displayGatewayFamily(family: string) {
   return labels[family] ?? family;
 }
 
-export async function loadDashboardData(options: { productLimit?: number } = {}) {
+function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
+  const createdAt = row.created_at ? String(row.created_at) : null;
+  const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
+  const family = row.family ? String(row.family) : '';
+  const url = String(row.url);
+  const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
+  return {
+    id: String(row.id || ''),
+    slug: String(row.slug || ''),
+    name: row.profile_name ? String(row.profile_name) : String(row.site_name),
+    url,
+    outboundUrl: inviteUrl || url,
+    host: row.host ? String(row.host) : hostFromUrl(url),
+    family,
+    displayFamily: displayGatewayFamily(family),
+    createdAt,
+    createdTime: formatBeijingRefreshTime(createdAt),
+    lastProductRefreshCompleteAt: null,
+    lastProductRefreshCompleteTime: '',
+    siteScore: Number(row.score) || 0,
+    availabilityPercent: Number(row.availability_percent) || 0,
+    avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
+    weight: Number(row.weight) || 0,
+    summary: String(row.summary || ''),
+    modelTypes: Array.isArray(row.model_types) ? row.model_types.map(String) : [],
+    paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
+    modelCount: Number(row.model_count) || 0,
+    priceCount: Number(row.price_count) || 0,
+    modelFamilies: Array.isArray(row.model_families) ? row.model_families.map(String) : [],
+    displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
+    refreshStatus: '',
+    refreshErrorType: '',
+    latestGatewayRefreshAt,
+    latestGatewayRefreshTime: formatBeijingRefreshTime(latestGatewayRefreshAt),
+  };
+}
+
+function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): PublicGatewayModelSiteRow {
+  const latestModelRefreshAt = row.latest_model_refresh_at ? String(row.latest_model_refresh_at) : null;
+  return {
+    ...mapGatewaySiteRow(row),
+    priceCountForModel: Number(row.price_count_for_model) || 0,
+    unitsForModel: Array.isArray(row.units_for_model) ? row.units_for_model.map(String) : [],
+    pricesForModel: Array.isArray(row.prices_for_model) ? row.prices_for_model.map((price: Record<string, unknown>) => ({
+      modelId,
+      unit: String(price.unit || ''),
+      inputPrice: price.inputPrice == null ? null : Number(price.inputPrice),
+      outputPrice: price.outputPrice == null ? null : Number(price.outputPrice),
+      cacheInputPrice: price.cacheInputPrice == null ? null : Number(price.cacheInputPrice),
+      cacheOutputPrice: price.cacheOutputPrice == null ? null : Number(price.cacheOutputPrice),
+    })) : [],
+    latestModelRefreshAt,
+    latestModelRefreshTime: formatBeijingRefreshTime(latestModelRefreshAt),
+  };
+}
+
+export async function loadShopProductsData(options: { productLimit?: number } = {}) {
+  const productLimitKey = typeof options.productLimit === 'number' && Number.isFinite(options.productLimit)
+    ? String(Math.max(1, Math.floor(options.productLimit)))
+    : 'all';
+  return withPublicDataCache(`shop-products:${productLimitKey}`, () => loadShopProductsDataUncached(options));
+}
+
+async function loadShopProductsDataUncached(options: { productLimit?: number } = {}) {
   const db = getPool();
   const safeProductLimit = typeof options.productLimit === 'number' && Number.isFinite(options.productLimit)
     ? Math.max(1, Math.floor(options.productLimit))
@@ -273,12 +342,17 @@ export async function loadDashboardData(options: { productLimit?: number } = {})
     products,
     totalSiteCount,
     totalProductCount,
+    latestRefreshedAt,
     latestRefreshTime: formatBeijingRefreshTime(latestRefreshedAt),
     isPartial: totalProductCount > products.length,
   };
 }
 
 export async function loadGatewaySites() {
+  return withPublicDataCache('gateway:sites', () => loadGatewaySitesUncached());
+}
+
+async function loadGatewaySitesUncached() {
   const result = await getPool().query(`
     WITH price_summary AS (
       SELECT
@@ -325,42 +399,7 @@ export async function loadGatewaySites() {
     ORDER BY gateway_sites.score DESC, gateway_profiles.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
   `);
 
-  const sites: PublicGatewaySiteRow[] = result.rows.map(row => {
-    const createdAt = row.created_at ? String(row.created_at) : null;
-    const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
-    const family = row.family ? String(row.family) : '';
-    const url = String(row.url);
-    const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
-    return {
-      id: String(row.id || ''),
-      slug: String(row.slug || ''),
-      name: row.profile_name ? String(row.profile_name) : String(row.site_name),
-      url,
-      outboundUrl: inviteUrl || url,
-      host: row.host ? String(row.host) : hostFromUrl(url),
-      family,
-      displayFamily: displayGatewayFamily(family),
-      createdAt,
-      createdTime: formatBeijingRefreshTime(createdAt),
-      lastProductRefreshCompleteAt: null,
-      lastProductRefreshCompleteTime: '',
-      siteScore: Number(row.score) || 0,
-      availabilityPercent: Number(row.availability_percent) || 0,
-      avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
-      weight: Number(row.weight) || 0,
-      summary: String(row.summary || ''),
-      modelTypes: Array.isArray(row.model_types) ? row.model_types.map(String) : [],
-      paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
-      modelCount: Number(row.model_count) || 0,
-      priceCount: Number(row.price_count) || 0,
-      modelFamilies: Array.isArray(row.model_families) ? row.model_families.map(String) : [],
-      displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
-      refreshStatus: '',
-      refreshErrorType: '',
-      latestGatewayRefreshAt,
-      latestGatewayRefreshTime: formatBeijingRefreshTime(latestGatewayRefreshAt),
-    };
-  });
+  const sites: PublicGatewaySiteRow[] = result.rows.map(row => mapGatewaySiteRow(row));
 
   return {
     sites,
@@ -372,6 +411,10 @@ export async function loadGatewaySites() {
 }
 
 export async function loadGatewayModels() {
+  return withPublicDataCache('gateway:models', () => loadGatewayModelsUncached());
+}
+
+async function loadGatewayModelsUncached() {
   const result = await getPool().query(`
     SELECT
       prices.model_id,
@@ -412,9 +455,100 @@ export async function loadGatewayModels() {
   };
 }
 
+export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGatewaySiteRow | null> {
+  const normalizedSlug = slug.trim();
+  if (!normalizedSlug) return null;
+  return withPublicDataCache(`gateway:site:${normalizedSlug}`, async () => {
+    const result = await getPool().query(`
+      WITH price_summary AS (
+        SELECT
+          site_id,
+          COUNT(DISTINCT model_id)::INTEGER AS model_count,
+          COUNT(*)::INTEGER AS price_count,
+          ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
+          MAX(fetched_at) AS latest_price_fetched_at
+        FROM gateway_model_prices
+        GROUP BY site_id
+      )
+      SELECT
+        gateway_sites.site_id AS id,
+        gateway_sites.name AS site_name,
+        gateway_sites.url,
+        gateway_sites.family,
+        gateway_sites.score,
+        gateway_sites.availability_percent,
+        gateway_sites.avg_success_latency_ms,
+        gateway_sites.created_at,
+        gateway_profiles.slug,
+        gateway_profiles.host,
+        gateway_profiles.name AS profile_name,
+        gateway_profiles.weight,
+        gateway_profiles.summary,
+        gateway_profiles.invite_url,
+        gateway_profiles.model_types,
+        gateway_profiles.payment_methods,
+        COALESCE(price_summary.model_count, 0) AS model_count,
+        COALESCE(price_summary.price_count, 0) AS price_count,
+        COALESCE(price_summary.model_families, ARRAY[]::text[]) AS model_families,
+        CASE
+          WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
+            THEN price_summary.model_families
+          ELSE ARRAY(
+            SELECT jsonb_array_elements_text(COALESCE(gateway_profiles.model_types, '[]'::jsonb))
+          )
+        END AS display_model_families,
+        price_summary.latest_price_fetched_at AS latest_gateway_refresh_at
+      FROM gateway_sites
+      INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
+      LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
+      WHERE gateway_sites.status = 'online'
+        AND gateway_sites.type = 'gateway'
+        AND gateway_profiles.slug = $1
+      LIMIT 1
+    `, [normalizedSlug]);
+    const row = result.rows[0];
+    if (!row) return null;
+    return mapGatewaySiteRow(row);
+  });
+}
+
+async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayModelRow | null> {
+  const normalizedModelId = modelId.trim();
+  if (!normalizedModelId) return null;
+  return withPublicDataCache(`gateway:model-summary:${normalizedModelId}`, async () => {
+    const result = await getPool().query(`
+      SELECT
+        prices.model_id,
+        COALESCE(NULLIF(prices.model_family, ''), 'Other') AS model_family,
+        COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count,
+        COUNT(*)::INTEGER AS price_count,
+        MAX(prices.fetched_at) AS latest_gateway_refresh_at
+      FROM gateway_model_prices prices
+      INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
+      INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
+      WHERE gateway_sites.status = 'online'
+        AND gateway_sites.type = 'gateway'
+        AND prices.model_id = $1
+      GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
+      LIMIT 1
+    `, [normalizedModelId]);
+    const row = result.rows[0];
+    if (!row) return null;
+    const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
+    return {
+      id: String(row.model_id),
+      modelId: String(row.model_id),
+      modelFamily: String(row.model_family || 'Other'),
+      supportSiteCount: Number(row.support_site_count) || 0,
+      priceCount: Number(row.price_count) || 0,
+      latestGatewayRefreshAt,
+      latestGatewayRefreshTime: formatBeijingRefreshTime(latestGatewayRefreshAt),
+    };
+  });
+}
+
 export async function loadGatewayDetail(slug: string): Promise<PublicGatewayDetail | null> {
-  const gatewayData = await loadGatewaySites();
-  const site = gatewayData.sites.find(item => item.slug === slug);
+  const site = await loadGatewaySiteBySlug(slug);
   if (!site) return null;
 
   const priceResult = await getPool().query(`
@@ -458,8 +592,7 @@ export async function loadGatewayModelDetail(pathId: string): Promise<PublicGate
   const modelId = pathId.trim();
   if (!modelId) return null;
 
-  const gatewayModels = await loadGatewayModels();
-  const model = gatewayModels.models.find(item => item.modelId === modelId);
+  const model = await loadGatewayModelSummary(modelId);
   if (!model) return null;
 
   const result = await getPool().query(`
@@ -535,55 +668,7 @@ export async function loadGatewayModelDetail(pathId: string): Promise<PublicGate
 
   return {
     model,
-    sites: result.rows.map(row => {
-      const createdAt = row.created_at ? String(row.created_at) : null;
-      const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
-      const latestModelRefreshAt = row.latest_model_refresh_at ? String(row.latest_model_refresh_at) : null;
-      const family = row.family ? String(row.family) : '';
-      const url = String(row.url);
-      const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
-      return {
-        id: String(row.id || ''),
-        slug: String(row.slug || ''),
-        name: row.profile_name ? String(row.profile_name) : String(row.site_name),
-        url,
-        outboundUrl: inviteUrl || url,
-        host: row.host ? String(row.host) : hostFromUrl(url),
-        family,
-        displayFamily: displayGatewayFamily(family),
-        createdAt,
-        createdTime: formatBeijingRefreshTime(createdAt),
-        lastProductRefreshCompleteAt: null,
-        lastProductRefreshCompleteTime: '',
-        siteScore: Number(row.score) || 0,
-        availabilityPercent: Number(row.availability_percent) || 0,
-        avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
-        weight: Number(row.weight) || 0,
-        summary: String(row.summary || ''),
-        modelTypes: Array.isArray(row.model_types) ? row.model_types.map(String) : [],
-        paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
-        modelCount: Number(row.model_count) || 0,
-        priceCount: Number(row.price_count) || 0,
-        modelFamilies: Array.isArray(row.model_families) ? row.model_families.map(String) : [],
-        displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
-        refreshStatus: '',
-        refreshErrorType: '',
-        latestGatewayRefreshAt,
-        latestGatewayRefreshTime: formatBeijingRefreshTime(latestGatewayRefreshAt),
-        priceCountForModel: Number(row.price_count_for_model) || 0,
-        unitsForModel: Array.isArray(row.units_for_model) ? row.units_for_model.map(String) : [],
-        pricesForModel: Array.isArray(row.prices_for_model) ? row.prices_for_model.map((price: any) => ({
-          modelId,
-          unit: String(price.unit || ''),
-          inputPrice: price.inputPrice == null ? null : Number(price.inputPrice),
-          outputPrice: price.outputPrice == null ? null : Number(price.outputPrice),
-          cacheInputPrice: price.cacheInputPrice == null ? null : Number(price.cacheInputPrice),
-          cacheOutputPrice: price.cacheOutputPrice == null ? null : Number(price.cacheOutputPrice),
-        })) : [],
-        latestModelRefreshAt,
-        latestModelRefreshTime: formatBeijingRefreshTime(latestModelRefreshAt),
-      };
-    }),
+    sites: result.rows.map(row => mapGatewayModelSiteRow(row, modelId)),
   };
 }
 
@@ -681,6 +766,12 @@ export async function recordProductClick(input: ProductClickInput) {
 
 export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerms: string[] = []) {
   const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
+  const presetKey = presetPopularSearchTerms.map(term => term.trim()).filter(Boolean).join('|');
+  return withPublicDataCache(`popular-search:${safeLimit}:${presetKey}`, () => loadPopularSearchTermsUncached(safeLimit, presetPopularSearchTerms));
+}
+
+async function loadPopularSearchTermsUncached(limit = 10, presetPopularSearchTerms: string[] = []) {
+  const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
   const db = getPool();
   const runtimeResult = await db.query(
     `
@@ -771,14 +862,19 @@ export type PublicModelLeaderboardRow = {
   fetchedAt: string;
 };
 
-export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
-  const db = getPool();
-  const result = await db.query(`
-    SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
-    FROM official_prices
-    ORDER BY display_order ASC, cny_price ASC
-  `);
-  return result.rows.map(row => ({
+export type PublicOfficialPriceCatalogRow = {
+  appSlug: string;
+  planSlug: string;
+  appName: string;
+  planName: string;
+  displayName: string;
+  urlSlug: string;
+  isDefault: boolean;
+  displayOrder: number;
+};
+
+function mapOfficialPriceRow(row: Record<string, unknown>): PublicOfficialPriceRow {
+  return {
     appSlug: String(row.app_slug),
     planSlug: String(row.plan_slug),
     appName: String(row.app_name),
@@ -796,10 +892,128 @@ export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
     usdPrice: Number(row.usd_price),
     rubPrice: Number(row.rub_price),
     fetchedAt: String(row.fetched_at),
-  }));
+  };
+}
+
+export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCatalogRow[]> {
+  return withPublicDataCache('official-price:catalog', async () => {
+    const result = await getPool().query(`
+      SELECT DISTINCT ON (app_slug, plan_slug)
+        app_slug,
+        plan_slug,
+        app_name,
+        plan_name,
+        display_name,
+        url_slug,
+        is_default,
+        display_order
+      FROM official_prices
+      WHERE trim(url_slug) <> ''
+        AND lower(trim(url_slug)) NOT IN ('default', 'official-price')
+        AND trim(display_name) <> ''
+      ORDER BY app_slug, plan_slug, display_order ASC
+    `);
+    return result.rows.map(row => ({
+      appSlug: String(row.app_slug),
+      planSlug: String(row.plan_slug),
+      appName: String(row.app_name),
+      planName: String(row.plan_name),
+      displayName: String(row.display_name),
+      urlSlug: String(row.url_slug),
+      isDefault: Boolean(row.is_default),
+      displayOrder: Number(row.display_order) || 0,
+    }));
+  });
+}
+
+export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<PublicOfficialPriceRow[]> {
+  const normalizedSlug = urlSlug.trim().toLowerCase();
+  return withPublicDataCache(`official-price:slug:${normalizedSlug}`, async () => {
+    const result = await getPool().query(`
+      SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
+      FROM official_prices
+      WHERE lower(trim(url_slug)) = $1
+      ORDER BY cny_price ASC
+    `, [normalizedSlug]);
+    return result.rows.map(mapOfficialPriceRow);
+  });
+}
+
+export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
+  return withPublicDataCache('official-prices:all', () => loadOfficialPricesUncached());
+}
+
+async function loadOfficialPricesUncached(): Promise<PublicOfficialPriceRow[]> {
+  const db = getPool();
+  const result = await db.query(`
+    SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
+    FROM official_prices
+    ORDER BY display_order ASC, cny_price ASC
+  `);
+  return result.rows.map(row => mapOfficialPriceRow(row));
+}
+
+export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {
+  return withPublicDataCache('model-leaderboards:catalog', async () => {
+    const result = await getPool().query(`
+      SELECT task_slug
+      FROM model_leaderboards
+      GROUP BY task_slug
+      ORDER BY
+        CASE task_slug
+          WHEN 'coding' THEN 1
+          WHEN 'creative-writing' THEN 2
+          WHEN 'math' THEN 3
+          WHEN 'text-to-image' THEN 4
+          ELSE 999
+        END ASC,
+        task_slug ASC
+    `);
+    return result.rows.map(row => String(row.task_slug));
+  });
+}
+
+export async function loadModelLeaderboardRowsForTask(taskSlug: string): Promise<PublicModelLeaderboardRow[]> {
+  const normalizedTaskSlug = taskSlug.trim().toLowerCase();
+  return withPublicDataCache(`model-leaderboards:task:${normalizedTaskSlug}`, async () => {
+    const result = await getPool().query(`
+      SELECT
+        task_slug,
+        source_name,
+        source_url,
+        source_group_slug,
+        source_board_slug,
+        rank,
+        model_name,
+        score,
+        fetched_at
+      FROM model_leaderboards
+      WHERE lower(trim(task_slug)) = $1
+      ORDER BY rank ASC
+    `, [normalizedTaskSlug]);
+    return result.rows.map(mapModelLeaderboardRow);
+  });
+}
+
+function mapModelLeaderboardRow(row: Record<string, unknown>): PublicModelLeaderboardRow {
+  return {
+    taskSlug: String(row.task_slug),
+    sourceName: String(row.source_name),
+    sourceUrl: String(row.source_url),
+    sourceGroupSlug: String(row.source_group_slug),
+    sourceBoardSlug: String(row.source_board_slug),
+    rank: Number(row.rank),
+    modelName: String(row.model_name),
+    score: Number(row.score),
+    fetchedAt: String(row.fetched_at),
+  };
 }
 
 export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow[]> {
+  return withPublicDataCache('model-leaderboards:all', () => loadModelLeaderboardsUncached());
+}
+
+async function loadModelLeaderboardsUncached(): Promise<PublicModelLeaderboardRow[]> {
   const db = getPool();
   const result = await db.query(`
     SELECT
@@ -823,15 +1037,5 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
       END ASC,
       rank ASC
   `);
-  return result.rows.map(row => ({
-    taskSlug: String(row.task_slug),
-    sourceName: String(row.source_name),
-    sourceUrl: String(row.source_url),
-    sourceGroupSlug: String(row.source_group_slug),
-    sourceBoardSlug: String(row.source_board_slug),
-    rank: Number(row.rank),
-    modelName: String(row.model_name),
-    score: Number(row.score),
-    fetchedAt: String(row.fetched_at),
-  }));
+  return result.rows.map(row => mapModelLeaderboardRow(row));
 }
