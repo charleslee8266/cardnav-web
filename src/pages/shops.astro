@@ -11,7 +11,6 @@ import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
-import shopsScriptUrl from '../scripts/index.js?url';
 import { loadOfficialPriceCatalog, loadShopProductsData, loadPopularSearchTerms } from '../store.js';
 
 type Props = {
@@ -442,6 +441,8 @@ const shopProductsJsonValue = JSON.stringify({
 
   <script is:inline type="application/json" id="shop-products-data" set:html={shopProductsJsonValue}></script>
   <script is:inline type="application/json" id="shops-messages" set:html={JSON.stringify(shopsScriptMessages)}></script>
-  <script is:inline slot="scripts" type="module" src={shopsScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+  <script>
+    import '../scripts/index.js';
+  </script>
 </PublicPage>
