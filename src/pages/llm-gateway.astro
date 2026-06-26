@@ -126,12 +126,12 @@ const gatewayHomeConfig = {
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-home>
       <div class="border-b border-base-300 bg-base-100 px-4 py-3">
         <div class="tool-tablist-wrap">
-          <div class="tool-tablist" role="tablist" aria-label={t.llmGateway.title}>
-            <button type="button" class="tool-tab tool-tab-active" role="tab" aria-selected="true" aria-controls="gatewaySitesPanel" id="gatewaySitesTab" data-gateway-tab="sites">
+          <div class="tabs tabs-box gateway-home-tablist" role="tablist" aria-label={t.llmGateway.title}>
+            <button type="button" class="tab tab-active" role="tab" aria-selected="true" aria-controls="gatewaySitesPanel" id="gatewaySitesTab" data-gateway-tab="sites">
               {t.llmGateway.gatewayListTitle}
               <span class="tool-tab-badge">{gatewayData.totalSiteCount}</span>
             </button>
-            <button type="button" class="tool-tab tool-tab-inactive" role="tab" aria-selected="false" aria-controls="gatewayModelsPanel" id="gatewayModelsTab" data-gateway-tab="models">
+            <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="gatewayModelsPanel" id="gatewayModelsTab" data-gateway-tab="models">
               {t.llmGateway.modelListTitle}
               <span class="tool-tab-badge">{gatewayModelData.totalModelCount}</span>
             </button>
@@ -177,7 +177,7 @@ const gatewayHomeConfig = {
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
                       <div class="min-w-0 space-y-2">
                         <div class="flex flex-wrap items-center gap-2">
-                          <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover break-words text-base font-semibold text-base-content" {...gatewaySiteClickAttrs(site)}>{site.name}</a>
+                          <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover break-words text-base font-semibold text-primary" {...gatewaySiteClickAttrs(site)}>{site.name}</a>
                           {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
                         </div>
                         {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
@@ -246,7 +246,7 @@ const gatewayHomeConfig = {
                   <tr data-home-model-card data-search={`${model.modelId} ${model.modelFamily}`.toLowerCase()} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelFamily} data-sort-support-count={String(model.supportSiteCount || 0)}>
                     <td data-label={t.llmGateway.rank} class="font-mono text-sm text-secondary">#{index + 1}</td>
                     <td data-label={t.labels.model}>
-                      <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-base-content" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
+                      <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-primary" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
                     </td>
                     <td data-label={t.llmGateway.modelFamily}>{model.modelFamily}</td>
                     <td data-label={t.llmGateway.supportedGatewayCount} class="font-mono">{model.supportSiteCount}</td>
@@ -267,5 +267,5 @@ const gatewayHomeConfig = {
   )}
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
   <script is:inline slot="scripts" defer src={sortableTablesScriptUrl}></script>
-  <script is:inline slot="scripts" defer src={gatewayHomeScriptUrl}></script>
+  <script is:inline slot="scripts" type="module" src={gatewayHomeScriptUrl}></script>
 </PublicPage>

@@ -4,6 +4,7 @@
 */
 import PageHero from './PageHero.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
+import { quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
 
 type Props = {
   groups: LocalizedOfficialPriceGroup[];
@@ -14,6 +15,11 @@ type Props = {
 const { groups, currentGroup, updateTime } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
+const relatedShopSearchTerm = quickPlanSearchTermForOfficialPriceSlug(currentGroup?.urlSlug);
+const relatedShopSearchPath = relatedShopSearchTerm ? linkTo(quickPlanSearchSeoPath(relatedShopSearchTerm)) : '';
+const relatedGatewayPath = relatedShopSearchTerm ? quickPlanGatewayPath(relatedShopSearchTerm) : '';
+const relatedGatewayTipPath = relatedGatewayPath ? linkTo(relatedGatewayPath) : '';
+const relatedGatewayFamilyName = relatedShopSearchTerm ? quickPlanGatewayFamilyName(relatedShopSearchTerm) : '';
 
 type CountryFlag = {
   emoji: string;
@@ -47,73 +53,124 @@ function countryFlag(countryCode: string): CountryFlag {
   )}
 </PageHero>
 
-{groups.length > 0 && (
-  <nav class="tabs tabs-box w-fit max-w-full flex-wrap" aria-label={t.officialPrice.navLabel}>
-    {groups.map(group => (
-      <a
-        role="tab"
-        href={linkTo(group.pathname)}
-        class={`tab text-sm ${currentGroup?.key === group.key ? 'tab-active font-semibold text-primary' : 'text-base-content/70 hover:text-base-content'}`}
-        aria-current={currentGroup?.key === group.key ? 'page' : undefined}
-      >
-        {group.displayName}
-      </a>
-    ))}
-  </nav>
-)}
-
-{currentGroup && (
+{(groups.length > 0 || relatedShopSearchTerm || currentGroup) && (
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
-    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">
-      {currentGroup.appName} {currentGroup.planName} {t.officialPrice.tableSummarySuffix}
-    </div>
-    <div class="product-table-scroll">
-      <table class="table table-zebra table-md w-full border-collapse">
-        <thead class="bg-base-200 text-base-content text-sm">
-          <tr>
-            <th scope="col" class="font-bold">{t.officialPrice.recommendedRank}</th>
-            <th scope="col" class="font-bold">{t.officialPrice.countryRegion}</th>
-            <th scope="col" class="font-bold">{t.officialPrice.localPrice}</th>
-            <th scope="col" class="font-bold">{t.officialPrice.currency}</th>
-            <th scope="col" class="font-bold text-primary">{t.officialPrice.cnyPrice}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentGroup.prices.map((item, idx) => {
-            const flag = countryFlag(item.countryCode);
-            return (
-            <tr class="hover">
-              <td class="font-bold">
-                {idx === 0 ? t.officialPrice.cheapest : idx === 1 || idx === 2 ? t.officialPrice.recommended : `${idx + 1}`}
-              </td>
-              <td class="font-semibold text-base-content">
-                <span class="inline-flex items-center gap-1.5">
-                  <span aria-hidden="true">{flag.emoji}</span>
-                  <span>{item.localizedCountryLabel} ({item.countryCode})</span>
-                </span>
-              </td>
-              <td class="font-bold font-mono">
-                {item.priceText}
-              </td>
-              <td class="font-mono text-base-content/70">
-                {item.currencyCode}
-              </td>
-              <td class="font-bold text-primary font-mono text-base">
-                {item.equivalentPriceText}
-              </td>
-            </tr>
-            );
-          })}
-          {currentGroup.prices.length === 0 && (
-            <tr>
-              <td colspan="5" class="p-8 text-center text-base-content/40">
-                {t.officialPrice.empty}
-              </td>
-            </tr>
+    {(groups.length > 0 || relatedShopSearchTerm) && (
+      <div class="border-b border-base-300 bg-base-100 px-4 py-3">
+        <div class="flex flex-col gap-3">
+          {groups.length > 0 && (
+            <nav class="tool-tablist-wrap" aria-label={t.officialPrice.navLabel}>
+              <div class="tabs tabs-box content-tablist" role="tablist">
+                {groups.map(group => {
+                  const isCurrent = currentGroup?.key === group.key;
+                  return (
+                    <a
+                      role="tab"
+                      href={linkTo(group.pathname)}
+                      class={`tab content-tab ${isCurrent ? 'tab-active' : ''}`}
+                      aria-selected={isCurrent ? 'true' : 'false'}
+                      aria-current={isCurrent ? 'page' : undefined}
+                    >
+                      {group.displayName}
+                    </a>
+                  );
+                })}
+              </div>
+            </nav>
           )}
-        </tbody>
-      </table>
-    </div>
+          {relatedShopSearchTerm && (
+            <div class="flex flex-row flex-wrap items-center justify-start gap-2">
+              <a
+                href={relatedShopSearchPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                data-umami-event="official-price-shop-tip-click"
+                data-umami-event-url={relatedShopSearchPath}
+                data-umami-event-name={relatedShopSearchTerm.label}
+              >
+                <span>{t.officialPrice.shopProductsTip.replace('{term}', relatedShopSearchTerm.label)}</span>
+                <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m13 6 6 6-6 6"></path>
+                </svg>
+              </a>
+              {relatedGatewayTipPath && (
+                <a
+                  href={relatedGatewayTipPath}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  data-umami-event="official-price-gateway-tip-click"
+                  data-umami-event-url={relatedGatewayTipPath}
+                  data-umami-event-name={relatedGatewayFamilyName}
+                >
+                  <span>{t.officialPrice.gatewayTip.replace('{term}', relatedGatewayFamilyName)}</span>
+                  <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m13 6 6 6-6 6"></path>
+                  </svg>
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    {currentGroup && (
+      <>
+        <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">
+          {currentGroup.appName} {currentGroup.planName} {t.officialPrice.tableSummarySuffix}
+        </div>
+        <div class="product-table-scroll">
+          <table class="table table-zebra table-md w-full border-collapse">
+            <thead class="bg-base-200 text-base-content text-sm">
+              <tr>
+                <th scope="col" class="font-bold">{t.officialPrice.recommendedRank}</th>
+                <th scope="col" class="font-bold">{t.officialPrice.countryRegion}</th>
+                <th scope="col" class="font-bold">{t.officialPrice.localPrice}</th>
+                <th scope="col" class="font-bold">{t.officialPrice.currency}</th>
+                <th scope="col" class="font-bold text-primary">{t.officialPrice.cnyPrice}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentGroup.prices.map((item, idx) => {
+                const flag = countryFlag(item.countryCode);
+                return (
+                  <tr class="hover">
+                    <td class="font-bold">
+                      {idx === 0 ? t.officialPrice.cheapest : idx === 1 || idx === 2 ? t.officialPrice.recommended : `${idx + 1}`}
+                    </td>
+                    <td class="font-semibold text-base-content">
+                      <span class="inline-flex items-center gap-1.5">
+                        <span aria-hidden="true">{flag.emoji}</span>
+                        <span>{item.localizedCountryLabel} ({item.countryCode})</span>
+                      </span>
+                    </td>
+                    <td class="font-bold font-mono">
+                      {item.priceText}
+                    </td>
+                    <td class="font-mono text-base-content/70">
+                      {item.currencyCode}
+                    </td>
+                    <td class="font-bold text-primary font-mono text-base">
+                      {item.equivalentPriceText}
+                    </td>
+                  </tr>
+                );
+              })}
+              {currentGroup.prices.length === 0 && (
+                <tr>
+                  <td colspan="5" class="p-8 text-center text-base-content/40">
+                    {t.officialPrice.empty}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )}
   </section>
 )}
 

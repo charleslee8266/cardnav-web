@@ -1,6 +1,9 @@
 /*
  * 文件说明: 首页商品表格筛选、排序、收藏与商家分组懒渲染交互。
  */
+import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery } from '../shop-search-query.js';
+import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
+
 const filtersForm = document.querySelector('#filters');
 const searchFilter = document.querySelector('#searchFilter');
 const showSoldOutFilter = document.querySelector('#showSoldOutFilter');
@@ -12,8 +15,9 @@ const priceMax = document.querySelector('#priceMax');
 const flatSortSelect = document.querySelector('#flatSortSelect');
 const quickTagFilters = document.querySelector('#quickTagFilters');
 const quickPlanRow = document.querySelector('#quickPlanRow');
-const quickPlanToggle = document.querySelector('#quickPlanToggle');
-const advancedSearchHelp = document.querySelector('#advancedSearchHelp');
+const officialPriceTip = document.querySelector('#officialPriceTip');
+const gatewayTip = document.querySelector('#gatewayTip');
+const inlineHelpButtons = Array.from(document.querySelectorAll('[data-inline-help]'));
 let shopProductsData = JSON.parse(document.querySelector('#shop-products-data')?.textContent || '{"sites":[],"products":[]}');
 const shopsMessages = JSON.parse(document.querySelector('#shops-messages')?.textContent || '{}');
 let flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
@@ -27,6 +31,7 @@ const merchantGroupedView = document.querySelector('#merchantGroupedView');
 const flatProductView = document.querySelector('#flatProductView');
 const shopPageHeroTitle = document.querySelector('#shopPageHeroTitle');
 const shopPageHeroDescription = document.querySelector('#shopPageHeroDescription');
+const currentProductCount = document.querySelector('#currentProductCount');
 const flatSortButtons = Array.from(document.querySelectorAll('.flat-sort-button'));
 let favoriteButtons = Array.from(document.querySelectorAll('.favorite-toggle'));
 const flatRows = [];
@@ -57,12 +62,12 @@ let searchReportTimer = null;
 let umamiFilterReportTimer = null;
 const SEARCH_REPORT_DELAY_MS = 5000;
 const SEARCH_REPORT_DEDUP_WINDOW_MS = 2 * 60 * 1000;
-const QUICK_PLAN_VISIBLE_LIMIT = 12;
 let lastReportedQuery = '';
 let lastReportedUmamiFilterKey = '';
 const recentSearchReports = new Map();
-let quickPlanExpanded = false;
-let hasResetSeoSearchPageTitle = false;
+let currentQuickPlanPath = shopsMessages.seoSearchPath || '';
+let currentSearchPageMetaQuery = shopsMessages.seoSearchQuery || '';
+let currentSearchPageMetaPath = shopsMessages.seoSearchPath || '';
 
 function trackUmamiEvent(eventName, eventData = {}) {
   if (typeof window.umami?.track !== 'function') return;
@@ -80,52 +85,23 @@ function normalize(value) {
   return (value || '').trim().toLowerCase();
 }
 
-function searchTerms(value) {
-  return normalize(value).replace(/\s*\|\s*/g, '|').split(/\s+/).filter(Boolean);
+function currentSearchFieldOptions() {
+  return {
+    matchCategory: matchCategoryFilter.checked,
+    matchMerchant: matchMerchantFilter.checked,
+  };
 }
 
-function searchTermGroup(value) {
-  return value.split('|').map(term => term.trim()).filter(Boolean);
+function buildActiveSearchQuery(value) {
+  return buildShopSearchQuery(value);
 }
 
-function parseSearchQuery(value) {
-  return searchTerms(value).reduce((query, term) => {
-    if (term.startsWith('-')) {
-      const excludedGroup = searchTermGroup(term.slice(1));
-      if (excludedGroup.length > 0) query.excludeGroups.push(excludedGroup);
-    } else {
-      const includedGroup = searchTermGroup(term);
-      if (includedGroup.length > 0) query.includeGroups.push(includedGroup);
-    }
-    return query;
-  }, { includeGroups: [], excludeGroups: [] });
-}
-
-function matchTermCount(value, terms) {
-  return terms.reduce((count, term) => count + (value.includes(term) ? 1 : 0), 0);
-}
-
-function matchesAnyTermAcrossEnabledFields(rowEntry, terms) {
-  const matchCategory = matchCategoryFilter.checked;
-  const matchMerchant = matchMerchantFilter.checked;
-  return terms.some(term => {
-    if (rowEntry.productName.includes(term)) return true;
-    if (matchCategory && rowEntry.categoryName.includes(term)) return true;
-    if (matchMerchant && rowEntry.siteText.includes(term)) return true;
-    return false;
-  });
-}
-
-function matchesEverySearchGroupAcrossEnabledFields(rowEntry, groups) {
-  return groups.every(group => matchesAnyTermAcrossEnabledFields(rowEntry, group));
-}
-
-function matchesAnySearchGroupAcrossEnabledFields(rowEntry, groups) {
-  return groups.some(group => matchesAnyTermAcrossEnabledFields(rowEntry, group));
+function matchesSearchQuery(rowEntry, query) {
+  return matchesShopSearchQuery(rowEntry, query, currentSearchFieldOptions());
 }
 
 function searchMatchedFlatRows() {
-  const { includeGroups, excludeGroups } = parseSearchQuery(searchFilter.value);
+  const query = buildActiveSearchQuery(searchFilter.value);
   const matchedRows = flatRows.filter(rowEntry => {
     const showSoldOut = showSoldOutFilter.checked;
     const priceMinValue = priceMin.value.trim();
@@ -134,9 +110,7 @@ function searchMatchedFlatRows() {
     const maxPrice = parseBound(priceMaxValue);
     const stockMatched = showSoldOut || rowEntry.inStock === 1;
     const priceMatched = matchesPriceRange(rowEntry.priceValue, minPrice, maxPrice);
-    const includeMatched = includeGroups.length === 0 || matchesEverySearchGroupAcrossEnabledFields(rowEntry, includeGroups);
-    const excludeMatched = excludeGroups.length > 0 && matchesAnySearchGroupAcrossEnabledFields(rowEntry, excludeGroups);
-    const queryMatched = includeMatched && !excludeMatched;
+    const queryMatched = matchesSearchQuery(rowEntry, query);
     return stockMatched && priceMatched && queryMatched;
   });
   return prioritizeFavoriteFlatRows(matchedRows);
@@ -397,9 +371,9 @@ function reportProductClick(payload) {
 }
 
 function scheduleSearchReport() {
-  const query = searchFilter.value.trim();
-  const reportQuery = parseSearchQuery(query).includeGroups.map(group => group.join('|')).join(' ');
   clearTimeout(searchReportTimer);
+  const query = searchFilter.value.trim();
+  const reportQuery = prepareShopSearchQuery(query);
   if (reportQuery.length < 2 || reportQuery === lastReportedQuery) return;
   searchReportTimer = setTimeout(() => {
     lastReportedQuery = reportQuery;
@@ -441,52 +415,106 @@ function resetFlatVisibleLimit() {
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
 }
 
-function shouldResetSeoSearchPageTitle(searchQuery) {
-  const seoSearchQuery = shopsMessages.seoSearchQuery || '';
-  return Boolean(seoSearchQuery && searchQuery !== seoSearchQuery);
+function shouldResetSearchPageMeta(searchQuery) {
+  return Boolean(
+    currentSearchPageMetaQuery
+      && (!currentQuickPlanPath || currentQuickPlanPath !== currentSearchPageMetaPath || searchQuery !== currentSearchPageMetaQuery),
+  );
 }
 
-function resetSeoSearchPageTitle(searchQuery) {
-  if (hasResetSeoSearchPageTitle || !shouldResetSeoSearchPageTitle(searchQuery)) return;
+function resetSearchPageMeta(searchQuery) {
+  if (!shouldResetSearchPageMeta(searchQuery)) return;
   if (shopsMessages.defaultPageTitle) document.title = shopsMessages.defaultPageTitle;
   if (shopPageHeroTitle && shopsMessages.defaultHeroTitle) shopPageHeroTitle.textContent = shopsMessages.defaultHeroTitle;
   if (shopPageHeroDescription && shopsMessages.defaultHeroDescription) shopPageHeroDescription.textContent = shopsMessages.defaultHeroDescription;
-  hasResetSeoSearchPageTitle = true;
+  currentSearchPageMetaQuery = '';
+  currentSearchPageMetaPath = '';
 }
 
-function renderQuickPlanFilters() {
-  if (!quickPlanRow) return;
-  const quickPlanItems = Array.from(quickPlanRow.querySelectorAll('[data-quick-plan-query]'));
-  quickPlanItems.forEach((item, index) => {
-    item.classList.toggle('hidden', !quickPlanExpanded && index >= QUICK_PLAN_VISIBLE_LIMIT);
+function applySearchPageMeta(termLabel, searchQuery, searchPath) {
+  const meta = buildShopSearchPageMeta(termLabel, {
+    searchResultsTitle: shopsMessages.searchResultsTitle || '{term}',
+    searchResultsDescription: shopsMessages.searchResultsDescription || '',
+    titleSuffix: shopsMessages.titleSuffix || '',
   });
+  document.title = meta.documentTitle;
+  if (shopPageHeroTitle) shopPageHeroTitle.textContent = meta.heroTitle;
+  if (shopPageHeroDescription) shopPageHeroDescription.textContent = meta.heroDescription;
+  currentSearchPageMetaQuery = searchQuery;
+  currentSearchPageMetaPath = searchPath;
+}
 
-  if (quickPlanToggle && quickPlanItems.length > QUICK_PLAN_VISIBLE_LIMIT) {
-    quickPlanToggle.className = 'btn btn-outline btn-sm text-sm! rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!';
-    quickPlanToggle.textContent = quickPlanExpanded
-      ? (quickPlanToggle.dataset.lessLabel || 'Show less')
-      : (quickPlanToggle.dataset.moreLabel || 'More');
-    quickPlanToggle.classList.remove('hidden');
-  } else if (quickPlanToggle) {
-    quickPlanToggle.classList.add('hidden');
+function hideOfficialPriceTip() {
+  if (!officialPriceTip) return;
+  officialPriceTip.classList.add('hidden');
+  officialPriceTip.href = '#';
+  const tipLabel = officialPriceTip.querySelector('[data-official-price-tip-label]');
+  if (tipLabel) tipLabel.textContent = '';
+  delete officialPriceTip.dataset.umamiEventUrl;
+  delete officialPriceTip.dataset.umamiEventName;
+  officialPriceTip.classList.remove('inline-flex');
+}
+
+function hideGatewayTip() {
+  if (!gatewayTip) return;
+  gatewayTip.classList.add('hidden');
+  gatewayTip.href = '#';
+  const tipLabel = gatewayTip.querySelector('[data-gateway-tip-label]');
+  if (tipLabel) tipLabel.textContent = '';
+  delete gatewayTip.dataset.umamiEventUrl;
+  delete gatewayTip.dataset.umamiEventName;
+  gatewayTip.classList.remove('inline-flex');
+}
+
+function showOfficialPriceTip(button, query) {
+  if (!officialPriceTip) return;
+  const officialPricePath = button.dataset.officialPricePath || '';
+  const label = button.textContent?.trim() || query;
+  if (!officialPricePath) {
+    hideOfficialPriceTip();
+    return;
   }
+  officialPriceTip.href = officialPricePath;
+  const tipLabel = officialPriceTip.querySelector('[data-official-price-tip-label]');
+  if (tipLabel) {
+    tipLabel.textContent = (shopsMessages.officialPriceTip || 'View official subscription price comparison for {term}')
+      .replace('{term}', label);
+  }
+  officialPriceTip.dataset.umamiEventUrl = officialPricePath;
+  officialPriceTip.dataset.umamiEventName = label;
+  officialPriceTip.classList.add('inline-flex');
+  officialPriceTip.classList.remove('hidden');
 }
 
-function setQuickPlanExpanded(value) {
-  quickPlanExpanded = value;
-  renderQuickPlanFilters();
+function showGatewayTip(button, query) {
+  if (!gatewayTip) return;
+  const gatewayPath = button.dataset.gatewayPath || '';
+  const label = (button.dataset.gatewayModelFamilyName || button.textContent || query).trim();
+  if (!gatewayPath) {
+    hideGatewayTip();
+    return;
+  }
+  gatewayTip.href = gatewayPath;
+  const tipLabel = gatewayTip.querySelector('[data-gateway-tip-label]');
+  if (tipLabel) {
+    tipLabel.textContent = (shopsMessages.gatewayTip || 'View gateway sites that support {term}')
+      .replace('{term}', label);
+  }
+  gatewayTip.dataset.umamiEventUrl = gatewayPath;
+  gatewayTip.dataset.umamiEventName = label;
+  gatewayTip.classList.add('inline-flex');
+  gatewayTip.classList.remove('hidden');
 }
 
-function initializeAdvancedSearchHelp() {
-  if (!advancedSearchHelp) return;
-  const tipText = advancedSearchHelp.dataset.tip || '';
+function initializeInlineHelpButton(button, index) {
+  const tipText = button.dataset.tip || '';
   if (!tipText) return;
-  const tipId = 'advanced-search-tip';
-  advancedSearchHelp.setAttribute('aria-describedby', tipId);
-  advancedSearchHelp.setAttribute('aria-expanded', 'false');
+  const tipId = `inline-help-tip-${index}`;
+  button.setAttribute('aria-describedby', tipId);
+  button.setAttribute('aria-expanded', 'false');
   const tip = document.createElement('div');
   tip.id = tipId;
-  tip.className = 'advanced-search-tooltip hidden';
+  tip.className = 'inline-help-tooltip hidden';
   tip.style.position = 'fixed';
   tip.style.zIndex = '9999';
   tip.style.maxWidth = '18rem';
@@ -504,7 +532,7 @@ function initializeAdvancedSearchHelp() {
   document.body.appendChild(tip);
 
   const positionTip = () => {
-    const triggerRect = advancedSearchHelp.getBoundingClientRect();
+    const triggerRect = button.getBoundingClientRect();
     const tipRect = tip.getBoundingClientRect();
     const viewportPadding = 12;
     const top = Math.min(
@@ -521,25 +549,29 @@ function initializeAdvancedSearchHelp() {
 
   const showTip = () => {
     tip.classList.remove('hidden');
-    advancedSearchHelp.setAttribute('aria-expanded', 'true');
+    button.setAttribute('aria-expanded', 'true');
     positionTip();
   };
 
   const hideTip = () => {
     tip.classList.add('hidden');
-    advancedSearchHelp.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-expanded', 'false');
   };
 
-  advancedSearchHelp.addEventListener('mouseenter', showTip);
-  advancedSearchHelp.addEventListener('focus', showTip);
-  advancedSearchHelp.addEventListener('mouseleave', hideTip);
-  advancedSearchHelp.addEventListener('blur', hideTip);
+  button.addEventListener('mouseenter', showTip);
+  button.addEventListener('focus', showTip);
+  button.addEventListener('mouseleave', hideTip);
+  button.addEventListener('blur', hideTip);
   window.addEventListener('resize', () => {
     if (!tip.classList.contains('hidden')) positionTip();
   });
   window.addEventListener('scroll', () => {
     if (!tip.classList.contains('hidden')) positionTip();
   }, true);
+}
+
+function initializeInlineHelp() {
+  inlineHelpButtons.forEach(initializeInlineHelpButton);
 }
 
 function shopProductsDataIsPartial() {
@@ -745,6 +777,26 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
   }
 }
 
+function updateCurrentProductCount(value) {
+  if (!currentProductCount) return;
+  currentProductCount.textContent = String(Math.max(0, Math.floor(Number(value) || 0)));
+}
+
+function shouldUseTotalProductCountForCurrentCount() {
+  return shopProductsDataIsPartial()
+    && !searchFilter.value.trim()
+    && !priceMin.value.trim()
+    && !priceMax.value.trim()
+    && !groupByMerchantFilter.checked
+    && !matchCategoryFilter.checked
+    && !matchMerchantFilter.checked
+    && !showSoldOutFilter.checked;
+}
+
+function updateCurrentProductCountFromVisible(value) {
+  updateCurrentProductCount(shouldUseTotalProductCountForCurrentCount() ? totalProductCount() : value);
+}
+
 async function loadMerchantViewModule() {
   if (merchantViewModule) return merchantViewModule;
   if (!merchantViewModulePromise) {
@@ -776,8 +828,7 @@ function renderMerchantViewModule(module) {
 }
 
 async function applyFilters(options = {}) {
-  const { includeGroups, excludeGroups } = parseSearchQuery(searchFilter.value);
-  const includeTerms = includeGroups.flat();
+  const query = buildActiveSearchQuery(searchFilter.value);
   const showSoldOut = showSoldOutFilter.checked;
   const groupByMerchant = groupByMerchantFilter.checked;
   const priceMinValue = priceMin.value.trim();
@@ -788,6 +839,7 @@ async function applyFilters(options = {}) {
   const hasActiveFilters = Boolean(searchQuery || priceMinValue || priceMaxValue);
   let visibleFlatProductCount = 0;
   let visibleMerchantCount = 0;
+  let visibleProductCount = 0;
 
   if (shouldLoadFullShopProductsData({
     groupByMerchant,
@@ -819,20 +871,15 @@ async function applyFilters(options = {}) {
       let visibleProductMatchCount = 0;
 
       chips.forEach(chip => {
-        const productMatchCount = matchTermCount(chip.dataset.productTitle, includeTerms);
         const stockMatched = showSoldOut || chip.dataset.inStock === '1';
         const priceMatched = matchesPriceRange(Number(chip.dataset.priceValue), minPrice, maxPrice);
-        const matchCategory = matchCategoryFilter.checked;
-        const matchMerchant = matchMerchantFilter.checked;
-        const chipMatchesTerm = term => {
-          if ((chip.dataset.productName || '').includes(term)) return true;
-          if (matchCategory && (chip.dataset.categoryName || '').includes(term)) return true;
-          if (matchMerchant && (row.dataset.siteText || '').includes(term)) return true;
-          return false;
+        const chipEntry = {
+          productName: chip.dataset.productName || '',
+          categoryName: chip.dataset.categoryName || '',
+          siteText: row.dataset.siteText || '',
         };
-        const includeMatched = includeGroups.length === 0 || includeGroups.every(group => group.some(chipMatchesTerm));
-        const excludeMatched = excludeGroups.length > 0 && excludeGroups.some(group => group.some(chipMatchesTerm));
-        const queryMatched = includeMatched && !excludeMatched;
+        const queryMatched = matchesSearchQuery(chipEntry, query);
+        const productMatchCount = query.mode === 'empty' ? 0 : (queryMatched ? 1 : 0);
         const visible = queryMatched && stockMatched && priceMatched;
         chip.classList.toggle('hidden', !visible);
         if (visible) visibleProductMatchCount += productMatchCount;
@@ -840,13 +887,14 @@ async function applyFilters(options = {}) {
         if (visible && chip.dataset.inStock === '1') visibleInStockCount += 1;
       });
 
-      const visibleProductCount = visibleInStockCount + visibleSoldOutCount;
+      const visibleRowProductCount = visibleInStockCount + visibleSoldOutCount;
       const hasProducts = Number(row.dataset.productCount) > 0;
-      const rowVisible = visibleProductCount > 0 || (!hasActiveFilters && !hasProducts);
+      const rowVisible = visibleRowProductCount > 0 || (!hasActiveFilters && !hasProducts);
       row.dataset.visibleProductMatchCount = String(visibleProductMatchCount);
       row.dataset.visibleInStockCount = String(visibleInStockCount);
       row.dataset.visibleSoldOutCount = String(visibleSoldOutCount);
       row.classList.toggle('hidden', !rowVisible);
+      visibleProductCount += visibleRowProductCount;
     });
 
     visibleMerchantCount = sortRows(merchantModule);
@@ -860,6 +908,7 @@ async function applyFilters(options = {}) {
     }
 
     visibleFlatProductCount = currentFlatRows.length;
+    visibleProductCount = visibleFlatProductCount;
     const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
     currentFlatRows.forEach(({ element: row }, index) => {
       row.classList.toggle('hidden', index >= renderedFlatCount);
@@ -869,21 +918,22 @@ async function applyFilters(options = {}) {
   }
 
   const visibleCount = groupByMerchant ? visibleMerchantCount : visibleFlatProductCount;
+  updateCurrentProductCountFromVisible(visibleProductCount);
   emptyState.classList.toggle('hidden', visibleCount > 0 || isShopProductsDataLoading);
   if (groupByMerchant) updateFlatProgressiveLoadSummary(0, 0);
   const params = new URLSearchParams();
-  if (searchQuery) params.set('q', searchQuery);
+  if (searchQuery && !currentQuickPlanPath) params.set('q', searchQuery);
   if (showSoldOut) params.set('showSoldOut', '1');
   if (groupByMerchant) params.set('groupByMerchant', '1');
   if (matchCategoryFilter.checked) params.set('matchCategory', '1');
   if (matchMerchantFilter.checked) params.set('matchMerchant', '1');
   if (priceMinValue) params.set('priceMin', priceMinValue);
   if (priceMaxValue) params.set('priceMax', priceMaxValue);
-  if (flatSortSelect?.value && flatSortSelect.value !== 'default' && flatSortSelect.value !== 'custom') {
+  if (!currentQuickPlanPath && flatSortSelect?.value && flatSortSelect.value !== 'default' && flatSortSelect.value !== 'custom') {
     params.set('sort', flatSortSelect.value);
   }
-  resetSeoSearchPageTitle(searchQuery);
-  const nextPath = shouldResetSeoSearchPageTitle(searchQuery) ? '/shops' : (window.location.pathname || '/shops');
+  resetSearchPageMeta(searchQuery);
+  const nextPath = currentQuickPlanPath || (shouldResetSearchPageMeta(searchQuery) ? '/shops' : (window.location.pathname || '/shops'));
   const nextUrl = params.toString() ? `${nextPath}?${params.toString()}` : nextPath;
   history.replaceState(null, '', nextUrl);
 }
@@ -1010,6 +1060,7 @@ function sortFlatProductRows(button) {
   });
   updateFlatProductIndexes();
   updateFlatProgressiveLoadSummary(currentFlatRows.length, renderedFlatCount);
+  updateCurrentProductCountFromVisible(currentFlatRows.length);
   updateFlatSortButtons();
   syncFlatSortSelect();
 }
@@ -1088,6 +1139,9 @@ filtersForm?.addEventListener('submit', event => {
 });
 searchFilter.addEventListener('input', () => {
   resetFlatVisibleLimit();
+  currentQuickPlanPath = '';
+  hideOfficialPriceTip();
+  hideGatewayTip();
   scheduleSearchReport();
   scheduleFilterTrack('query');
   scheduleApplyFilters();
@@ -1147,6 +1201,9 @@ quickTagFilters?.addEventListener('click', event => {
   if (!tag) return;
   searchFilter.value = tag.label;
   resetFlatVisibleLimit();
+  currentQuickPlanPath = '';
+  hideOfficialPriceTip();
+  hideGatewayTip();
   reportSearchTerm(tag.label, filteredFlatRows().length);
   applyFilters();
 });
@@ -1157,19 +1214,17 @@ quickPlanRow?.addEventListener('click', event => {
   const query = button.dataset.quickPlanQuery || '';
   if (!query) return;
   searchFilter.value = query;
+  currentQuickPlanPath = button.dataset.quickPlanPath || '';
+  applySearchPageMeta(button.textContent?.trim() || query, query, currentQuickPlanPath);
   resetFlatVisibleLimit();
   applyFlatSortPreset('price-asc', { shouldApply: false });
+  showOfficialPriceTip(button, query);
+  showGatewayTip(button, query);
   reportSearchTerm(query, filteredFlatRows().length);
   applyFilters();
   trackUmamiEvent('quick-plan-search-click', {
     name: button.textContent?.trim() || query,
     query,
-  });
-});
-quickPlanToggle?.addEventListener('click', () => {
-  setQuickPlanExpanded(!quickPlanExpanded);
-  trackUmamiEvent('quick-plan-toggle-click', {
-    expanded: quickPlanExpanded ? '1' : '0',
   });
 });
 flatProductLoadMoreButton?.addEventListener('click', () => {
@@ -1208,7 +1263,6 @@ renderFlatProductRowsFromData();
 buildFlatRows();
 loadFavorites();
 initializeFavorites();
-initializeAdvancedSearchHelp();
-renderQuickPlanFilters();
+initializeInlineHelp();
 syncFiltersFromUrl();
 applyFilters();

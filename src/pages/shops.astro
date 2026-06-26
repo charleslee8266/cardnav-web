@@ -4,38 +4,57 @@
 */
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
+import { officialPricePathname } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
-import { quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
+import { quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
+import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
 import shopsScriptUrl from '../scripts/index.js?url';
-import { loadShopProductsData, loadPopularSearchTerms } from '../store.js';
+import { loadOfficialPriceCatalog, loadShopProductsData, loadPopularSearchTerms } from '../store.js';
 
 type Props = {
   seoSearchTerm?: QuickPlanSearchTerm | null;
 };
 
 const initialProductLimitValue = 40;
-const quickPlanVisibleLimit = 12;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const requestUrl = new URL(Astro.request.url);
 const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
 const initialSearchQuery = seoSearchTerm?.query ?? requestUrl.searchParams.get('q')?.trim() ?? '';
 const initialSort = seoSearchTerm ? 'price-asc' : requestUrl.searchParams.get('sort')?.trim() ?? '';
-const pageTitle = seoSearchTerm
-  ? t.shops.searchResultsTitle.replace('{term}', seoSearchTerm.label)
-  : t.shops.seoTitle;
-const pageDescription = seoSearchTerm
-  ? t.shops.searchResultsDescription.replace('{term}', seoSearchTerm.label)
-  : t.shops.seoDescription;
-const heroTitle = seoSearchTerm ? pageTitle : t.shops.title;
-const heroDescription = seoSearchTerm ? pageDescription : t.shops.description;
+const seoSearchPageMeta = seoSearchTerm
+  ? buildShopSearchPageMeta(seoSearchTerm.label, {
+      searchResultsTitle: t.shops.searchResultsTitle,
+      searchResultsDescription: t.shops.searchResultsDescription,
+    })
+  : null;
+const pageTitle = seoSearchPageMeta?.pageTitle ?? t.shops.seoTitle;
+const pageDescription = seoSearchPageMeta?.pageDescription ?? t.shops.seoDescription;
+const heroTitle = seoSearchPageMeta?.heroTitle ?? t.shops.title;
+const heroDescription = seoSearchPageMeta?.heroDescription ?? t.shops.description;
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
 const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
-const data = await loadShopProductsData({ productLimit: initialProductLimitValue });
-const popularSearchTerms = (await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms])).terms;
+const [data, popularSearchResult, officialPriceCatalog] = await Promise.all([
+  loadShopProductsData({ productLimit: initialProductLimitValue }),
+  loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]),
+  loadOfficialPriceCatalog(),
+]);
+const popularSearchTerms = popularSearchResult.terms;
+const officialPriceUrlSlugs = new Set(officialPriceCatalog.map(entry => entry.urlSlug.trim()).filter(Boolean));
+const initialOfficialPricePath = seoSearchTerm?.officialPriceSlug && officialPriceUrlSlugs.has(seoSearchTerm.officialPriceSlug)
+  ? linkTo(officialPricePathname(seoSearchTerm.officialPriceSlug))
+  : '';
+const initialOfficialPriceTipLabel = initialOfficialPricePath
+  ? t.shops.officialPriceTip.replace('{term}', seoSearchTerm?.label ?? '')
+  : '';
+const initialGatewayPath = seoSearchTerm ? quickPlanGatewayPath(seoSearchTerm) : '';
+const initialGatewayTipPath = initialGatewayPath ? linkTo(initialGatewayPath) : '';
+const initialGatewayTipLabel = initialGatewayTipPath
+  ? t.shops.gatewayTip.replace('{term}', seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : '')
+  : '';
 const renderedProducts = data.products.map(product => ({
   categoryName: product.categoryName,
   name: product.name,
@@ -110,6 +129,11 @@ const shopsScriptMessages = {
   stockPrefix: t.shops.script.stockPrefix,
   latestRefreshPrefix: t.shops.script.latestRefreshPrefix,
   noData: t.shops.script.noData,
+  officialPriceTip: t.shops.officialPriceTip,
+  gatewayTip: t.shops.gatewayTip,
+  searchResultsTitle: t.shops.searchResultsTitle,
+  searchResultsDescription: t.shops.searchResultsDescription,
+  titleSuffix: t.seo.titleSuffix,
   ascending: t.shops.script.ascending,
   descending: t.shops.script.descending,
   currentSort: t.shops.script.currentSort,
@@ -125,6 +149,8 @@ const shopsScriptMessages = {
   defaultHeroTitle: t.shops.title,
   defaultHeroDescription: t.shops.description,
   seoSearchQuery: seoSearchTerm?.query ?? '',
+  seoSearchPath: seoSearchTerm ? linkTo(quickPlanSearchSeoPath(seoSearchTerm)) : '',
+  searchPlaceholder: t.shops.searchPlaceholder,
   tableLabels: {
     sequence: t.labels.sequence,
     product: t.labels.product,
@@ -195,37 +221,38 @@ const shopProductsJsonValue = JSON.stringify({
       <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
         <span>{t.labels.collectedSites}：<span class="font-bold text-primary">{data.totalSiteCount}</span></span>
         <span>{t.labels.products}：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
+        <span>{t.labels.currentProducts}：<span id="currentProductCount" class="font-bold text-primary">{data.totalProductCount}</span></span>
         {data.latestRefreshTime && <span>{t.labels.latestRefresh}：{data.latestRefreshTime}</span>}
       </div>
-      <div class="relative w-full">
+      <div class="relative w-full max-w-3xl">
         <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
-        <button id="advancedSearchHelp" type="button" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-xs font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={t.shops.advancedSearchLabel} data-tip={t.shops.advancedSearchTip}>i</button>
+        <button id="advancedSearchHelp" type="button" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-xs font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip={t.shops.advancedSearchTip}>i</button>
       </div>
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-          <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-          <span>{t.shops.matchCategory}</span>
-        </label>
-        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-          <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
-          <span>{t.shops.matchMerchant}</span>
-        </label>
-        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-          <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+      <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
+          <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
           <span>{t.shops.showSoldOut}</span>
         </label>
-        <label class="label cursor-pointer flex items-center gap-2 text-sm p-0">
-          <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-sm cursor-pointer" />
+        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
+          <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
+          <span>{t.shops.matchCategory}</span>
+        </label>
+        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
+          <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
+          <span>{t.shops.matchMerchant}</span>
+        </label>
+        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
+          <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
           <span>{t.shops.groupByMerchant}</span>
         </label>
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
           <span class="text-sm text-base-content/80">{t.labels.price}</span>
-          <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" aria-describedby="priceFilterHint" />
+          <button id="priceFilterHelp" type="button" class="flex h-4 w-4 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button>
+          <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" />
           <span class="text-xs text-base-content/40">~</span>
-          <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" aria-describedby="priceFilterHint" />
-          <span id="priceFilterHint" class="w-full text-xs text-base-content/50 sm:w-auto">{t.shops.priceFilterHint}</span>
+          <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
           <span class="text-sm text-base-content/80">{t.shops.sort}</span>
           <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
             <option value="default" selected={!initialSort || initialSort === 'default'}>{t.shops.defaultSort}</option>
@@ -236,23 +263,73 @@ const shopProductsJsonValue = JSON.stringify({
           </select>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">{t.labels.popularSearch}</span>
-        <div id="quickTagFilters" class="flex flex-wrap gap-1.5" aria-label={t.shops.hotSearchTags}>
+      <div id="quickPlanRow" class="flex flex-wrap items-center gap-1" aria-label={t.shops.quickPlanSearch}>
+        <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.shops.quickPlanSearch}</span>
+        {quickPlanSearchTerms.map(term => (
+          <button
+            type="button"
+            class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
+            data-quick-plan-query={term.query}
+            data-quick-plan-path={linkTo(quickPlanSearchSeoPath(term))}
+            data-official-price-path={term.officialPriceSlug && officialPriceUrlSlugs.has(term.officialPriceSlug) ? linkTo(officialPricePathname(term.officialPriceSlug)) : undefined}
+            data-gateway-path={quickPlanGatewayPath(term) ? linkTo(quickPlanGatewayPath(term)) : undefined}
+            data-gateway-model-family={term.gatewayModelFamily}
+            data-gateway-model-family-name={term.gatewayModelFamilyName}
+          >
+            {term.label}
+          </button>
+        ))}
+      </div>
+      <div class="flex flex-wrap items-center gap-1">
+        <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.labels.popularSearch}</span>
+        <div id="quickTagFilters" class="flex flex-wrap gap-0.5" aria-label={t.shops.hotSearchTags}>
           {popularSearchTermsValue.map(term => {
             const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
             return (
-              <button type="button" class="btn btn-outline btn-sm text-sm! rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
+              <button type="button" class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
             );
           })}
         </div>
       </div>
-      <div id="quickPlanRow" class="flex flex-wrap items-center gap-2" aria-label={t.shops.quickPlanSearch}>
-        <span class="text-sm font-semibold text-base-content/65 uppercase tracking-wider">{t.shops.quickPlanSearch}</span>
-        {quickPlanSearchTerms.map((term, index) => (
-          <button type="button" class={`btn btn-outline btn-sm text-sm! rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200! ${index >= quickPlanVisibleLimit ? 'hidden' : ''}`} data-quick-plan-query={term.query} data-quick-plan-index={String(index)}>{term.label}</button>
-        ))}
-        <button id="quickPlanToggle" type="button" class="hidden" data-more-label={t.shops.moreQuickPlans} data-less-label={t.shops.lessQuickPlans}>{t.shops.moreQuickPlans}</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <a
+          id="officialPriceTip"
+          href={initialOfficialPricePath || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          class:list={[
+            initialOfficialPricePath ? 'inline-flex' : 'hidden',
+            'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+          ]}
+          data-umami-event="quick-plan-official-price-tip-click"
+          data-umami-event-url={initialOfficialPricePath || undefined}
+          data-umami-event-name={initialOfficialPricePath ? seoSearchTerm?.label : undefined}
+        >
+          <span data-official-price-tip-label>{initialOfficialPriceTipLabel}</span>
+          <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m13 6 6 6-6 6"></path>
+          </svg>
+        </a>
+        <a
+          id="gatewayTip"
+          href={initialGatewayTipPath || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          class:list={[
+            initialGatewayTipPath ? 'inline-flex' : 'hidden',
+            'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+          ]}
+          data-umami-event="quick-plan-gateway-tip-click"
+          data-umami-event-url={initialGatewayTipPath || undefined}
+          data-umami-event-name={initialGatewayTipPath && seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : undefined}
+        >
+          <span data-gateway-tip-label>{initialGatewayTipLabel}</span>
+          <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m13 6 6 6-6 6"></path>
+          </svg>
+        </a>
       </div>
     </form>
   </section>

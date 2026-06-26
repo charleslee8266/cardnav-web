@@ -606,24 +606,24 @@
     @apply overflow-x-auto;
   }
 
-  .tool-tablist {
-    @apply inline-flex min-w-full flex-nowrap gap-1 rounded-2xl border border-base-300/80 bg-base-200/85 p-1 shadow-sm md:min-w-0;
-  }
-
-  .tool-tab {
-    @apply rounded-xl border border-transparent px-3.5 py-2 text-sm font-semibold transition-colors transition-shadow duration-200;
-  }
-
-  .tool-tab-inactive {
-    @apply text-base-content/75 hover:bg-base-100 hover:text-primary;
-  }
-
-  .tool-tab-active {
-    @apply border-base-300/80 bg-base-100 text-primary shadow-sm;
+  .tabs-box .tab {
+    @apply font-semibold;
   }
 
   .tool-tab-badge {
     @apply ml-2 rounded-full bg-base-200 px-2 py-0.5 text-[11px] font-semibold text-base-content/60;
+  }
+
+  .content-tablist {
+    @apply w-fit max-w-full flex-wrap;
+  }
+
+  .content-tab {
+    @apply whitespace-nowrap;
+  }
+
+  .gateway-home-tablist {
+    @apply min-w-full flex-nowrap md:min-w-0;
   }
 
   .ip-purity-facts-grid {

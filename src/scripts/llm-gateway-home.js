@@ -1,3 +1,6 @@
+/*
+ * 文件说明: 中转站首页标签页、本地筛选、URL 查询参数同步、懒加载与排序埋点交互。
+ */
 import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-display.ts';
 
 (() => {
@@ -6,6 +9,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
   const config = JSON.parse(document.getElementById('gateway-home-config')?.textContent || '{}');
   const paymentMethodLabels = config.paymentMethodLabels || {};
+  const siteSearchInput = gatewayHome.querySelector('[data-home-site-search]');
+  const siteFamilySelect = gatewayHome.querySelector('[data-home-site-family]');
+  const sitePaymentSelect = gatewayHome.querySelector('[data-home-site-payment]');
+  const modelSearchInput = gatewayHome.querySelector('[data-home-model-search]');
   let gatewayFilterTrackTimer = null;
   let lastGatewayFilterTrackKey = '';
 
@@ -113,7 +120,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const infoWrap = el('div', 'flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between');
     const textWrap = el('div', 'min-w-0 space-y-2');
     const titleWrap = el('div', 'flex flex-wrap items-center gap-2');
-    const siteLink = el('a', 'link link-hover break-words text-base font-semibold text-base-content', site.name);
+    const siteLink = el('a', 'link link-hover break-words text-base font-semibold text-primary', site.name);
     siteLink.href = `${config.gatewayLinkPrefix}/${site.slug}`;
     setTracking(siteLink, gatewaySiteTracking(site));
     titleWrap.append(siteLink);
@@ -176,7 +183,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     row.lastElementChild.dataset.label = config.rankLabel;
     const modelCell = document.createElement('td');
     modelCell.dataset.label = config.modelLabel;
-    const modelLink = el('a', 'link link-hover break-words font-mono text-sm font-semibold text-base-content', model.modelId);
+    const modelLink = el('a', 'link link-hover break-words font-mono text-sm font-semibold text-primary', model.modelId);
     modelLink.href = `${config.modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
     setTracking(modelLink, gatewayModelTracking(model));
     modelCell.append(modelLink);
@@ -199,10 +206,53 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     }, 600);
   }
 
+  function selectHasValue(select, value) {
+    if (!select || !value) return false;
+    return Array.from(select.options).some(option => option.value === value);
+  }
+
+  function readSiteFilterQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    const family = normalizeSiteFamilyParam(params.get('model') || params.get('family') || '');
+    const payment = (params.get('payment') || '').trim();
+    return {
+      family: selectHasValue(siteFamilySelect, family) ? family : '',
+      payment: selectHasValue(sitePaymentSelect, payment) ? payment : '',
+    };
+  }
+
+  function normalizeSiteFamilyParam(value) {
+    return value.trim().toLowerCase();
+  }
+
+  function syncSiteFilterControlsFromQuery() {
+    const { family, payment } = readSiteFilterQueryParams();
+    if (siteFamilySelect) siteFamilySelect.value = family;
+    if (sitePaymentSelect) sitePaymentSelect.value = payment;
+  }
+
+  function syncSiteFilterQueryFromControls() {
+    const url = new URL(window.location.href);
+    const selectedFamily = siteFamilySelect?.value || '';
+    const selectedPayment = sitePaymentSelect?.value || '';
+    if (selectedFamily) {
+      url.searchParams.set('model', selectedFamily);
+    } else {
+      url.searchParams.delete('model');
+    }
+    url.searchParams.delete('family');
+    if (selectedPayment) {
+      url.searchParams.set('payment', selectedPayment);
+    } else {
+      url.searchParams.delete('payment');
+    }
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+
   function applySiteFilters({ track = true } = {}) {
-    const keyword = (gatewayHome.querySelector('[data-home-site-search]')?.value || '').trim().toLowerCase();
-    const selectedFamily = gatewayHome.querySelector('[data-home-site-family]')?.value || '';
-    const selectedPayment = gatewayHome.querySelector('[data-home-site-payment]')?.value || '';
+    const keyword = (siteSearchInput?.value || '').trim().toLowerCase();
+    const selectedFamily = siteFamilySelect?.value || '';
+    const selectedPayment = sitePaymentSelect?.value || '';
     let visibleCount = 0;
     gatewayHome.querySelectorAll('[data-home-site-card]').forEach(card => {
       const matchesKeyword = !keyword || (card.dataset.search || '').includes(keyword);
@@ -222,7 +272,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function applyModelFilters({ track = true } = {}) {
-    const keyword = (gatewayHome.querySelector('[data-home-model-search]')?.value || '').trim().toLowerCase();
+    const keyword = (modelSearchInput?.value || '').trim().toLowerCase();
     let visibleCount = 0;
     gatewayHome.querySelectorAll('[data-home-model-card]').forEach(card => {
       const visible = !keyword || (card.dataset.search || '').includes(keyword);
@@ -236,11 +286,15 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     });
   }
 
+  function applySiteFilterChange() {
+    syncSiteFilterQueryFromControls();
+    applySiteFilters();
+  }
+
   function showTab(tabName) {
     gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
       const active = tab.dataset.gatewayTab === tabName;
-      tab.classList.toggle('tool-tab-active', active);
-      tab.classList.toggle('tool-tab-inactive', !active);
+      tab.classList.toggle('tab-active', active);
       tab.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     gatewayHome.querySelectorAll('[data-gateway-panel]').forEach(panel => {
@@ -280,10 +334,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
     tab.addEventListener('click', () => showTab(tab.dataset.gatewayTab || 'sites'));
   });
-  gatewayHome.querySelector('[data-home-site-search]')?.addEventListener('input', applySiteFilters);
-  gatewayHome.querySelector('[data-home-site-family]')?.addEventListener('change', applySiteFilters);
-  gatewayHome.querySelector('[data-home-site-payment]')?.addEventListener('change', applySiteFilters);
-  gatewayHome.querySelector('[data-home-model-search]')?.addEventListener('input', applyModelFilters);
+  siteSearchInput?.addEventListener('input', applySiteFilters);
+  siteFamilySelect?.addEventListener('change', applySiteFilterChange);
+  sitePaymentSelect?.addEventListener('change', applySiteFilterChange);
+  modelSearchInput?.addEventListener('input', applyModelFilters);
   gatewayHome.querySelectorAll('[data-gateway-load-more]').forEach(button => {
     button.addEventListener('click', () => loadMore(button.dataset.gatewayLoadMore || 'sites'), { once: true });
   });
@@ -298,5 +352,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
         direction: currentDirection === 'asc' ? 'desc' : 'asc',
       });
     });
+  });
+  syncSiteFilterControlsFromQuery();
+  applySiteFilters({ track: false });
+  window.addEventListener('popstate', () => {
+    syncSiteFilterControlsFromQuery();
+    applySiteFilters({ track: false });
   });
 })();

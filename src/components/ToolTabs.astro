@@ -37,7 +37,7 @@ const tabs: ToolTab[] = [
 <section class="card bg-base-100 border border-base-300 shadow-sm">
   <div class="card-body p-4">
     <div class="tool-tablist-wrap">
-      <div role="tablist" class="tool-tablist tabs tabs-box" aria-label={t.nav.tools}>
+      <div role="tablist" class="tabs tabs-box" aria-label={t.nav.tools}>
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
           return (
@@ -46,8 +46,8 @@ const tabs: ToolTab[] = [
               href={linkTo(tab.href)}
               aria-current={isActive ? 'page' : undefined}
               class:list={[
-                'tool-tab tab',
-                isActive ? 'tool-tab-active tab-active' : 'tool-tab-inactive',
+                'tab',
+                isActive && 'tab-active',
               ]}
             >
               <span>{tab.label}</span>

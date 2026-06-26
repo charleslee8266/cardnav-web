@@ -10,6 +10,7 @@ import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
 import { loadPageContent } from './page-content.js';
 import { quickPlanSearchSeoPath, quickPlanSearchTerms } from './shop-plan-search.js';
+import { buildShopSearchPageMeta } from './shop-search-page-meta.js';
 import type { PublicGatewayModelRow, PublicGatewaySiteRow } from './store.js';
 
 export type PublicSeoRoute = {
@@ -184,12 +185,19 @@ export function buildShopSeoRoutes(lastmod?: string, locale: Locale = defaultLoc
 
 export function buildQuickPlanSearchSeoRoutes(locale: Locale = defaultLocale): PublicSeoRoute[] {
   const messages = getMessages(locale);
-  return quickPlanSearchTerms.map(term => ({
-    pathname: routePath(quickPlanSearchSeoPath(term), locale),
-    title: messages.shops.searchResultsTitle.replace('{term}', term.label),
-    description: messages.shops.searchResultsDescription.replace('{term}', term.label),
-    changefreq: 'weekly' as const,
-  }));
+  return quickPlanSearchTerms.map(term => {
+    const meta = buildShopSearchPageMeta(term.label, {
+      searchResultsTitle: messages.shops.searchResultsTitle,
+      searchResultsDescription: messages.shops.searchResultsDescription,
+    });
+
+    return {
+      pathname: routePath(quickPlanSearchSeoPath(term), locale),
+      title: meta.pageTitle,
+      description: meta.pageDescription,
+      changefreq: 'weekly' as const,
+    };
+  });
 }
 
 export function buildGatewaySeoRoutes(gatewaySites: PublicGatewaySiteRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {

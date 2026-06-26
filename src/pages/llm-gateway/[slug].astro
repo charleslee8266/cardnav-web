@@ -141,7 +141,7 @@ function gatewayModelClickAttrs(modelId: string) {
               {prices.length > 0 ? prices.map(price => (
                 <tr>
                   <td class="min-w-48">
-                    <a href={modelHref(price.modelId)} class="link link-hover break-words font-mono text-xs font-semibold text-base-content" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
+                    <a href={modelHref(price.modelId)} class="link link-hover break-words font-mono text-xs font-semibold text-primary" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
                   </td>
                   <td>{displayPriceUnit(price.unit)}</td>
                   <td class="font-mono">{formatPrice(price.inputPrice)}</td>
