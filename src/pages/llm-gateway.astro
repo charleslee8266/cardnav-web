@@ -15,7 +15,6 @@ import {
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
-import gatewayHomeScriptUrl from '../scripts/llm-gateway-home.js?url';
 import sortableTablesScriptUrl from '../scripts/sortable-tables.js?url';
 
 const t = Astro.locals.messages;
@@ -267,5 +266,7 @@ const gatewayHomeConfig = {
   )}
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
   <script is:inline slot="scripts" defer src={sortableTablesScriptUrl}></script>
-  <script is:inline slot="scripts" type="module" src={gatewayHomeScriptUrl}></script>
+  <script>
+    import '../scripts/llm-gateway-home.js';
+  </script>
 </PublicPage>

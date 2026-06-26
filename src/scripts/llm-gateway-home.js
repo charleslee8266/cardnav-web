@@ -1,7 +1,7 @@
 /*
  * 文件说明: 中转站首页标签页、本地筛选、URL 查询参数同步、懒加载与排序埋点交互。
  */
-import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-display.ts';
+import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-display.js';
 
 (() => {
   const gatewayHome = document.querySelector('[data-gateway-home]');

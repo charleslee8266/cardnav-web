@@ -921,19 +921,20 @@ async function applyFilters(options = {}) {
   updateCurrentProductCountFromVisible(visibleProductCount);
   emptyState.classList.toggle('hidden', visibleCount > 0 || isShopProductsDataLoading);
   if (groupByMerchant) updateFlatProgressiveLoadSummary(0, 0);
+  const shouldUseCanonicalShopPath = shouldResetSearchPageMeta(searchQuery);
   const params = new URLSearchParams();
-  if (searchQuery && !currentQuickPlanPath) params.set('q', searchQuery);
+  if (searchQuery && (!currentQuickPlanPath || shouldUseCanonicalShopPath)) params.set('q', searchQuery);
   if (showSoldOut) params.set('showSoldOut', '1');
   if (groupByMerchant) params.set('groupByMerchant', '1');
   if (matchCategoryFilter.checked) params.set('matchCategory', '1');
   if (matchMerchantFilter.checked) params.set('matchMerchant', '1');
   if (priceMinValue) params.set('priceMin', priceMinValue);
   if (priceMaxValue) params.set('priceMax', priceMaxValue);
-  if (!currentQuickPlanPath && flatSortSelect?.value && flatSortSelect.value !== 'default' && flatSortSelect.value !== 'custom') {
+  if ((!currentQuickPlanPath || shouldUseCanonicalShopPath) && flatSortSelect?.value && flatSortSelect.value !== 'default' && flatSortSelect.value !== 'custom') {
     params.set('sort', flatSortSelect.value);
   }
   resetSearchPageMeta(searchQuery);
-  const nextPath = currentQuickPlanPath || (shouldResetSearchPageMeta(searchQuery) ? '/shops' : (window.location.pathname || '/shops'));
+  const nextPath = currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : '/shops';
   const nextUrl = params.toString() ? `${nextPath}?${params.toString()}` : nextPath;
   history.replaceState(null, '', nextUrl);
 }
