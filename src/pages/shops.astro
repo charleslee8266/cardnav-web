@@ -83,13 +83,6 @@ const shopListItems = renderedProducts.slice(0, 20).map((product, index) => ({
   url: product.productUrl,
   position: index + 1,
 }));
-const shopProductSchemaItems = renderedProducts.slice(0, 20).map(product => ({
-  name: `${product.categoryName} - ${product.name}`,
-  url: product.productUrl,
-  price: typeof product.priceNumber === 'number' && Number.isFinite(product.priceNumber) ? product.priceNumber : undefined,
-  priceCurrency: product.priceUnit === '$' ? 'USD' : 'CNY',
-  availability: product.inStock ? 'InStock' as const : 'OutOfStock' as const,
-}));
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: seoPathname,
@@ -100,7 +93,6 @@ const seo = buildSeoContext({
   noindex: hasNonCanonicalQuery,
   breadcrumbs: shopBreadcrumbs,
   listItems: shopListItems,
-  products: shopProductSchemaItems,
   locale: Astro.locals.locale,
 });
 const normalSeo = buildSeoContext({

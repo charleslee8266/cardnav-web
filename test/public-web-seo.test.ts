@@ -313,7 +313,7 @@ test('homepage official price matcher keeps preferred plan order', () => {
   assert.deepEqual(matched.map(entry => entry.urlSlug), ['chatgpt-plus', 'claude-pro']);
 });
 
-test('shops product schema emits Product nodes with Offer data', () => {
+test('shops list schema avoids Product nodes that require real reviews', () => {
   const seo = buildSeoContext({
     baseUrl: 'https://cardnav.xyz',
     pathname: '/shops',
@@ -321,20 +321,18 @@ test('shops product schema emits Product nodes with Offer data', () => {
     description: '商品页。',
     imagePath: '/og-cardnav.png',
     type: 'webpage',
-    products: [{
+    listItems: [{
       name: 'GPT Plus',
       url: 'https://example.com/product',
-      price: 18,
-      priceCurrency: 'CNY',
-      availability: 'InStock',
+      position: 1,
     }],
   });
 
   const graph = (seo.jsonLd as { '@graph': Array<Record<string, unknown>> })['@graph'];
+  const listNode = graph.find(node => node['@type'] === 'ItemList');
   const productNode = graph.find(node => node['@type'] === 'Product');
-  assert.ok(productNode);
-  assert.equal((productNode.offers as { '@type': string })['@type'], 'Offer');
-  assert.equal((productNode.offers as { price: string }).price, '18');
+  assert.ok(listNode);
+  assert.equal(productNode, undefined);
 });
 
 test('non-database public SEO routes build canonical metadata', () => {

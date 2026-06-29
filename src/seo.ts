@@ -25,14 +25,6 @@ export type SeoListItem = {
   position?: number;
 };
 
-export type SeoProductItem = {
-  name: string;
-  url?: string;
-  price?: number;
-  priceCurrency?: string;
-  availability?: 'InStock' | 'OutOfStock';
-};
-
 export interface SeoInput {
   baseUrl: string;
   pathname: string;
@@ -46,7 +38,6 @@ export interface SeoInput {
   locale?: Locale;
   breadcrumbs?: SeoBreadcrumb[];
   listItems?: SeoListItem[];
-  products?: SeoProductItem[];
   enableSiteSearch?: boolean;
 }
 
@@ -98,25 +89,6 @@ function buildItemListJsonLd(listItems: SeoListItem[]) {
       ...(item.url ? { url: item.url } : {}),
     })),
   };
-}
-
-function buildProductJsonLd(products: SeoProductItem[], pageUrl: string) {
-  return products.map(product => ({
-    '@type': 'Product',
-    name: product.name,
-    ...(product.url ? { url: product.url } : {}),
-    offers: {
-      '@type': 'Offer',
-      url: product.url || pageUrl,
-      ...(typeof product.price === 'number' && Number.isFinite(product.price)
-        ? {
-            price: String(product.price),
-            priceCurrency: product.priceCurrency || 'CNY',
-          }
-        : {}),
-      availability: `https://schema.org/${product.availability || 'InStock'}`,
-    },
-  }));
 }
 
 export function buildSeoContext(input: SeoInput) {
@@ -195,10 +167,6 @@ export function buildSeoContext(input: SeoInput) {
 
   if (input.listItems?.length) {
     jsonLdNodes.push(buildItemListJsonLd(input.listItems));
-  }
-
-  if (input.products?.length) {
-    jsonLdNodes.push(...buildProductJsonLd(input.products, canonicalUrl));
   }
 
   return {
