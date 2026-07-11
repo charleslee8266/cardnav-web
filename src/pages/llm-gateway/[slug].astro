@@ -108,7 +108,7 @@ function gatewayModelClickAttrs(modelId: string) {
     </div>
     <div slot="footer">
       <div class="mt-4 flex flex-wrap gap-2">
-        {shortList(site.modelFamilies, 12).map(family => <span class="badge badge-primary badge-outline">{family}</span>)}
+        {shortList(site.displayModelFamilies, 12).map(family => <span class="badge badge-primary badge-outline">{family}</span>)}
       </div>
       <div class="mt-4">
         <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" {...gatewaySiteOpenAttrs()}>{t.actions.open}</a>
