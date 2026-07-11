@@ -148,11 +148,11 @@ npm run typecheck
 cardnav-web/
 ├── content/              # Руководства, страница about, политика приватности и другой Markdown-контент
 ├── public/               # favicon, OG-изображение и статические ресурсы
+├── src/layouts/          # Общие макеты страниц Astro
 ├── src/pages/            # Astro-страницы и API-маршруты
 ├── src/scripts/          # Главная страница, страницы инструментов и другие frontend-скрипты взаимодействия
 ├── src/store.ts          # Чтение публичных данных
-├── src/seo-routes.ts     # Список страниц для sitemap, robots и llms.txt
-└── views/                # Шаблонные ресурсы публичного сайта
+└── src/seo-routes.ts     # Список страниц для sitemap, robots и llms.txt
 ```
 
 ## Участие в разработке
