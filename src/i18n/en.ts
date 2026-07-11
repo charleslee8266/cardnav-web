@@ -557,10 +557,10 @@ export const enMessages: Messages = {
       name: 'PackyAPI established AI API gateway',
       description: 'One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with invoice support.',
     },
-    rightCode: {
-      alt: 'RightCode sponsor logo',
-      name: 'RightCode enterprise AI Agent distribution platform',
-      description: 'Focused on software development, supporting Codex, Claude, DeepSeek, and more.',
+    yunwuApi: {
+      alt: 'Yunwu API sponsor logo',
+      name: 'Yunwu API',
+      description: 'Fast and convenient Web API access for developers through a stable, easy-to-use platform that integrates nearly all major AI models.',
     },
     rackNerd: {
       alt: 'RackNerd cloud server sponsor banner',

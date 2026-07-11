@@ -76,22 +76,14 @@ One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with 
 
 [Register](https://www.packyapi.com/register?aff=Nulo)
 
-## RightCode enterprise-level AI Agent distribution platform
-<!-- badge="Programming development" icon="toolbox" imageAspect="3.44/1" -->
+## Yunwu API
+<!-- badge="Multi-model access" icon="api" imageAspect="2.95/1" -->
 
-![RightCode sponsor logo](../../../public/rightcode.webp)
+![Yunwu API sponsor logo](../../../public/yunwu-api.png)
 
-Focused on programming development, supporting multiple models such as Codex, Claude, and DeepSeek, suitable for users mainly working with code and Agent workflows.
+Yunwu API provides developers with fast and convenient Web API access through a stable, easy-to-use platform that integrates nearly all major AI models.
 
-### Suitable scenarios
-- Code assistants, Agent distribution, and internal trials for development teams
-- Users mainly working with code and automated workflows
-
-### Notes
-- First test response quality, tool compatibility, and quota consumption with real development tasks
-- Decide whether to use it long term only after confirming stability
-
-[Register](https://www.right.codes/register?aff=84ba7fb0)
+[Register](https://yunwu.ai/register?aff=HV01)
 
 ## Usage advice
 

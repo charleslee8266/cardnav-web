@@ -556,10 +556,10 @@ export const zhMessages = {
       name: 'PackyAPI 老牌 AI API 中转站',
       description: '一站式接入 Claude、GPT、Gemini 等主流 AI 服务，可提供发票。',
     },
-    rightCode: {
-      alt: 'RightCode 赞助商标志',
-      name: 'RightCode 企业级 AI Agent 分发平台',
-      description: '专注于编程开发，支持Codex、Claude、DeepSeek等多种模型。',
+    yunwuApi: {
+      alt: '云雾 API 赞助商标志',
+      name: '云雾 API',
+      description: '致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。',
     },
     rackNerd: {
       alt: 'RackNerd 云主机赞助商横幅',

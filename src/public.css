@@ -784,6 +784,10 @@
     @apply max-h-[80%] max-w-[90%] object-contain;
   }
 
+  .sponsor-logo-cover {
+    @apply object-cover;
+  }
+
   .sponsor-name {
     @apply block text-center text-sm font-semibold leading-5 text-base-content underline-offset-2 group-hover:underline;
   }

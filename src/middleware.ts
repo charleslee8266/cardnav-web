@@ -13,7 +13,7 @@ import {
 } from './public-data-cache.js';
 import { submitSiteUrl } from './store.js';
 
-const brandAssetPathPattern = /^\/(favicon\.(?:webp|png)|og-cardnav\.(?:webp|png)|rightcode\.webp)$/;
+const brandAssetPathPattern = /^\/(favicon\.(?:webp|png)|og-cardnav\.(?:webp|png)|yunwu-api\.png)$/;
 
 function looksLikePublicPagePath(pathname: string) {
   if (pathname.startsWith('/api/') || pathname.startsWith('/_astro/')) return false;

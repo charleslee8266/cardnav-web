@@ -557,10 +557,10 @@ export const ruMessages: Messages = {
       name: 'PackyAPI, опытный AI API gateway',
       description: 'Единый доступ к Claude, GPT, Gemini и другим популярным AI-сервисам, возможны счета.',
     },
-    rightCode: {
-      alt: 'Логотип спонсора RightCode',
-      name: 'RightCode, платформа распространения enterprise AI Agent',
-      description: 'Фокус на разработке: поддерживает Codex, Claude, DeepSeek и другие модели.',
+    yunwuApi: {
+      alt: 'Логотип спонсора Yunwu API',
+      name: 'Yunwu API',
+      description: 'Быстрый и удобный доступ к Web API для разработчиков через стабильную и простую платформу, объединяющую почти все основные модели ИИ.',
     },
     rackNerd: {
       alt: 'Баннер спонсора RackNerd cloud servers',
