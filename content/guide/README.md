@@ -141,14 +141,14 @@ vps
 卡片图片使用标准 Markdown 图片语法，不写进属性注释。这样同一份 Markdown 在 GitHub 里也能正常显示图片：
 
 ```markdown
-## AnyRouter 公益站点
-<!-- badge="公益额度" imageAspect="3.44/1" -->
+## 示例服务
+<!-- badge="服务标签" imageAspect="3.44/1" -->
 
-![AnyRouter 赞助商标志](../../../public/anyrouter.png)
+![示例服务标志](../../../public/example.png)
 
-支持 GPT、Claude 等模型，每日登录赠送免费额度，适合先低成本试用 API 中转。
+用一句话说明服务内容和适用场景。
 
-[前往注册](https://anyrouter.top/register?aff=JA5h)
+[前往官网](https://example.com)
 ```
 
 网页渲染时会把卡片正文开头的第一张独立图片提取到卡片图片区，并把 `../../../public/xxx.png` 转成线上可访问的 `/xxx.png`。GitHub 渲染时则保留标准 Markdown 图片。

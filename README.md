@@ -165,10 +165,6 @@ cardnav-web/
 - 搜索、筛选和排序体验建议
 - 文档、环境变量和本地运行说明修正
 
-## 鸣谢
-
-感谢 <a href="https://linux.do">Linux.do</a> 社区对本项目的关注、讨论与推广。
-
 ## License
 
 卡网大全 (CardNav) 的软件代码使用 [GNU Affero General Public License v3.0](./LICENSE) 开源。

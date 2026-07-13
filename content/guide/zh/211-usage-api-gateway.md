@@ -42,15 +42,6 @@ API 中转站适合想快速接入大模型能力，但暂时不想处理海外�
 
 ## 推荐中转站
 
-## AnyRouter 公益站点
-<!-- badge="公益额度" icon="gift" imageAspect="3.44/1" -->
-
-![AnyRouter 赞助商标志](../../../public/anyrouter.png)
-
-支持 GPT、Claude 等模型，每日登录赠送免费额度，适合先低成本试用或作为轻量备用入口。
-
-[前往注册](https://anyrouter.top/register?aff=JA5h)
-
 ## PackyAPI 老牌 AI API 中转站
 <!-- badge="多模型接入" icon="api" imageAspect="3.44/1" -->
 

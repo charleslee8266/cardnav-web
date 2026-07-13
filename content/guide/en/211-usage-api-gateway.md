@@ -42,23 +42,6 @@ API gateway sites suit users who want to quickly connect to large model capabili
 
 ## Recommended gateway sites
 
-## AnyRouter public-benefit site
-<!-- badge="Public-benefit quota" icon="gift" imageAspect="3.44/1" -->
-
-![AnyRouter sponsor logo](../../../public/anyrouter.png)
-
-Supports models such as GPT and Claude, gives free quota on daily login, and is suitable for trying API gateway at low cost first.
-
-### Suitable scenarios
-- First experience the gateway site calling process
-- Use as a lightweight backup entry
-
-### Notes
-- Public-benefit quota is suitable for trials
-- Do not rely completely on a single free entry for key long-term tasks
-
-[Register](https://anyrouter.top/register?aff=JA5h)
-
 ## PackyAPI established AI API gateway site
 <!-- badge="Multi-model access" icon="api" imageAspect="3.44/1" -->
 

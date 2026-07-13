@@ -547,11 +547,6 @@ export const ruMessages: Messages = {
       name: 'TokenPlus',
       description: 'AI Resource & Service Linker Community.',
     },
-    anyRouter: {
-      alt: 'Логотип спонсора AnyRouter',
-      name: 'AnyRouter public-benefit site',
-      description: 'Поддерживает GPT, Claude и другие модели, ежедневно дает бесплатные кредиты после входа.',
-    },
     packyApi: {
       alt: 'Логотип спонсора PackyAPI AI API aggregation platform',
       name: 'PackyAPI, опытный AI API gateway',

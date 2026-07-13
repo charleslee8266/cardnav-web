@@ -547,11 +547,6 @@ export const enMessages: Messages = {
       name: 'TokenPlus',
       description: 'AI Resource & Service Linker Community.',
     },
-    anyRouter: {
-      alt: 'AnyRouter sponsor logo',
-      name: 'AnyRouter public-benefit site',
-      description: 'Supports GPT, Claude, and other models, with free daily credits after login.',
-    },
     packyApi: {
       alt: 'PackyAPI AI API aggregation platform sponsor logo',
       name: 'PackyAPI established AI API gateway',

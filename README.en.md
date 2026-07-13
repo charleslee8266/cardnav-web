@@ -165,10 +165,6 @@ Issues and Pull Requests are welcome for:
 - Search, filtering, and sorting experience suggestions
 - Documentation, environment variable, and local runtime fixes
 
-## Acknowledgements
-
-Thanks to the <a href="https://linux.do">Linux.do</a> community for its attention, discussion, and promotion of this project.
-
 ## License
 
 CardNav's software code is open sourced under the [GNU Affero General Public License v3.0](./LICENSE).

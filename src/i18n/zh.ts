@@ -546,11 +546,6 @@ export const zhMessages = {
       name: 'TokenPlus',
       description: 'AI资源与服务链接器',
     },
-    anyRouter: {
-      alt: 'AnyRouter 赞助商标志',
-      name: 'AnyRouter 公益站点',
-      description: '支持GPT、Claude等模型，每日登录赠送免费额度。',
-    },
     packyApi: {
       alt: 'PackyAPI AI API 聚合平台赞助商标志',
       name: 'PackyAPI 老牌 AI API 中转站',
