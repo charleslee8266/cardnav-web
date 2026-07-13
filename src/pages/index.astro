@@ -235,12 +235,16 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
     </div>
   </section>
 
-  <section class="site-main-width mt-4">
+  <section class="site-main-width mt-4 grid grid-cols-[minmax(0,1fr)] gap-5">
+    <div>
+      <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.highlightsTitle}</h2>
+    </div>
+
     <article class="card bg-base-100 border border-primary/20 shadow-md">
       <div class="card-body gap-4 p-4 md:p-5">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.productHighlightsTitle}</h2>
+            <h3 class="text-lg font-bold text-base-content">{t.home.productHighlightsTitle}</h3>
             <p class="mt-2 text-sm leading-6 text-base-content/72">{t.shops.description}</p>
           </div>
           <a href={linkTo('/shops')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}</a>
@@ -277,12 +281,6 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
         </div>
       </div>
     </article>
-  </section>
-
-  <section class="site-main-width mt-4 grid grid-cols-[minmax(0,1fr)] gap-5">
-    <div>
-      <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.highlightsTitle}</h2>
-    </div>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body gap-4 p-4">
@@ -327,9 +325,9 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
       </div>
     </article>
 
-    <article class="card bg-base-100 border border-base-300 shadow-sm">
-      <div class="card-body gap-5 p-4">
-        <div class="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
+    <div class="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
+      <article class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body gap-4 p-4">
           <section class="min-w-0">
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <h3 class="text-lg font-bold text-base-content">
@@ -353,7 +351,11 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
               ))}
             </div>
           </section>
+        </div>
+      </article>
 
+      <article class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body gap-4 p-4">
           <section class="min-w-0">
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <h3 class="text-lg font-bold text-base-content">
@@ -377,8 +379,8 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
             </div>
           </section>
         </div>
-      </div>
-    </article>
+      </article>
+    </div>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body gap-4 p-4">
