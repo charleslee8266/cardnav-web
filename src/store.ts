@@ -241,7 +241,8 @@ async function loadShopProductsDataUncached(options: { productLimit?: number } =
         score,
         last_product_refresh_success_at
       FROM shop_sites
-      WHERE type = 'cardShop'
+      WHERE status = 'online'
+        AND type = 'cardShop'
       ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
     : null;
@@ -265,7 +266,8 @@ async function loadShopProductsDataUncached(options: { productLimit?: number } =
       shop_products.refreshed_at
     FROM shop_products
     INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
-    WHERE shop_sites.type = 'cardShop'
+    WHERE shop_sites.status = 'online'
+      AND shop_sites.type = 'cardShop'
     ORDER BY shop_products.score DESC, shop_sites.score DESC, shop_products.in_stock DESC, shop_products.refreshed_at DESC, shop_products.category_name ASC, shop_products.name ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
@@ -322,14 +324,15 @@ async function loadShopProductsDataUncached(options: { productLimit?: number } =
     })();
   const summaryResult = await db.query(`
     SELECT
-      COUNT(*) FILTER (WHERE type = 'cardShop')::INTEGER AS total_site_count,
+      COUNT(*) FILTER (WHERE status = 'online' AND type = 'cardShop')::INTEGER AS total_site_count,
       COALESCE((
         SELECT COUNT(shop_products.*)::INTEGER
         FROM shop_products
         INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
-        WHERE shop_sites.type = 'cardShop'
+        WHERE shop_sites.status = 'online'
+          AND shop_sites.type = 'cardShop'
       ), 0) AS total_product_count,
-      MAX(last_product_refresh_success_at) FILTER (WHERE type = 'cardShop') AS latest_refreshed_at
+      MAX(last_product_refresh_success_at) FILTER (WHERE status = 'online' AND type = 'cardShop') AS latest_refreshed_at
     FROM shop_sites
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
@@ -747,14 +750,17 @@ export async function recordProductClick(input: ProductClickInput) {
       UPDATE shop_products
       SET click_count = click_count + 1
       WHERE ctid IN (
-        SELECT ctid
+        SELECT shop_products.ctid
         FROM shop_products
-        WHERE site_id = $1
+        INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
+        WHERE shop_products.site_id = $1
+          AND shop_sites.status = 'online'
+          AND shop_sites.type = 'cardShop'
           AND (
-            ($2 <> '' AND product_url = $2)
-            OR ($2 = '' AND category_name = $3 AND name = $4)
+            ($2 <> '' AND shop_products.product_url = $2)
+            OR ($2 = '' AND shop_products.category_name = $3 AND shop_products.name = $4)
           )
-        ORDER BY refreshed_at DESC, name ASC
+        ORDER BY shop_products.refreshed_at DESC, shop_products.name ASC
         LIMIT 1
       )
       RETURNING site_id
@@ -782,6 +788,14 @@ async function loadPopularSearchTermsUncached(limit = 10, presetPopularSearchTer
       FROM shop_search_terms
       WHERE shop_search_terms.total_count > 0
         AND shop_search_terms.result_count > 0
+        AND EXISTS (
+          SELECT 1
+          FROM shop_products
+          INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
+          WHERE lower(shop_products.category_name || ' ' || shop_products.name) LIKE '%' || shop_search_terms.term || '%'
+            AND shop_sites.status = 'online'
+            AND shop_sites.type = 'cardShop'
+        )
       ORDER BY shop_search_terms.total_count DESC, shop_search_terms.result_count DESC, shop_search_terms.last_seen_at DESC, shop_search_terms.term ASC
       LIMIT $1
     `,
@@ -808,7 +822,9 @@ async function loadPopularSearchTermsUncached(limit = 10, presetPopularSearchTer
       SELECT candidate_terms.term
       FROM candidate_terms
       INNER JOIN shop_products ON lower(shop_products.category_name || ' ' || shop_products.name) LIKE '%' || candidate_terms.normalized_term || '%'
-      INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id AND shop_sites.type = 'cardShop'
+      INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
+        AND shop_sites.status = 'online'
+        AND shop_sites.type = 'cardShop'
       GROUP BY candidate_terms.term, candidate_terms.ordinality
       HAVING COUNT(shop_products.*) > 0
       ORDER BY candidate_terms.ordinality ASC
