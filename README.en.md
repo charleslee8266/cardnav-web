@@ -32,7 +32,6 @@
   <a href="#guides">Guides</a> ·
   <a href="#local-development">Local Development</a> ·
   <a href="#contributing">Contributing</a> ·
-  <a href="#acknowledgements">Acknowledgements</a> ·
   <a href="#license">License</a>
 </p>
 

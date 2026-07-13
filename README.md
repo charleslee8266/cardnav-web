@@ -32,7 +32,6 @@
   <a href="#使用向导">使用向导</a> ·
   <a href="#本地运行">本地运行</a> ·
   <a href="#贡献">贡献</a> ·
-  <a href="#鸣谢">鸣谢</a> ·
   <a href="#license">License</a>
 </p>
 
