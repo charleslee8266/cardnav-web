@@ -13,6 +13,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   const siteFamilySelect = gatewayHome.querySelector('[data-home-site-family]');
   const sitePaymentSelect = gatewayHome.querySelector('[data-home-site-payment]');
   const modelSearchInput = gatewayHome.querySelector('[data-home-model-search]');
+  const deferredLoadState = {
+    sites: { loaded: !gatewayHome.querySelector('[data-gateway-load-more="sites"]'), promise: null },
+    models: { loaded: !gatewayHome.querySelector('[data-gateway-load-more="models"]'), promise: null },
+  };
   let gatewayFilterTrackTimer = null;
   let lastGatewayFilterTrackKey = '';
 
@@ -249,6 +253,18 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
+  function hasActiveSiteFilters() {
+    return Boolean(
+      (siteSearchInput?.value || '').trim()
+      || siteFamilySelect?.value
+      || sitePaymentSelect?.value
+    );
+  }
+
+  function hasActiveModelFilters() {
+    return Boolean((modelSearchInput?.value || '').trim());
+  }
+
   function applySiteFilters({ track = true } = {}) {
     const keyword = (siteSearchInput?.value || '').trim().toLowerCase();
     const selectedFamily = siteFamilySelect?.value || '';
@@ -271,6 +287,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     });
   }
 
+  async function applySiteFiltersWithDeferred({ track = true } = {}) {
+    if (hasActiveSiteFilters()) await ensureDeferredRowsLoaded('sites');
+    applySiteFilters({ track });
+  }
+
   function applyModelFilters({ track = true } = {}) {
     const keyword = (modelSearchInput?.value || '').trim().toLowerCase();
     let visibleCount = 0;
@@ -286,9 +307,14 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     });
   }
 
+  async function applyModelFiltersWithDeferred({ track = true } = {}) {
+    if (hasActiveModelFilters()) await ensureDeferredRowsLoaded('models');
+    applyModelFilters({ track });
+  }
+
   function applySiteFilterChange() {
     syncSiteFilterQueryFromControls();
-    applySiteFilters();
+    void applySiteFiltersWithDeferred();
   }
 
   function showTab(tabName) {
@@ -303,13 +329,20 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     trackGatewayEvent('gateway-tab-click', { name: tabName });
   }
 
-  async function loadMore(type) {
+  async function ensureDeferredRowsLoaded(type, { trackLoadMore = false } = {}) {
+    const state = deferredLoadState[type];
+    if (!state || state.loaded) return 0;
+    if (state.promise) return state.promise;
+
     const list = gatewayHome.querySelector(type === 'sites' ? '[data-gateway-home-sites-list]' : '[data-gateway-home-models-list]');
     const button = gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`);
     const apiUrl = type === 'sites' ? config.sitesApi : config.modelsApi;
-    if (!list || !button || !apiUrl) return;
-    button.setAttribute('disabled', 'disabled');
-    try {
+    if (!list || !apiUrl) {
+      state.loaded = true;
+      return 0;
+    }
+    button?.setAttribute('disabled', 'disabled');
+    state.promise = (async () => {
       const response = await fetch(apiUrl, { headers: { accept: 'application/json' } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
@@ -319,27 +352,44 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
         ? items.map((site, index) => siteRowElement(site, offset + index))
         : items.map((model, index) => modelRowElement(model, offset + index));
       if (rows.length) list.append(...rows);
-      button.closest('div')?.remove();
+      button?.closest('div')?.remove();
+      state.loaded = true;
       window.initSortableTables?.(gatewayHome);
       const table = list.closest('[data-sortable-table]');
       if (table) window.applySortableTableSort?.(table);
-      if (type === 'sites') applySiteFilters({ track: false });
-      else applyModelFilters({ track: false });
-      trackGatewayEvent('gateway-load-more-click', { name: type, loadedCount: rows.length });
+      if (trackLoadMore) trackGatewayEvent('gateway-load-more-click', { name: type, loadedCount: rows.length });
+      return rows.length;
+    })();
+
+    try {
+      return await state.promise;
     } catch {
-      button.removeAttribute('disabled');
+      button?.removeAttribute('disabled');
+      return 0;
+    } finally {
+      state.promise = null;
     }
+  }
+
+  async function loadMore(type) {
+    await ensureDeferredRowsLoaded(type, { trackLoadMore: true });
+    if (type === 'sites') applySiteFilters({ track: false });
+    else applyModelFilters({ track: false });
   }
 
   gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
     tab.addEventListener('click', () => showTab(tab.dataset.gatewayTab || 'sites'));
   });
-  siteSearchInput?.addEventListener('input', applySiteFilters);
+  siteSearchInput?.addEventListener('input', () => {
+    void applySiteFiltersWithDeferred();
+  });
   siteFamilySelect?.addEventListener('change', applySiteFilterChange);
   sitePaymentSelect?.addEventListener('change', applySiteFilterChange);
-  modelSearchInput?.addEventListener('input', applyModelFilters);
+  modelSearchInput?.addEventListener('input', () => {
+    void applyModelFiltersWithDeferred();
+  });
   gatewayHome.querySelectorAll('[data-gateway-load-more]').forEach(button => {
-    button.addEventListener('click', () => loadMore(button.dataset.gatewayLoadMore || 'sites'), { once: true });
+    button.addEventListener('click', () => loadMore(button.dataset.gatewayLoadMore || 'sites'));
   });
   gatewayHome.querySelectorAll('[data-sort-key]').forEach(button => {
     button.addEventListener('click', () => {
@@ -354,9 +404,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     });
   });
   syncSiteFilterControlsFromQuery();
-  applySiteFilters({ track: false });
+  void applySiteFiltersWithDeferred({ track: false });
   window.addEventListener('popstate', () => {
     syncSiteFilterControlsFromQuery();
-    applySiteFilters({ track: false });
+    void applySiteFiltersWithDeferred({ track: false });
   });
 })();
