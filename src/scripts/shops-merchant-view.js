@@ -153,6 +153,7 @@ export function renderMerchantRows({
     row.className = 'merchant-row';
     row.dataset.siteId = siteFavoriteKey;
     row.dataset.siteText = siteName.toLowerCase();
+    row.dataset.siteUrl = siteUrl.toLowerCase();
     row.dataset.siteName = siteName;
     row.dataset.siteScore = String(Number(site.score) || 0);
     row.dataset.lastProductRefreshSuccessAt = String(new Date(site.lastProductRefreshSuccessAt || '').getTime() || 0);

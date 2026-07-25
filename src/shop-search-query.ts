@@ -7,6 +7,7 @@ export type ShopSearchRow = {
   productName: string;
   categoryName?: string;
   siteText?: string;
+  siteUrl?: string;
 };
 
 export type ShopSearchFieldOptions = {
@@ -107,8 +108,10 @@ export function buildShopSearchRow(row: ShopSearchRow, options: ShopSearchFieldO
   if (options.matchCategory && row.categoryName) {
     searchable.categoryName = row.categoryName;
   }
-  if (options.matchMerchant && row.siteText) {
-    searchable.siteText = row.siteText;
+  if (options.matchMerchant) {
+    const siteText = [row.siteText, row.siteUrl].filter(Boolean).join(' ');
+    if (siteText) searchable.siteText = siteText;
+    if (row.siteUrl) searchable.siteUrl = row.siteUrl;
   }
   return searchable;
 }

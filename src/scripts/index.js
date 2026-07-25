@@ -287,6 +287,7 @@ function buildFlatRows() {
     const product = products[index] || {};
     const siteId = text(product.siteId);
     const siteName = text(product.siteName);
+    const siteUrl = text(product.siteUrl).trim();
     const categoryName = text(product.categoryName);
     const productName = text(product.name);
     const productTitle = `${categoryName}-${productName}`;
@@ -296,6 +297,7 @@ function buildFlatRows() {
       siteFavoriteKey: siteId || siteName,
       siteName: siteName.toLowerCase(),
       siteText: siteName.toLowerCase(),
+      siteUrl: siteUrl.toLowerCase(),
       categoryName: categoryName.toLowerCase(),
       productName: productName.toLowerCase(),
       productTitle: `${categoryName} ${productName} ${productTitle}`.toLowerCase(),
@@ -930,6 +932,7 @@ async function applyFilters(options = {}) {
           productName: chip.dataset.productName || '',
           categoryName: chip.dataset.categoryName || '',
           siteText: row.dataset.siteText || '',
+          siteUrl: row.dataset.siteUrl || '',
         };
         const queryMatched = matchesSearchQuery(chipEntry, query);
         const productMatchCount = query.mode === 'empty' ? 0 : (queryMatched ? 1 : 0);

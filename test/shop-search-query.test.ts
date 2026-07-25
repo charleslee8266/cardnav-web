@@ -69,3 +69,16 @@ test('shop search query can search category when matchCategory is enabled', () =
     false,
   );
 });
+
+test('shop search query can search merchant URL when matchMerchant is enabled', () => {
+  const query = buildShopSearchQuery('example-card.com');
+  const row = { productName: 'plus', siteText: 'example card', siteUrl: 'https://example-card.com' };
+  assert.equal(
+    matchesShopSearchQuery(row, query, { ...baseOptions, matchMerchant: true }),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery(row, query, baseOptions),
+    false,
+  );
+});
