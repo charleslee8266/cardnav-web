@@ -27,6 +27,9 @@ const flatProductRowsContainer = document.querySelector('#flatProductRows');
 const flatProductProgressiveLoad = document.querySelector('#flatProductProgressiveLoad');
 const flatProductLoadSummary = document.querySelector('#flatProductLoadSummary');
 const flatProductLoadMoreButton = document.querySelector('#flatProductLoadMoreButton');
+const merchantProgressiveLoad = document.querySelector('#merchantProgressiveLoad');
+const merchantLoadSummary = document.querySelector('#merchantLoadSummary');
+const merchantLoadMoreButton = document.querySelector('#merchantLoadMoreButton');
 const merchantGroupedView = document.querySelector('#merchantGroupedView');
 const flatProductView = document.querySelector('#flatProductView');
 const shopPageHeroTitle = document.querySelector('#shopPageHeroTitle');
@@ -41,6 +44,8 @@ const favoriteSiteStorageKey = 'cardnav.favoriteSites';
 const favoriteProductStorageKey = 'cardnav.favoriteProducts';
 const DEFAULT_FLAT_PRODUCT_LIMIT = 100;
 const FLAT_PRODUCT_LOAD_MORE_STEP = 100;
+const DEFAULT_MERCHANT_LIMIT = 20;
+const MERCHANT_LOAD_MORE_STEP = 20;
 const FLAT_SORT_PRESETS = {
   default: null,
   'price-asc': { key: 'priceValue', direction: 'asc', type: 'number' },
@@ -52,6 +57,7 @@ let currentFlatRows = flatRows;
 let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
 let currentFlatVisibleLimit = Number(shopProductsData.initialProductLimit) > 0 ? Number(shopProductsData.initialProductLimit) : DEFAULT_FLAT_PRODUCT_LIMIT;
+let currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
 let isShopProductsDataLoading = false;
 let shopProductsDataLoadPromise = null;
 let quickSearchTags = quickTagFilters
@@ -267,6 +273,12 @@ function productStockValue(product) {
   return productStockNumber(product) ?? (product.inStock ? 1 : 0);
 }
 
+function formatScore(value) {
+  const score = Number(value);
+  if (!Number.isFinite(score)) return '-';
+  return Number.isInteger(score) ? String(score) : score.toFixed(2);
+}
+
 function buildFlatRows() {
   flatRows.length = 0;
   const products = Array.isArray(shopProductsData.products) ? shopProductsData.products : [];
@@ -295,6 +307,7 @@ function buildFlatRows() {
       stockValue: productStockValue(product),
       inStock: product.inStock ? 1 : 0,
       score: Number(product.score) || 0,
+      siteScore: Number(product.siteScore) || 0,
       productRefreshedAt: new Date(product.refreshedAt || '').getTime() || 0,
       element: row,
       indexCell: row.querySelector('.flat-row-index'),
@@ -413,6 +426,7 @@ function scheduleApplyFilters() {
 
 function resetFlatVisibleLimit() {
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
+  currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
 }
 
 function shouldResetSearchPageMeta(searchQuery) {
@@ -716,6 +730,12 @@ function createFlatProductRow(item) {
   merchantCell.appendChild(merchantInline);
   row.appendChild(merchantCell);
 
+  const scoreCell = document.createElement('td');
+  scoreCell.className = 'flat-merchant-score-cell';
+  scoreCell.setAttribute('data-label', tableLabel('merchantScore'));
+  scoreCell.appendChild(document.createTextNode(formatScore(item.siteScore)));
+  row.appendChild(scoreCell);
+
   const refreshCell = document.createElement('td');
   refreshCell.className = 'flat-refresh-cell';
   refreshCell.setAttribute('data-label', tableLabel('latestRefresh'));
@@ -775,6 +795,38 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
   } else {
     flatProductLoadMoreButton.classList.add('hidden');
   }
+}
+
+function updateMerchantProgressiveLoadSummary(visibleCount, renderedCount) {
+  if (!merchantLoadSummary || !merchantLoadMoreButton || !merchantProgressiveLoad) return;
+  if (!groupByMerchantFilter.checked) {
+    merchantProgressiveLoad.classList.add('hidden');
+    merchantLoadSummary.classList.add('hidden');
+    merchantLoadMoreButton.classList.add('hidden');
+    return;
+  }
+
+  if (isShopProductsDataLoading) {
+    merchantProgressiveLoad.classList.remove('hidden');
+    merchantLoadSummary.classList.remove('hidden');
+    merchantLoadSummary.textContent = shopsMessages.loading || 'Loading';
+    merchantLoadMoreButton.classList.add('hidden');
+    return;
+  }
+
+  if (visibleCount === 0) {
+    merchantProgressiveLoad.classList.add('hidden');
+    merchantLoadSummary.classList.add('hidden');
+    merchantLoadMoreButton.classList.add('hidden');
+    return;
+  }
+
+  merchantProgressiveLoad.classList.remove('hidden');
+  merchantLoadSummary.classList.remove('hidden');
+  merchantLoadSummary.textContent = (shopsMessages.merchantDisplaySummary || 'Showing {rendered} / {total} matching merchants')
+    .replace('{rendered}', String(renderedCount))
+    .replace('{total}', String(visibleCount));
+  merchantLoadMoreButton.classList.toggle('hidden', renderedCount >= visibleCount);
 }
 
 function updateCurrentProductCount(value) {
@@ -839,6 +891,7 @@ async function applyFilters(options = {}) {
   const hasActiveFilters = Boolean(searchQuery || priceMinValue || priceMaxValue);
   let visibleFlatProductCount = 0;
   let visibleMerchantCount = 0;
+  let renderedMerchantCount = 0;
   let visibleProductCount = 0;
 
   if (shouldLoadFullShopProductsData({
@@ -893,11 +946,13 @@ async function applyFilters(options = {}) {
       row.dataset.visibleProductMatchCount = String(visibleProductMatchCount);
       row.dataset.visibleInStockCount = String(visibleInStockCount);
       row.dataset.visibleSoldOutCount = String(visibleSoldOutCount);
-      row.classList.toggle('hidden', !rowVisible);
+      row.dataset.filterVisible = rowVisible ? '1' : '0';
       visibleProductCount += visibleRowProductCount;
     });
 
-    visibleMerchantCount = sortRows(merchantModule);
+    const merchantRenderState = sortRows(merchantModule);
+    visibleMerchantCount = merchantRenderState.visibleCount;
+    renderedMerchantCount = merchantRenderState.renderedCount;
   } else {
     if (currentFlatSort) {
       sortFlatProductRows();
@@ -920,7 +975,12 @@ async function applyFilters(options = {}) {
   const visibleCount = groupByMerchant ? visibleMerchantCount : visibleFlatProductCount;
   updateCurrentProductCountFromVisible(visibleProductCount);
   emptyState.classList.toggle('hidden', visibleCount > 0 || isShopProductsDataLoading);
-  if (groupByMerchant) updateFlatProgressiveLoadSummary(0, 0);
+  if (groupByMerchant) {
+    updateFlatProgressiveLoadSummary(0, 0);
+    updateMerchantProgressiveLoadSummary(visibleMerchantCount, renderedMerchantCount);
+  } else {
+    updateMerchantProgressiveLoadSummary(0, 0);
+  }
   const shouldUseCanonicalShopPath = shouldResetSearchPageMeta(searchQuery);
   const params = new URLSearchParams();
   if (searchQuery && (!currentQuickPlanPath || shouldUseCanonicalShopPath)) params.set('q', searchQuery);
@@ -940,8 +1000,9 @@ async function applyFilters(options = {}) {
 }
 
 function sortRows(merchantModule) {
-  if (!rowContainer) return 0;
-  let visibleIndex = 0;
+  if (!rowContainer) return { visibleCount: 0, renderedCount: 0 };
+  let visibleCount = 0;
+  let renderedCount = 0;
 
   merchantModule.getMerchantRows()
     .slice()
@@ -957,15 +1018,19 @@ function sortRows(merchantModule) {
     .forEach(({ element: row, indexCell }, sortedIndex) => {
       row.dataset.sortedIndex = String(sortedIndex);
       rowContainer.appendChild(row);
-      if (!row.classList.contains('hidden')) {
-        visibleIndex += 1;
-        if (indexCell) indexCell.textContent = String(visibleIndex);
+      const rowVisible = row.dataset.filterVisible === '1';
+      if (rowVisible) visibleCount += 1;
+      const rowRendered = rowVisible && visibleCount <= currentMerchantVisibleLimit;
+      row.classList.toggle('hidden', !rowRendered);
+      if (rowRendered) {
+        renderedCount += 1;
+        if (indexCell) indexCell.textContent = String(visibleCount);
       } else if (indexCell) {
         indexCell.textContent = '';
       }
     });
 
-  return visibleIndex;
+  return { visibleCount, renderedCount };
 }
 
 function flatRowValue(rowEntry, key, type) {
@@ -1070,10 +1135,11 @@ function updateFlatSortButtons() {
   flatSortButtons.forEach(button => {
     const active = currentFlatSort?.key === button.dataset.sortKey;
     const headerCell = button.closest('th');
-    const indicator = button.querySelector('.sort-indicator');
+    const indicator = headerCell?.querySelector('.sort-indicator') || button.querySelector('.sort-indicator');
     const status = button.querySelector('.sort-status');
     const directionLabel = currentFlatSort?.direction === 'asc' ? (shopsMessages.ascending || 'ascending') : (shopsMessages.descending || 'descending');
     if (headerCell) headerCell.setAttribute('aria-sort', active ? (currentFlatSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
+    if (headerCell) headerCell.dataset.sortDirection = active ? currentFlatSort.direction : '';
     button.dataset.sortDirection = active ? currentFlatSort.direction : '';
     if (indicator) indicator.dataset.sortDirection = active ? currentFlatSort.direction : '';
     if (status) status.textContent = active
@@ -1091,6 +1157,7 @@ function replaceShopProductsData(nextShopProductsData) {
   };
   isShopProductsDataLoading = false;
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
+  currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
   if (merchantViewModule) {
     merchantViewModule.resetMerchantViewState();
   }
@@ -1232,6 +1299,10 @@ flatProductLoadMoreButton?.addEventListener('click', () => {
   currentFlatVisibleLimit += FLAT_PRODUCT_LOAD_MORE_STEP;
   applyFilters();
 });
+merchantLoadMoreButton?.addEventListener('click', () => {
+  currentMerchantVisibleLimit += MERCHANT_LOAD_MORE_STEP;
+  applyFilters();
+});
 flatSortButtons.forEach(button => {
   button.addEventListener('click', () => {
     sortFlatProductRows(button);
@@ -1244,6 +1315,7 @@ flatSortButtons.forEach(button => {
 
 document.querySelectorAll('.flat-sort-head').forEach(headerCell => {
   headerCell.addEventListener('click', event => {
+    if (event.target instanceof Element && event.target.closest('[data-inline-help]')) return;
     const button = headerCell.querySelector('.flat-sort-button');
     if (!(button instanceof HTMLElement) || event.target === button || button.contains(event.target)) return;
     button.click();

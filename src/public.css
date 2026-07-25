@@ -848,7 +848,7 @@
   }
 
   .flat-product-table {
-    @apply min-w-[700px] w-full table-fixed border-collapse lg:min-w-[1020px];
+    @apply min-w-[860px] w-full table-fixed border-collapse lg:min-w-[1160px];
   }
 
   .gateway-site-table {
@@ -978,6 +978,31 @@
     @apply flex h-full min-h-12 w-full items-center justify-between gap-1 rounded-none px-2 py-3 text-left font-bold text-base-content transition-colors hover:bg-base-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary;
   }
 
+  .flat-sort-head-content {
+    @apply flex h-full min-h-12 w-full items-center justify-start gap-1 px-2 py-3 transition-colors hover:bg-base-300;
+  }
+
+  .flat-sort-head-with-help .flat-sort-button {
+    @apply h-auto min-h-0 w-auto flex-none gap-0 rounded-none px-0 py-0 hover:bg-transparent focus-visible:outline-offset-2;
+  }
+
+  .flat-sort-head-with-help .flat-sort-label {
+    @apply flex-none;
+  }
+
+  .flat-sort-head-with-help .sort-indicator {
+    @apply ml-auto;
+  }
+
+  .flat-sort-head[data-sort-direction="asc"] .flat-sort-head-content .sort-indicator,
+  .flat-sort-head[data-sort-direction="desc"] .flat-sort-head-content .sort-indicator {
+    @apply text-primary;
+  }
+
+  .flat-header-help {
+    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
   .flat-sort-label {
     @apply min-w-0 flex-1 whitespace-nowrap;
   }
@@ -1005,7 +1030,10 @@
 
   .flat-sort-button:not([data-sort-direction="asc"]):not([data-sort-direction="desc"]) .sort-icon-none,
   .flat-sort-button[data-sort-direction="asc"] .sort-icon-asc,
-  .flat-sort-button[data-sort-direction="desc"] .sort-icon-desc {
+  .flat-sort-button[data-sort-direction="desc"] .sort-icon-desc,
+  .flat-sort-head:not([data-sort-direction="asc"]):not([data-sort-direction="desc"]) .flat-sort-head-content .sort-icon-none,
+  .flat-sort-head[data-sort-direction="asc"] .flat-sort-head-content .sort-icon-asc,
+  .flat-sort-head[data-sort-direction="desc"] .flat-sort-head-content .sort-icon-desc {
     @apply block;
   }
 
@@ -1014,7 +1042,7 @@
   }
 
   .flat-product-table th:nth-child(2) {
-    @apply w-[160px] lg:w-[30%];
+    @apply w-[160px] lg:w-[26%];
   }
 
   .flat-product-table th:nth-child(3) {
@@ -1030,11 +1058,19 @@
   }
 
   .flat-product-table th:nth-child(6) {
-    @apply w-[126px] lg:w-[20%];
+    @apply w-[126px] lg:w-[18%];
   }
 
   .flat-product-table th:nth-child(7) {
+    @apply w-[152px] lg:w-[166px];
+  }
+
+  .flat-product-table th:nth-child(8) {
     @apply w-[140px] lg:w-[160px];
+  }
+
+  .flat-merchant-score-cell {
+    @apply px-3 py-3 text-right font-mono text-sm font-bold text-primary;
   }
 
   /* Session 工具页面高度约束媒体查询 */
@@ -1074,19 +1110,27 @@
 
   /* 商家视图芯片高亮及排列 */
   .merchant-table-head {
-    @apply grid grid-cols-[72px_260px_1fr] border-b border-base-300 text-sm font-semibold text-base-content/70;
+    @apply hidden items-center grid-cols-[72px_260px_116px_1fr] border-b border-base-300 text-sm font-semibold text-base-content/70 md:grid;
   }
 
   .merchant-head-index {
-    @apply px-4 py-3 text-center;
+    @apply flex h-full items-center justify-center px-4 py-3 text-center;
   }
 
   .merchant-head-cell {
-    @apply px-4 py-3;
+    @apply flex h-full items-center px-4 py-3;
+  }
+
+  .merchant-score-head {
+    @apply flex items-center justify-end gap-1.5 text-right;
+  }
+
+  .merchant-score-help {
+    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
   }
 
   .merchant-row {
-    @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_260px_1fr];
+    @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_260px_116px_1fr];
   }
 
   .merchant-row-index {
@@ -1095,6 +1139,18 @@
 
   .merchant-cell {
     @apply border-b border-base-300 bg-base-200/30 px-4 py-4 md:border-b-0 md:border-r;
+  }
+
+  .merchant-score-cell {
+    @apply flex items-start justify-between gap-3 border-b border-base-300 bg-base-100 px-4 py-3 md:justify-end md:border-b-0 md:border-r md:bg-base-200/20 md:py-4 md:text-right;
+  }
+
+  .merchant-score-mobile-label {
+    @apply text-xs font-semibold text-base-content/45 md:hidden;
+  }
+
+  .merchant-score-value {
+    @apply font-mono text-sm font-bold text-primary;
   }
 
   .merchant-header {

@@ -97,6 +97,7 @@ export type PublicProductRow = {
   siteUrl: string;
   siteProductRefreshSuccessAt: string | null;
   siteProductRefreshSuccessTime: string;
+  siteScore: number;
   clickCount: number;
   score: number;
 };
@@ -292,6 +293,7 @@ async function loadShopProductsDataUncached(options: { productLimit?: number } =
       siteUrl: String(row.site_url),
       siteProductRefreshSuccessAt,
       siteProductRefreshSuccessTime: formatBeijingRefreshTime(siteProductRefreshSuccessAt),
+      siteScore: Number(row.site_score) || 0,
       score: Number(row.score) || 0,
     };
   });

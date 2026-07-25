@@ -54,6 +54,12 @@ function productStockLabel(item, shopsMessages) {
   return item.inStock ? (shopsMessages.inStock || 'In stock') : (shopsMessages.soldOut || 'Sold out');
 }
 
+function formatScore(value) {
+  const score = Number(value);
+  if (!Number.isFinite(score)) return '-';
+  return Number.isInteger(score) ? String(score) : score.toFixed(2);
+}
+
 function priceValueForSort(priceNumber, priceUnit) {
   if (typeof priceNumber !== 'number' || !Number.isFinite(priceNumber)) return Number.MAX_SAFE_INTEGER;
   if (priceUnit === '$' || priceUnit === 'USD') return priceNumber * 7;
@@ -169,6 +175,12 @@ export function renderMerchantRows({
       appendTextElement(merchantCell, 'div', 'merchant-refresh-time', `${shopsMessages.latestRefreshPrefix || 'Last refresh: '}${site.lastProductRefreshSuccessTime}`);
     }
     row.appendChild(merchantCell);
+
+    const scoreCell = document.createElement('div');
+    scoreCell.className = 'merchant-score-cell';
+    appendTextElement(scoreCell, 'span', 'merchant-score-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
+    appendTextElement(scoreCell, 'span', 'merchant-score-value', formatScore(site.score));
+    row.appendChild(scoreCell);
 
     const productsCell = document.createElement('div');
     productsCell.className = 'merchant-product-cell';
