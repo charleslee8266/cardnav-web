@@ -8,12 +8,33 @@ import { getLocalePathInfo, localizePath } from './i18n/paths.js';
 import {
   publicBrandAssetCacheControl,
   publicDevHtmlCacheControl,
+  publicDynamicHtmlCacheControl,
+  publicHomeHtmlCacheControl,
   publicHtmlCacheControl,
+  publicQueryHtmlCacheControl,
+  publicStaticHtmlCacheControl,
   publicStaticAssetCacheControl,
 } from './public-data-cache.js';
 import { submitSiteUrl } from './store.js';
 
 const brandAssetPathPattern = /^\/(favicon\.(?:webp|png)|og-cardnav\.(?:webp|png)|yunwu-api\.png)$/;
+const publicHomePathnames = new Set(['/']);
+const publicStaticHtmlPathnames = new Set([
+  '/about',
+  '/disclaimer',
+  '/guide',
+  '/privacy',
+  '/tools',
+  '/tools/ip-purity',
+  '/tools/session-converter',
+]);
+const publicDynamicHtmlPathnames = new Set([
+  '/',
+  '/llm-gateway',
+  '/model-leaderboard',
+  '/official-price',
+  '/shops',
+]);
 
 function looksLikePublicPagePath(pathname: string) {
   if (pathname.startsWith('/api/') || pathname.startsWith('/_astro/')) return false;
@@ -31,14 +52,39 @@ function isDevRuntime() {
   return !import.meta.env.PROD;
 }
 
-function applyPublicResponseHeaders(pathname: string, response: Response, method: string) {
+function publicRoutePathname(pathname: string) {
+  const routePathname = getLocalePathInfo(pathname).routePathname;
+  return routePathname.length > 1 ? routePathname.replace(/\/+$/, '') : routePathname;
+}
+
+function isPublicHomePath(pathname: string) {
+  return publicHomePathnames.has(publicRoutePathname(pathname));
+}
+
+function isPublicStaticHtmlPath(pathname: string) {
+  const routePathname = publicRoutePathname(pathname);
+  return publicStaticHtmlPathnames.has(routePathname) || routePathname.startsWith('/guide/');
+}
+
+function isPublicDynamicHtmlPath(pathname: string) {
+  const routePathname = publicRoutePathname(pathname);
+  return (
+    publicDynamicHtmlPathnames.has(routePathname)
+    || routePathname.startsWith('/llm-gateway/')
+    || routePathname.startsWith('/model-leaderboard/')
+    || routePathname.startsWith('/official-price/')
+    || routePathname.startsWith('/shops/')
+  );
+}
+
+function applyPublicResponseHeaders(url: URL, response: Response, method: string) {
   const headers = new Headers(response.headers);
   if (method === 'GET' || method === 'HEAD') {
     const cacheControl = resolvePublicResponseCacheControl(
-      pathname,
+      url,
       headers.get('content-type'),
     );
-    if (cacheControl && (isDevRuntime() || !headers.has('cache-control'))) {
+    if (cacheControl) {
       headers.set('Cache-Control', cacheControl);
       if (!isDevRuntime() && cacheControl.includes('public')) {
         headers.set('Vary', 'Accept-Encoding');
@@ -54,18 +100,31 @@ function applyPublicResponseHeaders(pathname: string, response: Response, method
   });
 }
 
-function resolvePublicResponseCacheControl(pathname: string, contentType: string | null) {
+function resolvePublicResponseCacheControl(url: URL, contentType: string | null) {
+  const pathname = url.pathname;
   if (!isPublicHtmlResponse(pathname, contentType)) {
     return null;
   }
   if (isDevRuntime()) {
     return publicDevHtmlCacheControl;
   }
+  if (url.search) {
+    return publicQueryHtmlCacheControl;
+  }
   if (pathname.startsWith('/_astro/')) {
     return publicStaticAssetCacheControl;
   }
   if (brandAssetPathPattern.test(pathname)) {
     return publicBrandAssetCacheControl;
+  }
+  if (isPublicHomePath(pathname)) {
+    return publicHomeHtmlCacheControl;
+  }
+  if (isPublicStaticHtmlPath(pathname)) {
+    return publicStaticHtmlCacheControl;
+  }
+  if (isPublicDynamicHtmlPath(pathname)) {
+    return publicDynamicHtmlCacheControl;
   }
   return publicHtmlCacheControl;
 }
@@ -111,7 +170,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (context.isPrerendered) {
     applyLocaleLocals(context, localePathInfo);
-    return next();
+    const response = await next();
+    return applyPublicResponseHeaders(url, response, context.request.method);
   }
 
   const rewriteLocale = context.request.headers.get('x-cardnav-rewrite-locale');
@@ -140,9 +200,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
       headers,
       method: context.request.method,
     }));
-    return applyPublicResponseHeaders(localePathInfo.pathname, response, context.request.method);
+    return applyPublicResponseHeaders(url, response, context.request.method);
   }
 
   const response = await next();
-  return applyPublicResponseHeaders(url.pathname, response, context.request.method);
+  return applyPublicResponseHeaders(url, response, context.request.method);
 });
