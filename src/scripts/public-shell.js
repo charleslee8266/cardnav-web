@@ -1,6 +1,62 @@
 /*
-文件说明: 承载公开站点全局前端增强，包括语言菜单、主题切换和页头广告加载。
+文件说明: 承载公开站点全局前端增强，包括语言菜单、主题切换、页头广告加载和通用行内说明浮层。
 */
+
+function initInlineHelp() {
+  const buttons = Array.from(document.querySelectorAll('[data-inline-help]'));
+
+  buttons.forEach((button, index) => {
+    const tipText = button.dataset.tip || '';
+    if (!tipText) return;
+    const tipId = `inline-help-tip-${index}`;
+    button.setAttribute('aria-describedby', tipId);
+    button.setAttribute('aria-expanded', 'false');
+    const tip = document.createElement('div');
+    tip.id = tipId;
+    tip.className = 'inline-help-tooltip hidden';
+    tip.textContent = tipText;
+    tip.setAttribute('role', 'tooltip');
+    document.body.appendChild(tip);
+
+    const positionTip = () => {
+      const triggerRect = button.getBoundingClientRect();
+      const tipRect = tip.getBoundingClientRect();
+      const viewportPadding = 12;
+      const top = Math.min(
+        window.innerHeight - tipRect.height - viewportPadding,
+        triggerRect.bottom + 8,
+      );
+      const left = Math.min(
+        window.innerWidth - tipRect.width - viewportPadding,
+        Math.max(viewportPadding, triggerRect.right - tipRect.width),
+      );
+      tip.style.top = `${Math.max(viewportPadding, top)}px`;
+      tip.style.left = `${left}px`;
+    };
+
+    const showTip = () => {
+      tip.classList.remove('hidden');
+      button.setAttribute('aria-expanded', 'true');
+      positionTip();
+    };
+
+    const hideTip = () => {
+      tip.classList.add('hidden');
+      button.setAttribute('aria-expanded', 'false');
+    };
+
+    button.addEventListener('mouseenter', showTip);
+    button.addEventListener('focus', showTip);
+    button.addEventListener('mouseleave', hideTip);
+    button.addEventListener('blur', hideTip);
+    window.addEventListener('resize', () => {
+      if (!tip.classList.contains('hidden')) positionTip();
+    });
+    window.addEventListener('scroll', () => {
+      if (!tip.classList.contains('hidden')) positionTip();
+    }, true);
+  });
+}
 
 function initPublicShell() {
   const languageMenus = Array.from(document.querySelectorAll('[data-language-menu]'));
@@ -72,3 +128,4 @@ function initHeaderAd() {
 
 initPublicShell();
 initHeaderAd();
+initInlineHelp();

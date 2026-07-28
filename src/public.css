@@ -999,8 +999,14 @@
     @apply text-primary;
   }
 
-  .flat-header-help {
+  .inline-help-button,
+  .flat-header-help,
+  .merchant-score-help {
     @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .inline-help-tooltip {
+    @apply fixed z-[9999] max-w-72 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-left text-xs leading-5 text-base-content shadow-lg;
   }
 
   .flat-sort-label {
@@ -1123,10 +1129,6 @@
 
   .merchant-score-head {
     @apply flex items-center justify-end gap-1.5 text-right;
-  }
-
-  .merchant-score-help {
-    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
   }
 
   .merchant-row {

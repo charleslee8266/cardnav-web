@@ -27,9 +27,12 @@ function updateSortButtons(table) {
   table.querySelectorAll('.flat-sort-button').forEach(button => {
     const active = currentSort?.key === button.dataset.sortKey;
     const headerCell = button.closest('th');
-    if (headerCell) headerCell.setAttribute('aria-sort', active ? (currentSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
+    if (headerCell) {
+      headerCell.setAttribute('aria-sort', active ? (currentSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
+      headerCell.dataset.sortDirection = active ? currentSort.direction : '';
+    }
     button.dataset.sortDirection = active ? currentSort.direction : '';
-    const indicator = button.querySelector('.sort-indicator');
+    const indicator = headerCell?.querySelector('.sort-indicator') || button.querySelector('.sort-indicator');
     if (indicator) indicator.dataset.sortDirection = active ? currentSort.direction : '';
   });
 }
@@ -89,6 +92,7 @@ function attachSortableTable(table) {
   });
   table.querySelectorAll('.flat-sort-head').forEach(headerCell => {
     headerCell.addEventListener('click', event => {
+      if (event.target instanceof Element && event.target.closest('[data-inline-help]')) return;
       const button = headerCell.querySelector('.flat-sort-button');
       if (!(button instanceof HTMLElement) || event.target === button || button.contains(event.target)) return;
       button.click();

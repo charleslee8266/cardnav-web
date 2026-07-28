@@ -92,7 +92,7 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
           <tr>
             <SortableTableHeader label={t.llmGateway.rank} sortKey="rank" sortType="number" class="w-20" />
             <SortableTableHeader label={t.llmGateway.basicInfo} sortKey="name" class="min-w-[360px]" />
-            <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-24 text-right" />
+            <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-28 text-right" helpTip={t.llmGateway.gatewayScoreTip} helpLabel={t.llmGateway.gatewayScoreHelpLabel} />
             <SortableTableHeader label={t.llmGateway.unit} sortKey="unit" class="min-w-36" />
             <SortableTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" class="w-32 text-right" />
             <SortableTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" class="w-32 text-right" />

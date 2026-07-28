@@ -332,6 +332,8 @@ export const enMessages: Messages = {
     sitesWithPrices: 'With price data',
     modelRecords: 'Model records',
     tableHint: 'The list shows only model and price summaries. Check the detail page and the platform itself for exact prices, availability, and billing rules.',
+    gatewayScoreHelpLabel: 'Gateway score help',
+    gatewayScoreTip: 'Gateway score is calculated by CardNav across multiple signals, including manual curation, model coverage, price records, availability, and response performance. Use it as a filtering reference.',
     siteName: 'Site',
     siteType: 'Type',
     rank: 'Rank',

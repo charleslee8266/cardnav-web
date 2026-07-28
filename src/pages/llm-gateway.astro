@@ -159,7 +159,7 @@ const gatewayHomeConfig = {
                 <tr>
                   <SortableTableHeader label={t.llmGateway.rank} sortKey="rank" sortType="number" class="w-14" />
                   <SortableTableHeader label={t.llmGateway.basicInfo} sortKey="name" class="w-[34%]" />
-                  <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-20" />
+                  <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-24" helpTip={t.llmGateway.gatewayScoreTip} helpLabel={t.llmGateway.gatewayScoreHelpLabel} />
                   <SortableTableHeader label={t.llmGateway.supportedModels} sortKey="families" class="w-[24%]" />
                   <SortableTableHeader label={t.llmGateway.modelCount} sortKey="modelCount" sortType="number" class="w-20" />
                   <SortableTableHeader label={t.llmGateway.paymentMethods} sortKey="payments" class="w-28" />

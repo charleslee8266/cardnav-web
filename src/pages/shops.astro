@@ -221,7 +221,7 @@ const shopProductsJsonValue = JSON.stringify({
       </div>
       <div class="relative w-full max-w-3xl">
         <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
-        <button id="advancedSearchHelp" type="button" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-xs font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip={t.shops.advancedSearchTip}>i</button>
+        <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip={t.shops.advancedSearchTip}>i</button>
       </div>
       <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
         <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
@@ -242,7 +242,7 @@ const shopProductsJsonValue = JSON.stringify({
         </label>
         <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
           <span class="text-sm text-base-content/80">{t.labels.price}</span>
-          <button id="priceFilterHelp" type="button" class="flex h-4 w-4 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button>
+          <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button>
           <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" />
           <span class="text-xs text-base-content/40">~</span>
           <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
@@ -348,7 +348,7 @@ const shopProductsJsonValue = JSON.stringify({
                       <span class="flat-sort-label">{column.label}</span>
                       <span class="sort-status sr-only">{t.shops.clickSort}</span>
                     </button>
-                    <button type="button" class="flat-header-help" aria-label={column.tipLabel} data-inline-help data-tip={column.tip}>i</button>
+                    <button type="button" class="inline-help-button flat-header-help" aria-label={column.tipLabel} data-inline-help data-tip={column.tip}>i</button>
                     <span class="sort-indicator" aria-hidden="true">
                       <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m7 15 5 5 5-5"></path>
@@ -405,7 +405,7 @@ const shopProductsJsonValue = JSON.stringify({
       <div class="merchant-head-cell">{t.labels.merchant}</div>
       <div class="merchant-head-cell merchant-score-head">
         <span>{t.labels.merchantScore}</span>
-        <button type="button" class="merchant-score-help" aria-label={t.shops.merchantScoreHelpLabel} data-inline-help data-tip={t.shops.merchantScoreTip}>i</button>
+        <button type="button" class="inline-help-button merchant-score-help" aria-label={t.shops.merchantScoreHelpLabel} data-inline-help data-tip={t.shops.merchantScoreTip}>i</button>
       </div>
       <div class="merchant-head-cell">{t.labels.product}</div>
     </div>

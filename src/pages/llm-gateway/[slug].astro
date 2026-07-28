@@ -94,7 +94,10 @@ function gatewayModelClickAttrs(modelId: string) {
         <div class="font-mono text-xl font-bold">{site.priceCount}</div>
       </div>
       <div class="rounded border border-base-300 px-3 py-2">
-        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.labels.score}</div>
+        <div class="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-base-content/45">
+          <span>{t.labels.score}</span>
+          <button type="button" class="inline-help-button" aria-label={t.llmGateway.gatewayScoreHelpLabel} data-inline-help data-tip={t.llmGateway.gatewayScoreTip}>i</button>
+        </div>
         <div class="font-mono text-xl font-bold">{formatPositiveScore(site.siteScore)}</div>
       </div>
       <div class="rounded border border-base-300 px-3 py-2">

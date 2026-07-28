@@ -17,7 +17,6 @@ const quickTagFilters = document.querySelector('#quickTagFilters');
 const quickPlanRow = document.querySelector('#quickPlanRow');
 const officialPriceTip = document.querySelector('#officialPriceTip');
 const gatewayTip = document.querySelector('#gatewayTip');
-const inlineHelpButtons = Array.from(document.querySelectorAll('[data-inline-help]'));
 let shopProductsData = JSON.parse(document.querySelector('#shop-products-data')?.textContent || '{"sites":[],"products":[]}');
 const shopsMessages = JSON.parse(document.querySelector('#shops-messages')?.textContent || '{}');
 let flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
@@ -520,74 +519,6 @@ function showGatewayTip(button, query) {
   gatewayTip.dataset.umamiEventName = label;
   gatewayTip.classList.add('inline-flex');
   gatewayTip.classList.remove('hidden');
-}
-
-function initializeInlineHelpButton(button, index) {
-  const tipText = button.dataset.tip || '';
-  if (!tipText) return;
-  const tipId = `inline-help-tip-${index}`;
-  button.setAttribute('aria-describedby', tipId);
-  button.setAttribute('aria-expanded', 'false');
-  const tip = document.createElement('div');
-  tip.id = tipId;
-  tip.className = 'inline-help-tooltip hidden';
-  tip.style.position = 'fixed';
-  tip.style.zIndex = '9999';
-  tip.style.maxWidth = '18rem';
-  tip.style.border = '1px solid var(--color-base-300)';
-  tip.style.borderRadius = '0.375rem';
-  tip.style.background = 'var(--color-base-100)';
-  tip.style.padding = '0.5rem 0.75rem';
-  tip.style.textAlign = 'left';
-  tip.style.fontSize = '0.75rem';
-  tip.style.lineHeight = '1.25rem';
-  tip.style.color = 'var(--color-base-content)';
-  tip.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)';
-  tip.textContent = tipText;
-  tip.setAttribute('role', 'tooltip');
-  document.body.appendChild(tip);
-
-  const positionTip = () => {
-    const triggerRect = button.getBoundingClientRect();
-    const tipRect = tip.getBoundingClientRect();
-    const viewportPadding = 12;
-    const top = Math.min(
-      window.innerHeight - tipRect.height - viewportPadding,
-      triggerRect.bottom + 8,
-    );
-    const left = Math.min(
-      window.innerWidth - tipRect.width - viewportPadding,
-      Math.max(viewportPadding, triggerRect.right - tipRect.width),
-    );
-    tip.style.top = `${Math.max(viewportPadding, top)}px`;
-    tip.style.left = `${left}px`;
-  };
-
-  const showTip = () => {
-    tip.classList.remove('hidden');
-    button.setAttribute('aria-expanded', 'true');
-    positionTip();
-  };
-
-  const hideTip = () => {
-    tip.classList.add('hidden');
-    button.setAttribute('aria-expanded', 'false');
-  };
-
-  button.addEventListener('mouseenter', showTip);
-  button.addEventListener('focus', showTip);
-  button.addEventListener('mouseleave', hideTip);
-  button.addEventListener('blur', hideTip);
-  window.addEventListener('resize', () => {
-    if (!tip.classList.contains('hidden')) positionTip();
-  });
-  window.addEventListener('scroll', () => {
-    if (!tip.classList.contains('hidden')) positionTip();
-  }, true);
-}
-
-function initializeInlineHelp() {
-  inlineHelpButtons.forEach(initializeInlineHelpButton);
 }
 
 function shopProductsDataIsPartial() {
@@ -1339,6 +1270,5 @@ renderFlatProductRowsFromData();
 buildFlatRows();
 loadFavorites();
 initializeFavorites();
-initializeInlineHelp();
 syncFiltersFromUrl();
 applyFilters();

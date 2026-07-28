@@ -331,6 +331,8 @@ export const zhMessages = {
     sitesWithPrices: '有价格数据',
     modelRecords: '模型记录',
     tableHint: '列表只展示模型和价格摘要，具体价格、可用性和充值规则请进入详情页并以平台页面为准。',
+    gatewayScoreHelpLabel: '中转站评分说明',
+    gatewayScoreTip: '中转站评分由本站算法综合多项因素决定，包括人工整理、模型覆盖、价格记录、可访问性和响应表现等，仅供筛选参考。',
     siteName: '站点',
     siteType: '类型',
     rank: '排序',
