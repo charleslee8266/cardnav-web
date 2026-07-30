@@ -191,12 +191,6 @@ export function renderMerchantRows({
     merchantCell.appendChild(merchantHeader);
     row.appendChild(merchantCell);
 
-    const scoreCell = document.createElement('div');
-    scoreCell.className = 'merchant-score-cell';
-    appendTextElement(scoreCell, 'span', 'merchant-score-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
-    appendTextElement(scoreCell, 'span', 'merchant-score-value', formatScore(site.score));
-    row.appendChild(scoreCell);
-
     const productsCell = document.createElement('div');
     productsCell.className = 'merchant-count-cell';
     appendTextElement(productsCell, 'span', 'merchant-count-mobile-label', shopsMessages.tableLabels?.productCount || 'Product count');
@@ -225,6 +219,12 @@ export function renderMerchantRows({
       hotProductsCell.appendChild(list);
     }
     row.appendChild(hotProductsCell);
+
+    const scoreCell = document.createElement('div');
+    scoreCell.className = 'merchant-score-cell';
+    appendTextElement(scoreCell, 'span', 'merchant-score-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
+    appendTextElement(scoreCell, 'span', 'merchant-score-value', formatScore(site.score));
+    row.appendChild(scoreCell);
 
     const refreshCell = document.createElement('div');
     refreshCell.className = 'merchant-refresh-cell';

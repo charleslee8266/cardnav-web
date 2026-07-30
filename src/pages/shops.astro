@@ -170,9 +170,9 @@ const merchantTabLabel = t.labels.merchant;
 const merchantSortColumns = [
   { key: 'rank', type: 'number', label: t.labels.sequence },
   { key: 'siteName', type: 'text', label: t.labels.merchant },
-  { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
   { key: 'productCount', type: 'number', label: t.labels.productCount },
   { key: 'hotProducts', type: 'number', label: t.shops.hotProductsTitle },
+  { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
   { key: 'lastProductRefreshSuccessAt', type: 'number', label: t.labels.latestRefresh },
 ];
 const shopProductsJsonValue = JSON.stringify({
@@ -334,7 +334,7 @@ const shopProductsJsonValue = JSON.stringify({
       </form>
       <div class="product-table-scroll">
         <table class="table table-zebra w-full flat-product-table border-collapse">
-          <thead class="bg-base-200 text-base-content text-base">
+          <thead class="bg-base-200 text-base-content text-sm">
             <tr>
               <th scope="col" class="table-head-index w-14 text-center">{t.labels.sequence}</th>
               {flatSortColumns.map(column => (
