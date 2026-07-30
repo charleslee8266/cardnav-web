@@ -1120,6 +1120,7 @@ async function loadShopProductsDataFromApi() {
   shopProductsDataLoadPromise = (async () => {
     isShopProductsDataLoading = true;
     updateFlatProgressiveLoadSummary(0, 0);
+    updateMerchantProgressiveLoadSummary(0, 0);
     productEmptyState?.classList.add('hidden');
     merchantEmptyState?.classList.add('hidden');
     try {
