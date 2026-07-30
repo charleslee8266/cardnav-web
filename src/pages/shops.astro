@@ -166,15 +166,16 @@ const flatSortColumns = [
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
 ];
+const rightAlignedProductColumns = new Set(['priceValue', 'stockValue', 'score']);
 const merchantTabLabel = t.labels.merchant;
 const merchantSortColumns = [
-  { key: 'rank', type: 'number', label: t.labels.sequence },
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productCount', type: 'number', label: t.labels.productCount },
   { key: 'hotProducts', type: 'number', label: t.shops.hotProductsTitle },
   { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
   { key: 'lastProductRefreshSuccessAt', type: 'number', label: t.labels.latestRefresh },
 ];
+const rightAlignedMerchantColumns = new Set(['productCount', 'siteScore']);
 const shopProductsJsonValue = JSON.stringify({
   sites: renderedSites,
   products: renderedProducts,
@@ -336,9 +337,9 @@ const shopProductsJsonValue = JSON.stringify({
         <table class="table table-zebra w-full flat-product-table border-collapse">
           <thead class="bg-base-200 text-base-content text-sm">
             <tr>
-              <th scope="col" class="table-head-index w-14 text-center">{t.labels.sequence}</th>
+              <th scope="col" class="table-head-index shop-table-head-index w-14">{t.labels.sequence}</th>
               {flatSortColumns.map(column => (
-                <th scope="col" class:list={['flat-sort-head', column.tip && 'flat-sort-head-with-help']} aria-sort="none">
+                <th scope="col" class:list={['flat-sort-head', rightAlignedProductColumns.has(column.key) && 'shop-table-head-number', column.tip && 'flat-sort-head-with-help']} aria-sort="none">
                   {column.tip ? (
                     <div class="flat-sort-head-content">
                       <button type="button" class="flat-sort-button" data-shop-sort-scope="products" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
@@ -404,9 +405,10 @@ const shopProductsJsonValue = JSON.stringify({
       </form>
       <div class="product-table-scroll merchant-table-scroll">
         <div class="merchant-table">
-          <div class="merchant-table-head bg-base-200 font-bold text-sm text-base-content">
+          <div class="merchant-table-head">
+            <div class="merchant-table-head-cell merchant-table-head-index">{t.labels.sequence}</div>
             {merchantSortColumns.map(column => (
-              <div class:list={['merchant-head-cell', column.key === 'rank' && 'merchant-head-index', column.key === 'siteScore' && 'merchant-score-head', 'flat-sort-head', column.tip && 'flat-sort-head-with-help']} aria-sort="none">
+              <div class:list={['merchant-table-head-cell', rightAlignedMerchantColumns.has(column.key) && 'shop-table-head-number', 'flat-sort-head', column.tip && 'flat-sort-head-with-help']} aria-sort="none">
                 {column.tip ? (
                   <div class="flat-sort-head-content">
                     <button type="button" class="flat-sort-button" data-shop-sort-scope="merchants" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>

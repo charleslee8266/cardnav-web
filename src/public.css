@@ -865,7 +865,12 @@
 
   .flat-product-table th,
   .flat-product-table td {
-    @apply align-top border-r border-base-300 last:border-r-0;
+    @apply align-middle border-r border-base-300 last:border-r-0;
+  }
+
+  .flat-product-table tbody th,
+  .flat-product-table tbody td {
+    @apply px-3 py-3 text-sm font-normal text-base-content;
   }
 
   .gateway-home-table th,
@@ -1017,6 +1022,35 @@
     @apply min-w-0 flex-1 whitespace-nowrap;
   }
 
+  .shop-table-head-index {
+    @apply text-center font-bold;
+  }
+
+  .shop-table-cell-index {
+    @apply text-center font-bold;
+  }
+
+  .shop-table-head-number {
+    @apply text-right;
+  }
+
+  .shop-table-head-number .flat-sort-button,
+  .shop-table-head-number .flat-sort-head-content {
+    @apply justify-end text-right;
+  }
+
+  .shop-table-head-number .flat-sort-label {
+    @apply flex-none text-right;
+  }
+
+  .shop-table-head-number .sort-indicator {
+    @apply ml-0;
+  }
+
+  .shop-table-cell-number {
+    @apply text-right;
+  }
+
   .sort-indicator {
     @apply ml-auto inline-flex h-4 w-4 shrink-0 items-center justify-center text-base-content/55;
   }
@@ -1080,7 +1114,7 @@
   }
 
   .flat-product-score-cell {
-    @apply px-3 py-3 text-right font-mono text-sm font-normal text-base-content;
+    @apply px-3 py-3 text-sm font-normal text-base-content;
   }
 
   /* Session 工具页面高度约束媒体查询 */
@@ -1130,59 +1164,63 @@
   }
 
   .merchant-table-head {
-    @apply hidden items-center grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_160px] border-b border-base-300 text-sm font-semibold text-base-content/70 md:grid;
+    @apply hidden items-center grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_160px] border-b border-base-300 bg-base-200 text-sm text-base-content md:grid;
   }
 
-  .merchant-head-index {
-    @apply flex h-full items-center justify-center px-4 py-3 text-center;
+  .merchant-table-head-cell {
+    @apply flex h-full min-h-12 items-center border-r border-base-300 px-2 py-3 font-bold text-base-content last:border-r-0;
   }
 
-  .merchant-head-cell {
-    @apply flex h-full items-center px-4 py-3;
-  }
-
-  .merchant-head-cell.flat-sort-head {
+  .merchant-table-head-cell.flat-sort-head {
     @apply cursor-pointer select-none p-0;
   }
 
-  .merchant-score-head {
-    @apply flex items-center justify-end gap-1.5 text-right;
+  .merchant-table-head-index {
+    @apply justify-center text-center;
   }
 
   .merchant-row {
     @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_160px];
   }
 
-  .merchant-row-index {
-    @apply flex items-center justify-center border-b border-base-300 bg-base-100 px-4 py-4 text-center text-sm font-normal text-base-content md:border-b-0 md:border-r;
+  .merchant-table-cell {
+    @apply flex items-center border-b border-base-300 bg-base-100 px-3 py-3 text-sm font-normal text-base-content md:border-b-0 md:border-r;
   }
 
-  .merchant-cell {
-    @apply border-b border-base-300 bg-base-200/30 px-4 py-4 md:flex md:items-center md:border-b-0 md:border-r;
+  .merchant-row > .merchant-table-cell:last-child {
+    @apply md:border-r-0;
   }
 
-  .merchant-score-cell {
-    @apply flex items-center justify-between gap-3 border-b border-base-300 bg-base-100 px-4 py-3 md:justify-end md:border-b-0 md:border-r md:bg-base-200/20 md:py-4 md:text-right;
+  .merchant-table-cell-index {
+    @apply justify-center text-center;
   }
 
-  .merchant-score-mobile-label {
+  .merchant-table-cell-merchant {
+    @apply justify-start;
+  }
+
+  .merchant-table-cell-value {
+    @apply justify-between gap-3;
+  }
+
+  .merchant-table-cell.shop-table-cell-number {
+    @apply md:justify-end;
+  }
+
+  .merchant-table-cell-products {
+    @apply flex-col items-stretch md:items-start md:justify-center;
+  }
+
+  .merchant-table-mobile-label {
     @apply text-xs font-semibold text-base-content/45 md:hidden;
   }
 
-  .merchant-score-value {
-    @apply font-mono text-sm font-normal text-base-content;
+  .merchant-table-products-mobile-label {
+    @apply mb-2;
   }
 
-  .merchant-count-cell {
-    @apply flex items-center justify-between gap-3 border-b border-base-300 bg-base-100 px-4 py-3 md:justify-end md:border-b-0 md:border-r md:bg-base-100 md:py-4 md:text-right;
-  }
-
-  .merchant-count-mobile-label {
-    @apply text-xs font-semibold text-base-content/45 md:hidden;
-  }
-
-  .merchant-count-value {
-    @apply font-mono text-sm font-normal text-base-content;
+  .merchant-table-value {
+    @apply text-sm font-normal text-base-content;
   }
 
   .merchant-header {
@@ -1191,26 +1229,6 @@
 
   .merchant-primary-text {
     @apply pt-0.5 font-medium text-base-content;
-  }
-
-  .merchant-refresh-time {
-    @apply text-sm text-base-content;
-  }
-
-  .merchant-product-cell {
-    @apply flex items-center bg-base-100 px-4 py-4 md:border-r md:border-base-300;
-  }
-
-  .merchant-products-mobile-label {
-    @apply mb-2 text-xs font-semibold text-base-content/45 md:hidden;
-  }
-
-  .merchant-refresh-cell {
-    @apply flex items-center justify-between gap-3 border-b border-base-300 bg-base-100 px-4 py-3 md:border-b-0 md:bg-base-200/10 md:py-4;
-  }
-
-  .merchant-refresh-mobile-label {
-    @apply text-xs font-semibold text-base-content/45 md:hidden;
   }
 
   .no-products {

@@ -633,7 +633,7 @@ function createFlatProductRow(item) {
   const row = document.createElement('tr');
   row.className = 'flat-product-row';
 
-  const indexCell = appendTextElement(row, 'th', 'flat-row-index', '');
+  const indexCell = appendTextElement(row, 'th', 'flat-row-index shop-table-cell-index', '');
   indexCell.scope = 'row';
   indexCell.setAttribute('data-label', tableLabel('sequence'));
 
@@ -657,13 +657,13 @@ function createFlatProductRow(item) {
   row.appendChild(productCell);
 
   const priceCell = document.createElement('td');
-  priceCell.className = 'flat-price-cell';
+  priceCell.className = 'flat-price-cell shop-table-cell-number';
   priceCell.setAttribute('data-label', tableLabel('price'));
   priceCell.appendChild(document.createTextNode(formatDisplayPrice(item.priceNumber, item.priceUnit)));
   row.appendChild(priceCell);
 
   const statusCell = document.createElement('td');
-  statusCell.className = 'flat-status-cell';
+  statusCell.className = 'flat-status-cell shop-table-cell-number';
   statusCell.setAttribute('data-label', tableLabel('stock'));
   appendTextElement(
     statusCell,
@@ -680,7 +680,7 @@ function createFlatProductRow(item) {
   row.appendChild(categoryCell);
 
   const productScoreCell = document.createElement('td');
-  productScoreCell.className = 'flat-product-score-cell';
+  productScoreCell.className = 'flat-product-score-cell shop-table-cell-number';
   productScoreCell.setAttribute('data-label', tableLabel('productScore'));
   productScoreCell.appendChild(document.createTextNode(formatScore(item.score)));
   row.appendChild(productScoreCell);

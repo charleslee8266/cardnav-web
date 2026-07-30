@@ -177,9 +177,9 @@ export function renderMerchantRows({
     row.dataset.productCount = String(siteProducts.length);
     row.dataset.hotProducts = String(hotProducts.length > 0 ? productScoreValue(hotProducts[0]) : 0);
 
-    const indexCell = appendTextElement(row, 'div', 'row-index merchant-row-index', '');
+    const indexCell = appendTextElement(row, 'div', 'row-index merchant-table-cell merchant-table-cell-index shop-table-cell-index', '');
     const merchantCell = document.createElement('div');
-    merchantCell.className = 'merchant-cell';
+    merchantCell.className = 'merchant-table-cell merchant-table-cell-merchant';
     const merchantHeader = document.createElement('div');
     merchantHeader.className = 'merchant-header';
     merchantHeader.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
@@ -192,17 +192,17 @@ export function renderMerchantRows({
     row.appendChild(merchantCell);
 
     const productsCell = document.createElement('div');
-    productsCell.className = 'merchant-count-cell';
-    appendTextElement(productsCell, 'span', 'merchant-count-mobile-label', shopsMessages.tableLabels?.productCount || 'Product count');
-    appendTextElement(productsCell, 'span', 'merchant-count-value', String(siteProducts.length));
+    productsCell.className = 'merchant-table-cell merchant-table-cell-value shop-table-cell-number';
+    appendTextElement(productsCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.productCount || 'Product count');
+    appendTextElement(productsCell, 'span', 'merchant-table-value', String(siteProducts.length));
     row.appendChild(productsCell);
 
     const hotProductsCell = document.createElement('div');
-    hotProductsCell.className = 'merchant-product-cell';
+    hotProductsCell.className = 'merchant-table-cell merchant-table-cell-products';
     appendTextElement(
       hotProductsCell,
       'div',
-      'merchant-products-mobile-label',
+      'merchant-table-mobile-label merchant-table-products-mobile-label',
       shopsMessages.hotProductsTitle || 'Hot products',
     );
     const chips = [];
@@ -221,15 +221,15 @@ export function renderMerchantRows({
     row.appendChild(hotProductsCell);
 
     const scoreCell = document.createElement('div');
-    scoreCell.className = 'merchant-score-cell';
-    appendTextElement(scoreCell, 'span', 'merchant-score-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
-    appendTextElement(scoreCell, 'span', 'merchant-score-value', formatScore(site.score));
+    scoreCell.className = 'merchant-table-cell merchant-table-cell-value shop-table-cell-number';
+    appendTextElement(scoreCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
+    appendTextElement(scoreCell, 'span', 'merchant-table-value', formatScore(site.score));
     row.appendChild(scoreCell);
 
     const refreshCell = document.createElement('div');
-    refreshCell.className = 'merchant-refresh-cell';
-    appendTextElement(refreshCell, 'span', 'merchant-refresh-mobile-label', shopsMessages.tableLabels?.latestRefresh || 'Latest refresh');
-    appendTextElement(refreshCell, 'span', 'merchant-refresh-time', site.lastProductRefreshSuccessTime || '-');
+    refreshCell.className = 'merchant-table-cell merchant-table-cell-value';
+    appendTextElement(refreshCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.latestRefresh || 'Latest refresh');
+    appendTextElement(refreshCell, 'span', 'merchant-table-value', site.lastProductRefreshSuccessTime || '-');
     row.appendChild(refreshCell);
 
     fragment.appendChild(row);
