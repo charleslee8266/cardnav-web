@@ -30,7 +30,6 @@ export type PublicGatewaySiteRow = {
   siteScore: number | null;
   availabilityPercent: number;
   avgSuccessLatencyMs: number | null;
-  weight: number;
   summary: string;
   modelTypes: string[];
   paymentMethods: string[];
@@ -174,7 +173,7 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
   return {
     id: String(row.id || ''),
     slug: String(row.slug || ''),
-    name: row.profile_name ? String(row.profile_name) : String(row.site_name),
+    name: String(row.site_name),
     url,
     outboundUrl: inviteUrl || url,
     host: row.host ? String(row.host) : hostFromUrl(url),
@@ -187,7 +186,6 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     siteScore: Number(row.score) || 0,
     availabilityPercent: Number(row.availability_percent) || 0,
     avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
-    weight: Number(row.weight) || 0,
     summary: String(row.summary || ''),
     modelTypes: Array.isArray(row.model_types) ? row.model_types.map(String) : [],
     paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
@@ -378,14 +376,12 @@ async function loadGatewaySitesUncached() {
       gateway_sites.availability_percent,
       gateway_sites.avg_success_latency_ms,
       gateway_sites.created_at,
-      gateway_profiles.slug,
-      gateway_profiles.host,
-      gateway_profiles.name AS profile_name,
-      gateway_profiles.weight,
-      gateway_profiles.summary,
-      gateway_profiles.invite_url,
-      gateway_profiles.model_types,
-      gateway_profiles.payment_methods,
+      gateway_sites.slug,
+      gateway_sites.host,
+      gateway_sites.summary,
+      gateway_sites.invite_url,
+      gateway_sites.model_types,
+      gateway_sites.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
       COALESCE(price_summary.price_count, 0) AS price_count,
       COALESCE(price_summary.model_families, ARRAY[]::text[]) AS model_families,
@@ -393,15 +389,14 @@ async function loadGatewaySitesUncached() {
         WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
           THEN price_summary.model_families
         ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_profiles.model_types, '[]'::jsonb))
+          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_types, '[]'::jsonb))
         )
       END AS display_model_families,
       price_summary.latest_price_fetched_at AS latest_gateway_refresh_at
     FROM gateway_sites
-    INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
     LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-    ORDER BY gateway_sites.score DESC, gateway_profiles.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+    ORDER BY gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
   `);
 
   const sites: PublicGatewaySiteRow[] = result.rows.map(row => mapGatewaySiteRow(row));
@@ -430,7 +425,6 @@ async function loadGatewayModelsUncached() {
       MAX(gateway_sites.score) AS max_site_score
     FROM gateway_model_prices prices
     INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
-    INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
     GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
     ORDER BY
@@ -484,14 +478,12 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
         gateway_sites.availability_percent,
         gateway_sites.avg_success_latency_ms,
         gateway_sites.created_at,
-        gateway_profiles.slug,
-        gateway_profiles.host,
-        gateway_profiles.name AS profile_name,
-        gateway_profiles.weight,
-        gateway_profiles.summary,
-        gateway_profiles.invite_url,
-        gateway_profiles.model_types,
-        gateway_profiles.payment_methods,
+        gateway_sites.slug,
+        gateway_sites.host,
+        gateway_sites.summary,
+        gateway_sites.invite_url,
+        gateway_sites.model_types,
+        gateway_sites.payment_methods,
         COALESCE(price_summary.model_count, 0) AS model_count,
         COALESCE(price_summary.price_count, 0) AS price_count,
         COALESCE(price_summary.model_families, ARRAY[]::text[]) AS model_families,
@@ -499,16 +491,15 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
           WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
             THEN price_summary.model_families
           ELSE ARRAY(
-            SELECT jsonb_array_elements_text(COALESCE(gateway_profiles.model_types, '[]'::jsonb))
+            SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_types, '[]'::jsonb))
           )
         END AS display_model_families,
         price_summary.latest_price_fetched_at AS latest_gateway_refresh_at
       FROM gateway_sites
-      INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
       LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
       WHERE gateway_sites.status = 'online'
         AND gateway_sites.type = 'gateway'
-        AND gateway_profiles.slug = $1
+        AND gateway_sites.slug = $1
       LIMIT 1
     `, [normalizedSlug]);
     const row = result.rows[0];
@@ -530,7 +521,6 @@ async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayMo
         MAX(prices.fetched_at) AS latest_gateway_refresh_at
       FROM gateway_model_prices prices
       INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
-      INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
       WHERE gateway_sites.status = 'online'
         AND gateway_sites.type = 'gateway'
         AND prices.model_id = $1
@@ -640,14 +630,12 @@ export async function loadGatewayModelDetail(pathId: string): Promise<PublicGate
       gateway_sites.availability_percent,
       gateway_sites.avg_success_latency_ms,
       gateway_sites.created_at,
-      gateway_profiles.slug,
-      gateway_profiles.host,
-      gateway_profiles.name AS profile_name,
-      gateway_profiles.weight,
-      gateway_profiles.summary,
-      gateway_profiles.invite_url,
-      gateway_profiles.model_types,
-      gateway_profiles.payment_methods,
+      gateway_sites.slug,
+      gateway_sites.host,
+      gateway_sites.summary,
+      gateway_sites.invite_url,
+      gateway_sites.model_types,
+      gateway_sites.payment_methods,
       COALESCE(site_price_summary.model_count, 0) AS model_count,
       COALESCE(site_price_summary.price_count, 0) AS price_count,
       COALESCE(site_price_summary.model_families, ARRAY[]::text[]) AS model_families,
@@ -655,7 +643,7 @@ export async function loadGatewayModelDetail(pathId: string): Promise<PublicGate
         WHEN cardinality(COALESCE(site_price_summary.model_families, ARRAY[]::text[])) > 0
           THEN site_price_summary.model_families
         ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_profiles.model_types, '[]'::jsonb))
+          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_types, '[]'::jsonb))
         )
       END AS display_model_families,
       site_price_summary.latest_price_fetched_at AS latest_gateway_refresh_at,
@@ -665,10 +653,9 @@ export async function loadGatewayModelDetail(pathId: string): Promise<PublicGate
       model_price_summary.latest_model_refresh_at
     FROM model_price_summary
     INNER JOIN gateway_sites ON gateway_sites.site_id = model_price_summary.site_id
-    INNER JOIN gateway_profiles ON gateway_profiles.url = gateway_sites.url
     LEFT JOIN site_price_summary ON site_price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-    ORDER BY gateway_sites.score DESC, gateway_profiles.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC
+    ORDER BY gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC
   `, [modelId]);
 
   return {
