@@ -2,17 +2,28 @@
  * 文件说明: 定义商家提交 URL 的规范化、拒绝原因和公开提交前校验。
  */
 
-export type PublicSubmittedUrlRejectReason = 'invalidUrl' | 'temporaryUrl' | 'productItemUrl' | 'ipAddressUrl' | 'invalidDomainUrl';
+export type PublicSubmittedUrlRejectReason =
+  | 'invalidUrl'
+  | 'temporaryUrl'
+  | 'productItemUrl'
+  | 'ipAddressUrl'
+  | 'invalidDomainUrl'
+  | 'platformHomeUrl'
+  | 'reservedHostUrl'
+  | 'probeUrl';
 
 export type PublicSubmittedUrlValidationResult =
   | { ok: true; url: string }
   | { ok: false; reason: PublicSubmittedUrlRejectReason; url?: string };
 
-const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)?(?:webhook\.site|serveousercontent\.com)(?::\d+)?(?:[/?#]|$)/i;
+const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)*(?:webhook\.site|serveousercontent\.com|lhr\.life|loca\.lt)(?::\d+)?(?:[/?#]|$)/i;
 const productItemUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/(?:item\/[^/?#]+|shop\/[^/?#]+\/[^?#]+)/i;
 const trackedShopUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/shop\/[^/?#]+(?:[?#]|$)/i;
 const ipAddressUrlPattern = /^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-f:.]+\])(?::\d+)?(?:[/?#]|$)/i;
 const incompleteDomainUrlPattern = /^https?:\/\/[^/?#.[\]:]+(?::\d+)?(?:[/?#]|$)/i;
+const platformHomeUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/?(?:[?#]|$)/i;
+const reservedHostUrlPattern = /^https?:\/\/(?:localhost|[^/?#]+\.(?:local|internal|invalid))(?::\d+)?(?:[/?#]|$)/i;
+const probeUrlPattern = /^https?:\/\/(?:(?:[^/?#:]+\.)?example\.[^/?#:]+(?::\d+)?\/[^?#]*(?:ctf|probe|admin|test|'|%27|%20or%20|--)|httpbin\.org(?::\d+)?\/base64\/|(?:(?:www|staging)\.)?cardnav\.xyz(?::\d+)?\/(?:admin|api)(?:[/?#]|$))/i;
 
 export function validatePublicSubmittedUrl(input: string): PublicSubmittedUrlValidationResult {
   let url: URL;
@@ -32,6 +43,9 @@ export function validatePublicSubmittedUrl(input: string): PublicSubmittedUrlVal
   if (incompleteDomainUrlPattern.test(normalized)) return { ok: false, reason: 'invalidDomainUrl', url: normalized };
   if (temporaryUrlPattern.test(normalized)) return { ok: false, reason: 'temporaryUrl', url: normalized };
   if (productItemUrlPattern.test(normalized)) return { ok: false, reason: 'productItemUrl', url: normalized };
+  if (platformHomeUrlPattern.test(normalized)) return { ok: false, reason: 'platformHomeUrl', url: normalized };
+  if (reservedHostUrlPattern.test(normalized)) return { ok: false, reason: 'reservedHostUrl', url: normalized };
+  if (probeUrlPattern.test(normalized)) return { ok: false, reason: 'probeUrl', url: normalized };
 
   if (trackedShopUrlPattern.test(normalized)) url.search = '';
   return { ok: true, url: normalizeParsedPublicSubmittedUrl(url) };
