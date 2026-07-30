@@ -7,12 +7,11 @@ import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 const filtersForm = document.querySelector('#filters');
 const searchFilter = document.querySelector('#searchFilter');
 const showSoldOutFilter = document.querySelector('#showSoldOutFilter');
-const groupByMerchantFilter = document.querySelector('#groupByMerchantFilter');
 const matchCategoryFilter = document.querySelector('#matchCategoryFilter');
-const matchMerchantFilter = document.querySelector('#matchMerchantFilter');
 const priceMin = document.querySelector('#priceMin');
 const priceMax = document.querySelector('#priceMax');
-const flatSortSelect = document.querySelector('#flatSortSelect');
+const merchantFiltersForm = document.querySelector('#merchantFilters');
+const merchantSearchFilter = document.querySelector('#merchantSearchFilter');
 const quickTagFilters = document.querySelector('#quickTagFilters');
 const quickPlanRow = document.querySelector('#quickPlanRow');
 const officialPriceTip = document.querySelector('#officialPriceTip');
@@ -20,7 +19,8 @@ const gatewayTip = document.querySelector('#gatewayTip');
 let shopProductsData = JSON.parse(document.querySelector('#shop-products-data')?.textContent || '{"sites":[],"products":[]}');
 const shopsMessages = JSON.parse(document.querySelector('#shops-messages')?.textContent || '{}');
 let flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
-const emptyState = document.querySelector('#emptyState');
+const productEmptyState = document.querySelector('#productEmptyState');
+const merchantEmptyState = document.querySelector('#merchantEmptyState');
 const rowContainer = document.querySelector('#merchantRows');
 const flatProductRowsContainer = document.querySelector('#flatProductRows');
 const flatProductProgressiveLoad = document.querySelector('#flatProductProgressiveLoad');
@@ -31,10 +31,12 @@ const merchantLoadSummary = document.querySelector('#merchantLoadSummary');
 const merchantLoadMoreButton = document.querySelector('#merchantLoadMoreButton');
 const merchantGroupedView = document.querySelector('#merchantGroupedView');
 const flatProductView = document.querySelector('#flatProductView');
+const shopTabButtons = Array.from(document.querySelectorAll('[data-shop-tab]'));
+const shopTabPanels = Array.from(document.querySelectorAll('[data-shop-panel]'));
 const shopPageHeroTitle = document.querySelector('#shopPageHeroTitle');
 const shopPageHeroDescription = document.querySelector('#shopPageHeroDescription');
-const currentProductCount = document.querySelector('#currentProductCount');
-const flatSortButtons = Array.from(document.querySelectorAll('.flat-sort-button'));
+const flatSortButtons = Array.from(document.querySelectorAll('.flat-sort-button[data-shop-sort-scope="products"]'));
+const merchantSortButtons = Array.from(document.querySelectorAll('.flat-sort-button[data-shop-sort-scope="merchants"]'));
 let favoriteButtons = Array.from(document.querySelectorAll('.favorite-toggle'));
 const flatRows = [];
 let merchantViewModule = null;
@@ -45,14 +47,12 @@ const DEFAULT_FLAT_PRODUCT_LIMIT = 100;
 const FLAT_PRODUCT_LOAD_MORE_STEP = 100;
 const DEFAULT_MERCHANT_LIMIT = 20;
 const MERCHANT_LOAD_MORE_STEP = 20;
-const FLAT_SORT_PRESETS = {
-  default: null,
-  'price-asc': { key: 'priceValue', direction: 'asc', type: 'number' },
-  'stock-desc': { key: 'stockValue', direction: 'desc', type: 'number' },
-  'refresh-desc': { key: 'productRefreshedAt', direction: 'desc', type: 'number' },
-};
-let currentFlatSort = null;
+const DEFAULT_FLAT_SORT = { key: 'score', direction: 'desc', type: 'number' };
+const FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT = 10;
+let currentFlatSort = { ...DEFAULT_FLAT_SORT };
+let currentMerchantSort = null;
 let currentFlatRows = flatRows;
+let currentShopTab = 'products';
 let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
 let currentFlatVisibleLimit = Number(shopProductsData.initialProductLimit) > 0 ? Number(shopProductsData.initialProductLimit) : DEFAULT_FLAT_PRODUCT_LIMIT;
@@ -79,6 +79,26 @@ function trackUmamiEvent(eventName, eventData = {}) {
   window.umami.track(eventName, eventData);
 }
 
+function showShopTab(tabName, options = {}) {
+  const nextTab = tabName === 'merchants' ? 'merchants' : 'products';
+  currentShopTab = nextTab;
+  shopTabButtons.forEach(button => {
+    const active = button.dataset.shopTab === nextTab;
+    button.classList.toggle('tab-active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  shopTabPanels.forEach(panel => {
+    panel.hidden = panel.dataset.shopPanel !== nextTab;
+  });
+  if (options.shouldApply !== false) {
+    resetFlatVisibleLimit();
+    applyFilters();
+  }
+  if (options.track !== false) {
+    trackUmamiEvent('shop-tab-click', { name: nextTab });
+  }
+}
+
 function toQuickSearchTag(label) {
   return {
     key: normalize(label).replace(/\s+/g, '-'),
@@ -92,8 +112,8 @@ function normalize(value) {
 
 function currentSearchFieldOptions() {
   return {
-    matchCategory: matchCategoryFilter.checked,
-    matchMerchant: matchMerchantFilter.checked,
+    matchCategory: Boolean(matchCategoryFilter?.checked),
+    matchMerchant: false,
   };
 }
 
@@ -106,11 +126,11 @@ function matchesSearchQuery(rowEntry, query) {
 }
 
 function searchMatchedFlatRows() {
-  const query = buildActiveSearchQuery(searchFilter.value);
+  const query = buildActiveSearchQuery(searchFilter?.value || '');
   const matchedRows = flatRows.filter(rowEntry => {
-    const showSoldOut = showSoldOutFilter.checked;
-    const priceMinValue = priceMin.value.trim();
-    const priceMaxValue = priceMax.value.trim();
+    const showSoldOut = Boolean(showSoldOutFilter?.checked);
+    const priceMinValue = priceMin?.value.trim() || '';
+    const priceMaxValue = priceMax?.value.trim() || '';
     const minPrice = parseBound(priceMinValue);
     const maxPrice = parseBound(priceMaxValue);
     const stockMatched = showSoldOut || rowEntry.inStock === 1;
@@ -218,21 +238,35 @@ function formatDisplayPrice(priceNumber, priceUnit) {
   return `${unit}${String(priceNumber)}`;
 }
 
-function isFlatRowFavorite(rowEntry) {
-  return favoriteProductKeys.has(rowEntry.productFavoriteKey) || favoriteSiteKeys.has(rowEntry.siteFavoriteKey);
-}
-
 function prioritizeFavoriteFlatRows(rowEntries) {
-  const favoriteRows = [];
-  const regularRows = [];
+  const favoriteProductRows = [];
+  const favoriteMerchantRowsBySite = new Map();
   rowEntries.forEach(rowEntry => {
-    if (isFlatRowFavorite(rowEntry)) {
-      favoriteRows.push(rowEntry);
-    } else {
-      regularRows.push(rowEntry);
+    if (favoriteProductKeys.has(rowEntry.productFavoriteKey)) {
+      favoriteProductRows.push(rowEntry);
+    } else if (favoriteSiteKeys.has(rowEntry.siteFavoriteKey)) {
+      const rows = favoriteMerchantRowsBySite.get(rowEntry.siteFavoriteKey) || [];
+      rows.push(rowEntry);
+      favoriteMerchantRowsBySite.set(rowEntry.siteFavoriteKey, rows);
     }
   });
-  return [...favoriteRows, ...regularRows];
+
+  const favoriteMerchantRows = [];
+  const pinnedRows = new Set(favoriteProductRows);
+  while (favoriteMerchantRows.length < FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT && favoriteMerchantRowsBySite.size > 0) {
+    for (const [siteKey, rows] of favoriteMerchantRowsBySite) {
+      const row = rows.shift();
+      if (row) {
+        favoriteMerchantRows.push(row);
+        pinnedRows.add(row);
+      }
+      if (rows.length === 0) favoriteMerchantRowsBySite.delete(siteKey);
+      if (favoriteMerchantRows.length >= FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT) break;
+    }
+  }
+
+  const regularRows = rowEntries.filter(rowEntry => !pinnedRows.has(rowEntry));
+  return [...favoriteProductRows, ...favoriteMerchantRows, ...regularRows];
 }
 
 function parseStructuredPriceToCny(priceNumber, priceUnit) {
@@ -331,17 +365,15 @@ function syncFiltersFromUrl() {
   if (params.has('q')) {
     searchFilter.value = params.get('q') || '';
   }
-  showSoldOutFilter.checked = params.get('showSoldOut') === '1';
+  if (showSoldOutFilter) showSoldOutFilter.checked = params.get('showSoldOut') === '1';
   if (params.has('priceMin')) {
     priceMin.value = params.get('priceMin') || '';
   }
   if (params.has('priceMax')) {
     priceMax.value = params.get('priceMax') || '';
   }
-  groupByMerchantFilter.checked = params.get('groupByMerchant') === '1';
-  matchCategoryFilter.checked = params.get('matchCategory') === '1';
-  matchMerchantFilter.checked = params.get('matchMerchant') === '1';
-  applyFlatSortPreset(params.get('sort') || flatSortSelect?.value || 'default', { shouldApply: false });
+  if (matchCategoryFilter) matchCategoryFilter.checked = params.get('matchCategory') === '1';
+  showShopTab('products', { shouldApply: false, track: false });
 }
 
 function reportSearchTerm(term, resultCount) {
@@ -386,7 +418,7 @@ function reportProductClick(payload) {
 
 function scheduleSearchReport() {
   clearTimeout(searchReportTimer);
-  const query = searchFilter.value.trim();
+  const query = searchFilter?.value.trim() || '';
   const reportQuery = prepareShopSearchQuery(query);
   if (reportQuery.length < 2 || reportQuery === lastReportedQuery) return;
   searchReportTimer = setTimeout(() => {
@@ -398,14 +430,13 @@ function scheduleSearchReport() {
 function currentFilterEventData(reason) {
   return {
     reason,
-    query: searchFilter.value.trim(),
-    priceMin: priceMin.value.trim(),
-    priceMax: priceMax.value.trim(),
-    showSoldOut: showSoldOutFilter.checked ? '1' : '0',
-    groupByMerchant: groupByMerchantFilter.checked ? '1' : '0',
-    matchCategory: matchCategoryFilter.checked ? '1' : '0',
-    matchMerchant: matchMerchantFilter.checked ? '1' : '0',
-    sort: flatSortSelect?.value || 'default',
+    query: searchFilter?.value.trim() || '',
+    merchantQuery: merchantSearchFilter?.value.trim() || '',
+    priceMin: priceMin?.value.trim() || '',
+    priceMax: priceMax?.value.trim() || '',
+    showSoldOut: showSoldOutFilter?.checked ? '1' : '0',
+    tab: currentShopTab,
+    matchCategory: matchCategoryFilter?.checked ? '1' : '0',
   };
 }
 
@@ -537,11 +568,10 @@ function shouldLoadFullShopProductsData(options = {}) {
   if (!shopProductsDataIsPartial()) return false;
   return Boolean(
     options.force
-    || options.groupByMerchant
+    || options.merchantTab
     || options.searchQuery
     || options.showSoldOut
     || options.matchCategory
-    || options.matchMerchant
     || options.priceMinValue
     || options.priceMaxValue
     || currentFlatVisibleLimit > loadedProductCount()
@@ -649,6 +679,12 @@ function createFlatProductRow(item) {
   categoryCell.appendChild(document.createTextNode(categoryName));
   row.appendChild(categoryCell);
 
+  const productScoreCell = document.createElement('td');
+  productScoreCell.className = 'flat-product-score-cell';
+  productScoreCell.setAttribute('data-label', tableLabel('productScore'));
+  productScoreCell.appendChild(document.createTextNode(formatScore(item.score)));
+  row.appendChild(productScoreCell);
+
   const merchantCell = document.createElement('td');
   merchantCell.className = 'flat-merchant-cell';
   merchantCell.setAttribute('data-label', tableLabel('merchant'));
@@ -662,12 +698,6 @@ function createFlatProductRow(item) {
   }
   merchantCell.appendChild(merchantInline);
   row.appendChild(merchantCell);
-
-  const scoreCell = document.createElement('td');
-  scoreCell.className = 'flat-merchant-score-cell';
-  scoreCell.setAttribute('data-label', tableLabel('merchantScore'));
-  scoreCell.appendChild(document.createTextNode(formatScore(item.siteScore)));
-  row.appendChild(scoreCell);
 
   const refreshCell = document.createElement('td');
   refreshCell.className = 'flat-refresh-cell';
@@ -691,7 +721,7 @@ function renderFlatProductRowsFromData() {
 
 function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
   if (!flatProductLoadSummary || !flatProductLoadMoreButton || !flatProductProgressiveLoad) return;
-  if (groupByMerchantFilter.checked) {
+  if (currentShopTab !== 'products') {
     flatProductProgressiveLoad.classList.add('hidden');
     flatProductLoadSummary.classList.add('hidden');
     flatProductLoadMoreButton.classList.add('hidden');
@@ -732,7 +762,7 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
 
 function updateMerchantProgressiveLoadSummary(visibleCount, renderedCount) {
   if (!merchantLoadSummary || !merchantLoadMoreButton || !merchantProgressiveLoad) return;
-  if (!groupByMerchantFilter.checked) {
+  if (currentShopTab !== 'merchants') {
     merchantProgressiveLoad.classList.add('hidden');
     merchantLoadSummary.classList.add('hidden');
     merchantLoadMoreButton.classList.add('hidden');
@@ -760,26 +790,6 @@ function updateMerchantProgressiveLoadSummary(visibleCount, renderedCount) {
     .replace('{rendered}', String(renderedCount))
     .replace('{total}', String(visibleCount));
   merchantLoadMoreButton.classList.toggle('hidden', renderedCount >= visibleCount);
-}
-
-function updateCurrentProductCount(value) {
-  if (!currentProductCount) return;
-  currentProductCount.textContent = String(Math.max(0, Math.floor(Number(value) || 0)));
-}
-
-function shouldUseTotalProductCountForCurrentCount() {
-  return shopProductsDataIsPartial()
-    && !searchFilter.value.trim()
-    && !priceMin.value.trim()
-    && !priceMax.value.trim()
-    && !groupByMerchantFilter.checked
-    && !matchCategoryFilter.checked
-    && !matchMerchantFilter.checked
-    && !showSoldOutFilter.checked;
-}
-
-function updateCurrentProductCountFromVisible(value) {
-  updateCurrentProductCount(shouldUseTotalProductCountForCurrentCount() ? totalProductCount() : value);
 }
 
 async function loadMerchantViewModule() {
@@ -813,26 +823,26 @@ function renderMerchantViewModule(module) {
 }
 
 async function applyFilters(options = {}) {
-  const query = buildActiveSearchQuery(searchFilter.value);
-  const showSoldOut = showSoldOutFilter.checked;
-  const groupByMerchant = groupByMerchantFilter.checked;
-  const priceMinValue = priceMin.value.trim();
-  const priceMaxValue = priceMax.value.trim();
+  const merchantTabActive = currentShopTab === 'merchants';
+  const productQueryValue = searchFilter?.value.trim() || '';
+  const merchantQueryValue = merchantSearchFilter?.value.trim() || '';
+  const query = buildActiveSearchQuery(productQueryValue);
+  const showSoldOut = Boolean(showSoldOutFilter?.checked);
+  const priceMinValue = priceMin?.value.trim() || '';
+  const priceMaxValue = priceMax?.value.trim() || '';
   const minPrice = parseBound(priceMinValue);
   const maxPrice = parseBound(priceMaxValue);
-  const searchQuery = searchFilter.value.trim();
-  const hasActiveFilters = Boolean(searchQuery || priceMinValue || priceMaxValue);
+  const normalizedMerchantQuery = normalize(merchantQueryValue);
   let visibleFlatProductCount = 0;
   let visibleMerchantCount = 0;
   let renderedMerchantCount = 0;
   let visibleProductCount = 0;
 
   if (shouldLoadFullShopProductsData({
-    groupByMerchant,
-    searchQuery,
-    showSoldOut,
-    matchCategory: matchCategoryFilter.checked,
-    matchMerchant: matchMerchantFilter.checked,
+    merchantTab: merchantTabActive,
+    searchQuery: merchantTabActive ? '' : productQueryValue,
+    showSoldOut: merchantTabActive ? false : showSoldOut,
+    matchCategory: !merchantTabActive && Boolean(matchCategoryFilter?.checked),
     priceMinValue,
     priceMaxValue,
   })) {
@@ -843,45 +853,30 @@ async function applyFilters(options = {}) {
     }
   }
 
-  merchantGroupedView.hidden = !groupByMerchant;
-  flatProductView.hidden = groupByMerchant;
+  merchantGroupedView.hidden = !merchantTabActive;
+  flatProductView.hidden = merchantTabActive;
 
-  if (groupByMerchant) {
+  if (merchantTabActive) {
     const merchantModule = await loadMerchantViewModule();
     if (!merchantModule.isMerchantViewRendered()) {
       renderMerchantViewModule(merchantModule);
     }
     merchantModule.getMerchantRows().forEach(({ element: row, chips }) => {
-      let visibleInStockCount = 0;
-      let visibleSoldOutCount = 0;
-      let visibleProductMatchCount = 0;
-
       chips.forEach(chip => {
-        const stockMatched = showSoldOut || chip.dataset.inStock === '1';
-        const priceMatched = matchesPriceRange(Number(chip.dataset.priceValue), minPrice, maxPrice);
-        const chipEntry = {
-          productName: chip.dataset.productName || '',
-          categoryName: chip.dataset.categoryName || '',
-          siteText: row.dataset.siteText || '',
-          siteUrl: row.dataset.siteUrl || '',
-        };
-        const queryMatched = matchesSearchQuery(chipEntry, query);
-        const productMatchCount = query.mode === 'empty' ? 0 : (queryMatched ? 1 : 0);
-        const visible = queryMatched && stockMatched && priceMatched;
-        chip.classList.toggle('hidden', !visible);
-        if (visible) visibleProductMatchCount += productMatchCount;
-        if (visible && chip.dataset.inStock !== '1') visibleSoldOutCount += 1;
-        if (visible && chip.dataset.inStock === '1') visibleInStockCount += 1;
+        chip.classList.remove('hidden');
       });
 
-      const visibleRowProductCount = visibleInStockCount + visibleSoldOutCount;
+      const visibleRowProductCount = Number(row.dataset.productCount) || 0;
       const hasProducts = Number(row.dataset.productCount) > 0;
-      const rowVisible = visibleRowProductCount > 0 || (!hasActiveFilters && !hasProducts);
-      row.dataset.visibleProductMatchCount = String(visibleProductMatchCount);
-      row.dataset.visibleInStockCount = String(visibleInStockCount);
-      row.dataset.visibleSoldOutCount = String(visibleSoldOutCount);
+      const merchantMatched = !normalizedMerchantQuery
+        || normalize(`${row.dataset.siteName || ''} ${row.dataset.siteText || ''} ${row.dataset.siteUrl || ''}`).includes(normalizedMerchantQuery);
+      const rowVisible = merchantMatched && (visibleRowProductCount > 0 || !hasProducts);
+      row.dataset.visibleProductMatchCount = '0';
+      row.dataset.visibleInStockCount = '0';
+      row.dataset.visibleSoldOutCount = '0';
+      row.dataset.visibleProductCount = String(visibleRowProductCount);
       row.dataset.filterVisible = rowVisible ? '1' : '0';
-      visibleProductCount += visibleRowProductCount;
+      if (rowVisible) visibleProductCount += visibleRowProductCount;
     });
 
     const merchantRenderState = sortRows(merchantModule);
@@ -906,28 +901,24 @@ async function applyFilters(options = {}) {
     updateFlatProgressiveLoadSummary(visibleFlatProductCount, renderedFlatCount);
   }
 
-  const visibleCount = groupByMerchant ? visibleMerchantCount : visibleFlatProductCount;
-  updateCurrentProductCountFromVisible(visibleProductCount);
-  emptyState.classList.toggle('hidden', visibleCount > 0 || isShopProductsDataLoading);
-  if (groupByMerchant) {
+  productEmptyState?.classList.toggle('hidden', merchantTabActive || visibleFlatProductCount > 0 || isShopProductsDataLoading);
+  merchantEmptyState?.classList.toggle('hidden', !merchantTabActive || visibleMerchantCount > 0 || isShopProductsDataLoading);
+  if (merchantTabActive) {
     updateFlatProgressiveLoadSummary(0, 0);
     updateMerchantProgressiveLoadSummary(visibleMerchantCount, renderedMerchantCount);
   } else {
     updateMerchantProgressiveLoadSummary(0, 0);
   }
-  const shouldUseCanonicalShopPath = shouldResetSearchPageMeta(searchQuery);
+  const shouldUseCanonicalShopPath = shouldResetSearchPageMeta(productQueryValue);
   const params = new URLSearchParams();
-  if (searchQuery && (!currentQuickPlanPath || shouldUseCanonicalShopPath)) params.set('q', searchQuery);
-  if (showSoldOut) params.set('showSoldOut', '1');
-  if (groupByMerchant) params.set('groupByMerchant', '1');
-  if (matchCategoryFilter.checked) params.set('matchCategory', '1');
-  if (matchMerchantFilter.checked) params.set('matchMerchant', '1');
-  if (priceMinValue) params.set('priceMin', priceMinValue);
-  if (priceMaxValue) params.set('priceMax', priceMaxValue);
-  if ((!currentQuickPlanPath || shouldUseCanonicalShopPath) && flatSortSelect?.value && flatSortSelect.value !== 'default' && flatSortSelect.value !== 'custom') {
-    params.set('sort', flatSortSelect.value);
+  if (!merchantTabActive) {
+    if (productQueryValue && (!currentQuickPlanPath || shouldUseCanonicalShopPath)) params.set('q', productQueryValue);
+    if (showSoldOut) params.set('showSoldOut', '1');
+    if (matchCategoryFilter?.checked) params.set('matchCategory', '1');
+    if (priceMinValue) params.set('priceMin', priceMinValue);
+    if (priceMaxValue) params.set('priceMax', priceMaxValue);
   }
-  resetSearchPageMeta(searchQuery);
+  resetSearchPageMeta(productQueryValue);
   const nextPath = currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : '/shops';
   const nextUrl = params.toString() ? `${nextPath}?${params.toString()}` : nextPath;
   history.replaceState(null, '', nextUrl);
@@ -943,6 +934,19 @@ function sortRows(merchantModule) {
     .sort((a, b) => {
       const favoriteDiff = Number(b.element.dataset.favorite) - Number(a.element.dataset.favorite);
       if (favoriteDiff !== 0) return favoriteDiff;
+
+      if (currentMerchantSort) {
+        const multiplier = currentMerchantSort.direction === 'asc' ? 1 : -1;
+        const leftValue = merchantRowValue(a.element, currentMerchantSort.key, currentMerchantSort.type);
+        const rightValue = merchantRowValue(b.element, currentMerchantSort.key, currentMerchantSort.type);
+        if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+          if (leftValue !== rightValue) return (leftValue - rightValue) * multiplier;
+        } else {
+          const compared = String(leftValue).localeCompare(String(rightValue), 'zh-Hans-CN', { numeric: true });
+          if (compared !== 0) return compared * multiplier;
+        }
+        return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
+      }
 
       const siteScoreDiff = Number(b.element.dataset.siteScore) - Number(a.element.dataset.siteScore);
       if (siteScoreDiff !== 0) return siteScoreDiff;
@@ -964,7 +968,23 @@ function sortRows(merchantModule) {
       }
     });
 
+  updateMerchantSortButtons();
   return { visibleCount, renderedCount };
+}
+
+function merchantRowValue(row, key, type) {
+  let value = row.dataset[key] ?? '';
+  if (key === 'rank') value = Number(row.dataset.originalIndex) + 1;
+  if (key === 'productCount') value = row.dataset.visibleProductCount || row.dataset.productCount || '0';
+  if (type === 'number') return Number(value) || 0;
+  return value;
+}
+
+function nextSort(currentSort, button) {
+  const key = button.dataset.sortKey;
+  const currentDirection = currentSort?.key === key ? currentSort.direction : null;
+  const direction = currentDirection === 'asc' ? 'desc' : (currentDirection === 'desc' ? null : 'asc');
+  return direction ? { key, direction, type: button.dataset.sortType || 'text' } : null;
 }
 
 function flatRowValue(rowEntry, key, type) {
@@ -996,32 +1016,6 @@ function appendCurrentFlatRows() {
 
 function filteredFlatRows() {
   return searchMatchedFlatRows();
-}
-
-function flatSortPresetForState() {
-  if (!currentFlatSort) return 'default';
-  const entry = Object.entries(FLAT_SORT_PRESETS).find(([, preset]) => {
-    return preset
-      && preset.key === currentFlatSort.key
-      && preset.direction === currentFlatSort.direction
-      && preset.type === currentFlatSort.type;
-  });
-  return entry ? entry[0] : 'custom';
-}
-
-function syncFlatSortSelect() {
-  if (!flatSortSelect) return;
-  flatSortSelect.value = flatSortPresetForState();
-}
-
-function applyFlatSortPreset(value, options = {}) {
-  const preset = FLAT_SORT_PRESETS[value] ?? null;
-  currentFlatSort = preset ? { ...preset } : null;
-  syncFlatSortSelect();
-  if (options.shouldApply !== false) {
-    resetFlatVisibleLimit();
-    applyFilters();
-  }
 }
 
 function sortFlatProductRows(button) {
@@ -1060,9 +1054,7 @@ function sortFlatProductRows(button) {
   });
   updateFlatProductIndexes();
   updateFlatProgressiveLoadSummary(currentFlatRows.length, renderedFlatCount);
-  updateCurrentProductCountFromVisible(currentFlatRows.length);
   updateFlatSortButtons();
-  syncFlatSortSelect();
 }
 
 function updateFlatSortButtons() {
@@ -1076,6 +1068,23 @@ function updateFlatSortButtons() {
     if (headerCell) headerCell.dataset.sortDirection = active ? currentFlatSort.direction : '';
     button.dataset.sortDirection = active ? currentFlatSort.direction : '';
     if (indicator) indicator.dataset.sortDirection = active ? currentFlatSort.direction : '';
+    if (status) status.textContent = active
+      ? (shopsMessages.currentSort || ', current {direction}').replace('{direction}', directionLabel)
+      : (shopsMessages.clickSort || ', click to sort');
+  });
+}
+
+function updateMerchantSortButtons() {
+  merchantSortButtons.forEach(button => {
+    const active = currentMerchantSort?.key === button.dataset.sortKey;
+    const headerCell = button.closest('.flat-sort-head');
+    const indicator = headerCell?.querySelector('.sort-indicator') || button.querySelector('.sort-indicator');
+    const status = button.querySelector('.sort-status');
+    const directionLabel = currentMerchantSort?.direction === 'asc' ? (shopsMessages.ascending || 'ascending') : (shopsMessages.descending || 'descending');
+    if (headerCell) headerCell.setAttribute('aria-sort', active ? (currentMerchantSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
+    if (headerCell) headerCell.dataset.sortDirection = active ? currentMerchantSort.direction : '';
+    button.dataset.sortDirection = active ? currentMerchantSort.direction : '';
+    if (indicator) indicator.dataset.sortDirection = active ? currentMerchantSort.direction : '';
     if (status) status.textContent = active
       ? (shopsMessages.currentSort || ', current {direction}').replace('{direction}', directionLabel)
       : (shopsMessages.clickSort || ', click to sort');
@@ -1111,7 +1120,8 @@ async function loadShopProductsDataFromApi() {
   shopProductsDataLoadPromise = (async () => {
     isShopProductsDataLoading = true;
     updateFlatProgressiveLoadSummary(0, 0);
-    emptyState.classList.add('hidden');
+    productEmptyState?.classList.add('hidden');
+    merchantEmptyState?.classList.add('hidden');
     try {
       const response = await fetch('/api/shop-products.json', { headers: { accept: 'application/json' } });
       if (!response.ok) {
@@ -1148,6 +1158,16 @@ searchFilter.addEventListener('input', () => {
   scheduleFilterTrack('query');
   scheduleApplyFilters();
 });
+merchantFiltersForm?.addEventListener('submit', event => {
+  event.preventDefault();
+  currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
+  applyFilters();
+});
+merchantSearchFilter?.addEventListener('input', () => {
+  currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
+  scheduleFilterTrack('merchantQuery');
+  scheduleApplyFilters();
+});
 showSoldOutFilter.addEventListener('change', () => {
   resetFlatVisibleLimit();
   trackUmamiEvent('filter-toggle-click', {
@@ -1156,26 +1176,11 @@ showSoldOutFilter.addEventListener('change', () => {
   });
   applyFilters();
 });
-groupByMerchantFilter.addEventListener('change', () => {
-  trackUmamiEvent('filter-toggle-click', {
-    name: 'groupByMerchant',
-    value: groupByMerchantFilter.checked ? '1' : '0',
-  });
-  applyFilters();
-});
 matchCategoryFilter.addEventListener('change', () => {
   resetFlatVisibleLimit();
   trackUmamiEvent('filter-toggle-click', {
     name: 'matchCategory',
     value: matchCategoryFilter.checked ? '1' : '0',
-  });
-  applyFilters();
-});
-matchMerchantFilter.addEventListener('change', () => {
-  resetFlatVisibleLimit();
-  trackUmamiEvent('filter-toggle-click', {
-    name: 'matchMerchant',
-    value: matchMerchantFilter.checked ? '1' : '0',
   });
   applyFilters();
 });
@@ -1188,12 +1193,6 @@ priceMax.addEventListener('input', () => {
   resetFlatVisibleLimit();
   scheduleFilterTrack('priceMax');
   scheduleApplyFilters();
-});
-flatSortSelect?.addEventListener('change', () => {
-  applyFlatSortPreset(flatSortSelect.value);
-  trackUmamiEvent('product-sort-select', {
-    value: flatSortSelect.value,
-  });
 });
 quickTagFilters?.addEventListener('click', event => {
   const button = event.target.closest('button[data-tag-key]');
@@ -1219,7 +1218,6 @@ quickPlanRow?.addEventListener('click', event => {
   currentQuickPlanPath = button.dataset.quickPlanPath || '';
   applySearchPageMeta(button.textContent?.trim() || query, query, currentQuickPlanPath);
   resetFlatVisibleLimit();
-  applyFlatSortPreset('price-asc', { shouldApply: false });
   showOfficialPriceTip(button, query);
   showGatewayTip(button, query);
   reportSearchTerm(query, filteredFlatRows().length);
@@ -1247,12 +1245,30 @@ flatSortButtons.forEach(button => {
   });
 });
 
+merchantSortButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    currentMerchantSort = nextSort(currentMerchantSort, button);
+    currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
+    applyFilters();
+    trackUmamiEvent('merchant-sort-click', {
+      key: button.dataset.sortKey || '',
+      direction: currentMerchantSort?.direction || 'none',
+    });
+  });
+});
+
 document.querySelectorAll('.flat-sort-head').forEach(headerCell => {
   headerCell.addEventListener('click', event => {
     if (event.target instanceof Element && event.target.closest('[data-inline-help]')) return;
     const button = headerCell.querySelector('.flat-sort-button');
     if (!(button instanceof HTMLElement) || event.target === button || button.contains(event.target)) return;
     button.click();
+  });
+});
+
+shopTabButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    showShopTab(button.dataset.shopTab || 'products');
   });
 });
 

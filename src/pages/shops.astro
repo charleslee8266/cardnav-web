@@ -23,7 +23,6 @@ const linkTo = Astro.locals.localizePath;
 const requestUrl = new URL(Astro.request.url);
 const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
 const initialSearchQuery = seoSearchTerm?.query ?? requestUrl.searchParams.get('q')?.trim() ?? '';
-const initialSort = seoSearchTerm ? 'price-asc' : requestUrl.searchParams.get('sort')?.trim() ?? '';
 const seoSearchPageMeta = seoSearchTerm
   ? buildShopSearchPageMeta(seoSearchTerm.label, {
       searchResultsTitle: t.shops.searchResultsTitle,
@@ -152,6 +151,8 @@ const shopsScriptMessages = {
     category: t.labels.category,
     merchant: t.labels.merchant,
     merchantScore: t.labels.merchantScore,
+    productScore: t.labels.productScore,
+    productCount: t.labels.productCount,
     latestRefresh: t.labels.latestRefresh,
   },
 };
@@ -160,9 +161,18 @@ const flatSortColumns = [
   { key: 'priceValue', type: 'number', label: t.labels.price },
   { key: 'stockValue', type: 'number', label: t.labels.stock },
   { key: 'categoryName', type: 'text', label: t.labels.category },
+  { key: 'score', type: 'number', label: t.labels.productScore, tip: t.shops.productScoreTip, tipLabel: t.shops.productScoreHelpLabel },
+  { key: 'siteName', type: 'text', label: t.labels.merchant },
+  { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
+];
+const merchantTabLabel = t.labels.merchant;
+const merchantSortColumns = [
+  { key: 'rank', type: 'number', label: t.labels.sequence },
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
-  { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
+  { key: 'productCount', type: 'number', label: t.labels.productCount },
+  { key: 'hotProducts', type: 'number', label: t.shops.hotProductsTitle },
+  { key: 'lastProductRefreshSuccessAt', type: 'number', label: t.labels.latestRefresh },
 ];
 const shopProductsJsonValue = JSON.stringify({
   sites: renderedSites,
@@ -211,144 +221,198 @@ const shopProductsJsonValue = JSON.stringify({
     </a>
   </section>
 
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
-    <form id="filters" class="card-body p-5 flex flex-col gap-3" method="get">
-      <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
-        <span>{t.labels.collectedSites}：<span class="font-bold text-primary">{data.totalSiteCount}</span></span>
-        <span>{t.labels.products}：<span class="font-bold text-primary">{data.totalProductCount}</span></span>
-        <span>{t.labels.currentProducts}：<span id="currentProductCount" class="font-bold text-primary">{data.totalProductCount}</span></span>
-        {data.latestRefreshTime && <span>{t.labels.latestRefresh}：{data.latestRefreshTime}</span>}
-      </div>
-      <div class="relative w-full max-w-3xl">
-        <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
-        <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip={t.shops.advancedSearchTip}>i</button>
-      </div>
-      <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
-          <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
-          <span>{t.shops.showSoldOut}</span>
-        </label>
-        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
-          <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
-          <span>{t.shops.matchCategory}</span>
-        </label>
-        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
-          <input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
-          <span>{t.shops.matchMerchant}</span>
-        </label>
-        <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
-          <input id="groupByMerchantFilter" name="groupByMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
-          <span>{t.shops.groupByMerchant}</span>
-        </label>
-        <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
-          <span class="text-sm text-base-content/80">{t.labels.price}</span>
-          <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button>
-          <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" />
-          <span class="text-xs text-base-content/40">~</span>
-          <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
-        </div>
-        <div class="flex items-center gap-1">
-          <span class="text-sm text-base-content/80">{t.shops.sort}</span>
-          <select id="flatSortSelect" name="sort" class="select select-bordered select-sm w-32" autocomplete="off">
-            <option value="default" selected={!initialSort || initialSort === 'default'}>{t.shops.defaultSort}</option>
-            <option value="price-asc" selected={initialSort === 'price-asc'}>{t.shops.priceAsc}</option>
-            <option value="stock-desc" selected={initialSort === 'stock-desc'}>{t.shops.stockDesc}</option>
-            <option value="refresh-desc" selected={initialSort === 'refresh-desc'}>{t.shops.refreshDesc}</option>
-            <option value="custom" hidden>{t.shops.headerSort}</option>
-          </select>
-        </div>
-      </div>
-      <div id="quickPlanRow" class="flex flex-wrap items-center gap-1" aria-label={t.shops.quickPlanSearch}>
-        <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.shops.quickPlanSearch}</span>
-        {quickPlanSearchTerms.map(term => (
-          <button
-            type="button"
-            class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
-            data-quick-plan-query={term.query}
-            data-quick-plan-path={linkTo(quickPlanSearchSeoPath(term))}
-            data-official-price-path={term.officialPriceSlug && officialPriceUrlSlugs.has(term.officialPriceSlug) ? linkTo(officialPricePathname(term.officialPriceSlug)) : undefined}
-            data-gateway-path={quickPlanGatewayPath(term) ? linkTo(quickPlanGatewayPath(term)) : undefined}
-            data-gateway-model-family={term.gatewayModelFamily}
-            data-gateway-model-family-name={term.gatewayModelFamilyName}
-          >
-            {term.label}
+  <section id="shopsExplorer" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-shop-tabs>
+    <div class="border-b border-base-300 bg-base-100 px-4 py-3">
+      <div class="tool-tablist-wrap">
+        <div class="tabs tabs-box gateway-home-tablist" role="tablist" aria-label={t.shops.title}>
+          <button type="button" class="tab tab-active" role="tab" aria-selected="true" aria-controls="flatProductView" id="shopProductsTab" data-shop-tab="products">
+            {t.labels.products}
+            <span class="tool-tab-badge">{data.totalProductCount}</span>
           </button>
-        ))}
-      </div>
-      <div class="flex flex-wrap items-center gap-1">
-        <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.labels.popularSearch}</span>
-        <div id="quickTagFilters" class="flex flex-wrap gap-0.5" aria-label={t.shops.hotSearchTags}>
-          {popularSearchTermsValue.map(term => {
-            const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
-            return (
-              <button type="button" class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
-            );
-          })}
+          <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="merchantGroupedView" id="shopMerchantsTab" data-shop-tab="merchants">
+            {merchantTabLabel}
+            <span class="tool-tab-badge">{data.totalSiteCount}</span>
+          </button>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <a
-          id="officialPriceTip"
-          href={initialOfficialPricePath || '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          class:list={[
-            initialOfficialPricePath ? 'inline-flex' : 'hidden',
-            'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-          ]}
-          data-umami-event="quick-plan-official-price-tip-click"
-          data-umami-event-url={initialOfficialPricePath || undefined}
-          data-umami-event-name={initialOfficialPricePath ? seoSearchTerm?.label : undefined}
-        >
-          <span data-official-price-tip-label>{initialOfficialPriceTipLabel}</span>
-          <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14"></path>
-            <path d="m13 6 6 6-6 6"></path>
-          </svg>
-        </a>
-        <a
-          id="gatewayTip"
-          href={initialGatewayTipPath || '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          class:list={[
-            initialGatewayTipPath ? 'inline-flex' : 'hidden',
-            'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-          ]}
-          data-umami-event="quick-plan-gateway-tip-click"
-          data-umami-event-url={initialGatewayTipPath || undefined}
-          data-umami-event-name={initialGatewayTipPath && seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : undefined}
-        >
-          <span data-gateway-tip-label>{initialGatewayTipLabel}</span>
-          <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14"></path>
-            <path d="m13 6 6 6-6 6"></path>
-          </svg>
-        </a>
+    </div>
+
+    <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products">
+      <form id="filters" class="card-body p-4 flex flex-col gap-3 border-b border-base-300" method="get" action={linkTo('/shops')}>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative min-w-64 flex-1">
+            <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
+            <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip={t.shops.advancedSearchTip}>i</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+            <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
+              <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
+              <span>{t.shops.showSoldOut}</span>
+            </label>
+            <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
+              <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
+              <span>{t.shops.matchCategory}</span>
+            </label>
+            <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
+              <span class="text-sm text-base-content/80">{t.labels.price}</span>
+              <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button>
+              <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" />
+              <span class="text-xs text-base-content/40">~</span>
+              <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
+            </div>
+          </div>
+        </div>
+        <div id="quickPlanRow" class="flex flex-wrap items-center gap-1" aria-label={t.shops.quickPlanSearch}>
+          <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.shops.quickPlanSearch}</span>
+          {quickPlanSearchTerms.map(term => (
+            <button
+              type="button"
+              class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
+              data-quick-plan-query={term.query}
+              data-quick-plan-path={linkTo(quickPlanSearchSeoPath(term))}
+              data-official-price-path={term.officialPriceSlug && officialPriceUrlSlugs.has(term.officialPriceSlug) ? linkTo(officialPricePathname(term.officialPriceSlug)) : undefined}
+              data-gateway-path={quickPlanGatewayPath(term) ? linkTo(quickPlanGatewayPath(term)) : undefined}
+              data-gateway-model-family={term.gatewayModelFamily}
+              data-gateway-model-family-name={term.gatewayModelFamilyName}
+            >
+              {term.label}
+            </button>
+          ))}
+        </div>
+        <div class="flex flex-wrap items-center gap-1">
+          <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.labels.popularSearch}</span>
+          <div id="quickTagFilters" class="flex flex-wrap gap-0.5" aria-label={t.shops.hotSearchTags}>
+            {popularSearchTermsValue.map(term => {
+              const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
+              return (
+                <button type="button" class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
+              );
+            })}
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <a
+            id="officialPriceTip"
+            href={initialOfficialPricePath || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            class:list={[
+              initialOfficialPricePath ? 'inline-flex' : 'hidden',
+              'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+            ]}
+            data-umami-event="quick-plan-official-price-tip-click"
+            data-umami-event-url={initialOfficialPricePath || undefined}
+            data-umami-event-name={initialOfficialPricePath ? seoSearchTerm?.label : undefined}
+          >
+            <span data-official-price-tip-label>{initialOfficialPriceTipLabel}</span>
+            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"></path>
+              <path d="m13 6 6 6-6 6"></path>
+            </svg>
+          </a>
+          <a
+            id="gatewayTip"
+            href={initialGatewayTipPath || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            class:list={[
+              initialGatewayTipPath ? 'inline-flex' : 'hidden',
+              'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+            ]}
+            data-umami-event="quick-plan-gateway-tip-click"
+            data-umami-event-url={initialGatewayTipPath || undefined}
+            data-umami-event-name={initialGatewayTipPath && seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : undefined}
+          >
+            <span data-gateway-tip-label>{initialGatewayTipLabel}</span>
+            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"></path>
+              <path d="m13 6 6 6-6 6"></path>
+            </svg>
+          </a>
+        </div>
+      </form>
+      <div class="product-table-scroll">
+        <table class="table table-zebra w-full flat-product-table border-collapse">
+          <thead class="bg-base-200 text-base-content text-base">
+            <tr>
+              <th scope="col" class="table-head-index w-14 text-center">{t.labels.sequence}</th>
+              {flatSortColumns.map(column => (
+                <th scope="col" class:list={['flat-sort-head', column.tip && 'flat-sort-head-with-help']} aria-sort="none">
+                  {column.tip ? (
+                    <div class="flat-sort-head-content">
+                      <button type="button" class="flat-sort-button" data-shop-sort-scope="products" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
+                        <span class="flat-sort-label">{column.label}</span>
+                        <span class="sort-status sr-only">{t.shops.clickSort}</span>
+                      </button>
+                      <button type="button" class="inline-help-button flat-header-help" aria-label={column.tipLabel} data-inline-help data-tip={column.tip}>i</button>
+                      <span class="sort-indicator" aria-hidden="true">
+                        <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="m7 15 5 5 5-5"></path>
+                          <path d="m7 9 5-5 5 5"></path>
+                        </svg>
+                        <svg class="sort-icon sort-icon-asc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="m5 12 7-7 7 7"></path>
+                          <path d="M12 19V5"></path>
+                        </svg>
+                        <svg class="sort-icon sort-icon-desc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 5v14"></path>
+                          <path d="m19 12-7 7-7-7"></path>
+                        </svg>
+                      </span>
+                    </div>
+                  ) : (
+                    <button type="button" class="flat-sort-button" data-shop-sort-scope="products" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
+                      <span class="flat-sort-label">{column.label}</span>
+                      <span class="sort-indicator" aria-hidden="true">
+                        <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="m7 15 5 5 5-5"></path>
+                          <path d="m7 9 5-5 5 5"></path>
+                        </svg>
+                        <svg class="sort-icon sort-icon-asc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="m5 12 7-7 7 7"></path>
+                          <path d="M12 19V5"></path>
+                        </svg>
+                        <svg class="sort-icon sort-icon-desc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 5v14"></path>
+                          <path d="m19 12-7 7-7-7"></path>
+                        </svg>
+                      </span>
+                      <span class="sort-status sr-only">{t.shops.clickSort}</span>
+                    </button>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody id="flatProductRows"></tbody>
+        </table>
+        <section id="productEmptyState" class="shops-empty-state hidden" aria-live="polite">
+          <p>{t.shops.productEmptyState}</p>
+        </section>
       </div>
-    </form>
-  </section>
+      <section id="flatProductProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3">
+        <p id="flatProductLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
+        <button id="flatProductLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">{t.shops.loadMoreProducts}</button>
+      </section>
+    </div>
 
-  <section id="emptyState" class="shops-empty-state hidden" aria-live="polite">
-    <p>{t.shops.emptyState}</p>
-  </section>
-
-  <section id="flatProductView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
-    <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">{t.shops.tableHint}</div>
-    <div class="product-table-scroll">
-      <table class="table table-zebra w-full flat-product-table border-collapse">
-        <thead class="bg-base-200 text-base-content text-base">
-          <tr>
-            <th scope="col" class="table-head-index w-14 text-center">{t.labels.sequence}</th>
-            {flatSortColumns.map(column => (
-              <th scope="col" class:list={['flat-sort-head', column.tip && 'flat-sort-head-with-help']} aria-sort="none">
+    <div id="merchantGroupedView" role="tabpanel" aria-labelledby="shopMerchantsTab" data-shop-panel="merchants" hidden>
+      <form id="merchantFilters" class="card-body p-4 border-b border-base-300" method="get" action={linkTo('/shops')}>
+        <input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full max-w-3xl" placeholder={t.shops.merchantSearchPlaceholder} autocomplete="off" />
+      </form>
+      <div class="product-table-scroll merchant-table-scroll">
+        <div class="merchant-table">
+          <div class="merchant-table-head bg-base-200 font-bold text-sm text-base-content">
+            {merchantSortColumns.map(column => (
+              <div class:list={['merchant-head-cell', column.key === 'rank' && 'merchant-head-index', column.key === 'siteScore' && 'merchant-score-head', 'flat-sort-head', column.tip && 'flat-sort-head-with-help']} aria-sort="none">
                 {column.tip ? (
                   <div class="flat-sort-head-content">
-                    <button type="button" class="flat-sort-button" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
+                    <button type="button" class="flat-sort-button" data-shop-sort-scope="merchants" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
                       <span class="flat-sort-label">{column.label}</span>
                       <span class="sort-status sr-only">{t.shops.clickSort}</span>
                     </button>
-                    <button type="button" class="inline-help-button flat-header-help" aria-label={column.tipLabel} data-inline-help data-tip={column.tip}>i</button>
+                    <button type="button" class="inline-help-button merchant-score-help" aria-label={column.tipLabel} data-inline-help data-tip={column.tip}>i</button>
                     <span class="sort-indicator" aria-hidden="true">
                       <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m7 15 5 5 5-5"></path>
@@ -365,7 +429,7 @@ const shopProductsJsonValue = JSON.stringify({
                     </span>
                   </div>
                 ) : (
-                  <button type="button" class="flat-sort-button" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
+                  <button type="button" class="flat-sort-button" data-shop-sort-scope="merchants" data-sort-key={column.key} data-sort-type={column.type} title={`${column.label}${t.shops.sortTitleSuffix}`}>
                     <span class="flat-sort-label">{column.label}</span>
                     <span class="sort-indicator" aria-hidden="true">
                       <svg class="sort-icon sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -384,37 +448,20 @@ const shopProductsJsonValue = JSON.stringify({
                     <span class="sort-status sr-only">{t.shops.clickSort}</span>
                   </button>
                 )}
-              </th>
+              </div>
             ))}
-          </tr>
-        </thead>
-
-        <tbody id="flatProductRows"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="flatProductProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3">
-    <p id="flatProductLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
-    <button id="flatProductLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">{t.shops.loadMoreProducts}</button>
-  </section>
-
-  <section id="merchantGroupedView" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" hidden>
-    <div class="merchant-table-head bg-base-200 font-bold text-sm text-base-content">
-      <div class="merchant-head-index text-center w-14">{t.labels.sequence}</div>
-      <div class="merchant-head-cell">{t.labels.merchant}</div>
-      <div class="merchant-head-cell merchant-score-head">
-        <span>{t.labels.merchantScore}</span>
-        <button type="button" class="inline-help-button merchant-score-help" aria-label={t.shops.merchantScoreHelpLabel} data-inline-help data-tip={t.shops.merchantScoreTip}>i</button>
+          </div>
+          <div id="merchantRows"></div>
+          <section id="merchantEmptyState" class="shops-empty-state hidden" aria-live="polite">
+            <p>{t.shops.merchantEmptyState}</p>
+          </section>
+        </div>
       </div>
-      <div class="merchant-head-cell">{t.labels.product}</div>
+      <section id="merchantProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3 hidden">
+        <p id="merchantLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
+        <button id="merchantLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">{t.shops.loadMoreMerchants}</button>
+      </section>
     </div>
-    <div id="merchantRows"></div>
-  </section>
-
-  <section id="merchantProgressiveLoad" class="progressive-load-panel flex flex-col items-center gap-3 hidden">
-    <p id="merchantLoadSummary" class="progressive-load-summary text-xs text-base-content/50 hidden"></p>
-    <button id="merchantLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">{t.shops.loadMoreMerchants}</button>
   </section>
 
   <dialog id="shopSubmitDialog" class="modal">

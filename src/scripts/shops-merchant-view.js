@@ -1,5 +1,5 @@
 /*
- * 文件说明: 商家分组视图的懒加载模块，仅在启用按商家分组时加载。
+ * 文件说明: 商家列表视图的懒加载模块，按商家渲染评分、商品数量、热门商品和刷新时间。
  */
 
 let merchantRowsRendered = false;
@@ -47,6 +47,11 @@ function formatDisplayPrice(priceNumber, priceUnit) {
 
 function productStockValue(item) {
   return typeof item.stock === 'number' && item.stock > 0 ? item.stock : (item.inStock ? 1 : 0);
+}
+
+function productScoreValue(item) {
+  const score = Number(item.score);
+  return Number.isFinite(score) ? score : 0;
 }
 
 function productStockLabel(item, shopsMessages) {
@@ -146,6 +151,16 @@ export function renderMerchantRows({
   sites.forEach((site, index) => {
     const siteId = text(site.id);
     const siteProducts = productsBySiteId.get(siteId) ?? [];
+    const hotProducts = siteProducts
+      .slice()
+      .sort((left, right) => {
+        const stockDiff = Number(Boolean(right.inStock)) - Number(Boolean(left.inStock));
+        if (stockDiff !== 0) return stockDiff;
+        const scoreDiff = productScoreValue(right) - productScoreValue(left);
+        if (scoreDiff !== 0) return scoreDiff;
+        return text(left.name).localeCompare(text(right.name), 'zh-Hans-CN', { numeric: true });
+      })
+      .slice(0, 10);
     const siteName = text(site.name);
     const siteUrl = text(site.url).trim();
     const siteFavoriteKey = siteId || siteName;
@@ -158,7 +173,9 @@ export function renderMerchantRows({
     row.dataset.siteScore = String(Number(site.score) || 0);
     row.dataset.lastProductRefreshSuccessAt = String(new Date(site.lastProductRefreshSuccessAt || '').getTime() || 0);
     row.dataset.originalIndex = String(index);
+    row.dataset.rank = String(index + 1);
     row.dataset.productCount = String(siteProducts.length);
+    row.dataset.hotProducts = String(hotProducts.length > 0 ? productScoreValue(hotProducts[0]) : 0);
 
     const indexCell = appendTextElement(row, 'div', 'row-index merchant-row-index', '');
     const merchantCell = document.createElement('div');
@@ -172,9 +189,6 @@ export function renderMerchantRows({
       appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
     }
     merchantCell.appendChild(merchantHeader);
-    if (site.lastProductRefreshSuccessTime) {
-      appendTextElement(merchantCell, 'div', 'merchant-refresh-time', `${shopsMessages.latestRefreshPrefix || 'Last refresh: '}${site.lastProductRefreshSuccessTime}`);
-    }
     row.appendChild(merchantCell);
 
     const scoreCell = document.createElement('div');
@@ -184,21 +198,40 @@ export function renderMerchantRows({
     row.appendChild(scoreCell);
 
     const productsCell = document.createElement('div');
-    productsCell.className = 'merchant-product-cell';
+    productsCell.className = 'merchant-count-cell';
+    appendTextElement(productsCell, 'span', 'merchant-count-mobile-label', shopsMessages.tableLabels?.productCount || 'Product count');
+    appendTextElement(productsCell, 'span', 'merchant-count-value', String(siteProducts.length));
+    row.appendChild(productsCell);
+
+    const hotProductsCell = document.createElement('div');
+    hotProductsCell.className = 'merchant-product-cell';
+    appendTextElement(
+      hotProductsCell,
+      'div',
+      'merchant-products-mobile-label',
+      shopsMessages.hotProductsTitle || 'Hot products',
+    );
     const chips = [];
-    if (siteProducts.length === 0) {
-      appendTextElement(productsCell, 'div', 'no-products', shopsMessages.noData || 'No data');
+    if (hotProducts.length === 0) {
+      appendTextElement(hotProductsCell, 'div', 'no-products', shopsMessages.noData || 'No data');
     } else {
       const list = document.createElement('div');
       list.className = 'product-list';
-      siteProducts.forEach(item => {
+      hotProducts.forEach(item => {
         const chip = createProductChip(item, shopsMessages, createTrackedLink);
         chips.push(chip);
         list.appendChild(chip);
       });
-      productsCell.appendChild(list);
+      hotProductsCell.appendChild(list);
     }
-    row.appendChild(productsCell);
+    row.appendChild(hotProductsCell);
+
+    const refreshCell = document.createElement('div');
+    refreshCell.className = 'merchant-refresh-cell';
+    appendTextElement(refreshCell, 'span', 'merchant-refresh-mobile-label', shopsMessages.tableLabels?.latestRefresh || 'Latest refresh');
+    appendTextElement(refreshCell, 'span', 'merchant-refresh-time', site.lastProductRefreshSuccessTime || '-');
+    row.appendChild(refreshCell);
+
     fragment.appendChild(row);
     merchantRows.push({ element: row, indexCell, chips });
   });
