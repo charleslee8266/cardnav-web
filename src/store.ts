@@ -4,6 +4,7 @@
 import 'dotenv/config';
 import pg from 'pg';
 import { withPublicDataCache } from './public-data-cache.js';
+import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
 export type PublicSiteRow = {
   id: string;
@@ -113,7 +114,7 @@ export type PopularSearchTermsSnapshot = {
   normalizedTerms: string[];
 };
 
-type SubmitSiteUrlErrorKey = 'invalidUrl' | 'duplicateUrl';
+type SubmitSiteUrlErrorKey = PublicSubmittedUrlRejectReason | 'duplicateUrl';
 
 let pool: pg.Pool | null = null;
 const beijingDateFormatter = new Intl.DateTimeFormat('sv-SE', {
@@ -677,17 +678,11 @@ export function normalizeSearchText(value: string) {
 }
 
 export async function submitSiteUrl(input: string) {
-  let url: string;
-  try {
-    const parsed = new URL(input.trim());
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return { ok: false as const, errorKey: 'invalidUrl' satisfies SubmitSiteUrlErrorKey };
-    }
-    parsed.hash = '';
-    url = parsed.toString().replace(/\/+$/, '');
-  } catch {
-    return { ok: false as const, errorKey: 'invalidUrl' satisfies SubmitSiteUrlErrorKey };
+  const validation = validatePublicSubmittedUrl(input);
+  if (!validation.ok) {
+    return { ok: false as const, errorKey: validation.reason satisfies SubmitSiteUrlErrorKey };
   }
+  const url = validation.url;
 
   const result = await getPool().query(
     `

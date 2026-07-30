@@ -574,6 +574,10 @@ export const enMessages: Messages = {
   submit: {
     success: 'Submitted successfully',
     invalidUrl: 'Please enter a valid URL',
+    temporaryUrl: 'Temporary URLs are not accepted. Please enter the real shop URL',
+    productItemUrl: 'Product pages are not shop URLs. Please submit the shop homepage or storefront link',
+    ipAddressUrl: 'IP-address URLs are not accepted. Please enter a real domain name',
+    invalidDomainUrl: 'Please enter a full domain URL, such as https://example.com',
     duplicateUrl: 'This URL already exists. Please do not submit it again',
     failed: 'Submission failed. Please try again later',
   },

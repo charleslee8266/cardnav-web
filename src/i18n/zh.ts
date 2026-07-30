@@ -573,6 +573,10 @@ export const zhMessages = {
   submit: {
     success: '提交成功',
     invalidUrl: '请输入有效的 URL',
+    temporaryUrl: '临时 URL 不能提交，请填写真实商店网址',
+    productItemUrl: '商品详情页不是商店网址，请提交商店首页或店铺链接',
+    ipAddressUrl: 'IP 地址形式的网址不能提交，请填写真实域名',
+    invalidDomainUrl: '请填写完整域名的网址，例如 https://example.com',
     duplicateUrl: '当前已经有了，请勿重复提交',
     failed: '提交失败，请稍后重试',
   },

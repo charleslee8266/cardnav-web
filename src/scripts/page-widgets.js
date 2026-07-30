@@ -78,13 +78,34 @@ function initShopSubmit() {
     if (submitButton) submitButton.dataset.umamiEventUrl = urlInput?.value.trim() || '';
   }
 
-  function isValidUrl(value) {
+  const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)?(?:webhook\.site|serveousercontent\.com)(?::\d+)?(?:[/?#]|$)/i;
+  const productItemUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/(?:item\/[^/?#]+|shop\/[^/?#]+\/[^?#]+)/i;
+  const trackedShopUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/shop\/[^/?#]+(?:[?#]|$)/i;
+  const ipAddressUrlPattern = /^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-f:.]+\])(?::\d+)?(?:[/?#]|$)/i;
+  const incompleteDomainUrlPattern = /^https?:\/\/[^/?#.[\]:]+(?::\d+)?(?:[/?#]|$)/i;
+
+  function submitUrlRejectReason(value) {
     try {
       const url = new URL(value.trim());
-      return url.protocol === 'http:' || url.protocol === 'https:';
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return 'invalidUrl';
+      url.hash = '';
+      const normalized = url.toString().replace(/\/$/, '');
+      if (ipAddressUrlPattern.test(normalized)) return 'ipAddressUrl';
+      if (incompleteDomainUrlPattern.test(normalized)) return 'invalidDomainUrl';
+      if (temporaryUrlPattern.test(normalized)) return 'temporaryUrl';
+      if (productItemUrlPattern.test(normalized)) return 'productItemUrl';
+      return '';
     } catch {
-      return false;
+      return 'invalidUrl';
     }
+  }
+
+  function normalizeSubmittedUrl(value) {
+    const url = new URL(value.trim());
+    url.hash = '';
+    const normalized = url.toString().replace(/\/$/, '');
+    if (trackedShopUrlPattern.test(normalized)) url.search = '';
+    return url.toString().replace(/\/$/, '');
   }
 
   function hideServerMessages() {
@@ -120,8 +141,10 @@ function initShopSubmit() {
   submitForm?.addEventListener('submit', event => {
     syncSubmitEventUrl();
     hideServerMessages();
-    if (!isValidUrl(urlInput?.value || '')) {
+    const rejectReason = submitUrlRejectReason(urlInput?.value || '');
+    if (rejectReason) {
       event.preventDefault();
+      if (clientError) clientError.textContent = submitMessages[rejectReason] || submitMessages.invalidUrl;
       clientError?.classList.remove('hidden');
       urlInput?.focus();
       return;
@@ -133,7 +156,7 @@ function initShopSubmit() {
 
     fetch(submitForm.action, {
       method: 'POST',
-      body: JSON.stringify({ url: urlInput.value.trim() }),
+      body: JSON.stringify({ url: normalizeSubmittedUrl(urlInput.value) }),
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
