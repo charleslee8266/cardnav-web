@@ -11,6 +11,7 @@ import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
+import { packShopProductsData } from '../shop-products-data.js';
 import { loadOfficialPriceCatalog, loadShopProductsData, loadPopularSearchTerms } from '../store.js';
 
 type Props = {
@@ -105,14 +106,6 @@ const normalSeo = buildSeoContext({
   locale: Astro.locals.locale,
 });
 
-const renderedSites = data.sites.map(site => ({
-  id: site.id || '',
-  name: site.name,
-  url: site.url || '',
-  lastProductRefreshSuccessAt: site.lastProductRefreshSuccessAt || null,
-  lastProductRefreshSuccessTime: site.lastProductRefreshSuccessTime || '',
-  score: site.score || 0,
-}));
 const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
 const shopsScriptMessages = {
   loading: t.shops.script.loading,
@@ -176,15 +169,10 @@ const merchantSortColumns = [
   { key: 'lastProductRefreshSuccessAt', type: 'number', label: t.labels.latestRefresh },
 ];
 const rightAlignedMerchantColumns = new Set(['productCount', 'siteScore']);
-const shopProductsJsonValue = JSON.stringify({
-  sites: renderedSites,
-  products: renderedProducts,
-  totalSiteCount: data.totalSiteCount,
-  totalProductCount: data.totalProductCount,
-  latestRefreshTime: data.latestRefreshTime,
+const shopProductsJsonValue = JSON.stringify(packShopProductsData({
+  ...data,
   initialProductLimit: initialProductLimitValue,
-  isPartial: data.isPartial,
-}).replace(/[<>&\u2028\u2029]/g, character => ({
+})).replace(/[<>&\u2028\u2029]/g, character => ({
   '<': '\\u003c',
   '>': '\\u003e',
   '&': '\\u0026',

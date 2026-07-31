@@ -3,10 +3,11 @@
  */
 import type { APIRoute } from 'astro';
 import { publicReadApiCacheControl } from '../../public-data-cache.js';
+import { packShopProductsData } from '../../shop-products-data.js';
 import { loadShopProductsData } from '../../store.js';
 
 export const GET: APIRoute = async () => {
-  return new Response(JSON.stringify(await loadShopProductsData()), {
+  return new Response(JSON.stringify(packShopProductsData(await loadShopProductsData())), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': publicReadApiCacheControl,

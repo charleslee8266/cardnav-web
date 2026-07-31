@@ -3,6 +3,30 @@
  */
 import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery } from '../shop-search-query.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
+import {
+  shopProductCategoryName,
+  shopProductInStock,
+  shopProductName,
+  shopProductPriceNumber,
+  shopProductPriceUnit,
+  shopProductRefreshedMs,
+  shopProductRefreshTime,
+  shopProductScore,
+  shopProducts,
+  shopProductsInitialLimit,
+  shopProductsIsPartial,
+  shopProductsTotalProductCount,
+  shopProductSite,
+  shopProductStock,
+  shopProductUrl,
+  shopSiteId,
+  shopSiteLastRefreshMs,
+  shopSiteLastRefreshTime,
+  shopSiteName,
+  shopSiteScore,
+  shopSiteUrl,
+  shopSites,
+} from '../shop-products-data.js';
 
 const filtersForm = document.querySelector('#filters');
 const searchFilter = document.querySelector('#searchFilter');
@@ -16,9 +40,8 @@ const quickTagFilters = document.querySelector('#quickTagFilters');
 const quickPlanRow = document.querySelector('#quickPlanRow');
 const officialPriceTip = document.querySelector('#officialPriceTip');
 const gatewayTip = document.querySelector('#gatewayTip');
-let shopProductsData = JSON.parse(document.querySelector('#shop-products-data')?.textContent || '{"sites":[],"products":[]}');
+let shopProductsData = JSON.parse(document.querySelector('#shop-products-data')?.textContent || '{"v":1,"s":[],"c":[],"u":[],"p":[],"sc":0,"pc":0,"l":null,"x":0}');
 const shopsMessages = JSON.parse(document.querySelector('#shops-messages')?.textContent || '{}');
-let flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
 const productEmptyState = document.querySelector('#productEmptyState');
 const merchantEmptyState = document.querySelector('#merchantEmptyState');
 const rowContainer = document.querySelector('#merchantRows');
@@ -55,7 +78,7 @@ let currentFlatRows = flatRows;
 let currentShopTab = 'products';
 let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
-let currentFlatVisibleLimit = Number(shopProductsData.initialProductLimit) > 0 ? Number(shopProductsData.initialProductLimit) : DEFAULT_FLAT_PRODUCT_LIMIT;
+let currentFlatVisibleLimit = shopProductsInitialLimit(shopProductsData) || DEFAULT_FLAT_PRODUCT_LIMIT;
 let currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
 let isShopProductsDataLoading = false;
 let shopProductsDataLoadPromise = null;
@@ -292,18 +315,18 @@ function priceValueForSort(priceNumber, priceUnit) {
 }
 
 function productStockNumber(product) {
-  const stock = Number(product.stock);
+  const stock = Number(shopProductStock(product));
   return Number.isFinite(stock) && stock > 0 ? stock : null;
 }
 
 function productStockLabel(product, options = {}) {
   const stock = productStockNumber(product);
   if (stock !== null) return options.prefix ? `${options.prefix}${stock}` : String(stock);
-  return product.inStock ? (shopsMessages.inStock || 'In stock') : (shopsMessages.soldOut || 'Out of stock');
+  return shopProductInStock(product) ? (shopsMessages.inStock || 'In stock') : (shopsMessages.soldOut || 'Out of stock');
 }
 
 function productStockValue(product) {
-  return productStockNumber(product) ?? (product.inStock ? 1 : 0);
+  return productStockNumber(product) ?? (shopProductInStock(product) ? 1 : 0);
 }
 
 function formatScore(value) {
@@ -314,17 +337,19 @@ function formatScore(value) {
 
 function buildFlatRows() {
   flatRows.length = 0;
-  const products = Array.isArray(shopProductsData.products) ? shopProductsData.products : [];
+  const products = shopProducts(shopProductsData);
 
-  flatProductRows.forEach((row, index) => {
-    const product = products[index] || {};
-    const siteId = text(product.siteId);
-    const siteName = text(product.siteName);
-    const siteUrl = text(product.siteUrl).trim();
-    const categoryName = text(product.categoryName);
-    const productName = text(product.name);
+  products.forEach((product, index) => {
+    const site = shopProductSite(shopProductsData, product);
+    const siteId = text(shopSiteId(site));
+    const siteName = text(shopSiteName(site));
+    const siteUrl = text(shopSiteUrl(site)).trim();
+    const categoryName = text(shopProductCategoryName(shopProductsData, product));
+    const productName = text(shopProductName(product));
     const productTitle = `${categoryName}-${productName}`;
-    const priceText = formatDisplayPrice(product.priceNumber, product.priceUnit);
+    const priceNumber = shopProductPriceNumber(product);
+    const priceUnit = shopProductPriceUnit(shopProductsData, product);
+    const priceText = formatDisplayPrice(priceNumber, priceUnit);
     flatRows.push({
       siteId,
       siteFavoriteKey: siteId || siteName,
@@ -336,16 +361,17 @@ function buildFlatRows() {
       productTitle: `${categoryName} ${productName} ${productTitle}`.toLowerCase(),
       productFavoriteKey: `${siteName}#${productTitle}`,
       priceText,
-      priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
-      priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
-      priceValue: priceValueForSort(product.priceNumber, product.priceUnit),
+      priceNumber,
+      priceUnit,
+      priceValue: priceValueForSort(priceNumber, priceUnit),
       stockValue: productStockValue(product),
-      inStock: product.inStock ? 1 : 0,
-      score: Number(product.score) || 0,
-      siteScore: Number(product.siteScore) || 0,
-      productRefreshedAt: new Date(product.refreshedAt || '').getTime() || 0,
-      element: row,
-      indexCell: row.querySelector('.flat-row-index'),
+      inStock: shopProductInStock(product) ? 1 : 0,
+      score: shopProductScore(product),
+      siteScore: shopSiteScore(site),
+      productRefreshedAt: shopProductRefreshedMs(product) || 0,
+      product,
+      element: null,
+      indexCell: null,
       originalIndex: index,
     });
   });
@@ -553,15 +579,15 @@ function showGatewayTip(button, query) {
 }
 
 function shopProductsDataIsPartial() {
-  return Boolean(shopProductsData.isPartial);
+  return shopProductsIsPartial(shopProductsData);
 }
 
 function loadedProductCount() {
-  return Array.isArray(shopProductsData.products) ? shopProductsData.products.length : 0;
+  return shopProducts(shopProductsData).length;
 }
 
 function totalProductCount() {
-  return Number(shopProductsData.totalProductCount) || loadedProductCount();
+  return shopProductsTotalProductCount(shopProductsData);
 }
 
 function shouldLoadFullShopProductsData(options = {}) {
@@ -622,14 +648,19 @@ function tableLabel(key) {
 }
 
 function createFlatProductRow(item) {
-  const siteId = text(item.siteId);
-  const siteName = text(item.siteName);
-  const siteUrl = text(item.siteUrl).trim();
-  const categoryName = text(item.categoryName);
-  const productName = text(item.name);
+  const site = shopProductSite(shopProductsData, item);
+  const siteId = text(shopSiteId(site));
+  const siteName = text(shopSiteName(site));
+  const siteUrl = text(shopSiteUrl(site)).trim();
+  const categoryName = text(shopProductCategoryName(shopProductsData, item));
+  const productName = text(shopProductName(item));
   const productTitle = `${categoryName}-${productName}`;
   const productFavoriteKey = `${siteName}#${productTitle}`;
   const siteFavoriteKey = siteId || siteName;
+  const productUrl = shopProductUrl(item);
+  const priceNumber = shopProductPriceNumber(item);
+  const priceUnit = shopProductPriceUnit(shopProductsData, item);
+  const inStock = shopProductInStock(item);
   const row = document.createElement('tr');
   row.className = 'flat-product-row';
 
@@ -643,10 +674,10 @@ function createFlatProductRow(item) {
   const productInline = document.createElement('div');
   productInline.className = 'cell-inline';
   productInline.appendChild(createFavoriteButton('product', productFavoriteKey, `${shopsMessages.productFavorite || 'Favorite product'} ${productTitle}`));
-  if (item.productUrl) {
-    const productLink = createTrackedProductLink(item.productUrl, 'product-link', productName, productTitle);
+  if (productUrl) {
+    const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle);
     productLink.dataset.productClickSiteId = siteId;
-    productLink.dataset.productClickUrl = item.productUrl;
+    productLink.dataset.productClickUrl = productUrl;
     productLink.dataset.productClickCategory = categoryName;
     productLink.dataset.productClickName = productName;
     productInline.appendChild(productLink);
@@ -659,7 +690,7 @@ function createFlatProductRow(item) {
   const priceCell = document.createElement('td');
   priceCell.className = 'flat-price-cell shop-table-cell-number';
   priceCell.setAttribute('data-label', tableLabel('price'));
-  priceCell.appendChild(document.createTextNode(formatDisplayPrice(item.priceNumber, item.priceUnit)));
+  priceCell.appendChild(document.createTextNode(formatDisplayPrice(priceNumber, priceUnit)));
   row.appendChild(priceCell);
 
   const statusCell = document.createElement('td');
@@ -668,7 +699,7 @@ function createFlatProductRow(item) {
   appendTextElement(
     statusCell,
     'span',
-    item.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out',
+    inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out',
     productStockLabel(item),
   );
   row.appendChild(statusCell);
@@ -682,7 +713,7 @@ function createFlatProductRow(item) {
   const productScoreCell = document.createElement('td');
   productScoreCell.className = 'flat-product-score-cell shop-table-cell-number';
   productScoreCell.setAttribute('data-label', tableLabel('productScore'));
-  productScoreCell.appendChild(document.createTextNode(formatScore(item.score)));
+  productScoreCell.appendChild(document.createTextNode(formatScore(shopProductScore(item))));
   row.appendChild(productScoreCell);
 
   const merchantCell = document.createElement('td');
@@ -702,21 +733,10 @@ function createFlatProductRow(item) {
   const refreshCell = document.createElement('td');
   refreshCell.className = 'flat-refresh-cell';
   refreshCell.setAttribute('data-label', tableLabel('latestRefresh'));
-  refreshCell.appendChild(document.createTextNode(text(item.refreshTime)));
+  refreshCell.appendChild(document.createTextNode(text(shopProductRefreshTime(item))));
   row.appendChild(refreshCell);
 
   return row;
-}
-
-function renderFlatProductRowsFromData() {
-  if (!flatProductRowsContainer) return;
-  const products = Array.isArray(shopProductsData.products) ? shopProductsData.products : [];
-  const fragment = document.createDocumentFragment();
-  products.forEach(item => {
-    fragment.appendChild(createFlatProductRow(item));
-  });
-  flatProductRowsContainer.replaceChildren(fragment);
-  flatProductRows = Array.from(document.querySelectorAll('.flat-product-row'));
 }
 
 function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
@@ -808,6 +828,26 @@ async function loadMerchantViewModule() {
 function renderMerchantViewModule(module) {
   module.renderMerchantRows({
     shopProductsData,
+    shopDataAccessors: {
+      shopProductCategoryName,
+      shopProductInStock,
+      shopProductName,
+      shopProductPriceNumber,
+      shopProductPriceUnit,
+      shopProductRefreshedMs,
+      shopProductScore,
+      shopProducts,
+      shopProductSite,
+      shopProductStock,
+      shopProductUrl,
+      shopSites,
+      shopSiteId,
+      shopSiteLastRefreshMs,
+      shopSiteLastRefreshTime,
+      shopSiteName,
+      shopSiteScore,
+      shopSiteUrl,
+    },
     shopsMessages,
     createFavoriteButton,
     createTrackedLink: (href, className, label, eventLabel) => {
@@ -894,9 +934,6 @@ async function applyFilters(options = {}) {
     visibleFlatProductCount = currentFlatRows.length;
     visibleProductCount = visibleFlatProductCount;
     const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
-    currentFlatRows.forEach(({ element: row }, index) => {
-      row.classList.toggle('hidden', index >= renderedFlatCount);
-    });
     updateFlatProductIndexes();
     updateFlatProgressiveLoadSummary(visibleFlatProductCount, renderedFlatCount);
   }
@@ -995,20 +1032,29 @@ function flatRowValue(rowEntry, key, type) {
 
 function updateFlatProductIndexes() {
   let visibleFlatIndex = 0;
-  currentFlatRows.forEach(({ element: row, indexCell }) => {
-    if (!row.classList.contains('hidden')) {
-      visibleFlatIndex += 1;
-      if (indexCell) indexCell.textContent = String(visibleFlatIndex);
-    } else if (indexCell) {
-      indexCell.textContent = '';
-    }
+  currentFlatRows.slice(0, currentFlatVisibleLimit).forEach(({ indexCell }) => {
+    visibleFlatIndex += 1;
+    if (indexCell) indexCell.textContent = String(visibleFlatIndex);
   });
+}
+
+function ensureFlatRowElement(rowEntry) {
+  if (rowEntry.element) return rowEntry.element;
+  const row = createFlatProductRow(rowEntry.product);
+  rowEntry.element = row;
+  rowEntry.indexCell = row.querySelector('.flat-row-index');
+  const newFavoriteButtons = Array.from(row.querySelectorAll('.favorite-toggle'));
+  favoriteButtons = Array.from(new Set([...favoriteButtons, ...newFavoriteButtons]));
+  initializeFavorites(newFavoriteButtons);
+  return row;
 }
 
 function appendCurrentFlatRows() {
   if (!flatProductRowsContainer) return;
   const fragment = document.createDocumentFragment();
-  currentFlatRows.forEach(({ element: row }) => {
+  currentFlatRows.slice(0, currentFlatVisibleLimit).forEach(rowEntry => {
+    const row = ensureFlatRowElement(rowEntry);
+    row.classList.remove('hidden');
     fragment.appendChild(row);
   });
   flatProductRowsContainer.replaceChildren(fragment);
@@ -1049,9 +1095,6 @@ function sortFlatProductRows(button) {
   currentFlatRows = prioritizeFavoriteFlatRows(sortedRows);
   appendCurrentFlatRows();
   const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
-  currentFlatRows.forEach(({ element: row }, index) => {
-    row.classList.toggle('hidden', index >= renderedFlatCount);
-  });
   updateFlatProductIndexes();
   updateFlatProgressiveLoadSummary(currentFlatRows.length, renderedFlatCount);
   updateFlatSortButtons();
@@ -1092,11 +1135,11 @@ function updateMerchantSortButtons() {
 }
 
 function replaceShopProductsData(nextShopProductsData) {
-  if (!nextShopProductsData || !Array.isArray(nextShopProductsData.products) || !Array.isArray(nextShopProductsData.sites)) return;
+  if (!nextShopProductsData || !Array.isArray(nextShopProductsData.p) || !Array.isArray(nextShopProductsData.s)) return;
 
   shopProductsData = {
     ...nextShopProductsData,
-    isPartial: false,
+    x: 0,
   };
   isShopProductsDataLoading = false;
   currentFlatVisibleLimit = DEFAULT_FLAT_PRODUCT_LIMIT;
@@ -1104,12 +1147,10 @@ function replaceShopProductsData(nextShopProductsData) {
   if (merchantViewModule) {
     merchantViewModule.resetMerchantViewState();
   }
-  renderFlatProductRowsFromData();
-  currentFlatRows = flatRows;
   buildFlatRows();
-  favoriteButtons = Array.from(document.querySelectorAll('.favorite-toggle'));
-  initializeFavorites();
-  if (currentFlatSort) sortFlatProductRows();
+  currentFlatRows = flatRows;
+  if (flatProductRowsContainer) flatProductRowsContainer.replaceChildren();
+  favoriteButtons = [];
   applyFilters();
 }
 
@@ -1283,9 +1324,8 @@ document.addEventListener('click', event => {
     name: target.dataset.productClickName || '',
   });
 });
-renderFlatProductRowsFromData();
-buildFlatRows();
 loadFavorites();
-initializeFavorites();
+buildFlatRows();
+currentFlatRows = flatRows;
 syncFiltersFromUrl();
 applyFilters();

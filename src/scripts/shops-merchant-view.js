@@ -45,18 +45,20 @@ function formatDisplayPrice(priceNumber, priceUnit) {
   return '';
 }
 
-function productStockValue(item) {
-  return typeof item.stock === 'number' && item.stock > 0 ? item.stock : (item.inStock ? 1 : 0);
+function productStockValue(item, accessors) {
+  const stock = Number(accessors.shopProductStock(item));
+  return Number.isFinite(stock) && stock > 0 ? stock : (accessors.shopProductInStock(item) ? 1 : 0);
 }
 
-function productScoreValue(item) {
-  const score = Number(item.score);
+function productScoreValue(item, accessors) {
+  const score = Number(accessors.shopProductScore(item));
   return Number.isFinite(score) ? score : 0;
 }
 
-function productStockLabel(item, shopsMessages) {
-  if (typeof item.stock === 'number' && item.stock > 0) return String(item.stock);
-  return item.inStock ? (shopsMessages.inStock || 'In stock') : (shopsMessages.soldOut || 'Sold out');
+function productStockLabel(item, shopsMessages, accessors) {
+  const stock = Number(accessors.shopProductStock(item));
+  if (Number.isFinite(stock) && stock > 0) return String(stock);
+  return accessors.shopProductInStock(item) ? (shopsMessages.inStock || 'In stock') : (shopsMessages.soldOut || 'Sold out');
 }
 
 function formatScore(value) {
@@ -78,36 +80,41 @@ function createTrackedMerchantLink(siteUrl, siteName, createTrackedLink) {
   });
 }
 
-function createProductChip(item, shopsMessages, createTrackedLink) {
-  const categoryName = text(item.categoryName);
-  const productName = text(item.name);
-  const price = formatDisplayPrice(item.priceNumber, item.priceUnit);
+function createProductChip(item, shopProductsData, shopsMessages, createTrackedLink, accessors) {
+  const site = accessors.shopProductSite(shopProductsData, item);
+  const categoryName = text(accessors.shopProductCategoryName(shopProductsData, item));
+  const productName = text(accessors.shopProductName(item));
+  const priceNumber = accessors.shopProductPriceNumber(item);
+  const priceUnit = accessors.shopProductPriceUnit(shopProductsData, item);
+  const productUrl = accessors.shopProductUrl(item);
+  const inStock = accessors.shopProductInStock(item);
+  const price = formatDisplayPrice(priceNumber, priceUnit);
   const productTitle = `${categoryName}-${productName}`;
   const shortCategory = categoryName.length > 10 ? `${categoryName.slice(0, 10)}...` : categoryName;
   const shortName = productName.length > 14 ? `${productName.slice(0, 14)}...` : productName;
-  const chip = item.productUrl ? document.createElement('a') : document.createElement('div');
+  const chip = productUrl ? document.createElement('a') : document.createElement('div');
 
   chip.title = productTitle;
   chip.dataset.productTitle = productTitle.toLowerCase();
   chip.dataset.productName = productName.toLowerCase();
   chip.dataset.categoryName = categoryName.toLowerCase();
-  chip.dataset.priceValue = String(priceValueForSort(item.priceNumber, item.priceUnit));
-  chip.dataset.inStock = item.inStock ? '1' : '0';
-  chip.dataset.stockValue = String(productStockValue(item));
-  chip.dataset.productRefreshedAt = String(new Date(item.refreshedAt || '').getTime() || 0);
-  chip.className = item.productUrl
-    ? (item.inStock ? 'product-chip-link-in-stock' : 'product-chip-link-sold-out')
-    : (item.inStock ? 'product-chip-static-in-stock' : 'product-chip-static-sold-out');
+  chip.dataset.priceValue = String(priceValueForSort(priceNumber, priceUnit));
+  chip.dataset.inStock = inStock ? '1' : '0';
+  chip.dataset.stockValue = String(productStockValue(item, accessors));
+  chip.dataset.productRefreshedAt = String(accessors.shopProductRefreshedMs(item) || 0);
+  chip.className = productUrl
+    ? (inStock ? 'product-chip-link-in-stock' : 'product-chip-link-sold-out')
+    : (inStock ? 'product-chip-static-in-stock' : 'product-chip-static-sold-out');
 
-  if (item.productUrl) {
-    chip.href = item.productUrl;
+  if (productUrl) {
+    chip.href = productUrl;
     chip.target = '_blank';
     chip.rel = 'noopener noreferrer';
     chip.dataset.umamiEvent = 'product-click';
-    chip.dataset.umamiEventUrl = item.productUrl;
+    chip.dataset.umamiEventUrl = productUrl;
     chip.dataset.umamiEventName = productTitle;
-    chip.dataset.productClickSiteId = text(item.siteId);
-    chip.dataset.productClickUrl = item.productUrl;
+    chip.dataset.productClickSiteId = text(accessors.shopSiteId(site));
+    chip.dataset.productClickUrl = productUrl;
     chip.dataset.productClickCategory = categoryName;
     chip.dataset.productClickName = productName;
   }
@@ -118,8 +125,8 @@ function createProductChip(item, shopsMessages, createTrackedLink) {
   appendTextElement(
     chip,
     'span',
-    item.inStock ? 'product-status-in-stock' : 'product-status-sold-out',
-    productStockLabel(item, shopsMessages),
+    inStock ? 'product-status-in-stock' : 'product-status-sold-out',
+    productStockLabel(item, shopsMessages, accessors),
   );
 
   return chip;
@@ -127,6 +134,7 @@ function createProductChip(item, shopsMessages, createTrackedLink) {
 
 export function renderMerchantRows({
   shopProductsData,
+  shopDataAccessors,
   shopsMessages,
   createFavoriteButton,
   createTrackedLink,
@@ -137,11 +145,12 @@ export function renderMerchantRows({
   const rowContainer = document.querySelector('#merchantRows');
   if (merchantRowsRendered || !rowContainer) return;
 
-  const sites = Array.isArray(shopProductsData.sites) ? shopProductsData.sites : [];
-  const products = Array.isArray(shopProductsData.products) ? shopProductsData.products : [];
+  const accessors = shopDataAccessors;
+  const sites = accessors.shopSites(shopProductsData);
+  const products = accessors.shopProducts(shopProductsData);
   const productsBySiteId = new Map();
   products.forEach(item => {
-    const siteId = text(item.siteId);
+    const siteId = text(accessors.shopSiteId(accessors.shopProductSite(shopProductsData, item)));
     const items = productsBySiteId.get(siteId) ?? [];
     items.push(item);
     productsBySiteId.set(siteId, items);
@@ -149,20 +158,20 @@ export function renderMerchantRows({
   const fragment = document.createDocumentFragment();
 
   sites.forEach((site, index) => {
-    const siteId = text(site.id);
+    const siteId = text(accessors.shopSiteId(site));
     const siteProducts = productsBySiteId.get(siteId) ?? [];
     const hotProducts = siteProducts
       .slice()
       .sort((left, right) => {
-        const stockDiff = Number(Boolean(right.inStock)) - Number(Boolean(left.inStock));
+        const stockDiff = Number(accessors.shopProductInStock(right)) - Number(accessors.shopProductInStock(left));
         if (stockDiff !== 0) return stockDiff;
-        const scoreDiff = productScoreValue(right) - productScoreValue(left);
+        const scoreDiff = productScoreValue(right, accessors) - productScoreValue(left, accessors);
         if (scoreDiff !== 0) return scoreDiff;
-        return text(left.name).localeCompare(text(right.name), 'zh-Hans-CN', { numeric: true });
+        return text(accessors.shopProductName(left)).localeCompare(text(accessors.shopProductName(right)), 'zh-Hans-CN', { numeric: true });
       })
       .slice(0, 10);
-    const siteName = text(site.name);
-    const siteUrl = text(site.url).trim();
+    const siteName = text(accessors.shopSiteName(site));
+    const siteUrl = text(accessors.shopSiteUrl(site)).trim();
     const siteFavoriteKey = siteId || siteName;
     const row = document.createElement('div');
     row.className = 'merchant-row';
@@ -170,12 +179,12 @@ export function renderMerchantRows({
     row.dataset.siteText = siteName.toLowerCase();
     row.dataset.siteUrl = siteUrl.toLowerCase();
     row.dataset.siteName = siteName;
-    row.dataset.siteScore = String(Number(site.score) || 0);
-    row.dataset.lastProductRefreshSuccessAt = String(new Date(site.lastProductRefreshSuccessAt || '').getTime() || 0);
+    row.dataset.siteScore = String(accessors.shopSiteScore(site));
+    row.dataset.lastProductRefreshSuccessAt = String(accessors.shopSiteLastRefreshMs(site) || 0);
     row.dataset.originalIndex = String(index);
     row.dataset.rank = String(index + 1);
     row.dataset.productCount = String(siteProducts.length);
-    row.dataset.hotProducts = String(hotProducts.length > 0 ? productScoreValue(hotProducts[0]) : 0);
+    row.dataset.hotProducts = String(hotProducts.length > 0 ? productScoreValue(hotProducts[0], accessors) : 0);
 
     const indexCell = appendTextElement(row, 'div', 'row-index merchant-table-cell merchant-table-cell-index shop-table-cell-index', '');
     const merchantCell = document.createElement('div');
@@ -212,7 +221,7 @@ export function renderMerchantRows({
       const list = document.createElement('div');
       list.className = 'product-list';
       hotProducts.forEach(item => {
-        const chip = createProductChip(item, shopsMessages, createTrackedLink);
+        const chip = createProductChip(item, shopProductsData, shopsMessages, createTrackedLink, accessors);
         chips.push(chip);
         list.appendChild(chip);
       });
@@ -223,13 +232,13 @@ export function renderMerchantRows({
     const scoreCell = document.createElement('div');
     scoreCell.className = 'merchant-table-cell merchant-table-cell-value shop-table-cell-number';
     appendTextElement(scoreCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
-    appendTextElement(scoreCell, 'span', 'merchant-table-value', formatScore(site.score));
+    appendTextElement(scoreCell, 'span', 'merchant-table-value', formatScore(accessors.shopSiteScore(site)));
     row.appendChild(scoreCell);
 
     const refreshCell = document.createElement('div');
     refreshCell.className = 'merchant-table-cell merchant-table-cell-value';
     appendTextElement(refreshCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.latestRefresh || 'Latest refresh');
-    appendTextElement(refreshCell, 'span', 'merchant-table-value', site.lastProductRefreshSuccessTime || '-');
+    appendTextElement(refreshCell, 'span', 'merchant-table-value', accessors.shopSiteLastRefreshTime(site) || '-');
     row.appendChild(refreshCell);
 
     fragment.appendChild(row);
