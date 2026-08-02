@@ -59,10 +59,28 @@ test('public submitted URL validation strips tracked storefront query parameters
     ok: true,
     url: 'https://pay.ldxp.cn/shop/2VWX76A4',
   });
+  assert.deepEqual(validatePublicSubmittedUrl('https://www.ldxp.cn/shop/2VWX76A4?u_atoken=x'), {
+    ok: true,
+    url: 'https://pay.ldxp.cn/shop/2VWX76A4',
+  });
+  assert.deepEqual(validatePublicSubmittedUrl('https://ldxp.cn/shop/2VWX76A4?u_atoken=x'), {
+    ok: true,
+    url: 'https://pay.ldxp.cn/shop/2VWX76A4',
+  });
 });
 
 test('public submitted URL validation rejects platform homepages', () => {
   assert.deepEqual(validatePublicSubmittedUrl('https://pay.ldxp.cn'), {
+    ok: false,
+    reason: 'platformHomeUrl',
+    url: 'https://pay.ldxp.cn',
+  });
+  assert.deepEqual(validatePublicSubmittedUrl('https://www.ldxp.cn'), {
+    ok: false,
+    reason: 'platformHomeUrl',
+    url: 'https://pay.ldxp.cn',
+  });
+  assert.deepEqual(validatePublicSubmittedUrl('https://ldxp.cn'), {
     ok: false,
     reason: 'platformHomeUrl',
     url: 'https://pay.ldxp.cn',

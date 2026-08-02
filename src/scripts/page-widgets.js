@@ -79,11 +79,12 @@ function initShopSubmit() {
   }
 
   const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)*(?:webhook\.site|serveousercontent\.com|lhr\.life|loca\.lt)(?::\d+)?(?:[/?#]|$)/i;
-  const productItemUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/(?:item\/[^/?#]+|shop\/[^/?#]+\/[^?#]+)/i;
-  const trackedShopUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/shop\/[^/?#]+(?:[?#]|$)/i;
+  const ldxpSubmittedHostPattern = /^(?:(?:pay|www)\.)?ldxp\.cn$/i;
+  const productItemUrlPattern = /^https?:\/\/(?:(?:(?:pay|www)\.)?ldxp\.cn|catfk\.com)(?::\d+)?\/(?:item\/[^/?#]+|shop\/[^/?#]+\/[^?#]+)/i;
+  const trackedShopUrlPattern = /^https?:\/\/(?:(?:(?:pay|www)\.)?ldxp\.cn|catfk\.com)(?::\d+)?\/shop\/[^/?#]+(?:[?#]|$)/i;
   const ipAddressUrlPattern = /^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-f:.]+\])(?::\d+)?(?:[/?#]|$)/i;
   const incompleteDomainUrlPattern = /^https?:\/\/[^/?#.[\]:]+(?::\d+)?(?:[/?#]|$)/i;
-  const platformHomeUrlPattern = /^https?:\/\/(?:pay\.ldxp\.cn|catfk\.com)(?::\d+)?\/?(?:[?#]|$)/i;
+  const platformHomeUrlPattern = /^https?:\/\/(?:(?:(?:pay|www)\.)?ldxp\.cn|catfk\.com)(?::\d+)?\/?(?:[?#]|$)/i;
   const reservedHostUrlPattern = /^https?:\/\/(?:localhost|[^/?#]+\.(?:local|internal|invalid))(?::\d+)?(?:[/?#]|$)/i;
   const probeUrlPattern = /^https?:\/\/(?:(?:[^/?#:]+\.)?example\.[^/?#:]+(?::\d+)?\/[^?#]*(?:ctf|probe|admin|test|'|%27|%20or%20|--)|httpbin\.org(?::\d+)?\/base64\/|(?:(?:www|staging)\.)?cardnav\.xyz(?::\d+)?\/(?:admin|api)(?:[/?#]|$))/i;
 
@@ -109,6 +110,7 @@ function initShopSubmit() {
   function normalizeSubmittedUrl(value) {
     const url = new URL(value.trim());
     url.hash = '';
+    if (ldxpSubmittedHostPattern.test(url.hostname)) url.hostname = 'pay.ldxp.cn';
     const normalized = url.toString().replace(/\/$/, '');
     if (trackedShopUrlPattern.test(normalized)) url.search = '';
     return url.toString().replace(/\/$/, '');
