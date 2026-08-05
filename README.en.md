@@ -124,7 +124,7 @@ By default, the project reads `.env` from the current directory.
 
 ```dotenv
 DATABASE_URL=postgres://user:password@host:5432/cardnav
-PORT=3000
+PORT=3101
 PUBLIC_SITE_URL=https://cardnav.xyz
 ABUSEIPDB_API_KEY=
 OTX_API_KEY=
