@@ -6,7 +6,10 @@ import { isLocale } from '../../../i18n/config.js';
 import { getMessages } from '../../../i18n/messages.js';
 import { localizeModelLeaderboardGroups } from '../../../localized-display.js';
 import { buildModelLeaderboardGroups } from '../../../model-leaderboard.js';
-import { publicReadApiCacheControl } from '../../../public-data-cache.js';
+import {
+  publicReadApiCacheControl,
+  publicReadApiCloudflareCacheControl,
+} from '../../../public-data-cache.js';
 import { loadModelLeaderboardRowsForTask } from '../../../store.js';
 
 export const GET: APIRoute = async ({ params, request }) => {
@@ -28,6 +31,7 @@ export const GET: APIRoute = async ({ params, request }) => {
       headers: {
         'content-type': 'application/json; charset=utf-8',
         'cache-control': publicReadApiCacheControl,
+        'cloudflare-cdn-cache-control': publicReadApiCloudflareCacheControl,
       },
     });
   }
@@ -42,6 +46,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': publicReadApiCacheControl,
+      'cloudflare-cdn-cache-control': publicReadApiCloudflareCacheControl,
     },
   });
 };

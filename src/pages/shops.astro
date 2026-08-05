@@ -36,11 +36,9 @@ const heroTitle = seoSearchPageMeta?.heroTitle ?? t.shops.title;
 const heroDescription = seoSearchPageMeta?.heroDescription ?? t.shops.description;
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
 const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
-const [data, popularSearchResult, officialPriceCatalog] = await Promise.all([
-  loadShopProductsData({ productLimit: initialProductLimitValue }),
-  loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]),
-  loadOfficialPriceCatalog(),
-]);
+const data = await loadShopProductsData({ productLimit: initialProductLimitValue });
+const popularSearchResult = await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]);
+const officialPriceCatalog = await loadOfficialPriceCatalog();
 const popularSearchTerms = popularSearchResult.terms;
 const officialPriceUrlSlugs = new Set(officialPriceCatalog.map(entry => entry.urlSlug.trim()).filter(Boolean));
 const initialOfficialPricePath = seoSearchTerm?.officialPriceSlug && officialPriceUrlSlugs.has(seoSearchTerm.officialPriceSlug)

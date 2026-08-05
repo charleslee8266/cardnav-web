@@ -2,7 +2,10 @@
  * 文件说明: 提供中转站首页首屏之后的站点排行 JSON 数据。
  */
 import type { APIRoute } from 'astro';
-import { publicReadApiCacheControl } from '../../../public-data-cache.js';
+import {
+  publicReadApiCacheControl,
+  publicReadApiCloudflareCacheControl,
+} from '../../../public-data-cache.js';
 import { loadGatewaySites } from '../../../store.js';
 
 export const GET: APIRoute = async ({ request }) => {
@@ -13,6 +16,7 @@ export const GET: APIRoute = async ({ request }) => {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': publicReadApiCacheControl,
+      'cloudflare-cdn-cache-control': publicReadApiCloudflareCacheControl,
     },
   });
 };

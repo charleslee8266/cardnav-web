@@ -12,10 +12,8 @@ import { publicSiteUrl } from '../site.js';
 import { formatBeijingRefreshTime, loadModelLeaderboardRowsForTask, loadModelLeaderboardTaskSlugs } from '../store.js';
 
 const activeTaskSlug = 'coding';
-const [taskSlugs, activeRows] = await Promise.all([
-  loadModelLeaderboardTaskSlugs(),
-  loadModelLeaderboardRowsForTask(activeTaskSlug),
-]);
+const taskSlugs = await loadModelLeaderboardTaskSlugs();
+const activeRows = await loadModelLeaderboardRowsForTask(activeTaskSlug);
 const groups = localizeModelLeaderboardGroups(
   buildModelLeaderboardGroupsForActiveTask(taskSlugs, activeRows, activeTaskSlug),
   Astro.locals.messages,

@@ -19,7 +19,8 @@ import sortableTablesScriptUrl from '../scripts/sortable-tables.js?url';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const [gatewayData, gatewayModelData] = await Promise.all([loadGatewaySites(), loadGatewayModels()]);
+const gatewayData = await loadGatewaySites();
+const gatewayModelData = await loadGatewayModels();
 const topSites = gatewayData.sites.slice(0, 20);
 const topModels = gatewayModelData.models.slice(0, 20);
 const deferredSites = gatewayData.sites.slice(20);

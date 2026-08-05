@@ -19,6 +19,8 @@ import {
   loadPopularSearchTerms,
   loadGatewayModels,
   loadGatewaySites,
+  type PublicModelLeaderboardRow,
+  type PublicOfficialPriceRow,
 } from '../store.js';
 
 const t = Astro.locals.messages;
@@ -29,26 +31,21 @@ const preferredOfficialPlans = [
   { app: 'claude', plan: 'pro' },
   { app: 'claude', plan: '20x' },
 ];
-const [
-  shopProductsData,
-  popularSearchSnapshot,
-  officialPriceCatalog,
-  leaderboardTaskSlugs,
-  gatewayData,
-  gatewayModelData,
-] = await Promise.all([
-  loadShopProductsData({ productLimit: 6 }),
-  loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]),
-  loadOfficialPriceCatalog(),
-  loadModelLeaderboardTaskSlugs(),
-  loadGatewaySites(),
-  loadGatewayModels(),
-]);
+const shopProductsData = await loadShopProductsData({ productLimit: 6 });
+const popularSearchSnapshot = await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]);
+const officialPriceCatalog = await loadOfficialPriceCatalog();
+const leaderboardTaskSlugs = await loadModelLeaderboardTaskSlugs();
+const gatewayData = await loadGatewaySites();
+const gatewayModelData = await loadGatewayModels();
 const matchedOfficialEntries = matchOfficialPriceCatalogEntries(officialPriceCatalog, preferredOfficialPlans);
-const [officialPrices, leaderboardRows] = await Promise.all([
-  Promise.all(matchedOfficialEntries.map(entry => loadOfficialPricesByUrlSlug(entry.urlSlug))).then(rows => rows.flat()),
-  Promise.all(leaderboardTaskSlugs.map(taskSlug => loadModelLeaderboardRowsForTask(taskSlug))).then(rows => rows.flat()),
-]);
+const officialPrices: PublicOfficialPriceRow[] = [];
+for (const entry of matchedOfficialEntries) {
+  officialPrices.push(...await loadOfficialPricesByUrlSlug(entry.urlSlug));
+}
+const leaderboardRows: PublicModelLeaderboardRow[] = [];
+for (const taskSlug of leaderboardTaskSlugs) {
+  leaderboardRows.push(...await loadModelLeaderboardRowsForTask(taskSlug));
+}
 const popularSearchTerms = popularSearchSnapshot.terms
   .map(term => term.trim())
   .filter(Boolean);
