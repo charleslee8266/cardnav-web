@@ -7,10 +7,12 @@ import {
   publicReadApiCloudflareCacheControl,
 } from '../../public-data-cache.js';
 import { packShopProductsData } from '../../shop-products-data.js';
-import { loadShopProductsData } from '../../store.js';
+import { loadPackedShopProductsSnapshot, loadShopProductsData } from '../../store.js';
 
 export const GET: APIRoute = async () => {
-  return new Response(JSON.stringify(packShopProductsData(await loadShopProductsData())), {
+  const packedSnapshot = await loadPackedShopProductsSnapshot();
+  const payload = packedSnapshot ?? packShopProductsData(await loadShopProductsData());
+  return new Response(JSON.stringify(payload), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': publicReadApiCacheControl,

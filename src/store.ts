@@ -3,6 +3,7 @@
  */
 import 'dotenv/config';
 import pg from 'pg';
+import type { PackedShopProductsData } from './shop-products-data.js';
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
 export type PublicSiteRow = {
@@ -114,6 +115,16 @@ export type PopularSearchTermsSnapshot = {
 };
 
 type SubmitSiteUrlErrorKey = PublicSubmittedUrlRejectReason | 'duplicateUrl';
+type PublicSnapshotKey =
+  | 'shop-products'
+  | 'shop-products-packed'
+  | 'popular-search-terms'
+  | 'gateway-sites'
+  | 'gateway-models'
+  | 'official-price-catalog'
+  | 'official-prices'
+  | 'model-leaderboard-task-slugs'
+  | 'model-leaderboards';
 
 let pool: pg.Pool | null = null;
 const beijingDateFormatter = new Intl.DateTimeFormat('sv-SE', {
@@ -138,6 +149,21 @@ function getPool() {
     connectionTimeoutMillis: 5_000,
   });
   return pool;
+}
+
+async function loadPublicSnapshot<T>(key: PublicSnapshotKey): Promise<T | null> {
+  try {
+    const result = await getPool().query(
+      'SELECT payload FROM public_snapshot_entries WHERE key = $1',
+      [key],
+    );
+    return result.rows[0]?.payload as T ?? null;
+  } catch (error) {
+    if (typeof error === 'object' && error && 'code' in error && error.code === '42P01') {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export function formatBeijingRefreshTime(input: string | null | undefined): string {
@@ -220,10 +246,35 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
 }
 
 export async function loadShopProductsData(options: { productLimit?: number } = {}) {
+  const snapshot = await loadPublicSnapshot<{
+    sites: PublicSiteRow[];
+    products: PublicProductRow[];
+    totalSiteCount: number;
+    totalProductCount: number;
+    latestRefreshedAt?: string | null;
+    latestRefreshTime: string;
+    isPartial: boolean;
+  }>('shop-products');
   const db = getPool();
   const safeProductLimit = typeof options.productLimit === 'number' && Number.isFinite(options.productLimit)
     ? Math.max(1, Math.floor(options.productLimit))
     : null;
+  if (snapshot) {
+    const products = safeProductLimit === null ? snapshot.products : snapshot.products.slice(0, safeProductLimit);
+    const sites = safeProductLimit === null
+      ? snapshot.sites
+      : (() => {
+        const selectedSiteIds = new Set(products.map(product => product.siteId));
+        return snapshot.sites.filter(site => selectedSiteIds.has(site.id));
+      })();
+    return {
+      ...snapshot,
+      sites,
+      products,
+      ...(safeProductLimit === null ? {} : { initialProductLimit: safeProductLimit }),
+      isPartial: snapshot.totalProductCount > products.length,
+    };
+  }
   const sitesResult = safeProductLimit === null
     ? await db.query(`
       SELECT
@@ -344,7 +395,20 @@ export async function loadShopProductsData(options: { productLimit?: number } = 
   };
 }
 
+export async function loadPackedShopProductsSnapshot(): Promise<PackedShopProductsData | null> {
+  return loadPublicSnapshot<PackedShopProductsData>('shop-products-packed');
+}
+
 export async function loadGatewaySites() {
+  const snapshot = await loadPublicSnapshot<{
+    sites: PublicGatewaySiteRow[];
+    totalSiteCount: number;
+    sitesWithPricesCount: number;
+    totalModelCount: number;
+    totalPriceCount: number;
+  }>('gateway-sites');
+  if (snapshot) return snapshot;
+
   const result = await getPool().query(`
     WITH price_summary AS (
       SELECT
@@ -400,6 +464,13 @@ export async function loadGatewaySites() {
 }
 
 export async function loadGatewayModels() {
+  const snapshot = await loadPublicSnapshot<{
+    models: PublicGatewayModelRow[];
+    totalModelCount: number;
+    totalSupportCount: number;
+  }>('gateway-models');
+  if (snapshot) return snapshot;
+
   const result = await getPool().query(`
     SELECT
       prices.model_id,
@@ -442,6 +513,12 @@ export async function loadGatewayModels() {
 export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGatewaySiteRow | null> {
   const normalizedSlug = slug.trim();
   if (!normalizedSlug) return null;
+  const sitesSnapshot = await loadPublicSnapshot<{
+    sites: PublicGatewaySiteRow[];
+  }>('gateway-sites');
+  const snapshotSite = sitesSnapshot?.sites.find(site => site.slug === normalizedSlug) ?? null;
+  if (snapshotSite) return snapshotSite;
+
   const result = await getPool().query(`
     WITH price_summary AS (
       SELECT
@@ -494,6 +571,12 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
 async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayModelRow | null> {
   const normalizedModelId = modelId.trim();
   if (!normalizedModelId) return null;
+  const modelsSnapshot = await loadPublicSnapshot<{
+    models: PublicGatewayModelRow[];
+  }>('gateway-models');
+  const snapshotModel = modelsSnapshot?.models.find(model => model.modelId === normalizedModelId) ?? null;
+  if (snapshotModel) return snapshotModel;
+
   const result = await getPool().query(`
     SELECT
       prices.model_id,
@@ -736,6 +819,14 @@ export async function recordProductClick(input: ProductClickInput) {
 
 export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerms: string[] = []) {
   const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
+  const snapshot = await loadPublicSnapshot<PopularSearchTermsSnapshot>('popular-search-terms');
+  if (snapshot && snapshot.terms.length >= safeLimit) {
+    const terms = snapshot.terms.slice(0, safeLimit);
+    return {
+      terms,
+      normalizedTerms: terms.map(normalizeSearchText),
+    };
+  }
   const db = getPool();
   const runtimeResult = await db.query(
     `
@@ -862,6 +953,9 @@ function mapOfficialPriceRow(row: Record<string, unknown>): PublicOfficialPriceR
 }
 
 export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCatalogRow[]> {
+  const snapshot = await loadPublicSnapshot<PublicOfficialPriceCatalogRow[]>('official-price-catalog');
+  if (snapshot) return snapshot;
+
   const result = await getPool().query(`
     SELECT DISTINCT ON (app_slug, plan_slug)
       app_slug,
@@ -892,6 +986,13 @@ export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCat
 
 export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<PublicOfficialPriceRow[]> {
   const normalizedSlug = urlSlug.trim().toLowerCase();
+  const snapshot = await loadPublicSnapshot<PublicOfficialPriceRow[]>('official-prices');
+  if (snapshot) {
+    return snapshot
+      .filter(row => row.urlSlug.trim().toLowerCase() === normalizedSlug)
+      .sort((a, b) => a.cnyPrice - b.cnyPrice);
+  }
+
   const result = await getPool().query(`
     SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
     FROM official_prices
@@ -902,6 +1003,9 @@ export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<Publ
 }
 
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
+  const snapshot = await loadPublicSnapshot<PublicOfficialPriceRow[]>('official-prices');
+  if (snapshot) return snapshot;
+
   const db = getPool();
   const result = await db.query(`
     SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
@@ -912,6 +1016,9 @@ export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
 }
 
 export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {
+  const snapshot = await loadPublicSnapshot<string[]>('model-leaderboard-task-slugs');
+  if (snapshot) return snapshot;
+
   const result = await getPool().query(`
     SELECT task_slug
     FROM model_leaderboards
@@ -931,6 +1038,13 @@ export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {
 
 export async function loadModelLeaderboardRowsForTask(taskSlug: string): Promise<PublicModelLeaderboardRow[]> {
   const normalizedTaskSlug = taskSlug.trim().toLowerCase();
+  const snapshot = await loadPublicSnapshot<PublicModelLeaderboardRow[]>('model-leaderboards');
+  if (snapshot) {
+    return snapshot
+      .filter(row => row.taskSlug.trim().toLowerCase() === normalizedTaskSlug)
+      .sort((a, b) => a.rank - b.rank);
+  }
+
   const result = await getPool().query(`
     SELECT
       task_slug,
@@ -964,6 +1078,9 @@ function mapModelLeaderboardRow(row: Record<string, unknown>): PublicModelLeader
 }
 
 export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow[]> {
+  const snapshot = await loadPublicSnapshot<PublicModelLeaderboardRow[]>('model-leaderboards');
+  if (snapshot) return snapshot;
+
   const db = getPool();
   const result = await db.query(`
     SELECT

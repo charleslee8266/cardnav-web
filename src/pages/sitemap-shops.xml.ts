@@ -8,7 +8,7 @@ import { buildQuickPlanSearchSeoRoutes, buildShopSeoRoutes, buildSitemapXml, nor
 import { publicSiteUrl } from '../site.js';
 import { loadShopProductsData } from '../store.js';
 
-function toSitemapLastmod(value: string | null) {
+function toSitemapLastmod(value: string | null | undefined) {
   if (!value) return undefined;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return undefined;
