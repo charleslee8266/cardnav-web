@@ -183,6 +183,9 @@ export const ruMessages: Messages = {
     onlineCheck: 'Онлайн',
     externalSite: 'Внешний сайт',
     notRecorded: 'Нет данных',
+    loading: 'Загрузка',
+    loadMore: 'Показать еще',
+    displaySummary: 'Показано {rendered} / {total}',
   },
   seo: {
     titleSuffix: 'CardNav',
@@ -345,6 +348,7 @@ export const ruMessages: Messages = {
     siteType: 'Тип',
     rank: 'Порядок',
     basicInfo: 'Основное',
+    sponsorLabel: 'Спонсор',
     createdAt: 'Добавлено',
     modelCount: 'Модели',
     priceCount: 'Цены',
@@ -430,8 +434,6 @@ export const ruMessages: Messages = {
     dynamicDescription: 'Смотрите локальные цены, валюты и пересчет для официальной подписки {displayName} по странам и регионам, отсортировано от дешевых к дорогим.',
     note: 'Текущие цены основаны на ценах внутренних покупок на страницах Apple App Store и могут отличаться от официальных веб-подписок.',
     navLabel: 'Выбор модели',
-    tableSummarySuffix: 'сравнение цен по регионам, отсортировано по пересчитанной цене от низкой к высокой:',
-    recommendedRank: 'Рекоменд. место',
     countryRegion: 'Страна/регион',
     localPrice: 'Местная цена',
     currency: 'Валюта',
@@ -556,27 +558,6 @@ export const ruMessages: Messages = {
   sponsors: {
     title: 'Спонсоры',
     becomeSponsor: 'Стать спонсором',
-    tokenPlus: {
-      alt: 'Логотип спонсора TokenPlus',
-      name: 'TokenPlus',
-      description: 'AI Resource & Service Linker Community.',
-    },
-    packyApi: {
-      alt: 'Логотип спонсора PackyAPI AI API aggregation platform',
-      name: 'PackyAPI, опытный AI API gateway',
-      description: 'Единый доступ к Claude, GPT, Gemini и другим популярным AI-сервисам, возможны счета.',
-    },
-    yunwuApi: {
-      alt: 'Логотип спонсора Yunwu API',
-      name: 'Yunwu API',
-      description: 'Быстрый и удобный доступ к Web API для разработчиков через стабильную и простую платформу, объединяющую почти все основные модели ИИ.',
-    },
-    rackNerd: {
-      alt: 'Баннер спонсора RackNerd cloud servers',
-      name: 'RackNerd cloud servers',
-      price: '1C1G от $21.99/год',
-      plans: ['2C2G $35.99/год', '3C4G $59.99/год', '6C6G $89.99/год', '7C8G $119.99/год'],
-    },
   },
   submit: {
     success: 'Успешно отправлено',

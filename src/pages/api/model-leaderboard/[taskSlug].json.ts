@@ -37,6 +37,7 @@ export const GET: APIRoute = async ({ params, request }) => {
   }
 
   return new Response(JSON.stringify({
+    totalCount: currentGroup.rows.length,
     rows: currentGroup.rows.slice(offset).map(row => ({
       rank: row.rank,
       modelName: row.modelName,

@@ -29,6 +29,7 @@ export type PublicGatewaySiteRow = {
   lastProductRefreshCompleteAt: string | null;
   lastProductRefreshCompleteTime: string;
   siteScore: number | null;
+  sponsor: boolean;
   availabilityPercent: number;
   avgSuccessLatencyMs: number | null;
   summary: string;
@@ -126,6 +127,16 @@ type PublicSnapshotKey =
   | 'model-leaderboard-task-slugs'
   | 'model-leaderboards';
 
+type PublicListLimitOptions = {
+  limit?: number;
+};
+
+function safeListLimit(limit: number | undefined) {
+  return typeof limit === 'number' && Number.isFinite(limit)
+    ? Math.max(1, Math.floor(limit))
+    : null;
+}
+
 let pool: pg.Pool | null = null;
 const beijingDateFormatter = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Asia/Shanghai',
@@ -210,6 +221,7 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     lastProductRefreshCompleteAt: null,
     lastProductRefreshCompleteTime: '',
     siteScore: Number(row.score) || 0,
+    sponsor: row.sponsor === true,
     availabilityPercent: Number(row.availability_percent) || 0,
     avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
     summary: String(row.summary || ''),
@@ -245,12 +257,13 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
   };
 }
 
-export async function loadShopProductsData(options: { productLimit?: number } = {}) {
+export async function loadShopProductsData(options: { productLimit?: number; inStockOnly?: boolean } = {}) {
   const snapshot = await loadPublicSnapshot<{
     sites: PublicSiteRow[];
     products: PublicProductRow[];
     totalSiteCount: number;
     totalProductCount: number;
+    totalInStockProductCount?: number;
     latestRefreshedAt?: string | null;
     latestRefreshTime: string;
     isPartial: boolean;
@@ -260,19 +273,29 @@ export async function loadShopProductsData(options: { productLimit?: number } = 
     ? Math.max(1, Math.floor(options.productLimit))
     : null;
   if (snapshot) {
-    const products = safeProductLimit === null ? snapshot.products : snapshot.products.slice(0, safeProductLimit);
+    const sourceProducts = options.inStockOnly
+      ? snapshot.products.filter(product => product.inStock)
+      : snapshot.products;
+    const products = safeProductLimit === null ? sourceProducts : sourceProducts.slice(0, safeProductLimit);
     const sites = safeProductLimit === null
       ? snapshot.sites
       : (() => {
         const selectedSiteIds = new Set(products.map(product => product.siteId));
         return snapshot.sites.filter(site => selectedSiteIds.has(site.id));
       })();
+    const totalInStockProductCount = typeof snapshot.totalInStockProductCount === 'number'
+      ? snapshot.totalInStockProductCount
+      : snapshot.products.filter(product => product.inStock).length;
+    const totalProductCount = snapshot.totalProductCount;
+    const partialTotalCount = options.inStockOnly ? totalInStockProductCount : totalProductCount;
     return {
       ...snapshot,
       sites,
       products,
+      totalProductCount,
+      totalInStockProductCount,
       ...(safeProductLimit === null ? {} : { initialProductLimit: safeProductLimit }),
-      isPartial: snapshot.totalProductCount > products.length,
+      isPartial: partialTotalCount > products.length,
     };
   }
   const sitesResult = safeProductLimit === null
@@ -311,6 +334,7 @@ export async function loadShopProductsData(options: { productLimit?: number } = 
     INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
     WHERE shop_sites.status = 'online'
       AND shop_sites.type = 'cardShop'
+      ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
     ORDER BY shop_products.score DESC, shop_sites.score DESC, shop_products.in_stock DESC, shop_products.refreshed_at DESC, shop_products.category_name ASC, shop_products.name ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
@@ -376,12 +400,23 @@ export async function loadShopProductsData(options: { productLimit?: number } = 
         WHERE shop_sites.status = 'online'
           AND shop_sites.type = 'cardShop'
       ), 0) AS total_product_count,
+      COALESCE((
+        SELECT COUNT(shop_products.*)::INTEGER
+        FROM shop_products
+        INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
+        WHERE shop_sites.status = 'online'
+          AND shop_sites.type = 'cardShop'
+          AND shop_products.in_stock = TRUE
+      ), 0) AS total_in_stock_product_count,
       MAX(last_product_refresh_success_at) FILTER (WHERE status = 'online' AND type = 'cardShop') AS latest_refreshed_at
     FROM shop_sites
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
   const totalSiteCount = Number(summaryRow.total_site_count) || 0;
-  const totalProductCount = Number(summaryRow.total_product_count) || 0;
+  const allProductCount = Number(summaryRow.total_product_count) || 0;
+  const totalInStockProductCount = Number(summaryRow.total_in_stock_product_count) || 0;
+  const totalProductCount = allProductCount;
+  const partialTotalCount = options.inStockOnly ? totalInStockProductCount : totalProductCount;
   const latestRefreshedAt = summaryRow.latest_refreshed_at ? String(summaryRow.latest_refreshed_at) : null;
 
   return {
@@ -389,9 +424,10 @@ export async function loadShopProductsData(options: { productLimit?: number } = 
     products,
     totalSiteCount,
     totalProductCount,
+    totalInStockProductCount,
     latestRefreshedAt,
     latestRefreshTime: formatBeijingRefreshTime(latestRefreshedAt),
-    isPartial: totalProductCount > products.length,
+    isPartial: partialTotalCount > products.length,
   };
 }
 
@@ -399,7 +435,8 @@ export async function loadPackedShopProductsSnapshot(): Promise<PackedShopProduc
   return loadPublicSnapshot<PackedShopProductsData>('shop-products-packed');
 }
 
-export async function loadGatewaySites() {
+export async function loadGatewaySites(options: PublicListLimitOptions = {}) {
+  const limit = safeListLimit(options.limit);
   const snapshot = await loadPublicSnapshot<{
     sites: PublicGatewaySiteRow[];
     totalSiteCount: number;
@@ -407,7 +444,14 @@ export async function loadGatewaySites() {
     totalModelCount: number;
     totalPriceCount: number;
   }>('gateway-sites');
-  if (snapshot) return snapshot;
+  if (snapshot) {
+    return {
+      ...snapshot,
+      sites: snapshot.sites
+        .slice(0, limit ?? snapshot.sites.length)
+        .map(site => ({ ...site, sponsor: site.sponsor === true })),
+    };
+  }
 
   const result = await getPool().query(`
     WITH price_summary AS (
@@ -433,6 +477,7 @@ export async function loadGatewaySites() {
       gateway_sites.host,
       gateway_sites.summary,
       gateway_sites.invite_url,
+      gateway_sites.sponsor,
       gateway_sites.model_types,
       gateway_sites.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
@@ -449,27 +494,61 @@ export async function loadGatewaySites() {
     FROM gateway_sites
     LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-    ORDER BY gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+    ORDER BY gateway_sites.sponsor DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+    ${limit ? 'LIMIT $1' : ''}
+  `, limit ? [limit] : []);
+
+  const summaryResult = await getPool().query(`
+    WITH price_summary AS (
+      SELECT
+        site_id,
+        COUNT(DISTINCT model_id)::INTEGER AS model_count,
+        COUNT(*)::INTEGER AS price_count
+      FROM gateway_model_prices
+      GROUP BY site_id
+    ),
+    online_sites AS (
+      SELECT
+        gateway_sites.site_id,
+        COALESCE(price_summary.model_count, 0) AS model_count,
+        COALESCE(price_summary.price_count, 0) AS price_count
+      FROM gateway_sites
+      LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
+      WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
+    )
+    SELECT
+      COUNT(*)::INTEGER AS total_site_count,
+      COUNT(*) FILTER (WHERE price_count > 0)::INTEGER AS sites_with_prices_count,
+      COALESCE(SUM(model_count), 0)::INTEGER AS total_model_count,
+      COALESCE(SUM(price_count), 0)::INTEGER AS total_price_count
+    FROM online_sites
   `);
+  const summaryRow = summaryResult.rows[0] ?? {};
 
   const sites: PublicGatewaySiteRow[] = result.rows.map(row => mapGatewaySiteRow(row));
 
   return {
     sites,
-    totalSiteCount: sites.length,
-    sitesWithPricesCount: sites.filter(site => site.priceCount > 0).length,
-    totalModelCount: sites.reduce((sum, site) => sum + site.modelCount, 0),
-    totalPriceCount: sites.reduce((sum, site) => sum + site.priceCount, 0),
+    totalSiteCount: Number(summaryRow.total_site_count) || 0,
+    sitesWithPricesCount: Number(summaryRow.sites_with_prices_count) || 0,
+    totalModelCount: Number(summaryRow.total_model_count) || 0,
+    totalPriceCount: Number(summaryRow.total_price_count) || 0,
   };
 }
 
-export async function loadGatewayModels() {
+export async function loadGatewayModels(options: PublicListLimitOptions = {}) {
+  const limit = safeListLimit(options.limit);
   const snapshot = await loadPublicSnapshot<{
     models: PublicGatewayModelRow[];
     totalModelCount: number;
     totalSupportCount: number;
   }>('gateway-models');
-  if (snapshot) return snapshot;
+  if (snapshot) {
+    return {
+      ...snapshot,
+      models: snapshot.models.slice(0, limit ?? snapshot.models.length),
+    };
+  }
 
   const result = await getPool().query(`
     SELECT
@@ -487,7 +566,26 @@ export async function loadGatewayModels() {
       COUNT(DISTINCT prices.site_id) DESC,
       MAX(gateway_sites.score) DESC NULLS LAST,
       prices.model_id ASC
+    ${limit ? 'LIMIT $1' : ''}
+  `, limit ? [limit] : []);
+
+  const summaryResult = await getPool().query(`
+    WITH grouped_models AS (
+      SELECT
+        prices.model_id,
+        COALESCE(NULLIF(prices.model_family, ''), 'Other') AS model_family,
+        COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count
+      FROM gateway_model_prices prices
+      INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
+      WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
+      GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
+    )
+    SELECT
+      COUNT(*)::INTEGER AS total_model_count,
+      COALESCE(SUM(support_site_count), 0)::INTEGER AS total_support_count
+    FROM grouped_models
   `);
+  const summaryRow = summaryResult.rows[0] ?? {};
 
   const models: PublicGatewayModelRow[] = result.rows.map(row => {
     const modelId = String(row.model_id);
@@ -505,8 +603,8 @@ export async function loadGatewayModels() {
 
   return {
     models,
-    totalModelCount: models.length,
-    totalSupportCount: models.reduce((sum, model) => sum + model.supportSiteCount, 0),
+    totalModelCount: Number(summaryRow.total_model_count) || 0,
+    totalSupportCount: Number(summaryRow.total_support_count) || 0,
   };
 }
 
@@ -517,7 +615,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
     sites: PublicGatewaySiteRow[];
   }>('gateway-sites');
   const snapshotSite = sitesSnapshot?.sites.find(site => site.slug === normalizedSlug) ?? null;
-  if (snapshotSite) return snapshotSite;
+  if (snapshotSite) return { ...snapshotSite, sponsor: snapshotSite.sponsor === true };
 
   const result = await getPool().query(`
     WITH price_summary AS (
@@ -543,6 +641,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
       gateway_sites.host,
       gateway_sites.summary,
       gateway_sites.invite_url,
+      gateway_sites.sponsor,
       gateway_sites.model_types,
       gateway_sites.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
@@ -606,9 +705,10 @@ async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayMo
   };
 }
 
-export async function loadGatewayDetail(slug: string): Promise<PublicGatewayDetail | null> {
+export async function loadGatewayDetail(slug: string, options: { priceLimit?: number } = {}): Promise<PublicGatewayDetail | null> {
   const site = await loadGatewaySiteBySlug(slug);
   if (!site) return null;
+  const priceLimit = safeListLimit(options.priceLimit);
 
   const priceResult = await getPool().query(`
     SELECT
@@ -631,8 +731,8 @@ export async function loadGatewayDetail(slug: string): Promise<PublicGatewayDeta
       END ASC,
       prices.model_id ASC,
       prices.unit ASC
-    LIMIT 80
-  `, [site.id]);
+    ${priceLimit ? 'LIMIT $2' : ''}
+  `, priceLimit ? [site.id, priceLimit] : [site.id]);
 
   return {
     site,
@@ -647,9 +747,10 @@ export async function loadGatewayDetail(slug: string): Promise<PublicGatewayDeta
   };
 }
 
-export async function loadGatewayModelDetail(pathId: string): Promise<PublicGatewayModelDetail | null> {
+export async function loadGatewayModelDetail(pathId: string, options: { siteLimit?: number } = {}): Promise<PublicGatewayModelDetail | null> {
   const modelId = pathId.trim();
   if (!modelId) return null;
+  const siteLimit = safeListLimit(options.siteLimit);
 
   const model = await loadGatewayModelSummary(modelId);
   if (!model) return null;
@@ -698,6 +799,7 @@ export async function loadGatewayModelDetail(pathId: string): Promise<PublicGate
       gateway_sites.host,
       gateway_sites.summary,
       gateway_sites.invite_url,
+      gateway_sites.sponsor,
       gateway_sites.model_types,
       gateway_sites.payment_methods,
       COALESCE(site_price_summary.model_count, 0) AS model_count,
@@ -719,8 +821,9 @@ export async function loadGatewayModelDetail(pathId: string): Promise<PublicGate
     INNER JOIN gateway_sites ON gateway_sites.site_id = model_price_summary.site_id
     LEFT JOIN site_price_summary ON site_price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-    ORDER BY gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC
-  `, [modelId]);
+    ORDER BY gateway_sites.sponsor DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC
+    ${siteLimit ? 'LIMIT $2' : ''}
+  `, siteLimit ? [modelId, siteLimit] : [modelId]);
 
   return {
     model,
@@ -1036,13 +1139,15 @@ export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {
   return result.rows.map(row => String(row.task_slug));
 }
 
-export async function loadModelLeaderboardRowsForTask(taskSlug: string): Promise<PublicModelLeaderboardRow[]> {
+export async function loadModelLeaderboardRowsForTask(taskSlug: string, options: PublicListLimitOptions = {}): Promise<PublicModelLeaderboardRow[]> {
   const normalizedTaskSlug = taskSlug.trim().toLowerCase();
+  const limit = safeListLimit(options.limit);
   const snapshot = await loadPublicSnapshot<PublicModelLeaderboardRow[]>('model-leaderboards');
   if (snapshot) {
     return snapshot
       .filter(row => row.taskSlug.trim().toLowerCase() === normalizedTaskSlug)
-      .sort((a, b) => a.rank - b.rank);
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, limit ?? snapshot.length);
   }
 
   const result = await getPool().query(`
@@ -1059,8 +1164,54 @@ export async function loadModelLeaderboardRowsForTask(taskSlug: string): Promise
     FROM model_leaderboards
     WHERE lower(trim(task_slug)) = $1
     ORDER BY rank ASC
-  `, [normalizedTaskSlug]);
+    ${limit ? 'LIMIT $2' : ''}
+  `, limit ? [normalizedTaskSlug, limit] : [normalizedTaskSlug]);
   return result.rows.map(mapModelLeaderboardRow);
+}
+
+export async function loadModelLeaderboardRowsForTaskPage(taskSlug: string, options: PublicListLimitOptions = {}) {
+  const normalizedTaskSlug = taskSlug.trim().toLowerCase();
+  const limit = safeListLimit(options.limit);
+  const snapshot = await loadPublicSnapshot<PublicModelLeaderboardRow[]>('model-leaderboards');
+  if (snapshot) {
+    const rows = snapshot
+      .filter(row => row.taskSlug.trim().toLowerCase() === normalizedTaskSlug)
+      .sort((a, b) => a.rank - b.rank);
+    const latestFetchedAt = rows.reduce<string | null>((latest, row) => {
+      if (!latest) return row.fetchedAt;
+      return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
+    }, null);
+    return {
+      rows: rows.slice(0, limit ?? rows.length),
+      totalCount: rows.length,
+      latestFetchedAt,
+    };
+  }
+
+  const result = await getPool().query(`
+    SELECT
+      task_slug,
+      source_name,
+      source_url,
+      source_group_slug,
+      source_board_slug,
+      rank,
+      model_name,
+      score,
+      fetched_at,
+      COUNT(*) OVER()::INTEGER AS total_count,
+      MAX(fetched_at) OVER() AS latest_fetched_at
+    FROM model_leaderboards
+    WHERE lower(trim(task_slug)) = $1
+    ORDER BY rank ASC
+    ${limit ? 'LIMIT $2' : ''}
+  `, limit ? [normalizedTaskSlug, limit] : [normalizedTaskSlug]);
+  const firstRow = result.rows[0] ?? {};
+  return {
+    rows: result.rows.map(mapModelLeaderboardRow),
+    totalCount: Number(firstRow.total_count) || 0,
+    latestFetchedAt: firstRow.latest_fetched_at ? String(firstRow.latest_fetched_at) : null,
+  };
 }
 
 function mapModelLeaderboardRow(row: Record<string, unknown>): PublicModelLeaderboardRow {

@@ -1,13 +1,15 @@
 ---
 /*
-文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示前二十名并支持本地加载更多。
+文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示排行并支持本地加载更多。
 */
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
-import SortableTableHeader from '../components/SortableTableHeader.astro';
+import GatewaySiteTableRow from '../components/GatewaySiteTableRow.astro';
+import DataTable from '../components/DataTable.astro';
+import DataTableCell from '../components/DataTableCell.astro';
+import DataTableHeader from '../components/DataTableHeader.astro';
 import {
   collectFilterOptions,
-  formatPositiveScore,
   paymentIcon,
   paymentLabel,
   uniqueLabels,
@@ -15,16 +17,16 @@ import {
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
-import sortableTablesScriptUrl from '../scripts/sortable-tables.js?url';
+import dataTableScriptUrl from '../scripts/data-table.js?url';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const gatewayData = await loadGatewaySites();
-const gatewayModelData = await loadGatewayModels();
-const topSites = gatewayData.sites.slice(0, 20);
-const topModels = gatewayModelData.models.slice(0, 20);
-const deferredSites = gatewayData.sites.slice(20);
-const deferredModels = gatewayModelData.models.slice(20);
+const GATEWAY_SITE_PAGE_SIZE = 20;
+const GATEWAY_MODEL_PAGE_SIZE = 100;
+const gatewayData = await loadGatewaySites({ limit: GATEWAY_SITE_PAGE_SIZE });
+const gatewayModelData = await loadGatewayModels({ limit: GATEWAY_MODEL_PAGE_SIZE });
+const topSites = gatewayData.sites;
+const topModels = gatewayModelData.models;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/llm-gateway',
@@ -71,19 +73,29 @@ function gatewayModelClickAttrs(model: { modelId: string; modelFamily: string })
   };
 }
 
+function isStickyGatewaySite(site: { sponsor?: boolean }) {
+  return Boolean(site.sponsor);
+}
+
 const modelFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.displayModelFamilies));
 const paymentFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.paymentMethods));
-const hasMoreSites = deferredSites.length > 0;
-const hasMoreModels = deferredModels.length > 0;
+const hasMoreSites = gatewayData.totalSiteCount > topSites.length;
+const hasMoreModels = gatewayModelData.totalModelCount > topModels.length;
 const gatewayHomeConfig = {
   gatewayLinkPrefix: linkTo('/llm-gateway'),
   modelLinkPrefix: linkTo('/llm-gateway/models'),
-  sitesApi: `/api/llm-gateway/sites.json?offset=20&locale=${encodeURIComponent(Astro.locals.locale)}`,
-  modelsApi: `/api/llm-gateway/models.json?offset=20&locale=${encodeURIComponent(Astro.locals.locale)}`,
+  sitePageSize: GATEWAY_SITE_PAGE_SIZE,
+  modelPageSize: GATEWAY_MODEL_PAGE_SIZE,
+  siteTotalCount: gatewayData.totalSiteCount,
+  modelTotalCount: gatewayModelData.totalModelCount,
+  displaySummary: t.labels.displaySummary,
+  sitesApi: `/api/llm-gateway/sites.json?offset=${GATEWAY_SITE_PAGE_SIZE}&locale=${encodeURIComponent(Astro.locals.locale)}`,
+  modelsApi: `/api/llm-gateway/models.json?offset=${GATEWAY_MODEL_PAGE_SIZE}&locale=${encodeURIComponent(Astro.locals.locale)}`,
   detailLabel: t.llmGateway.viewDetail,
   openLabel: t.actions.open,
-  rankLabel: t.llmGateway.rank,
+  sequenceLabel: t.labels.sequence,
   basicInfoLabel: t.llmGateway.basicInfo,
+  sponsorLabel: t.llmGateway.sponsorLabel,
   scoreLabel: t.labels.score,
   supportedModelsLabel: t.llmGateway.supportedModels,
   modelCountLabel: t.llmGateway.modelCount,
@@ -139,8 +151,7 @@ const gatewayHomeConfig = {
         </div>
       </div>
 
-      <div id="gatewaySitesPanel" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites">
-        <div class="card-body p-0">
+      <div id="gatewaySitesPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites">
           <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
             <label class="input input-bordered flex h-11 items-center gap-2">
               <input data-home-site-search type="search" class="grow text-sm" placeholder={t.llmGateway.searchPlaceholder} />
@@ -154,43 +165,63 @@ const gatewayHomeConfig = {
               {paymentFilterOptions.map(method => <option value={method}>{paymentLabelFor(method)}</option>)}
             </select>
           </div>
-          <div class="gateway-table-scroll">
-            <table class="table table-zebra gateway-home-table gateway-site-table w-full table-fixed align-top border-collapse" data-sortable-table>
-              <thead class="bg-base-200 text-sm font-semibold text-base-content">
-                <tr>
-                  <SortableTableHeader label={t.llmGateway.rank} sortKey="rank" sortType="number" class="w-14" />
-                  <SortableTableHeader label={t.llmGateway.basicInfo} sortKey="name" class="w-[34%]" />
-                  <SortableTableHeader label={t.labels.score} sortKey="score" sortType="number" class="w-24" helpTip={t.llmGateway.gatewayScoreTip} helpLabel={t.llmGateway.gatewayScoreHelpLabel} />
-                  <SortableTableHeader label={t.llmGateway.supportedModels} sortKey="families" class="w-[24%]" />
-                  <SortableTableHeader label={t.llmGateway.modelCount} sortKey="modelCount" sortType="number" class="w-20" />
-                  <SortableTableHeader label={t.llmGateway.paymentMethods} sortKey="payments" class="w-28" />
-                </tr>
-              </thead>
-              <tbody data-gateway-home-sites-list>
+          <DataTable
+            variant="gatewaySites"
+            tbodyDataAttrs={{ 'data-gateway-home-sites-list': '' }}
+            emptyText={t.llmGateway.filterEmpty}
+            emptyDataAttrs={{ 'data-home-site-empty': '' }}
+            loadingText={t.labels.loading}
+            loadingDataAttrs={{ 'data-gateway-loading': 'sites' }}
+            summaryText={t.labels.displaySummary}
+            summaryRenderedCount={topSites.length}
+            summaryDataAttrs={{ 'data-gateway-load-summary': 'sites' }}
+            totalCount={gatewayData.totalSiteCount}
+            loadMoreText={hasMoreSites ? t.labels.loadMore : ''}
+            loadMoreHidden={!hasMoreSites}
+            loadMoreDataAttrs={{ 'data-gateway-load-more': 'sites' }}
+            stickySortKey="sticky"
+          >
+            <Fragment slot="head">
+              <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
+              <DataTableHeader label={t.llmGateway.basicInfo} sortKey="name" />
+              <DataTableHeader label={t.labels.score} sortKey="score" sortType="number" align="right" helpTip={t.llmGateway.gatewayScoreTip} helpLabel={t.llmGateway.gatewayScoreHelpLabel} />
+              <DataTableHeader label={t.llmGateway.supportedModels} sortKey="families" />
+              <DataTableHeader label={t.llmGateway.modelCount} sortKey="modelCount" sortType="number" align="right" />
+              <DataTableHeader label={t.llmGateway.paymentMethods} sortKey="payments" />
+            </Fragment>
             {topSites.map((site, index) => {
               const families = uniqueLabels(site.displayModelFamilies, 8);
               const paymentMethods = uniqueLabels(site.paymentMethods, 6);
+              const rank = index + 1;
               return (
-                <tr data-home-site-card data-search={`${site.name} ${site.url} ${site.host} ${site.displayModelFamilies.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase()} data-families={families.map(item => item.toLowerCase()).join(',')} data-payments={paymentMethods.join(',')} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-name={site.name} data-sort-score={String(site.siteScore || 0)} data-sort-families={families.join(' ')} data-sort-model-count={String(site.modelCount || 0)} data-sort-payments={paymentMethods.map(paymentLabelFor).join(' ')}>
-                  <td data-label={t.llmGateway.rank} class="font-mono text-sm text-primary">#{index + 1}</td>
-                  <td data-label={t.llmGateway.basicInfo}>
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
-                      <div class="min-w-0 space-y-2">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <a href={linkTo(`/llm-gateway/${site.slug}`)} class="link link-hover break-words text-base font-semibold text-primary" {...gatewaySiteClickAttrs(site)}>{site.name}</a>
-                          {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
-                        </div>
-                        {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
-                        <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
-                      </div>
-                      <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
-                        <a href={linkTo(`/llm-gateway/${site.slug}`)} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...gatewaySiteClickAttrs(site)}>{t.llmGateway.viewDetail}</a>
-                        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...gatewaySiteOpenAttrs(site)}>{t.actions.open}</a>
-                      </div>
-                    </div>
-                  </td>
-                  <td data-label={t.labels.score} class="font-mono">{formatPositiveScore(site.siteScore)}</td>
-                  <td data-label={t.llmGateway.supportedModels}>
+                <GatewaySiteTableRow
+                  site={site}
+                  sequence={rank}
+                  sequenceLabel={t.labels.sequence}
+                  basicInfoLabel={t.llmGateway.basicInfo}
+                  sponsorLabel={t.llmGateway.sponsorLabel}
+                  detailLabel={t.llmGateway.viewDetail}
+                  openLabel={t.actions.open}
+                  detailHref={linkTo(`/llm-gateway/${site.slug}`)}
+                  clickAttrs={gatewaySiteClickAttrs(site)}
+                  openAttrs={gatewaySiteOpenAttrs(site)}
+                  sticky={isStickyGatewaySite(site)}
+                  scoreLabel={t.labels.score}
+                  rowAttrs={{
+                    'data-home-site-card': '',
+                    'data-search': `${site.name} ${site.url} ${site.host} ${site.displayModelFamilies.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase(),
+                    'data-families': families.map(item => item.toLowerCase()).join(','),
+                    'data-payments': paymentMethods.join(','),
+                    'data-original-order': String(index),
+                    'data-sort-sequence': String(rank),
+                    'data-sort-name': site.name,
+                    'data-sort-score': String(site.siteScore || 0),
+                    'data-sort-families': families.join(' '),
+                    'data-sort-model-count': String(site.modelCount || 0),
+                    'data-sort-payments': paymentMethods.map(paymentLabelFor).join(' '),
+                  }}
+                >
+                  <DataTableCell label={t.llmGateway.supportedModels}>
                     {families.length > 0 ? (
                       <div class="flex flex-wrap gap-1.5">
                         {families.map(family => <span class="badge badge-primary badge-outline badge-sm">{family}</span>)}
@@ -198,9 +229,9 @@ const gatewayHomeConfig = {
                     ) : (
                       <span class="text-base-content/35">-</span>
                     )}
-                  </td>
-                  <td data-label={t.llmGateway.modelCount} class="font-mono">{site.modelCount > 0 ? site.modelCount : '-'}</td>
-                  <td data-label={t.llmGateway.paymentMethods}>{paymentMethods.length > 0 ? (
+                  </DataTableCell>
+                  <DataTableCell label={t.llmGateway.modelCount} align="right" class="font-mono">{site.modelCount > 0 ? site.modelCount : '-'}</DataTableCell>
+                  <DataTableCell label={t.llmGateway.paymentMethods}>{paymentMethods.length > 0 ? (
                     <div class="flex flex-wrap gap-1.5">
                       {paymentMethods.map(method => {
                         const icon = paymentIcon(method);
@@ -208,65 +239,56 @@ const gatewayHomeConfig = {
                         return <span class="payment-icon" title={label} aria-label={label}>{icon.src ? <img src={icon.src} alt="" loading="lazy" /> : icon.fallback}</span>;
                       })}
                     </div>
-                  ) : <span class="text-base-content/35">-</span>}</td>
-                </tr>
+                  ) : <span class="text-base-content/35">-</span>}</DataTableCell>
+                </GatewaySiteTableRow>
               );
             })}
-              </tbody>
-            </table>
-          </div>
-          <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-site-empty>{t.llmGateway.filterEmpty}</div>
-          {hasMoreSites ? (
-            <div class="border-t border-base-300 p-4 text-center">
-              <button type="button" class="btn btn-outline btn-sm" data-gateway-load-more="sites">{t.llmGateway.loadMore}</button>
-            </div>
-          ) : null}
-        </div>
+          </DataTable>
       </div>
 
-      <div id="gatewayModelsPanel" role="tabpanel" aria-labelledby="gatewayModelsTab" data-gateway-panel="models" hidden>
-        <div class="card-body p-0">
+      <div id="gatewayModelsPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewayModelsTab" data-gateway-panel="models" hidden>
           <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4">
             <label class="input input-bordered flex h-11 items-center gap-2">
               <input data-home-model-search type="search" class="grow text-sm" placeholder={t.llmGateway.modelSearchPlaceholder} />
             </label>
           </div>
-          <div class="gateway-table-scroll">
-            <table class="table table-zebra gateway-home-table gateway-model-table w-full table-fixed align-top border-collapse" data-sortable-table>
-              <thead class="bg-base-200 text-sm font-semibold text-base-content">
-                <tr>
-                  <SortableTableHeader label={t.llmGateway.rank} sortKey="rank" sortType="number" class="w-14" />
-                  <SortableTableHeader label={t.labels.model} sortKey="model" class="w-[48%]" />
-                  <SortableTableHeader label={t.llmGateway.modelFamily} sortKey="family" class="w-[24%]" />
-                  <SortableTableHeader label={t.llmGateway.supportedGatewayCount} sortKey="supportCount" sortType="number" class="w-24" />
-                </tr>
-              </thead>
-              <tbody data-gateway-home-models-list>
-                {topModels.map((model, index) => (
-                  <tr data-home-model-card data-search={`${model.modelId} ${model.modelFamily}`.toLowerCase()} data-original-order={String(index)} data-sort-rank={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelFamily} data-sort-support-count={String(model.supportSiteCount || 0)}>
-                    <td data-label={t.llmGateway.rank} class="font-mono text-sm text-secondary">#{index + 1}</td>
-                    <td data-label={t.labels.model}>
-                      <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-primary" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
-                    </td>
-                    <td data-label={t.llmGateway.modelFamily}>{model.modelFamily}</td>
-                    <td data-label={t.llmGateway.supportedGatewayCount} class="font-mono">{model.supportSiteCount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div class="hidden p-6 text-center text-sm text-base-content/60" data-home-model-empty>{t.llmGateway.filterEmpty}</div>
-          {hasMoreModels ? (
-            <div class="border-t border-base-300 p-4 text-center">
-              <button type="button" class="btn btn-outline btn-sm" data-gateway-load-more="models">{t.llmGateway.loadMore}</button>
-            </div>
-          ) : null}
-        </div>
+          <DataTable
+            variant="gatewayModels"
+            tbodyDataAttrs={{ 'data-gateway-home-models-list': '' }}
+            emptyText={t.llmGateway.filterEmpty}
+            emptyDataAttrs={{ 'data-home-model-empty': '' }}
+            loadingText={t.labels.loading}
+            loadingDataAttrs={{ 'data-gateway-loading': 'models' }}
+            summaryText={t.labels.displaySummary}
+            summaryRenderedCount={topModels.length}
+            summaryDataAttrs={{ 'data-gateway-load-summary': 'models' }}
+            totalCount={gatewayModelData.totalModelCount}
+            loadMoreText={hasMoreModels ? t.labels.loadMore : ''}
+            loadMoreHidden={!hasMoreModels}
+            loadMoreDataAttrs={{ 'data-gateway-load-more': 'models' }}
+          >
+            <Fragment slot="head">
+              <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
+              <DataTableHeader label={t.labels.model} sortKey="model" />
+              <DataTableHeader label={t.llmGateway.modelFamily} sortKey="family" />
+              <DataTableHeader label={t.llmGateway.supportedGatewayCount} sortKey="supportCount" sortType="number" align="right" />
+            </Fragment>
+            {topModels.map((model, index) => (
+              <tr data-home-model-card data-search={`${model.modelId} ${model.modelFamily}`.toLowerCase()} data-original-order={String(index)} data-sort-sequence={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelFamily} data-sort-support-count={String(model.supportSiteCount || 0)}>
+                <DataTableCell label={t.labels.sequence} align="center" sequence>{index + 1}</DataTableCell>
+                <DataTableCell label={t.labels.model}>
+                  <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-primary" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
+                </DataTableCell>
+                <DataTableCell label={t.llmGateway.modelFamily}>{model.modelFamily}</DataTableCell>
+                <DataTableCell label={t.llmGateway.supportedGatewayCount} align="right" class="font-mono">{model.supportSiteCount}</DataTableCell>
+              </tr>
+            ))}
+          </DataTable>
       </div>
     </section>
   )}
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
-  <script is:inline slot="scripts" defer src={sortableTablesScriptUrl}></script>
+  <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
   <script>
     import '../scripts/llm-gateway-home.js';
   </script>

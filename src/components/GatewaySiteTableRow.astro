@@ -1,0 +1,87 @@
+---
+/*
+文件说明: 渲染中转站列表与模型详情页共用的中转站表格行，统一站点信息、赞助标签、评分列和操作入口。
+*/
+import { formatPositiveScore } from '../gateway-display.js';
+import DataTableCell from './DataTableCell.astro';
+
+type DataAttrs = Record<string, string | number | boolean | undefined>;
+
+type GatewaySite = {
+  name: string;
+  slug: string;
+  url: string;
+  outboundUrl: string;
+  displayFamily?: string;
+  summary?: string;
+  siteScore?: number | null;
+  sponsor?: boolean;
+};
+
+type Props = {
+  site: GatewaySite;
+  sequence: number;
+  sequenceLabel: string;
+  basicInfoLabel: string;
+  sponsorLabel: string;
+  detailLabel: string;
+  openLabel: string;
+  detailHref: string;
+  clickAttrs?: DataAttrs;
+  openAttrs?: DataAttrs;
+  rowAttrs?: DataAttrs;
+  sticky?: boolean;
+  showScore?: boolean;
+  scoreLabel?: string;
+  scoreClass?: string;
+  scoreAlign?: 'left' | 'center' | 'right';
+};
+
+const {
+  site,
+  sequence,
+  sequenceLabel,
+  basicInfoLabel,
+  sponsorLabel,
+  detailLabel,
+  openLabel,
+  detailHref,
+  clickAttrs = {},
+  openAttrs = {},
+  rowAttrs = {},
+  sticky = false,
+  showScore = true,
+  scoreLabel = '',
+  scoreClass = 'font-mono',
+  scoreAlign = 'right',
+} = Astro.props;
+
+const mergedRowAttrs = {
+  ...rowAttrs,
+  'data-sort-sequence': String(sequence),
+  'data-sort-sticky': sticky ? '1' : '0',
+};
+---
+
+<tr {...mergedRowAttrs}>
+  <DataTableCell label={sequenceLabel} align="center" sequence>{sequence}</DataTableCell>
+  <DataTableCell label={basicInfoLabel}>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
+      <div class="min-w-0 space-y-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <a href={detailHref} class="link link-hover break-words text-base font-semibold text-primary" {...clickAttrs}>{site.name}</a>
+          {site.sponsor ? <span class="gateway-sponsor-badge">{sponsorLabel}</span> : null}
+          {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
+        </div>
+        {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
+        <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
+      </div>
+      <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
+        <a href={detailHref} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...clickAttrs}>{detailLabel}</a>
+        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...openAttrs}>{openLabel}</a>
+      </div>
+    </div>
+  </DataTableCell>
+  {showScore ? <DataTableCell label={scoreLabel} align={scoreAlign} class={scoreClass}>{formatPositiveScore(site.siteScore ?? null)}</DataTableCell> : null}
+  <slot />
+</tr>

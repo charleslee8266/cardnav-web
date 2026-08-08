@@ -2,6 +2,7 @@
 文件说明: 全站共享样式，包含首页列表、收藏按钮、向导页和公共组件的视觉规则。
 */
 @import "tailwindcss";
+@import "./components/data-table.css";
 @plugin "daisyui";
 
 @source "./**/*.astro";
@@ -715,6 +716,13 @@
     overflow-wrap: anywhere;
   }
 
+  .gateway-sponsor-badge {
+    @apply inline-flex h-5 min-h-5 shrink-0 items-center rounded px-2 text-xs font-semibold leading-none;
+    border: 1px solid #93c5fd;
+    background: transparent;
+    color: #2563eb;
+  }
+
   .hero-domain {
     overflow-wrap: anywhere;
   }
@@ -738,20 +746,24 @@
   }
 
   .sponsor-grid {
-    @apply grid gap-3;
+    @apply grid gap-3 list-none p-0;
     grid-template-columns: 1fr;
   }
 
+  .sponsor-grid-item {
+    @apply min-w-0;
+  }
+
   .sponsor-card {
-    @apply flex min-w-0 w-full flex-col rounded border border-base-content/15 bg-base-200 transition-all hover:border-primary/50 hover:shadow-sm;
+    @apply flex h-full min-w-0 w-full flex-col rounded border border-base-content/15 bg-base-200 transition-all hover:border-primary/50 hover:shadow-sm;
   }
 
   .sponsor-main-link {
-    @apply flex flex-1 flex-col gap-2 p-3;
+    @apply flex flex-1 flex-col gap-2 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
   }
 
   .sponsor-plan-main-link {
-    @apply flex flex-col gap-1 p-3 pb-1.5;
+    @apply flex flex-col gap-1 p-3 pb-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
   }
 
   .sponsor-logo-frame {
@@ -813,7 +825,8 @@
   }
 
   .sponsor-plan-link {
-    @apply block px-3 py-0.5 text-center text-base-content/80 hover:text-primary hover:underline;
+    @apply block px-3 py-0.5 text-center hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30;
+    color: var(--sponsor-link-color, color-mix(in oklab, currentColor 80%, transparent));
   }
 
   @container (min-width: 38rem) {
@@ -843,56 +856,6 @@
     @apply px-4 py-5;
   }
 
-  .product-table-scroll {
-    @apply w-full max-w-full overflow-x-auto;
-  }
-
-  .gateway-table-scroll {
-    @apply w-full max-w-full overflow-x-auto;
-  }
-
-  .flat-product-table {
-    @apply min-w-[860px] w-full table-fixed border-collapse lg:min-w-[1160px];
-  }
-
-  .gateway-site-table {
-    min-width: 920px;
-  }
-
-  .gateway-model-table {
-    min-width: 680px;
-  }
-
-  .flat-product-table th,
-  .flat-product-table td {
-    @apply align-middle border-r border-base-300 last:border-r-0;
-  }
-
-  .flat-product-table tbody th,
-  .flat-product-table tbody td {
-    @apply px-3 py-3 text-sm font-normal text-base-content;
-  }
-
-  .gateway-home-table th,
-  .gateway-home-table td,
-  .gateway-sites-table th,
-  .gateway-sites-table td {
-    @apply align-top border-r border-base-300 last:border-r-0;
-    overflow-wrap: anywhere;
-  }
-
-  .gateway-home-table .badge,
-  .gateway-sites-table .badge {
-    max-width: 100%;
-    height: auto;
-    min-height: 1.25rem;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    line-height: 1.15;
-    text-align: left;
-  }
-
   .gateway-filter-grid > .input,
   .gateway-filter-grid > .select,
   .gateway-filter-grid > div {
@@ -902,219 +865,6 @@
 
   .gateway-filter-grid input {
     min-width: 0;
-  }
-
-  @media (max-width: 767px) {
-    .gateway-table-scroll {
-      @apply overflow-visible px-3 py-3;
-    }
-
-    .gateway-site-table,
-    .gateway-model-table {
-      min-width: 0;
-    }
-
-    .gateway-home-table,
-    .gateway-home-table thead,
-    .gateway-home-table tbody,
-    .gateway-home-table tr,
-    .gateway-home-table td {
-      display: block;
-      width: 100%;
-    }
-
-    .gateway-home-table thead {
-      @apply hidden;
-    }
-
-    .gateway-home-table {
-      @apply border-separate border-spacing-0 bg-transparent;
-    }
-
-    .gateway-home-table tr {
-      @apply mb-3 overflow-hidden rounded border border-base-300 bg-base-100;
-    }
-
-    .gateway-home-table tr.hidden {
-      display: none;
-    }
-
-    .gateway-home-table td {
-      @apply border-r-0 border-b border-base-300 px-3 py-3 text-left last:border-b-0;
-    }
-
-    .gateway-home-table td::before {
-      content: attr(data-label);
-      @apply mb-1 block text-[11px] font-semibold uppercase text-base-content/45;
-    }
-
-    .gateway-home-table td[data-label="排序"],
-    .gateway-home-table td[data-label="Rank"],
-    .gateway-home-table td[data-label="Порядок"] {
-      @apply bg-base-200/55;
-    }
-
-    .gateway-home-table td.text-right {
-      text-align: left;
-    }
-  }
-
-  .flat-product-table thead .flat-sort-head {
-    padding: 0 !important;
-    @apply align-middle;
-  }
-
-  .gateway-home-table thead .flat-sort-head,
-  .gateway-sites-table thead .flat-sort-head {
-    padding: 0 !important;
-    @apply align-middle;
-  }
-
-  .flat-product-table .flat-sort-head {
-    @apply cursor-pointer select-none;
-  }
-
-  .gateway-home-table .flat-sort-head,
-  .gateway-sites-table .flat-sort-head {
-    @apply cursor-pointer select-none;
-  }
-
-  .flat-sort-button {
-    margin: 0;
-    border: 0;
-    appearance: none;
-    background: transparent;
-    @apply flex h-full min-h-12 w-full items-center justify-between gap-1 rounded-none px-2 py-3 text-left font-bold text-base-content transition-colors hover:bg-base-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary;
-  }
-
-  .flat-sort-head-content {
-    @apply flex h-full min-h-12 w-full items-center justify-start gap-1 px-2 py-3 transition-colors hover:bg-base-300;
-  }
-
-  .flat-sort-head-with-help .flat-sort-button {
-    @apply h-auto min-h-0 w-auto flex-none gap-0 rounded-none px-0 py-0 hover:bg-transparent focus-visible:outline-offset-2;
-  }
-
-  .flat-sort-head-with-help .flat-sort-label {
-    @apply flex-none;
-  }
-
-  .flat-sort-head-with-help .sort-indicator {
-    @apply ml-auto;
-  }
-
-  .flat-sort-head[data-sort-direction="asc"] .flat-sort-head-content .sort-indicator,
-  .flat-sort-head[data-sort-direction="desc"] .flat-sort-head-content .sort-indicator {
-    @apply text-primary;
-  }
-
-  .inline-help-button,
-  .flat-header-help,
-  .merchant-score-help {
-    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
-  }
-
-  .inline-help-tooltip {
-    @apply fixed z-[9999] max-w-72 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-left text-xs leading-5 text-base-content shadow-lg;
-  }
-
-  .flat-sort-label {
-    @apply min-w-0 flex-1 whitespace-nowrap;
-  }
-
-  .shop-table-head-index {
-    @apply text-center font-bold;
-  }
-
-  .shop-table-cell-index {
-    @apply text-center font-bold;
-  }
-
-  .shop-table-head-number {
-    @apply text-right;
-  }
-
-  .shop-table-head-number .flat-sort-button,
-  .shop-table-head-number .flat-sort-head-content {
-    @apply justify-end text-right;
-  }
-
-  .shop-table-head-number .flat-sort-label {
-    @apply flex-none text-right;
-  }
-
-  .shop-table-head-number .sort-indicator {
-    @apply ml-0;
-  }
-
-  .shop-table-cell-number {
-    @apply text-right;
-  }
-
-  .sort-indicator {
-    @apply ml-auto inline-flex h-4 w-4 shrink-0 items-center justify-center text-base-content/55;
-  }
-
-  .flat-sort-button[data-sort-direction="asc"] .sort-indicator,
-  .flat-sort-button[data-sort-direction="desc"] .sort-indicator {
-    @apply text-primary;
-  }
-
-  .sort-icon {
-    @apply hidden h-4 w-4;
-  }
-
-  .payment-icon {
-    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-base-300 bg-base-100 text-xs font-bold text-base-content/75;
-  }
-
-  .payment-icon img {
-    @apply h-4 w-4 object-contain;
-  }
-
-  .flat-sort-button:not([data-sort-direction="asc"]):not([data-sort-direction="desc"]) .sort-icon-none,
-  .flat-sort-button[data-sort-direction="asc"] .sort-icon-asc,
-  .flat-sort-button[data-sort-direction="desc"] .sort-icon-desc,
-  .flat-sort-head:not([data-sort-direction="asc"]):not([data-sort-direction="desc"]) .flat-sort-head-content .sort-icon-none,
-  .flat-sort-head[data-sort-direction="asc"] .flat-sort-head-content .sort-icon-asc,
-  .flat-sort-head[data-sort-direction="desc"] .flat-sort-head-content .sort-icon-desc {
-    @apply block;
-  }
-
-  .flat-product-table th:nth-child(1) {
-    @apply w-[56px] text-center;
-  }
-
-  .flat-product-table th:nth-child(2) {
-    @apply w-[180px] lg:w-[28%];
-  }
-
-  .flat-product-table th:nth-child(3) {
-    @apply w-[72px] lg:w-[120px];
-  }
-
-  .flat-product-table th:nth-child(4) {
-    @apply w-[64px] lg:w-[100px];
-  }
-
-  .flat-product-table th:nth-child(5) {
-    @apply w-[96px] lg:w-[150px];
-  }
-
-  .flat-product-table th:nth-child(6) {
-    @apply w-[104px] lg:w-[128px];
-  }
-
-  .flat-product-table th:nth-child(7) {
-    @apply w-[152px] lg:w-[18%];
-  }
-
-  .flat-product-table th:nth-child(8) {
-    @apply w-[140px] lg:w-[160px];
-  }
-
-  .flat-product-score-cell {
-    @apply px-3 py-3 text-sm font-normal text-base-content;
   }
 
   /* Session 工具页面高度约束媒体查询 */
@@ -1171,7 +921,7 @@
     @apply flex h-full min-h-12 items-center border-r border-base-300 px-2 py-3 font-bold text-base-content last:border-r-0;
   }
 
-  .merchant-table-head-cell.flat-sort-head {
+  .merchant-table-head-cell.data-table-head-cell-sortable {
     @apply cursor-pointer select-none p-0;
   }
 
@@ -1203,7 +953,7 @@
     @apply justify-between gap-3;
   }
 
-  .merchant-table-cell.shop-table-cell-number {
+  .merchant-table-cell.data-table-cell-align-right {
     @apply md:justify-end;
   }
 

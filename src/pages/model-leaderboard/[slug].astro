@@ -6,14 +6,18 @@ import ModelLeaderboardContent from '../../components/ModelLeaderboardContent.as
 import { localizeModelLeaderboardGroups } from '../../localized-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildModelLeaderboardGroupsForActiveTask } from '../../model-leaderboard.js';
+import dataTableScriptUrl from '../../scripts/data-table.js?url';
+import deferredTableCoreScriptUrl from '../../scripts/deferred-table-core.js?url';
 import pageWidgetsScriptUrl from '../../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
-import { formatBeijingRefreshTime, loadModelLeaderboardRowsForTask, loadModelLeaderboardTaskSlugs } from '../../store.js';
+import { formatBeijingRefreshTime, loadModelLeaderboardRowsForTaskPage, loadModelLeaderboardTaskSlugs } from '../../store.js';
 
 const taskSlug = Astro.params.slug || '';
+const initialRowCount = 30;
 const taskSlugs = await loadModelLeaderboardTaskSlugs();
-const activeRows = await loadModelLeaderboardRowsForTask(taskSlug);
+const activePage = await loadModelLeaderboardRowsForTaskPage(taskSlug, { limit: initialRowCount });
+const activeRows = activePage.rows;
 const groups = localizeModelLeaderboardGroups(
   buildModelLeaderboardGroupsForActiveTask(taskSlugs, activeRows, taskSlug),
   Astro.locals.messages,
@@ -22,10 +26,7 @@ const currentGroup = groups.find(group => group.taskSlug === taskSlug) || null;
 
 if (!currentGroup) return Astro.redirect(Astro.locals.localizePath('/model-leaderboard'), 302);
 
-const latestFetchedAt = activeRows.reduce<string | null>((latest, row) => {
-  if (!latest) return row.fetchedAt;
-  return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
-}, null);
+const latestFetchedAt = activePage.latestFetchedAt;
 const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : Astro.locals.messages.labels.notRecorded;
 
 const seo = buildSeoContext({
@@ -44,6 +45,8 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="model-leaderboard" {...seo}>
-  <ModelLeaderboardContent groups={groups} currentGroup={currentGroup} updateTime={updateTime} />
+  <ModelLeaderboardContent groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updateTime={updateTime} />
+  <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
+  <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>

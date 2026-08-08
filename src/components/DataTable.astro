@@ -1,0 +1,160 @@
+---
+/*
+文件说明: 渲染公开页面通用数据表外壳，统一可排序表格、空状态、加载中提示和加载更多入口。
+*/
+
+type Props = {
+  variant?: 'default' | 'compact' | 'shopProducts' | 'gatewaySites' | 'gatewayModels' | 'gatewayPrices' | 'gatewayModelSites';
+  tbodyId?: string;
+  tbodyDataAttrs?: Record<string, string | boolean | undefined>;
+  sortable?: boolean;
+  pageSize?: number;
+  stickySortKey?: string;
+  totalCount?: number;
+  summaryRenderedCount?: number;
+  emptyText?: string;
+  emptyHidden?: boolean;
+  emptyId?: string;
+  emptyDataAttrs?: Record<string, string | boolean | undefined>;
+  loadMoreText?: string;
+  summaryText?: string;
+  summaryId?: string;
+  summaryHidden?: boolean;
+  summaryDataAttrs?: Record<string, string | boolean | undefined>;
+  loadMoreId?: string;
+  loadMoreHidden?: boolean;
+  loadMoreButtonId?: string;
+  loadMoreButtonHidden?: boolean;
+  loadMoreDataAttrs?: Record<string, string | boolean | undefined>;
+  loadingId?: string;
+  loadingText?: string;
+  loadingHidden?: boolean;
+  loadingDataAttrs?: Record<string, string | boolean | undefined>;
+};
+
+const {
+  variant = 'default',
+  tbodyId,
+  tbodyDataAttrs = {},
+  sortable = true,
+  pageSize = 0,
+  stickySortKey = '',
+  totalCount = 0,
+  summaryRenderedCount = 0,
+  emptyText = '',
+  emptyHidden = true,
+  emptyId,
+  emptyDataAttrs = {},
+  loadMoreText = '',
+  summaryText = '',
+  summaryId,
+  summaryHidden = false,
+  summaryDataAttrs = {},
+  loadMoreId,
+  loadMoreHidden = false,
+  loadMoreButtonId,
+  loadMoreButtonHidden = false,
+  loadMoreDataAttrs = {},
+  loadingId,
+  loadingText = '',
+  loadingHidden = true,
+  loadingDataAttrs = {},
+} = Astro.props;
+
+const variantClasses = {
+  default: {
+    table: 'table table-zebra w-full align-top border-collapse',
+    scroll: 'product-table-scroll',
+    head: 'bg-base-200 text-base-content text-sm',
+  },
+  compact: {
+    table: 'table table-zebra table-md w-full border-collapse',
+    scroll: 'product-table-scroll',
+    head: 'bg-base-200 text-base-content text-sm',
+  },
+  shopProducts: {
+    table: 'table table-zebra w-full data-table-shop-products border-collapse',
+    scroll: 'product-table-scroll',
+    head: 'bg-base-200 text-base-content text-sm',
+  },
+  gatewaySites: {
+    table: 'table table-zebra gateway-home-table gateway-site-table table-fixed',
+    scroll: 'gateway-table-scroll',
+    head: 'bg-base-200 text-sm font-semibold text-base-content',
+  },
+  gatewayModels: {
+    table: 'table table-zebra gateway-home-table gateway-model-table table-fixed',
+    scroll: 'gateway-table-scroll',
+    head: 'bg-base-200 text-sm font-semibold text-base-content',
+  },
+  gatewayPrices: {
+    table: 'table table-zebra data-table-gateway-prices',
+    scroll: 'product-table-scroll',
+    head: 'bg-base-200 text-sm font-semibold text-base-content',
+  },
+  gatewayModelSites: {
+    table: 'table table-zebra data-table-gateway-model-sites',
+    scroll: 'product-table-scroll',
+    head: 'bg-base-200 text-sm font-semibold text-base-content',
+  },
+} as const;
+const resolvedVariant = variantClasses[variant] ?? variantClasses.default;
+const tableAttrs = {
+  'data-table': true,
+  ...(sortable ? { 'data-table-sortable': true } : {}),
+  ...(pageSize > 0 ? { 'data-table-page-size': String(pageSize) } : {}),
+  ...(stickySortKey ? { 'data-table-sticky-key': stickySortKey } : {}),
+  ...(totalCount > 0 ? { 'data-table-total-count': String(totalCount) } : {}),
+  ...(summaryText.trim() ? { 'data-table-summary-template': summaryText } : {}),
+};
+const hasEmpty = emptyText.trim().length > 0 || Astro.slots.has('empty');
+const hasLoadMore = loadMoreText.trim().length > 0 || Astro.slots.has('loadMore');
+const hasLoading = loadingText.trim().length > 0 || Astro.slots.has('loading');
+const hasSummary = summaryText.trim().length > 0 || Astro.slots.has('summary');
+const initialSummaryRendered = totalCount > 0
+  ? Math.min(summaryRenderedCount > 0 ? summaryRenderedCount : (pageSize > 0 ? pageSize : totalCount), totalCount)
+  : (summaryRenderedCount > 0 ? summaryRenderedCount : pageSize);
+const initialSummaryTotal = totalCount > 0 ? totalCount : initialSummaryRendered;
+const initialSummaryText = summaryText
+  .replace('{rendered}', String(initialSummaryRendered))
+  .replace('{total}', String(initialSummaryTotal));
+---
+
+<div class="data-table-frame">
+  <div class={resolvedVariant.scroll}>
+    <table class:list={['data-table', resolvedVariant.table]} {...tableAttrs}>
+      <thead class={resolvedVariant.head}>
+        <tr>
+          <slot name="head" />
+        </tr>
+      </thead>
+      <tbody id={tbodyId} {...tbodyDataAttrs}>
+        <slot />
+      </tbody>
+    </table>
+    {hasEmpty ? (
+      <section id={emptyId} class:list={['data-table-empty-state', emptyHidden && 'hidden']} aria-live="polite" {...emptyDataAttrs}>
+        <slot name="empty">{emptyText}</slot>
+      </section>
+    ) : null}
+  </div>
+  {hasLoadMore || hasLoading || hasSummary ? (
+    <section id={loadMoreId} class:list={['data-table-footer', loadMoreHidden && 'hidden']} data-table-load-more>
+      {hasSummary ? (
+        <p id={summaryId} class:list={['data-table-loading', summaryHidden && 'hidden']} data-table-summary {...summaryDataAttrs}>
+          <slot name="summary">{initialSummaryText}</slot>
+        </p>
+      ) : null}
+      {hasLoading ? (
+        <p id={loadingId} class:list={['data-table-loading', loadingHidden && 'hidden']} {...loadingDataAttrs}>
+          <slot name="loading">{loadingText}</slot>
+        </p>
+      ) : null}
+      {hasLoadMore ? (
+        <button id={loadMoreButtonId} type="button" class:list={['btn btn-outline btn-sm', loadMoreButtonHidden && 'hidden']} {...loadMoreDataAttrs}>
+          <slot name="loadMore">{loadMoreText}</slot>
+        </button>
+      ) : null}
+    </section>
+  ) : null}
+</div>

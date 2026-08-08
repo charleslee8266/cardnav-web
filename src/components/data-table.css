@@ -1,0 +1,371 @@
+/*
+文件说明: DataTable 与 DataTableHeader 的组件级样式，随组件 import 后进入公开站统一 CSS 产物。
+*/
+@layer components {
+  .data-table-empty-state {
+    @apply mx-auto my-8 max-w-md px-4 text-center text-sm text-base-content/55;
+  }
+
+  .data-table-footer {
+    @apply flex flex-col items-center gap-3 px-4 py-5;
+  }
+
+  .data-table-loading {
+    @apply text-xs text-base-content/50;
+  }
+
+  .data-table-frame {
+    @apply flex w-full min-w-0 flex-col gap-0;
+  }
+
+  .product-table-scroll {
+    @apply w-full max-w-full overflow-x-auto;
+  }
+
+  .gateway-table-scroll {
+    @apply w-full max-w-full overflow-x-auto;
+  }
+
+  .data-table {
+    @apply w-full border-collapse align-top;
+  }
+
+  .data-table th,
+  .data-table td {
+    @apply border-r border-base-300 last:border-r-0;
+  }
+
+  .data-table thead th {
+    padding: 0 !important;
+    @apply align-middle;
+  }
+
+  .data-table tbody th,
+  .data-table tbody td,
+  .data-table-cell {
+    @apply px-3 py-3 text-sm font-normal text-base-content;
+  }
+
+  .data-table-cell {
+    @apply align-top;
+    overflow-wrap: anywhere;
+  }
+
+  .data-table-cell-align-left {
+    @apply text-left;
+  }
+
+  .data-table-cell-align-center {
+    @apply text-center;
+  }
+
+  .data-table-cell-align-right {
+    @apply text-right;
+  }
+
+  .data-table-sequence-head {
+    @apply text-center font-bold;
+    width: 5rem !important;
+    min-width: 5rem;
+  }
+
+  .data-table-sequence-cell {
+    @apply text-center font-normal text-base-content;
+  }
+
+  .data-table-shop-products {
+    @apply min-w-[860px] w-full table-fixed border-collapse lg:min-w-[1160px];
+  }
+
+  .gateway-site-table {
+    min-width: 920px;
+  }
+
+  .gateway-model-table {
+    min-width: 680px;
+  }
+
+  .gateway-site-table th:nth-child(1),
+  .gateway-model-table th:nth-child(1),
+  .data-table-gateway-prices th:nth-child(1),
+  .data-table-gateway-model-sites th:nth-child(1) {
+    width: 5rem;
+  }
+
+  .gateway-site-table th:nth-child(2) {
+    width: 34%;
+  }
+
+  .gateway-site-table th:nth-child(3) {
+    width: 6rem;
+  }
+
+  .gateway-site-table th:nth-child(4) {
+    width: 24%;
+  }
+
+  .gateway-site-table th:nth-child(5) {
+    width: 5rem;
+  }
+
+  .gateway-site-table th:nth-child(6) {
+    width: 7rem;
+  }
+
+  .gateway-model-table th:nth-child(2) {
+    width: 48%;
+  }
+
+  .gateway-model-table th:nth-child(3) {
+    width: 24%;
+  }
+
+  .gateway-model-table th:nth-child(4) {
+    width: 6rem;
+  }
+
+  .data-table-gateway-prices,
+  .data-table-gateway-model-sites {
+    min-width: 58rem;
+  }
+
+  .data-table-gateway-model-sites {
+    min-width: 68rem;
+  }
+
+  .data-table-gateway-prices th:nth-child(2) {
+    min-width: 12rem;
+  }
+
+  .data-table-gateway-model-sites th:nth-child(2) {
+    min-width: 22.5rem;
+  }
+
+  .data-table-gateway-prices th:nth-child(3),
+  .data-table-gateway-model-sites th:nth-child(3) {
+    min-width: 9rem;
+  }
+
+  .data-table-gateway-prices th:nth-child(4),
+  .data-table-gateway-prices th:nth-child(5),
+  .data-table-gateway-model-sites th:nth-child(4),
+  .data-table-gateway-model-sites th:nth-child(5),
+  .data-table-gateway-model-sites th:nth-child(6),
+  .data-table-gateway-model-sites th:nth-child(7) {
+    width: 8rem;
+  }
+
+  .data-table-gateway-prices th:nth-child(6),
+  .data-table-gateway-prices th:nth-child(7) {
+    width: 9rem;
+  }
+
+  .gateway-home-table th,
+  .gateway-home-table td,
+  .gateway-sites-table th,
+  .gateway-sites-table td {
+    @apply align-top;
+    overflow-wrap: anywhere;
+  }
+
+  .gateway-home-table .badge,
+  .gateway-sites-table .badge {
+    max-width: 100%;
+    height: auto;
+    min-height: 1.25rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.15;
+    text-align: left;
+  }
+
+  @media (max-width: 767px) {
+    .gateway-table-scroll {
+      @apply overflow-visible px-3 py-3;
+    }
+
+    .gateway-site-table,
+    .gateway-model-table {
+      min-width: 0;
+    }
+
+    .gateway-home-table,
+    .gateway-home-table thead,
+    .gateway-home-table tbody,
+    .gateway-home-table tr,
+    .gateway-home-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .gateway-home-table thead {
+      @apply hidden;
+    }
+
+    .gateway-home-table {
+      @apply border-separate border-spacing-0 bg-transparent;
+    }
+
+    .gateway-home-table tr {
+      @apply mb-3 overflow-hidden rounded border border-base-300 bg-base-100;
+    }
+
+    .gateway-home-table tr.hidden {
+      display: none;
+    }
+
+    .gateway-home-table td {
+      @apply border-r-0 border-b border-base-300 px-3 py-3 text-left last:border-b-0;
+    }
+
+    .gateway-home-table td::before {
+      content: attr(data-label);
+      @apply mb-1 block text-[11px] font-semibold uppercase text-base-content/45;
+    }
+
+    .gateway-home-table td[data-label="序号"],
+    .gateway-home-table td[data-label="No."],
+    .gateway-home-table td[data-label="N"] {
+      @apply bg-base-200/55;
+    }
+
+    .gateway-home-table td.text-right {
+      text-align: left;
+    }
+  }
+
+  .data-table-head-cell-sortable,
+  .merchant-table-head-cell.data-table-head-cell-sortable {
+    @apply cursor-pointer select-none;
+  }
+
+  .data-table-head-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    @apply h-full min-h-12 w-full items-center gap-2 px-2 py-3 text-left font-bold text-base-content;
+  }
+
+  .data-table-head-content {
+    @apply transition-colors hover:bg-base-300;
+  }
+
+  .data-table-head-label-group {
+    @apply flex min-w-0 items-center gap-1;
+  }
+
+  .data-table-sort-button {
+    margin: 0;
+    border: 0;
+    appearance: none;
+    background: transparent;
+    @apply inline-flex min-w-0 items-center rounded-none p-0 text-left font-bold text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .data-table-head-label {
+    @apply whitespace-nowrap;
+  }
+
+  .data-table-head-align-center .data-table-head-label-group {
+    @apply justify-center text-center;
+  }
+
+  .data-table-head-align-center .data-table-sort-button {
+    @apply text-center;
+  }
+
+  .data-table-head-align-right .data-table-head-label-group {
+    @apply justify-end text-right;
+  }
+
+  .data-table-head-align-right .data-table-sort-button {
+    @apply text-right;
+  }
+
+  .inline-help-button,
+  .data-table-help,
+  .merchant-score-help {
+    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-base-content/30 bg-base-100 text-[10px] font-bold leading-none text-base-content/60 hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .inline-help-tooltip {
+    @apply fixed z-[9999] max-w-72 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-left text-xs leading-5 text-base-content shadow-lg;
+  }
+
+  .data-table-sort-indicator {
+    @apply inline-flex h-4 w-4 shrink-0 items-center justify-center justify-self-end text-base-content/55;
+  }
+
+  .data-table-sort-indicator[data-sort-direction="asc"],
+  .data-table-sort-indicator[data-sort-direction="desc"],
+  .data-table-head-cell[data-sort-direction="asc"] .data-table-sort-indicator,
+  .data-table-head-cell[data-sort-direction="desc"] .data-table-sort-indicator {
+    @apply text-primary;
+  }
+
+  .data-table-sort-icon {
+    @apply hidden h-4 w-4;
+  }
+
+  .data-table-sort-icon-none {
+    @apply block;
+  }
+
+  .data-table-sort-indicator[data-sort-direction="asc"] .data-table-sort-icon-none,
+  .data-table-sort-indicator[data-sort-direction="desc"] .data-table-sort-icon-none,
+  .data-table-head-cell[data-sort-direction="asc"] .data-table-sort-icon-none,
+  .data-table-head-cell[data-sort-direction="desc"] .data-table-sort-icon-none {
+    @apply hidden;
+  }
+
+  .data-table-sort-indicator[data-sort-direction="asc"] .data-table-sort-icon-asc,
+  .data-table-head-cell[data-sort-direction="asc"] .data-table-sort-icon-asc,
+  .data-table-sort-indicator[data-sort-direction="desc"] .data-table-sort-icon-desc,
+  .data-table-head-cell[data-sort-direction="desc"] .data-table-sort-icon-desc {
+    @apply block;
+  }
+
+  .payment-icon {
+    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-base-300 bg-base-100 text-xs font-bold text-base-content/75;
+  }
+
+  .payment-icon img {
+    @apply h-4 w-4 object-contain;
+  }
+
+  .data-table-shop-products th:nth-child(1) {
+    @apply w-20 text-center;
+  }
+
+  .data-table-shop-products th:nth-child(2) {
+    @apply w-[180px] lg:w-[28%];
+  }
+
+  .data-table-shop-products th:nth-child(3) {
+    @apply w-[72px] lg:w-[120px];
+  }
+
+  .data-table-shop-products th:nth-child(4) {
+    @apply w-[64px] lg:w-[100px];
+  }
+
+  .data-table-shop-products th:nth-child(5) {
+    @apply w-[96px] lg:w-[150px];
+  }
+
+  .data-table-shop-products th:nth-child(6) {
+    @apply w-[104px] lg:w-[128px];
+  }
+
+  .data-table-shop-products th:nth-child(7) {
+    @apply w-[152px] lg:w-[18%];
+  }
+
+  .data-table-shop-products th:nth-child(8) {
+    @apply w-[140px] lg:w-[160px];
+  }
+
+  .data-table-product-score-cell {
+    @apply px-3 py-3 text-sm font-normal text-base-content;
+  }
+}

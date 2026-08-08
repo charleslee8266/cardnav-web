@@ -183,6 +183,9 @@ export const enMessages: Messages = {
     onlineCheck: 'Online check',
     externalSite: 'External site',
     notRecorded: 'Not recorded',
+    loading: 'Loading',
+    loadMore: 'Load more',
+    displaySummary: 'Showing {rendered} / {total}',
   },
   seo: {
     titleSuffix: 'CardNav',
@@ -345,6 +348,7 @@ export const enMessages: Messages = {
     siteType: 'Type',
     rank: 'Rank',
     basicInfo: 'Basic info',
+    sponsorLabel: 'Sponsored',
     createdAt: 'Listed time',
     modelCount: 'Models',
     priceCount: 'Prices',
@@ -430,8 +434,6 @@ export const enMessages: Messages = {
     dynamicDescription: 'View local prices, currencies, and localized conversions for the official {displayName} subscription across countries and regions, sorted by converted price from low to high.',
     note: 'Current prices are based on in-app purchase prices shown on Apple App Store pages and may differ from official web subscription prices.',
     navLabel: 'Model selection',
-    tableSummarySuffix: 'regional price comparison, sorted by converted price from low to high:',
-    recommendedRank: 'Recommended rank',
     countryRegion: 'Country/region',
     localPrice: 'Local price',
     currency: 'Currency',
@@ -556,27 +558,6 @@ export const enMessages: Messages = {
   sponsors: {
     title: 'Sponsors',
     becomeSponsor: 'Become a sponsor',
-    tokenPlus: {
-      alt: 'TokenPlus sponsor logo',
-      name: 'TokenPlus',
-      description: 'AI Resource & Service Linker Community.',
-    },
-    packyApi: {
-      alt: 'PackyAPI AI API aggregation platform sponsor logo',
-      name: 'PackyAPI established AI API gateway',
-      description: 'One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with invoice support.',
-    },
-    yunwuApi: {
-      alt: 'Yunwu API sponsor logo',
-      name: 'Yunwu API',
-      description: 'Fast and convenient Web API access for developers through a stable, easy-to-use platform that integrates nearly all major AI models.',
-    },
-    rackNerd: {
-      alt: 'RackNerd cloud server sponsor banner',
-      name: 'RackNerd cloud servers',
-      price: '1C1G from $21.99/year',
-      plans: ['2C2G $35.99/year', '3C4G $59.99/year', '6C6G $89.99/year', '7C8G $119.99/year'],
-    },
   },
   submit: {
     success: 'Submitted successfully',

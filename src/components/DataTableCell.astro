@@ -1,0 +1,27 @@
+---
+/*
+文件说明: 渲染 DataTable 的 body 单元格，统一 data-label、内边距、边框和列对齐样式。
+*/
+
+type Props = {
+  label?: string;
+  align?: 'left' | 'center' | 'right';
+  class?: string;
+  sequence?: boolean;
+};
+
+const {
+  label,
+  align = 'left',
+  class: className = '',
+  sequence = false,
+} = Astro.props;
+
+const cellAttrs = {
+  'data-table-sequence-cell': sequence ? '' : undefined,
+};
+---
+
+<td data-label={label} class:list={['data-table-cell', `data-table-cell-align-${align}`, sequence && 'data-table-sequence-cell', className]} {...cellAttrs}>
+  <slot />
+</td>

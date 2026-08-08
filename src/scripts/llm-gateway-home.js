@@ -13,8 +13,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   const siteFamilySelect = gatewayHome.querySelector('[data-home-site-family]');
   const sitePaymentSelect = gatewayHome.querySelector('[data-home-site-payment]');
   const modelSearchInput = gatewayHome.querySelector('[data-home-model-search]');
-  const INITIAL_RENDER_LIMIT = 20;
-  const RENDER_STEP = 20;
+  const SITE_PAGE_SIZE = Number(config.sitePageSize) || 20;
+  const MODEL_PAGE_SIZE = Number(config.modelPageSize) || 100;
   const gatewayLists = {
     sites: {
       type: 'sites',
@@ -24,7 +24,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       apiUrl: config.sitesApi,
       loaded: !gatewayHome.querySelector('[data-gateway-load-more="sites"]'),
       promise: null,
-      visibleLimit: INITIAL_RENDER_LIMIT,
+      pageSize: SITE_PAGE_SIZE,
+      visibleLimit: SITE_PAGE_SIZE,
+      totalCount: Number(config.siteTotalCount) || 0,
       entries: [],
       filteredEntries: [],
       sort: null,
@@ -37,7 +39,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       apiUrl: config.modelsApi,
       loaded: !gatewayHome.querySelector('[data-gateway-load-more="models"]'),
       promise: null,
-      visibleLimit: INITIAL_RENDER_LIMIT,
+      pageSize: MODEL_PAGE_SIZE,
+      visibleLimit: MODEL_PAGE_SIZE,
+      totalCount: Number(config.modelTotalCount) || 0,
       entries: [],
       filteredEntries: [],
       sort: null,
@@ -74,6 +78,19 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     });
   }
 
+  function tableCell(label, align = 'left', className = '', options = {}) {
+    const cell = document.createElement('td');
+    cell.dataset.label = label;
+    if (options.sequence) cell.setAttribute('data-table-sequence-cell', '');
+    cell.className = [
+      'data-table-cell',
+      `data-table-cell-align-${align}`,
+      options.sequence ? 'data-table-sequence-cell' : '',
+      className,
+    ].filter(Boolean).join(' ');
+    return cell;
+  }
+
   function gatewaySiteTracking(site) {
     const targetPage = `${config.gatewayLinkPrefix}/${site.slug}`;
     return {
@@ -101,6 +118,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       umamiEventTargetPage: targetPage,
       umamiEventUrl: targetPage,
     };
+  }
+
+  function isStickySite(site) {
+    return Boolean(site.sponsor);
   }
 
   function paymentBadges(payments) {
@@ -134,7 +155,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       families: families.map(item => item.toLowerCase()).join(','),
       payments: payments.join(','),
       originalOrder: index,
-      sortRank: index + 1,
+      sortSequence: index + 1,
+      sortSticky: isStickySite(site) ? 1 : 0,
       sortName: site.name,
       sortScore: Number(site.siteScore) || 0,
       sortFamilies: families.join(' '),
@@ -142,11 +164,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       sortPayments: payments.map(paymentLabel).join(' '),
     });
 
-    row.append(el('td', 'font-mono text-sm text-primary', `#${index + 1}`));
-    row.lastElementChild.dataset.label = config.rankLabel;
+    const sequenceCell = tableCell(config.sequenceLabel, 'center', '', { sequence: true });
+    sequenceCell.textContent = String(index + 1);
+    row.append(sequenceCell);
 
-    const infoCell = document.createElement('td');
-    infoCell.dataset.label = config.basicInfoLabel;
+    const infoCell = tableCell(config.basicInfoLabel);
     const infoWrap = el('div', 'flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between');
     const textWrap = el('div', 'min-w-0 space-y-2');
     const titleWrap = el('div', 'flex flex-wrap items-center gap-2');
@@ -154,6 +176,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     siteLink.href = `${config.gatewayLinkPrefix}/${site.slug}`;
     setTracking(siteLink, gatewaySiteTracking(site));
     titleWrap.append(siteLink);
+    if (site.sponsor) titleWrap.append(el('span', 'gateway-sponsor-badge', config.sponsorLabel || 'Sponsored'));
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));
@@ -174,11 +197,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     infoCell.append(infoWrap);
     row.append(infoCell);
 
-    row.append(el('td', 'font-mono', formatPositiveScore(site.siteScore)));
-    row.lastElementChild.dataset.label = config.scoreLabel;
+    const scoreCell = tableCell(config.scoreLabel, 'right', 'font-mono');
+    scoreCell.textContent = formatPositiveScore(site.siteScore);
+    row.append(scoreCell);
 
-    const familiesCell = document.createElement('td');
-    familiesCell.dataset.label = config.supportedModelsLabel;
+    const familiesCell = tableCell(config.supportedModelsLabel);
     if (families.length) {
       const wrap = el('div', 'flex flex-wrap gap-1.5');
       families.forEach(family => wrap.append(el('span', 'badge badge-primary badge-outline badge-sm', family)));
@@ -188,11 +211,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     }
     row.append(familiesCell);
 
-    row.append(el('td', 'font-mono', site.modelCount > 0 ? site.modelCount : '-'));
-    row.lastElementChild.dataset.label = config.modelCountLabel;
+    const modelCountCell = tableCell(config.modelCountLabel, 'right', 'font-mono');
+    modelCountCell.textContent = site.modelCount > 0 ? site.modelCount : '-';
+    row.append(modelCountCell);
 
-    const paymentsCell = document.createElement('td');
-    paymentsCell.dataset.label = config.paymentMethodsLabel;
+    const paymentsCell = tableCell(config.paymentMethodsLabel);
     paymentsCell.append(payments.length ? paymentBadges(payments) : el('span', 'text-base-content/35', '-'));
     row.append(paymentsCell);
     return row;
@@ -204,24 +227,26 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     setDataset(row, {
       search: `${model.modelId} ${model.modelFamily}`.toLowerCase(),
       originalOrder: index,
-      sortRank: index + 1,
+      sortSequence: index + 1,
       sortModel: model.modelId,
       sortFamily: model.modelFamily,
       sortSupportCount: Number(model.supportSiteCount) || 0,
     });
-    row.append(el('td', 'font-mono text-sm text-secondary', `#${index + 1}`));
-    row.lastElementChild.dataset.label = config.rankLabel;
-    const modelCell = document.createElement('td');
-    modelCell.dataset.label = config.modelLabel;
+    const sequenceCell = tableCell(config.sequenceLabel, 'center', '', { sequence: true });
+    sequenceCell.textContent = String(index + 1);
+    row.append(sequenceCell);
+    const modelCell = tableCell(config.modelLabel);
     const modelLink = el('a', 'link link-hover break-words font-mono text-sm font-semibold text-primary', model.modelId);
     modelLink.href = `${config.modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
     setTracking(modelLink, gatewayModelTracking(model));
     modelCell.append(modelLink);
     row.append(modelCell);
-    row.append(el('td', '', model.modelFamily));
-    row.lastElementChild.dataset.label = config.modelFamilyLabel;
-    row.append(el('td', 'font-mono', model.supportSiteCount));
-    row.lastElementChild.dataset.label = config.supportedGatewayCountLabel;
+    const familyCell = tableCell(config.modelFamilyLabel);
+    familyCell.textContent = model.modelFamily;
+    row.append(familyCell);
+    const supportCountCell = tableCell(config.supportedGatewayCountLabel, 'right', 'font-mono');
+    supportCountCell.textContent = model.supportSiteCount;
+    row.append(supportCountCell);
     return row;
   }
 
@@ -254,14 +279,15 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       families: row.dataset.families || '',
       payments: row.dataset.payments || '',
       sort: type === 'sites' ? {
-        rank: rowSortValue(row, 'rank', 'number'),
+        sticky: rowSortValue(row, 'sticky', 'number'),
+        sequence: rowSortValue(row, 'sequence', 'number') || index + 1,
         name: rowSortValue(row, 'name'),
         score: rowSortValue(row, 'score', 'number'),
         families: rowSortValue(row, 'families'),
         modelCount: rowSortValue(row, 'modelCount', 'number'),
         payments: rowSortValue(row, 'payments'),
       } : {
-        rank: rowSortValue(row, 'rank', 'number'),
+        sequence: rowSortValue(row, 'sequence', 'number') || index + 1,
         model: rowSortValue(row, 'model'),
         family: rowSortValue(row, 'family'),
         supportCount: rowSortValue(row, 'supportCount', 'number'),
@@ -281,7 +307,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       families: families.map(item => item.toLowerCase()).join(','),
       payments: payments.join(','),
       sort: {
-        rank: index + 1,
+        sticky: isStickySite(site) ? 1 : 0,
+        sequence: index + 1,
         name: site.name,
         score: Number(site.siteScore) || 0,
         families: families.join(' '),
@@ -300,7 +327,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       families: '',
       payments: '',
       sort: {
-        rank: index + 1,
+        sequence: index + 1,
         model: model.modelId,
         family: model.modelFamily,
         supportCount: Number(model.supportSiteCount) || 0,
@@ -323,6 +350,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     return (left, right) => {
       const leftValue = left.sort[sort.key];
       const rightValue = right.sort[sort.key];
+      if ('sticky' in left.sort && 'sticky' in right.sort && left.sort.sticky !== right.sort.sticky) {
+        return (Number(right.sort.sticky) || 0) - (Number(left.sort.sticky) || 0);
+      }
       if (typeof leftValue === 'number' && typeof rightValue === 'number') {
         if (leftValue !== rightValue) return (leftValue - rightValue) * multiplier;
         return left.index - right.index;
@@ -340,16 +370,49 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function loadMoreWrap(type) {
-    return gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`)?.closest('div') || null;
+    return gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`)?.closest('[data-table-load-more]') || null;
+  }
+
+  function loadingLabel(type) {
+    return gatewayHome.querySelector(`[data-gateway-loading="${type}"]`);
+  }
+
+  function summaryLabel(type) {
+    return gatewayHome.querySelector(`[data-gateway-load-summary="${type}"]`);
+  }
+
+  function displaySummaryText(renderedCount, totalCount) {
+    return (config.displaySummary || 'Showing {rendered} / {total}')
+      .replace('{rendered}', String(renderedCount))
+      .replace('{total}', String(totalCount));
+  }
+
+  function setLoading(type, loading) {
+    loadingLabel(type)?.classList.toggle('hidden', !loading);
+    summaryLabel(type)?.classList.toggle('hidden', loading);
+  }
+
+  function hasActiveFilters(state) {
+    return state.type === 'sites' ? hasActiveSiteFilters() : hasActiveModelFilters();
   }
 
   function updateLoadMoreButton(state) {
     const button = gatewayHome.querySelector(`[data-gateway-load-more="${state.type}"]`);
     const wrap = loadMoreWrap(state.type);
-    if (!button || !wrap) return;
+    const summary = summaryLabel(state.type);
+    if (!wrap) return;
+    const filtersActive = hasActiveFilters(state);
     const hasMoreRenderedRows = state.filteredEntries.length > state.visibleLimit;
     const canLoadDeferredRows = !state.loaded;
-    wrap.classList.toggle('hidden', !(hasMoreRenderedRows || canLoadDeferredRows));
+    const renderedCount = Math.min(state.filteredEntries.length, state.visibleLimit);
+    const totalCount = filtersActive ? state.filteredEntries.length : Math.max(state.totalCount, state.entries.length);
+    const hasRows = totalCount > 0;
+    wrap.classList.toggle('hidden', !hasRows);
+    if (summary instanceof HTMLElement) {
+      summary.textContent = displaySummaryText(renderedCount, totalCount);
+      summary.classList.toggle('hidden', !hasRows || Boolean(state.promise));
+    }
+    button?.classList.toggle('hidden', !(hasMoreRenderedRows || canLoadDeferredRows));
   }
 
   function renderGatewayList(state) {
@@ -454,7 +517,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function resetVisibleLimit(type) {
-    gatewayLists[type].visibleLimit = INITIAL_RENDER_LIMIT;
+    gatewayLists[type].visibleLimit = gatewayLists[type].pageSize;
   }
 
   async function ensureGatewayDataLoaded(type) {
@@ -467,12 +530,15 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       return 0;
     }
     button?.setAttribute('disabled', 'disabled');
+    setLoading(type, true);
     state.promise = (async () => {
       const response = await fetch(state.apiUrl, { headers: { accept: 'application/json' } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
       const items = Array.isArray(payload.items) ? payload.items : [];
-      const offset = Number(payload.offset) || INITIAL_RENDER_LIMIT;
+      const offset = Number(payload.offset) || state.pageSize;
+      const totalCount = Number(payload.totalCount);
+      if (Number.isFinite(totalCount) && totalCount > 0) state.totalCount = totalCount;
       const entries = type === 'sites'
         ? items.map((site, index) => siteEntryFromItem(site, offset + index))
         : items.map((model, index) => modelEntryFromItem(model, offset + index));
@@ -488,6 +554,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     } finally {
       state.promise = null;
       if (state.loaded) button?.removeAttribute('disabled');
+      setLoading(type, false);
     }
   }
 
@@ -524,7 +591,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const state = gatewayLists[type];
     if (!state) return;
     const loadedCount = await ensureGatewayDataLoaded(type);
-    state.visibleLimit += RENDER_STEP;
+    state.visibleLimit += state.pageSize;
     if (type === 'sites') applySiteFilters({ track: false });
     else applyModelFilters({ track: false });
     trackGatewayEvent('gateway-load-more-click', { name: type, loadedCount });
@@ -539,29 +606,24 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function updateSortButtons(state) {
-    const table = gatewayHome.querySelector(state.listSelector)?.closest('[data-sortable-table]');
-    table?.querySelectorAll('.flat-sort-button').forEach(button => {
-      const active = state.sort?.key === button.dataset.sortKey;
-      const headerCell = button.closest('th');
-      if (headerCell) headerCell.setAttribute('aria-sort', active ? (state.sort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
-      button.dataset.sortDirection = active ? state.sort.direction : '';
-      const indicator = button.querySelector('.sort-indicator');
-      if (indicator) indicator.dataset.sortDirection = active ? state.sort.direction : '';
-    });
+    const table = gatewayHome.querySelector(state.listSelector)?.closest('[data-table]');
+    window.updateDataTableHeaders?.(table, state.sort);
   }
 
-  function handleGatewaySort(event) {
+  async function handleGatewaySort(event) {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
-    const table = target.closest('[data-sortable-table]');
+    const table = target.closest('[data-table]');
     const panel = target.closest('[data-gateway-panel]');
     const type = panel?.dataset.gatewayPanel || '';
     const state = gatewayLists[type];
     if (!state || !table) return;
-    const button = target.closest('.flat-sort-button') || target.closest('.flat-sort-head')?.querySelector('.flat-sort-button');
+    if (target.closest('[data-inline-help]')) return;
+    const button = target.closest('.data-table-sort-button') || target.closest('.data-table-head-cell-sortable')?.querySelector('.data-table-sort-button');
     if (!(button instanceof HTMLElement)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    await ensureGatewayDataLoaded(type);
     state.sort = nextSort(state.sort, button);
     resetVisibleLimit(type);
     if (type === 'sites') applySiteFilters({ track: false });
@@ -595,7 +657,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   gatewayHome.querySelectorAll('[data-gateway-load-more]').forEach(button => {
     button.addEventListener('click', () => loadMore(button.dataset.gatewayLoadMore || 'sites'));
   });
-  gatewayHome.querySelectorAll('[data-sortable-table]').forEach(table => {
+  gatewayHome.querySelectorAll('[data-table]').forEach(table => {
     table.addEventListener('click', handleGatewaySort, { capture: true });
   });
   syncSiteFilterControlsFromQuery();

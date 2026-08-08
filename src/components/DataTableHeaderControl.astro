@@ -1,0 +1,62 @@
+---
+/*
+文件说明: 渲染 DataTable 可排序表头内部控件，统一标题、排序箭头、可选说明按钮和排序数据属性。
+*/
+
+type Props = {
+  label: string;
+  sortKey: string;
+  sortType?: 'text' | 'number';
+  sortScope?: string;
+  title?: string;
+  statusText?: string;
+  helpTip?: string;
+  helpLabel?: string;
+  helpClass?: string;
+};
+
+const {
+  label,
+  sortKey,
+  sortType = 'text',
+  sortScope = '',
+  title,
+  statusText = '',
+  helpTip = '',
+  helpLabel = '',
+  helpClass = 'data-table-help',
+} = Astro.props;
+const hasHelp = helpTip.trim().length > 0;
+const buttonAttrs = {
+  'data-sort-key': sortKey,
+  'data-sort-type': sortType,
+  'data-shop-sort-scope': sortScope || undefined,
+  title,
+};
+---
+
+<div class="data-table-head-content">
+  <span class="data-table-head-label-group">
+    <button type="button" class="data-table-sort-button" {...buttonAttrs}>
+      <span class="data-table-head-label">{label}</span>
+      {statusText ? <span class="data-table-sort-status sr-only">{statusText}</span> : null}
+    </button>
+    {hasHelp ? (
+      <button type="button" class:list={['inline-help-button', helpClass]} aria-label={helpLabel || label} data-inline-help data-tip={helpTip}>i</button>
+    ) : null}
+  </span>
+  <span class="data-table-sort-indicator" aria-hidden="true">
+    <svg class="data-table-sort-icon data-table-sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m7 15 5 5 5-5"></path>
+      <path d="m7 9 5-5 5 5"></path>
+    </svg>
+    <svg class="data-table-sort-icon data-table-sort-icon-asc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m5 12 7-7 7 7"></path>
+      <path d="M12 19V5"></path>
+    </svg>
+    <svg class="data-table-sort-icon data-table-sort-icon-desc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14"></path>
+      <path d="m19 12-7 7-7-7"></path>
+    </svg>
+  </span>
+</div>

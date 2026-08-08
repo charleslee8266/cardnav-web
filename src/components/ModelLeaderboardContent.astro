@@ -3,20 +3,24 @@
 文件说明: 渲染模型排行榜页的服务端 HTML 内容，包括任务导航和当前任务榜单。
 */
 import PageHero from './PageHero.astro';
+import DataTable from './DataTable.astro';
+import DataTableCell from './DataTableCell.astro';
+import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedModelLeaderboardGroup } from '../localized-display.js';
 
 type Props = {
   groups: LocalizedModelLeaderboardGroup[];
   currentGroup: LocalizedModelLeaderboardGroup | null;
+  currentGroupTotalCount?: number;
   updateTime: string;
 };
 
-const { groups, currentGroup, updateTime } = Astro.props;
+const { groups, currentGroup, currentGroupTotalCount = currentGroup?.rows.length ?? 0, updateTime } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const initialRowCount = 30;
 const visibleRows = currentGroup?.rows.slice(0, initialRowCount) ?? [];
-const hasMoreRows = (currentGroup?.rows.length ?? 0) > initialRowCount;
+const hasMoreRows = currentGroupTotalCount > visibleRows.length;
 const leaderboardApiUrl = currentGroup
   ? `/api/model-leaderboard/${encodeURIComponent(currentGroup.taskSlug)}.json?offset=${initialRowCount}&locale=${encodeURIComponent(Astro.locals.locale)}`
   : '';
@@ -36,6 +40,7 @@ const leaderboardApiUrl = currentGroup
     class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden"
     data-model-leaderboard={currentGroup ? '' : undefined}
     data-model-leaderboard-api={currentGroup ? leaderboardApiUrl : undefined}
+    data-model-leaderboard-total={currentGroupTotalCount}
   >
     {groups.length > 0 && (
       <div class="border-b border-base-300 bg-base-100 px-4 py-3">
@@ -61,41 +66,33 @@ const leaderboardApiUrl = currentGroup
     )}
     {currentGroup && (
       <>
-        <div class="bg-base-200/50 px-4 py-3 border-b border-base-300">
-          <p class="text-sm font-bold text-base-content">{currentGroup.displayName}</p>
-        </div>
-        <div class="product-table-scroll">
-          <table class="table table-zebra table-md w-full border-collapse">
-            <thead class="bg-base-200 text-base-content text-sm">
-              <tr>
-                <th scope="col" class="font-bold">{t.labels.rank}</th>
-                <th scope="col" class="font-bold">{t.labels.model}</th>
-                <th scope="col" class="font-bold text-primary">{t.labels.score}</th>
-              </tr>
-            </thead>
-            <tbody data-model-leaderboard-body>
-              {visibleRows.map(item => (
-                <tr class="hover">
-                  <td class="font-bold">
-                    {item.rank <= 3 ? '#' + item.rank : item.rank}
-                  </td>
-                  <td class="font-semibold text-base-content break-all">{item.modelName}</td>
-                  <td class="font-mono font-bold text-primary">{item.score.toFixed(2)}</td>
-                </tr>
-              ))}
-              {currentGroup.rows.length === 0 && (
-                <tr>
-                  <td colspan="3" class="p-8 text-center text-base-content/40">{t.leaderboard.empty}</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        {hasMoreRows ? (
-          <div class="border-t border-base-300 p-4 text-center">
-            <button type="button" class="btn btn-outline btn-sm" data-model-leaderboard-load-more>{t.leaderboard.loadMore}</button>
-          </div>
-        ) : null}
+        <DataTable
+          sortable={false}
+          variant="compact"
+          emptyText={t.leaderboard.empty}
+          emptyHidden={currentGroup.rows.length > 0}
+          summaryText={currentGroupTotalCount > 0 ? t.labels.displaySummary : ''}
+          summaryRenderedCount={visibleRows.length}
+          totalCount={currentGroupTotalCount}
+          summaryDataAttrs={{ 'data-model-leaderboard-load-summary': '', 'data-summary-template': t.labels.displaySummary }}
+          loadMoreText={hasMoreRows ? t.labels.loadMore : ''}
+          loadMoreHidden={!hasMoreRows}
+          loadMoreDataAttrs={{ 'data-model-leaderboard-load-more': '' }}
+          tbodyDataAttrs={{ 'data-model-leaderboard-body': '' }}
+        >
+          <Fragment slot="head">
+            <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
+            <DataTableHeader label={t.labels.model} sortable={false} />
+            <DataTableHeader label={t.labels.score} sortable={false} />
+          </Fragment>
+          {visibleRows.map(item => (
+            <tr data-sort-sequence={String(item.rank)}>
+              <DataTableCell label={t.labels.sequence} align="center" sequence>{item.rank}</DataTableCell>
+              <DataTableCell label={t.labels.model} class="font-semibold text-base-content break-all">{item.modelName}</DataTableCell>
+              <DataTableCell label={t.labels.score} class="font-mono font-bold text-primary">{item.score.toFixed(2)}</DataTableCell>
+            </tr>
+          ))}
+        </DataTable>
       </>
     )}
   </section>

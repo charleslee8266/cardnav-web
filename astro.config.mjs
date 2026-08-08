@@ -3,6 +3,9 @@
  */
 import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
+/*
+ * 文件说明: 配置公开站 Astro 构建、Tailwind 集成、开发热更新和前端脚本分包策略。
+ */
 import { defineConfig } from 'astro/config';
 
 /** 开发时修改文案/内容真源后，主动触发整页刷新，避免 SSR 页面仍显示旧文字。 */
@@ -41,8 +44,8 @@ export default defineConfig({
             if (id.includes('/src/scripts/shops-merchant-view.js')) {
               return 'shops-merchant-view';
             }
-            if (id.includes('/src/scripts/sortable-tables.js')) {
-              return 'sortable-tables';
+            if (id.includes('/src/scripts/data-table.js')) {
+              return 'data-table';
             }
             if (id.includes('/src/scripts/llm-gateway-home.js')) {
               return 'llm-gateway-home';

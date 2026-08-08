@@ -42,6 +42,15 @@ API gateway sites suit users who want to quickly connect to large model capabili
 
 ## Recommended gateway sites
 
+## GeniusCoder
+<!-- badge="OpenAI SDK compatible" icon="api" imageAspect="3.44/1" -->
+
+![GeniusCoder sponsor logo](../../../public/geniuscoder.png)
+
+Stable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and small teams.
+
+[Register](https://api.geniuscoder.net/)
+
 ## PackyAPI established AI API gateway site
 <!-- badge="Multi-model access" icon="api" imageAspect="3.44/1" -->
 

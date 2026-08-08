@@ -3,6 +3,9 @@
 文件说明: 渲染官方订阅比价页的服务端 HTML 内容，包括套餐导航和当前套餐价格表。
 */
 import PageHero from './PageHero.astro';
+import DataTable from './DataTable.astro';
+import DataTableCell from './DataTableCell.astro';
+import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
 import { quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
 
@@ -119,56 +122,37 @@ function countryFlag(countryCode: string): CountryFlag {
     )}
     {currentGroup && (
       <>
-        <div class="bg-base-200/50 px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300">
-          {currentGroup.appName} {currentGroup.planName} {t.officialPrice.tableSummarySuffix}
-        </div>
-        <div class="product-table-scroll">
-          <table class="table table-zebra table-md w-full border-collapse">
-            <thead class="bg-base-200 text-base-content text-sm">
-              <tr>
-                <th scope="col" class="font-bold">{t.officialPrice.recommendedRank}</th>
-                <th scope="col" class="font-bold">{t.officialPrice.countryRegion}</th>
-                <th scope="col" class="font-bold">{t.officialPrice.localPrice}</th>
-                <th scope="col" class="font-bold">{t.officialPrice.currency}</th>
-                <th scope="col" class="font-bold text-primary">{t.officialPrice.cnyPrice}</th>
+        <DataTable
+          sortable={false}
+          variant="compact"
+          emptyText={t.officialPrice.empty}
+          emptyHidden={currentGroup.prices.length > 0}
+        >
+          <Fragment slot="head">
+            <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
+            <DataTableHeader label={t.officialPrice.countryRegion} sortable={false} />
+            <DataTableHeader label={t.officialPrice.localPrice} sortable={false} />
+            <DataTableHeader label={t.officialPrice.currency} sortable={false} />
+            <DataTableHeader label={t.officialPrice.cnyPrice} sortable={false} />
+          </Fragment>
+          {currentGroup.prices.map((item, idx) => {
+            const flag = countryFlag(item.countryCode);
+            return (
+              <tr data-sort-sequence={String(idx + 1)}>
+                <DataTableCell label={t.labels.sequence} align="center" sequence>{idx + 1}</DataTableCell>
+                <DataTableCell label={t.officialPrice.countryRegion} class="font-semibold text-base-content">
+                  <span class="inline-flex items-center gap-1.5">
+                    <span aria-hidden="true">{flag.emoji}</span>
+                    <span>{item.localizedCountryLabel} ({item.countryCode})</span>
+                  </span>
+                </DataTableCell>
+                <DataTableCell label={t.officialPrice.localPrice} class="font-bold font-mono">{item.priceText}</DataTableCell>
+                <DataTableCell label={t.officialPrice.currency} class="font-mono text-base-content/70">{item.currencyCode}</DataTableCell>
+                <DataTableCell label={t.officialPrice.cnyPrice} class="font-bold text-primary font-mono text-base">{item.equivalentPriceText}</DataTableCell>
               </tr>
-            </thead>
-            <tbody>
-              {currentGroup.prices.map((item, idx) => {
-                const flag = countryFlag(item.countryCode);
-                return (
-                  <tr class="hover">
-                    <td class="font-bold">
-                      {idx === 0 ? t.officialPrice.cheapest : idx === 1 || idx === 2 ? t.officialPrice.recommended : `${idx + 1}`}
-                    </td>
-                    <td class="font-semibold text-base-content">
-                      <span class="inline-flex items-center gap-1.5">
-                        <span aria-hidden="true">{flag.emoji}</span>
-                        <span>{item.localizedCountryLabel} ({item.countryCode})</span>
-                      </span>
-                    </td>
-                    <td class="font-bold font-mono">
-                      {item.priceText}
-                    </td>
-                    <td class="font-mono text-base-content/70">
-                      {item.currencyCode}
-                    </td>
-                    <td class="font-bold text-primary font-mono text-base">
-                      {item.equivalentPriceText}
-                    </td>
-                  </tr>
-                );
-              })}
-              {currentGroup.prices.length === 0 && (
-                <tr>
-                  <td colspan="5" class="p-8 text-center text-base-content/40">
-                    {t.officialPrice.empty}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            );
+          })}
+        </DataTable>
       </>
     )}
   </section>

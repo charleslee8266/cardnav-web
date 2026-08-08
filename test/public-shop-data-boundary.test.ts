@@ -15,3 +15,13 @@ test('public shop reads and interactions require online card shops', () => {
   assert.match(storeSource, /UPDATE shop_products[\s\S]+?shop_sites\.status = 'online'[\s\S]+?shop_sites\.type = 'cardShop'/);
   assert.match(storeSource, /FROM shop_search_terms[\s\S]+?shop_search_terms\.result_count > 0/);
 });
+
+test('public gateway sites expose sponsor marker and pin sponsors before score sorting', () => {
+  assert.match(storeSource, /gateway_sites\.sponsor/);
+  assert.match(storeSource, /ORDER BY gateway_sites\.sponsor DESC, gateway_sites\.score DESC/);
+});
+
+test('public gateway detail does not truncate model price rows', () => {
+  const detailQuery = storeSource.match(/export async function loadGatewayDetail[\s\S]+?return \{/)?.[0] ?? '';
+  assert.doesNotMatch(detailQuery, /LIMIT\s+80\b/);
+});

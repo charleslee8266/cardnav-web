@@ -42,6 +42,15 @@ API gatewayные сайты подходят пользователям, кот
 
 ## Рекомендуемые gateway-сайты
 
+## GeniusCoder
+<!-- badge="Совместим с OpenAI SDK" icon="api" imageAspect="3.44/1" -->
+
+![Логотип спонсора GeniusCoder](../../../public/geniuscoder.png)
+
+Стабильный доступ к GPT API для AI-программирования и похожих задач. Совместим с OpenAI SDK для личного использования и небольших команд.
+
+[Зарегистрироваться](https://api.geniuscoder.net/)
+
 ## PackyAPI, старый AI API gateway
 <!-- badge="Доступ к нескольким моделям" icon="api" imageAspect="3.44/1" -->
 

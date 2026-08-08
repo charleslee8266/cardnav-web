@@ -1,0 +1,61 @@
+---
+/*
+文件说明: 渲染 DataTable 表头单元格，按参数决定是否提供排序按钮和说明图标。
+*/
+import DataTableHeaderControl from './DataTableHeaderControl.astro';
+
+type Props = {
+  label: string;
+  sortKey?: string;
+  sortType?: 'text' | 'number';
+  sortable?: boolean;
+  align?: 'left' | 'center' | 'right';
+  sortScope?: string;
+  title?: string;
+  statusText?: string;
+  helpTip?: string;
+  helpLabel?: string;
+  helpClass?: string;
+};
+
+const {
+  label,
+  sortKey = '',
+  sortType = 'text',
+  sortable = true,
+  align = 'left',
+  sortScope = '',
+  title,
+  statusText = '',
+  helpTip = '',
+  helpLabel = '',
+  helpClass,
+} = Astro.props;
+const hasHelp = helpTip.trim().length > 0;
+const isSequence = sortKey === 'sequence';
+---
+
+<th scope="col" class:list={['data-table-head-cell', sortable ? 'data-table-head-cell-sortable' : 'data-table-head-cell-static', `data-table-head-align-${align}`, isSequence && 'data-table-sequence-head', hasHelp && 'data-table-head-with-help']} aria-sort={sortable ? 'none' : undefined}>
+  {sortable ? (
+    <DataTableHeaderControl
+      label={label}
+      sortKey={sortKey}
+      sortType={sortType}
+      sortScope={sortScope}
+      title={title}
+      statusText={statusText}
+      helpTip={helpTip}
+      helpLabel={helpLabel}
+      helpClass={helpClass}
+    />
+  ) : (
+    <div class="data-table-head-content">
+      <span class="data-table-head-label-group">
+        <span class="data-table-head-label">{label}</span>
+        {hasHelp ? (
+          <button type="button" class:list={['inline-help-button', helpClass || 'data-table-help']} aria-label={helpLabel || label} data-inline-help data-tip={helpTip}>i</button>
+        ) : null}
+      </span>
+    </div>
+  )}
+</th>

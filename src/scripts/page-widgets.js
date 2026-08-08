@@ -211,19 +211,61 @@ function initModelLeaderboard() {
     row.className = 'hover';
     const rank = Number(item.rank);
     const score = Number(item.score);
+    if (Number.isFinite(rank)) row.dataset.sortSequence = String(rank);
+    const sequenceCell = textCell('data-table-sequence-cell', Number.isFinite(rank) ? rank : '');
+    sequenceCell.setAttribute('data-table-sequence-cell', '');
     row.append(
-      textCell('font-bold', Number.isFinite(rank) && rank <= 3 ? `#${rank}` : rank),
+      sequenceCell,
       textCell('font-semibold text-base-content break-all', item.modelName ?? ''),
       textCell('font-mono font-bold text-primary', Number.isFinite(score) ? score.toFixed(2) : '-'),
     );
     return row;
   }
 
+  function updateSummary(summary, renderedCount, totalCount) {
+    if (!(summary instanceof HTMLElement)) return;
+    const template = summary.dataset.summaryTemplate || 'Showing {rendered} / {total}';
+    summary.textContent = template
+      .replace('{rendered}', String(renderedCount))
+      .replace('{total}', String(totalCount));
+  }
+
   document.querySelectorAll('[data-model-leaderboard]').forEach(leaderboard => {
     const button = leaderboard.querySelector('[data-model-leaderboard-load-more]');
     const body = leaderboard.querySelector('[data-model-leaderboard-body]');
+    const summary = leaderboard.querySelector('[data-model-leaderboard-load-summary]');
     const apiUrl = leaderboard.getAttribute('data-model-leaderboard-api');
     if (!button || !body || !apiUrl) return;
+
+    if (typeof window.createDeferredTableController === 'function') {
+      const controller = window.createDeferredTableController({
+        table: leaderboard.querySelector('table'),
+        tbody: body,
+        button,
+        summary,
+        pageSize: 30,
+        totalCount: Number(leaderboard.getAttribute('data-model-leaderboard-total')) || 0,
+        apiUrl,
+        summaryTemplate: summary?.dataset.summaryTemplate || 'Showing {rendered} / {total}',
+        entryFromRow: (row, index) => ({ index, row, item: null, sort: { sequence: Number(row.dataset.sortSequence) || index + 1 } }),
+        entryFromItem: (item, index) => ({ index, row: null, item, sort: { sequence: Number(item.rank) || index + 1 } }),
+        ensureRow: entry => {
+          if (!entry.row) entry.row = rowElement(entry.item);
+          entry.row.classList.remove('hidden');
+          return entry.row;
+        },
+        getItems: payload => (Array.isArray(payload.rows) ? payload.rows : []),
+      });
+      controller.initialize();
+      button.addEventListener('click', async () => {
+        try {
+          await controller.loadMore();
+        } catch {
+          button.removeAttribute('disabled');
+        }
+      });
+      return;
+    }
 
     button.addEventListener('click', async () => {
       button.setAttribute('disabled', 'disabled');
@@ -235,7 +277,10 @@ function initModelLeaderboard() {
         const payload = await response.json();
         const rows = Array.isArray(payload.rows) ? payload.rows : [];
         if (rows.length) body.append(...rows.map(rowElement));
-        button.closest('div')?.remove();
+        const loadedRows = body.querySelectorAll('tr.hover').length;
+        const totalCount = Number(payload.totalCount) || loadedRows;
+        updateSummary(summary, loadedRows, totalCount);
+        button.classList.add('hidden');
       } catch {
         button.removeAttribute('disabled');
       }

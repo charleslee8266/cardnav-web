@@ -183,10 +183,11 @@ export function renderMerchantRows({
     row.dataset.lastProductRefreshSuccessAt = String(accessors.shopSiteLastRefreshMs(site) || 0);
     row.dataset.originalIndex = String(index);
     row.dataset.rank = String(index + 1);
+    row.dataset.sequence = String(index + 1);
     row.dataset.productCount = String(siteProducts.length);
     row.dataset.hotProducts = String(hotProducts.length > 0 ? productScoreValue(hotProducts[0], accessors) : 0);
 
-    const indexCell = appendTextElement(row, 'div', 'row-index merchant-table-cell merchant-table-cell-index shop-table-cell-index', '');
+    const indexCell = appendTextElement(row, 'div', 'row-index merchant-table-cell merchant-table-cell-index data-table-sequence-cell', '');
     const merchantCell = document.createElement('div');
     merchantCell.className = 'merchant-table-cell merchant-table-cell-merchant';
     const merchantHeader = document.createElement('div');
@@ -201,7 +202,7 @@ export function renderMerchantRows({
     row.appendChild(merchantCell);
 
     const productsCell = document.createElement('div');
-    productsCell.className = 'merchant-table-cell merchant-table-cell-value shop-table-cell-number';
+    productsCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';
     appendTextElement(productsCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.productCount || 'Product count');
     appendTextElement(productsCell, 'span', 'merchant-table-value', String(siteProducts.length));
     row.appendChild(productsCell);
@@ -230,7 +231,7 @@ export function renderMerchantRows({
     row.appendChild(hotProductsCell);
 
     const scoreCell = document.createElement('div');
-    scoreCell.className = 'merchant-table-cell merchant-table-cell-value shop-table-cell-number';
+    scoreCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';
     appendTextElement(scoreCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
     appendTextElement(scoreCell, 'span', 'merchant-table-value', formatScore(accessors.shopSiteScore(site)));
     row.appendChild(scoreCell);

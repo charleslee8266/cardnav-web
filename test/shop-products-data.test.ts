@@ -12,6 +12,7 @@ import {
   shopProductRefreshTime,
   shopProductSite,
   shopProducts,
+  shopProductsTotalInStockProductCount,
   shopSiteName,
   shopSites,
 } from '../src/shop-products-data.js';
@@ -69,6 +70,7 @@ const fixture: PublicShopProductsData = {
   ],
   totalSiteCount: 1,
   totalProductCount: 2,
+  totalInStockProductCount: 1,
   latestRefreshedAt: '2026-07-31T13:00:00.000Z',
   latestRefreshTime: '2026-07-31 21:00:00',
   initialProductLimit: 40,
@@ -85,6 +87,7 @@ test('packed shop products share site, category and default CNY unit data', () =
   assert.equal(products[0][4], null);
   assert.equal(products[1][4], 0);
   assert.equal(JSON.stringify(packed).includes('siteName'), false);
+  assert.equal(shopProductsTotalInStockProductCount(packed), 1);
 });
 
 test('packed shop products accessors read page fields without unpacking long objects', () => {

@@ -182,6 +182,9 @@ export const zhMessages = {
     onlineCheck: '在线检测',
     externalSite: '外部网站',
     notRecorded: '未记录',
+    loading: '加载中',
+    loadMore: '加载更多',
+    displaySummary: '当前显示 {rendered} / {total} 个',
   },
   seo: {
     titleSuffix: '卡网大全',
@@ -344,6 +347,7 @@ export const zhMessages = {
     siteType: '类型',
     rank: '排序',
     basicInfo: '基本信息',
+    sponsorLabel: '赞助',
     createdAt: '收录时间',
     modelCount: '模型数',
     priceCount: '价格数',
@@ -429,8 +433,6 @@ export const zhMessages = {
     dynamicDescription: '查看 {displayName} 官方订阅在不同国家和地区的本地价格、币种和人民币折算结果，按折算价格由低到高对比。',
     note: '当前价格以 Apple App Store 页面展示的应用内购买价格为准，可能与官网 Web 订阅价格不同。',
     navLabel: '大模型选择',
-    tableSummarySuffix: '各地区价格对比（已按人民币折算价格由低到高排列）：',
-    recommendedRank: '推荐排名',
     countryRegion: '国家/地区',
     localPrice: '本地标价',
     currency: '币种',
@@ -555,27 +557,6 @@ export const zhMessages = {
   sponsors: {
     title: '赞助商列表',
     becomeSponsor: '成为赞助商',
-    tokenPlus: {
-      alt: 'TokenPlus 赞助商标志',
-      name: 'TokenPlus',
-      description: 'AI资源与服务链接器',
-    },
-    packyApi: {
-      alt: 'PackyAPI AI API 聚合平台赞助商标志',
-      name: 'PackyAPI 老牌 AI API 中转站',
-      description: '一站式接入 Claude、GPT、Gemini 等主流 AI 服务，可提供发票。',
-    },
-    yunwuApi: {
-      alt: '云雾 API 赞助商标志',
-      name: '云雾 API',
-      description: '致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。',
-    },
-    rackNerd: {
-      alt: 'RackNerd 云主机赞助商横幅',
-      name: 'RackNerd云主机',
-      price: '1C1G 仅需 $21.99/年',
-      plans: ['2C2G $35.99/年', '3C4G $59.99/年', '6C6G $89.99/年', '7C8G $119.99/年'],
-    },
   },
   submit: {
     success: '提交成功',

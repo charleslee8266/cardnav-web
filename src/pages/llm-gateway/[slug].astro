@@ -3,6 +3,8 @@
 文件说明: 渲染单个 AI 大模型 API 中转站详情页，展示模型覆盖和价格记录。
 */
 import PageHero from '../../components/PageHero.astro';
+import DataTable from '../../components/DataTable.astro';
+import DataTableCell from '../../components/DataTableCell.astro';
 import {
   displayPriceUnit,
   formatAvailabilityPercent,
@@ -12,18 +14,41 @@ import {
   shortList,
 } from '../../gateway-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
+import DataTableHeader from '../../components/DataTableHeader.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 import { loadGatewayDetail } from '../../store.js';
+import deferredTableCoreScriptUrl from '../../scripts/deferred-table-core.js?url';
+import gatewayDetailTablesScriptUrl from '../../scripts/gateway-detail-tables.js?url';
+import dataTableScriptUrl from '../../scripts/data-table.js?url';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const detail = await loadGatewayDetail(Astro.params.slug || '');
+const PRICE_TABLE_PAGE_SIZE = 100;
+const detail = await loadGatewayDetail(Astro.params.slug || '', { priceLimit: PRICE_TABLE_PAGE_SIZE });
 
 if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 302);
 
 const { site, prices } = detail;
 if (Astro.params.slug !== site.slug) return Astro.redirect(Astro.locals.localizePath(`/llm-gateway/${site.slug}`), 301);
+const priceTotalCount = site.priceCount;
+const priceTableConfig = {
+  type: 'prices',
+  pageSize: PRICE_TABLE_PAGE_SIZE,
+  totalCount: priceTotalCount,
+  apiUrl: `/api/llm-gateway/site-prices/${encodeURIComponent(site.slug)}.json?offset=${prices.length}&locale=${encodeURIComponent(Astro.locals.locale)}`,
+  displaySummary: t.labels.displaySummary,
+  modelLinkPrefix: linkTo('/llm-gateway/models'),
+  labels: {
+    sequence: t.labels.sequence,
+    model: t.labels.model,
+    unit: t.llmGateway.unit,
+    inputPrice: t.llmGateway.inputPrice,
+    outputPrice: t.llmGateway.outputPrice,
+    cacheInputPrice: t.llmGateway.cacheInputPrice,
+    cacheOutputPrice: t.llmGateway.cacheOutputPrice,
+  },
+};
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -44,6 +69,10 @@ const seo = buildSeoContext({
 
 function modelHref(modelId: string) {
   return linkTo(`/llm-gateway/models/${encodeURIComponent(modelId)}`);
+}
+
+function priceSortValue(value: number | null) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : '';
 }
 
 function gatewaySiteOpenAttrs() {
@@ -119,46 +148,60 @@ function gatewayModelClickAttrs(modelId: string) {
     </div>
   </PageHero>
 
-  <section>
-    <div class="card bg-base-100 border border-base-300 shadow-sm">
-      <div class="card-body p-5">
-        <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 class="text-lg font-semibold">{t.llmGateway.priceSummaryTitle}</h2>
-            <p class="text-sm leading-6 text-base-content/65">{t.llmGateway.priceSummaryDescription}</p>
-          </div>
-        </div>
-        <div class="mt-3 overflow-x-auto">
-          <table class="table table-sm">
-            <thead>
-              <tr>
-                <th scope="col">{t.labels.model}</th>
-                <th scope="col">{t.llmGateway.unit}</th>
-                <th scope="col">{t.llmGateway.inputPrice}</th>
-                <th scope="col">{t.llmGateway.outputPrice}</th>
-                <th scope="col">{t.llmGateway.cacheInputPrice}</th>
-                <th scope="col">{t.llmGateway.cacheOutputPrice}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {prices.length > 0 ? prices.map(price => (
-                <tr>
-                  <td class="min-w-48">
-                    <a href={modelHref(price.modelId)} class="link link-hover break-words font-mono text-xs font-semibold text-primary" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
-                  </td>
-                  <td>{displayPriceUnit(price.unit)}</td>
-                  <td class="font-mono">{formatPrice(price.inputPrice)}</td>
-                  <td class="font-mono">{formatPrice(price.outputPrice)}</td>
-                  <td class="font-mono">{formatPrice(price.cacheInputPrice)}</td>
-                  <td class="font-mono">{formatPrice(price.cacheOutputPrice)}</td>
-                </tr>
-              )) : (
-                <tr><td colspan="6" class="text-center text-base-content/55">{t.llmGateway.noPriceData}</td></tr>
-              )}
-            </tbody>
-          </table>
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="prices">
+    <div class="border-b border-base-300 p-5">
+      <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 class="text-lg font-semibold">{t.llmGateway.priceSummaryTitle}</h2>
+          <p class="text-sm leading-6 text-base-content/65">{t.llmGateway.priceSummaryDescription}</p>
         </div>
       </div>
     </div>
+    <DataTable
+      variant="gatewayPrices"
+      totalCount={priceTotalCount}
+      summaryRenderedCount={prices.length}
+      emptyHidden={prices.length > 0}
+      emptyText={t.llmGateway.noPriceData}
+      summaryText={t.labels.displaySummary}
+      loadMoreText={priceTotalCount > prices.length ? t.labels.loadMore : ''}
+      loadMoreHidden={priceTotalCount <= prices.length}
+      loadMoreDataAttrs={{ 'data-gateway-detail-load-more': 'prices' }}
+    >
+      <Fragment slot="head">
+        <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
+        <DataTableHeader label={t.labels.model} sortKey="model" />
+        <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
+        <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.cacheOutputPrice} sortKey="cacheOutputPrice" sortType="number" align="right" />
+      </Fragment>
+      {prices.map((price, index) => (
+        <tr
+          data-sort-model={price.modelId}
+          data-sort-sequence={String(index + 1)}
+          data-sort-unit={displayPriceUnit(price.unit)}
+          data-sort-input-price={String(priceSortValue(price.inputPrice))}
+          data-sort-output-price={String(priceSortValue(price.outputPrice))}
+          data-sort-cache-input-price={String(priceSortValue(price.cacheInputPrice))}
+          data-sort-cache-output-price={String(priceSortValue(price.cacheOutputPrice))}
+        >
+          <DataTableCell label={t.labels.sequence} align="center" sequence>{index + 1}</DataTableCell>
+          <DataTableCell label={t.labels.model} class="min-w-48">
+            <a href={modelHref(price.modelId)} class="link link-hover break-words font-mono text-xs font-semibold text-primary" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
+          </DataTableCell>
+          <DataTableCell label={t.llmGateway.unit}>{displayPriceUnit(price.unit)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.inputPrice} align="right" class="font-mono">{formatPrice(price.inputPrice)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.outputPrice} align="right" class="font-mono">{formatPrice(price.outputPrice)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.cacheInputPrice} align="right" class="font-mono">{formatPrice(price.cacheInputPrice)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.cacheOutputPrice} align="right" class="font-mono">{formatPrice(price.cacheOutputPrice)}</DataTableCell>
+        </tr>
+      ))}
+    </DataTable>
   </section>
+  <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(priceTableConfig)}></script>
+  <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
+  <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
+  <script is:inline slot="scripts" defer src={gatewayDetailTablesScriptUrl}></script>
 </PublicPage>

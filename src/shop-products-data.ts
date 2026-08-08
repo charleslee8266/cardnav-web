@@ -12,6 +12,7 @@ export type PublicShopProductsData = {
   products: PublicProductRow[];
   totalSiteCount: number;
   totalProductCount: number;
+  totalInStockProductCount?: number;
   latestRefreshedAt?: string | null;
   latestRefreshTime: string;
   initialProductLimit?: number;
@@ -47,6 +48,7 @@ export type PackedShopProductsData = {
   p: PackedShopProductRow[];
   sc: number;
   pc: number;
+  ipc?: number;
   l: number | null;
   i?: number;
   x: 0 | 1;
@@ -153,6 +155,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
     p: products,
     sc: data.totalSiteCount,
     pc: data.totalProductCount,
+    ...(typeof data.totalInStockProductCount === 'number' ? { ipc: data.totalInStockProductCount } : {}),
     l: timestampMs(data.latestRefreshedAt),
     ...(typeof data.initialProductLimit === 'number' ? { i: data.initialProductLimit } : {}),
     x: data.isPartial ? 1 : 0,
@@ -177,6 +180,12 @@ export function shopProductsInitialLimit(data: PackedShopProductsData) {
 
 export function shopProductsTotalProductCount(data: PackedShopProductsData) {
   return Number(data.pc) || shopProducts(data).length;
+}
+
+export function shopProductsTotalInStockProductCount(data: PackedShopProductsData) {
+  const count = Number(data.ipc);
+  if (Number.isFinite(count) && count >= 0) return count;
+  return shopProducts(data).filter(product => shopProductInStock(product)).length;
 }
 
 export function shopProductSite(data: PackedShopProductsData, product: PackedShopProductRow) {

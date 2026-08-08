@@ -42,6 +42,15 @@ API 中转站适合想快速接入大模型能力，但暂时不想处理海外�
 
 ## 推荐中转站
 
+## GeniusCoder
+<!-- badge="OpenAI SDK 兼容" icon="api" imageAspect="3.44/1" -->
+
+![GeniusCoder 赞助商标志](../../../public/geniuscoder.png)
+
+为 AI 编程等任务提供稳定的 GPT API 接入。保持 OpenAI SDK 兼容，适合个人和小团队长期使用。
+
+[前往注册](https://api.geniuscoder.net/)
+
 ## PackyAPI 老牌 AI API 中转站
 <!-- badge="多模型接入" icon="api" imageAspect="3.44/1" -->
 
