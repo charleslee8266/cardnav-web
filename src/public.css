@@ -689,7 +689,7 @@
 
   /* 收藏功能高亮状态 */
   .favorite-toggle {
-    @apply mt-0.5 inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center text-lg leading-none text-slate-300 transition hover:text-red-400 focus:outline-none;
+    @apply inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center text-lg leading-none text-slate-300 transition hover:text-red-400 focus:outline-none;
   }
 
   .favorite-toggle[aria-pressed="true"] {
@@ -697,30 +697,54 @@
   }
 
   .cell-inline {
-    @apply flex items-start gap-2;
+    @apply flex items-center gap-2;
   }
 
   /* 横向溢出折行保护 */
   .merchant-text {
-    @apply pt-0.5;
     overflow-wrap: anywhere;
   }
 
   .merchant-link,
   .product-link {
-    @apply inline underline decoration-primary/55 decoration-[1.5px] underline-offset-[0.18em] text-primary transition hover:text-[color:var(--color-primary-hover)] hover:decoration-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30;
+    @apply inline no-underline text-primary transition hover:underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30;
   }
 
   .product-text {
-    @apply pt-0.5;
     overflow-wrap: anywhere;
   }
 
-  .gateway-sponsor-badge {
-    @apply inline-flex h-5 min-h-5 shrink-0 items-center rounded px-2 text-xs font-semibold leading-none;
+  .sponsor-badge {
+    @apply inline-flex h-5 min-h-5 shrink-0 items-center gap-1 rounded px-2 text-xs font-semibold leading-none;
     border: 1px solid #93c5fd;
     background: transparent;
     color: #2563eb;
+  }
+
+  .sponsor-badge-group {
+    @apply inline-flex shrink-0 items-center;
+  }
+
+  .sponsor-badge-link {
+    @apply text-primary underline underline-offset-2;
+  }
+
+  .sponsor-badge-info {
+    @apply relative inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-current text-[9px] font-bold leading-none text-primary outline-none;
+  }
+
+  .sponsor-badge-tooltip {
+    @apply pointer-events-auto absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 rounded border border-base-300 bg-base-100 px-3 py-2 text-left text-xs font-normal leading-5 text-base-content opacity-0 shadow-lg transition-opacity;
+  }
+
+  .sponsor-badge-tooltip::before {
+    content: '';
+    @apply absolute -top-2 left-0 right-0 h-2;
+  }
+
+  .sponsor-badge-info:hover .sponsor-badge-tooltip,
+  .sponsor-badge-info:focus .sponsor-badge-tooltip {
+    @apply opacity-100;
   }
 
   .hero-domain {

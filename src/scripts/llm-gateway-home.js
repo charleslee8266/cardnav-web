@@ -176,7 +176,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     siteLink.href = `${config.gatewayLinkPrefix}/${site.slug}`;
     setTracking(siteLink, gatewaySiteTracking(site));
     titleWrap.append(siteLink);
-    if (site.sponsor) titleWrap.append(el('span', 'gateway-sponsor-badge', config.sponsorLabel || 'Sponsored'));
+    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', config.partnershipUrl || '/partnership', config.partnershipLinkLabel || 'How to partner'));
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));

@@ -1,7 +1,6 @@
 /*
  * 文件说明: 接管中转站详情类表格的远端补齐、渐进 DOM 渲染和全量本地排序。
  */
-
 (() => {
   const root = document.querySelector('[data-gateway-deferred-table]');
   if (!root) return;
@@ -220,7 +219,7 @@
     siteLink.dataset.umamiEventTargetPage = detailHref;
     siteLink.dataset.umamiEventUrl = detailHref;
     titleWrap.append(siteLink);
-    if (site.sponsor) titleWrap.append(el('span', 'gateway-sponsor-badge', config.sponsorLabel || 'Sponsored'));
+    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', config.partnershipUrl || '/partnership', config.partnershipLinkLabel || 'How to partner'));
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));

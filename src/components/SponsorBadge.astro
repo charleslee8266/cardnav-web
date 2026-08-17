@@ -1,0 +1,26 @@
+---
+/*
+文件说明: 渲染公开页面统一使用的合作 badge 和审核说明。
+对应文档: docs/promo/cardnav-partner-offer.md
+*/
+type Props = {
+  label: string;
+  description: string;
+  href: string;
+  linkLabel: string;
+};
+
+const { label, description, href, linkLabel } = Astro.props;
+---
+
+<span class="sponsor-badge-group">
+  <span class="sponsor-badge">
+    <span>{label}</span>
+    <span class="sponsor-badge-info" tabindex="0" role="img" aria-label={description}>
+      i
+      <span class="sponsor-badge-tooltip" role="tooltip">
+        {description} <a href={href} class="sponsor-badge-link">{linkLabel}</a>
+      </span>
+    </span>
+  </span>
+</span>

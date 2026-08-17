@@ -21,6 +21,13 @@ test('public gateway sites expose sponsor marker and pin sponsors before score s
   assert.match(storeSource, /ORDER BY gateway_sites\.sponsor DESC, gateway_sites\.score DESC/);
 });
 
+test('public shop products expose sponsor marker and prepare sponsored pins', () => {
+  assert.match(storeSource, /shop_sites\.sponsor AS site_sponsor/);
+  assert.match(storeSource, /sponsor_candidates AS/);
+  assert.match(storeSource, /sponsor_site_product_rank <= 5/);
+  assert.match(storeSource, /LIMIT 10/);
+});
+
 test('public gateway detail does not truncate model price rows', () => {
   const detailQuery = storeSource.match(/export async function loadGatewayDetail[\s\S]+?return \{/)?.[0] ?? '';
   assert.doesNotMatch(detailQuery, /LIMIT\s+80\b/);

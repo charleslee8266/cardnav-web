@@ -7,7 +7,7 @@ import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
 import { defaultLocale, type Locale } from './i18n/config.js';
 
-export type PageContentSlug = 'about' | 'privacy' | 'disclaimer';
+export type PageContentSlug = 'about' | 'privacy' | 'disclaimer' | 'partnership';
 
 export type RenderedPageContent = {
   slug: PageContentSlug;

@@ -25,9 +25,11 @@ import {
   shopSiteLastRefreshTime,
   shopSiteName,
   shopSiteScore,
+  shopSiteSponsor,
   shopSiteUrl,
   shopSites,
 } from '../shop-products-data.js';
+import { prioritizeShopProductRows } from '../shop-sponsored-pinning.js';
 
 const filtersForm = document.querySelector('#filters');
 const searchFilter = document.querySelector('#searchFilter');
@@ -74,6 +76,8 @@ const DEFAULT_MERCHANT_LIMIT = 20;
 const MERCHANT_LOAD_MORE_STEP = 20;
 const DEFAULT_FLAT_SORT = { key: 'score', direction: 'desc', type: 'number' };
 const FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT = 10;
+const SPONSOR_PRODUCT_PIN_LIMIT = 10;
+const SPONSOR_PRODUCT_PIN_LIMIT_PER_SITE = 5;
 let currentFlatSort = { ...DEFAULT_FLAT_SORT };
 let currentMerchantSort = null;
 let currentFlatRows = flatRows;
@@ -264,34 +268,14 @@ function formatDisplayPrice(priceNumber, priceUnit) {
 }
 
 function prioritizeFavoriteFlatRows(rowEntries) {
-  const favoriteProductRows = [];
-  const favoriteMerchantRowsBySite = new Map();
-  rowEntries.forEach(rowEntry => {
-    if (favoriteProductKeys.has(rowEntry.productFavoriteKey)) {
-      favoriteProductRows.push(rowEntry);
-    } else if (favoriteSiteKeys.has(rowEntry.siteFavoriteKey)) {
-      const rows = favoriteMerchantRowsBySite.get(rowEntry.siteFavoriteKey) || [];
-      rows.push(rowEntry);
-      favoriteMerchantRowsBySite.set(rowEntry.siteFavoriteKey, rows);
-    }
+  return prioritizeShopProductRows(rowEntries, {
+    favoriteProductKeys,
+    favoriteSiteKeys,
+  }, {
+    favoriteMerchantProductLimit: FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT,
+    sponsorProductLimit: SPONSOR_PRODUCT_PIN_LIMIT,
+    sponsorProductLimitPerSite: SPONSOR_PRODUCT_PIN_LIMIT_PER_SITE,
   });
-
-  const favoriteMerchantRows = [];
-  const pinnedRows = new Set(favoriteProductRows);
-  while (favoriteMerchantRows.length < FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT && favoriteMerchantRowsBySite.size > 0) {
-    for (const [siteKey, rows] of favoriteMerchantRowsBySite) {
-      const row = rows.shift();
-      if (row) {
-        favoriteMerchantRows.push(row);
-        pinnedRows.add(row);
-      }
-      if (rows.length === 0) favoriteMerchantRowsBySite.delete(siteKey);
-      if (favoriteMerchantRows.length >= FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT) break;
-    }
-  }
-
-  const regularRows = rowEntries.filter(rowEntry => !pinnedRows.has(rowEntry));
-  return [...favoriteProductRows, ...favoriteMerchantRows, ...regularRows];
 }
 
 function parseStructuredPriceToCny(priceNumber, priceUnit) {
@@ -371,6 +355,7 @@ function buildFlatRows() {
       inStock: shopProductInStock(product) ? 1 : 0,
       score: shopProductScore(product),
       siteScore: shopSiteScore(site),
+      sponsor: shopSiteSponsor(site),
       productRefreshedAt: shopProductRefreshedMs(product) || 0,
       product,
       element: null,
@@ -651,11 +636,15 @@ function createFavoriteButton(favoriteKind, key, label) {
   return button;
 }
 
-function createTrackedProductLink(href, className, label, eventLabel) {
+function sponsoredRel(sponsored) {
+  return sponsored ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
+}
+
+function createTrackedProductLink(href, className, label, eventLabel, options = {}) {
   const link = document.createElement('a');
   link.href = href;
   link.target = '_blank';
-  link.rel = 'noopener noreferrer';
+  link.rel = sponsoredRel(options.sponsor);
   link.dataset.umamiEvent = 'product-click';
   link.dataset.umamiEventUrl = href;
   link.dataset.umamiEventName = eventLabel;
@@ -664,11 +653,11 @@ function createTrackedProductLink(href, className, label, eventLabel) {
   return link;
 }
 
-function createTrackedMerchantLink(href, label) {
+function createTrackedMerchantLink(href, label, options = {}) {
   const link = document.createElement('a');
   link.href = href;
   link.target = '_blank';
-  link.rel = 'noopener noreferrer';
+  link.rel = sponsoredRel(options.sponsor);
   link.dataset.umamiEvent = 'merchant-click';
   link.dataset.umamiEventUrl = href;
   link.dataset.umamiEventName = label;
@@ -686,6 +675,7 @@ function createFlatProductRow(item) {
   const siteId = text(shopSiteId(site));
   const siteName = text(shopSiteName(site));
   const siteUrl = text(shopSiteUrl(site)).trim();
+  const siteSponsor = shopSiteSponsor(site);
   const categoryName = text(shopProductCategoryName(shopProductsData, item));
   const productName = text(shopProductName(item));
   const productTitle = `${categoryName}-${productName}`;
@@ -709,7 +699,7 @@ function createFlatProductRow(item) {
   productInline.className = 'cell-inline';
   productInline.appendChild(createFavoriteButton('product', productFavoriteKey, `${shopsMessages.productFavorite || 'Favorite product'} ${productTitle}`));
   if (productUrl) {
-    const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle);
+    const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle, { sponsor: siteSponsor });
     productLink.dataset.productClickSiteId = siteId;
     productLink.dataset.productClickUrl = productUrl;
     productLink.dataset.productClickCategory = categoryName;
@@ -718,6 +708,7 @@ function createFlatProductRow(item) {
   } else {
     appendTextElement(productInline, 'span', 'product-text', productName);
   }
+  if (siteSponsor) productInline.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || '/partnership', shopsMessages.partnershipLinkLabel || 'How to partner'));
   productCell.appendChild(productInline);
   row.appendChild(productCell);
 
@@ -757,7 +748,7 @@ function createFlatProductRow(item) {
   merchantInline.className = 'cell-inline';
   merchantInline.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
   if (siteUrl) {
-    merchantInline.appendChild(createTrackedMerchantLink(siteUrl, siteName));
+    merchantInline.appendChild(createTrackedMerchantLink(siteUrl, siteName, { sponsor: siteSponsor }));
   } else {
     appendTextElement(merchantInline, 'span', 'merchant-text', siteName);
   }
@@ -879,13 +870,15 @@ function renderMerchantViewModule(module) {
       shopSiteLastRefreshTime,
       shopSiteName,
       shopSiteScore,
+      shopSiteSponsor,
       shopSiteUrl,
     },
     shopsMessages,
     createFavoriteButton,
-    createTrackedLink: (href, className, label, eventLabel) => {
-      if (className.includes('merchant')) return createTrackedMerchantLink(href, label);
-      return createTrackedProductLink(href, className, label, eventLabel);
+    createTrackedLink: (href, className, label, eventLabel, options = {}) => {
+      const sponsor = options?.sponsor === true;
+      if (className.includes('merchant')) return createTrackedMerchantLink(href, label, { sponsor });
+      return createTrackedProductLink(href, className, label, eventLabel, { sponsor });
     },
     initializeFavorites,
     getFavoriteButtons: () => favoriteButtons,
@@ -1004,6 +997,8 @@ function sortRows(merchantModule) {
     .sort((a, b) => {
       const favoriteDiff = Number(b.element.dataset.favorite) - Number(a.element.dataset.favorite);
       if (favoriteDiff !== 0) return favoriteDiff;
+      const sponsorDiff = Number(b.element.dataset.sponsor) - Number(a.element.dataset.sponsor);
+      if (sponsorDiff !== 0) return sponsorDiff;
 
       if (currentMerchantSort) {
         const multiplier = currentMerchantSort.direction === 'asc' ? 1 : -1;

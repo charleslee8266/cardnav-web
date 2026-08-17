@@ -14,6 +14,7 @@ import {
   shopProducts,
   shopProductsTotalInStockProductCount,
   shopSiteName,
+  shopSiteSponsor,
   shopSites,
 } from '../src/shop-products-data.js';
 import type { PublicShopProductsData } from '../src/shop-products-data.js';
@@ -26,6 +27,7 @@ const fixture: PublicShopProductsData = {
     lastProductRefreshSuccessAt: '2026-07-31T12:00:00.000Z',
     lastProductRefreshSuccessTime: '2026-07-31 20:00:00',
     score: 9.5,
+    sponsor: true,
   }],
   products: [
     {
@@ -35,6 +37,7 @@ const fixture: PublicShopProductsData = {
       siteProductRefreshSuccessAt: '2026-07-31T12:00:00.000Z',
       siteProductRefreshSuccessTime: '2026-07-31 20:00:00',
       siteScore: 9.5,
+      siteSponsor: true,
       categoryName: 'ChatGPT',
       name: 'Plus 成品号',
       price: '¥35',
@@ -55,6 +58,7 @@ const fixture: PublicShopProductsData = {
       siteProductRefreshSuccessAt: '2026-07-31T12:00:00.000Z',
       siteProductRefreshSuccessTime: '2026-07-31 20:00:00',
       siteScore: 9.5,
+      siteSponsor: true,
       categoryName: 'ChatGPT',
       name: 'API 额度',
       price: '$5',
@@ -95,6 +99,7 @@ test('packed shop products accessors read page fields without unpacking long obj
   const [first, second] = shopProducts(packed);
 
   assert.equal(shopSiteName(shopProductSite(packed, first)), '商家 A');
+  assert.equal(shopSiteSponsor(shopProductSite(packed, first)), true);
   assert.equal(shopProductCategoryName(packed, first), 'ChatGPT');
   assert.equal(shopProductName(first), 'Plus 成品号');
   assert.equal(shopProductPriceUnit(packed, first), '¥');

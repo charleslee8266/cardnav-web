@@ -2,17 +2,17 @@
 /*
 文件说明: 渲染 CardNav 公开站点赞助商展示区，供首页和内容页复用。
 */
-import { telegramGroupUrl } from '../site.js';
 import { getVisibleSponsors } from '../sponsors.js';
 
 const t = Astro.locals.messages;
 const sponsors = getVisibleSponsors(Astro.locals.locale);
+const partnershipUrl = Astro.locals.localizePath('/partnership');
 ---
 
 {sponsors.length > 0 && <section class="sponsor-section" aria-labelledby="sponsors-title">
   <div class="sponsor-header">
     <h2 id="sponsors-title" class="sponsor-title">{t.sponsors.title}</h2>
-    <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="sponsor-lead-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.sponsors.becomeSponsor} class="sponsor-join-link">{t.sponsors.becomeSponsor}</a>
+    <a href={partnershipUrl} data-umami-event="sponsor-lead-click" data-umami-event-url={partnershipUrl} data-umami-event-name={t.sponsors.becomeSponsor} class="sponsor-join-link">{t.sponsors.becomeSponsor}</a>
   </div>
   <ul class="sponsor-grid">
     {sponsors.map(sponsor => (

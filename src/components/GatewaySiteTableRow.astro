@@ -4,6 +4,7 @@
 */
 import { formatPositiveScore } from '../gateway-display.js';
 import DataTableCell from './DataTableCell.astro';
+import SponsorBadge from './SponsorBadge.astro';
 
 type DataAttrs = Record<string, string | number | boolean | undefined>;
 
@@ -24,6 +25,9 @@ type Props = {
   sequenceLabel: string;
   basicInfoLabel: string;
   sponsorLabel: string;
+  sponsorDescription: string;
+  sponsorHref: string;
+  sponsorLinkLabel: string;
   detailLabel: string;
   openLabel: string;
   detailHref: string;
@@ -43,6 +47,9 @@ const {
   sequenceLabel,
   basicInfoLabel,
   sponsorLabel,
+  sponsorDescription,
+  sponsorHref,
+  sponsorLinkLabel,
   detailLabel,
   openLabel,
   detailHref,
@@ -70,7 +77,7 @@ const mergedRowAttrs = {
       <div class="min-w-0 space-y-2">
         <div class="flex flex-wrap items-center gap-2">
           <a href={detailHref} class="link link-hover break-words text-base font-semibold text-primary" {...clickAttrs}>{site.name}</a>
-          {site.sponsor ? <span class="gateway-sponsor-badge">{sponsorLabel}</span> : null}
+          {site.sponsor ? <SponsorBadge label={sponsorLabel} description={sponsorDescription} href={sponsorHref} linkLabel={sponsorLinkLabel} /> : null}
           {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
         </div>
         {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}

@@ -25,6 +25,7 @@ export type PackedShopSiteRow = [
   url: string,
   lastProductRefreshSuccessMs: number | null,
   score: number,
+  sponsor?: 0 | 1,
 ];
 
 export type PackedShopProductRow = [
@@ -116,6 +117,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
       site.url,
       timestampMs(site.lastProductRefreshSuccessAt),
       Number(site.score) || 0,
+      site.sponsor ? 1 : 0,
     ];
   });
   const categories: string[] = [];
@@ -131,6 +133,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
         product.siteUrl,
         timestampMs(product.siteProductRefreshSuccessAt),
         Number(product.siteScore) || 0,
+        product.siteSponsor ? 1 : 0,
       ]);
     }
     return [
@@ -214,6 +217,10 @@ export function shopSiteLastRefreshTime(site: PackedShopSiteRow | null | undefin
 
 export function shopSiteScore(site: PackedShopSiteRow | null | undefined) {
   return Number(site?.[4]) || 0;
+}
+
+export function shopSiteSponsor(site: PackedShopSiteRow | null | undefined) {
+  return site?.[5] === 1;
 }
 
 export function shopProductCategoryName(data: PackedShopProductsData, product: PackedShopProductRow) {

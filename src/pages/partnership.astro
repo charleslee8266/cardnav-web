@@ -1,0 +1,31 @@
+---
+/*
+文件说明: 渲染公开站点商务合作说明页，展示合作方式、审核边界和联系入口。
+对应文档: docs/promo/cardnav-partner-offer.md
+*/
+import PublicPage from '../layouts/PublicPage.astro';
+import PageContentArticle from '../components/PageContentArticle.astro';
+import { loadPageContent } from '../page-content.js';
+import { buildSeoContext } from '../seo.js';
+import { publicSiteUrl } from '../site.js';
+import { applyStaticLocaleLocals } from '../static-locale.js';
+
+export const prerender = true;
+
+applyStaticLocaleLocals(Astro, undefined, '/partnership');
+
+const content = loadPageContent('partnership', Astro.locals.locale);
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/partnership',
+  title: content.title,
+  description: content.description,
+  imagePath: '/og-cardnav.png',
+  type: 'webpage',
+  locale: Astro.locals.locale,
+});
+---
+
+<PublicPage activeNav="partnership" showSponsors={false} {...seo}>
+  <PageContentArticle content={content} />
+</PublicPage>

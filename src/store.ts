@@ -13,6 +13,7 @@ export type PublicSiteRow = {
   lastProductRefreshSuccessAt: string | null;
   lastProductRefreshSuccessTime: string;
   score: number;
+  sponsor: boolean;
 };
 
 export type PublicGatewaySiteRow = {
@@ -99,6 +100,7 @@ export type PublicProductRow = {
   siteProductRefreshSuccessAt: string | null;
   siteProductRefreshSuccessTime: string;
   siteScore: number;
+  siteSponsor: boolean;
   clickCount: number;
   score: number;
 };
@@ -273,15 +275,17 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     ? Math.max(1, Math.floor(options.productLimit))
     : null;
   if (snapshot) {
-    const sourceProducts = options.inStockOnly
+    const normalizedSites = snapshot.sites.map(site => ({ ...site, sponsor: site.sponsor === true }));
+    const sourceProducts = (options.inStockOnly
       ? snapshot.products.filter(product => product.inStock)
-      : snapshot.products;
+      : snapshot.products)
+      .map(product => ({ ...product, siteSponsor: product.siteSponsor === true }));
     const products = safeProductLimit === null ? sourceProducts : sourceProducts.slice(0, safeProductLimit);
     const sites = safeProductLimit === null
-      ? snapshot.sites
+      ? normalizedSites
       : (() => {
         const selectedSiteIds = new Set(products.map(product => product.siteId));
-        return snapshot.sites.filter(site => selectedSiteIds.has(site.id));
+        return normalizedSites.filter(site => selectedSiteIds.has(site.id));
       })();
     const totalInStockProductCount = typeof snapshot.totalInStockProductCount === 'number'
       ? snapshot.totalInStockProductCount
@@ -305,37 +309,86 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         name,
         url,
         score,
+        sponsor,
         last_product_refresh_success_at
       FROM shop_sites
       WHERE status = 'online'
         AND type = 'cardShop'
-      ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
+      ORDER BY sponsor DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
     : null;
   const productsResult = await db.query(`
+    WITH base_products AS (
+      SELECT
+        shop_products.id AS product_row_id,
+        shop_products.site_id,
+        shop_sites.name AS site_name,
+        shop_sites.url AS site_url,
+        shop_sites.score AS site_score,
+        shop_sites.sponsor AS site_sponsor,
+        shop_sites.last_product_refresh_success_at AS site_product_refresh_success_at,
+        shop_products.category_name,
+        shop_products.name,
+        shop_products.price,
+        shop_products.price_number,
+        shop_products.price_unit,
+        shop_products.product_url,
+        shop_products.stock,
+        shop_products.in_stock,
+        shop_products.click_count,
+        shop_products.score,
+        shop_products.refreshed_at,
+        ROW_NUMBER() OVER (
+          ORDER BY shop_products.score DESC, shop_sites.score DESC, shop_products.in_stock DESC, shop_products.refreshed_at DESC, shop_products.category_name ASC, shop_products.name ASC
+        ) AS natural_order
+      FROM shop_products
+      INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
+      WHERE shop_sites.status = 'online'
+        AND shop_sites.type = 'cardShop'
+        ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
+    ),
+    sponsor_candidates AS (
+      SELECT
+        product_row_id,
+        natural_order,
+        ROW_NUMBER() OVER (PARTITION BY site_id ORDER BY natural_order ASC) AS sponsor_site_product_rank,
+        MIN(natural_order) OVER (PARTITION BY site_id) AS sponsor_site_first_order
+      FROM base_products
+      WHERE site_sponsor = TRUE
+    ),
+    sponsor_pins AS (
+      SELECT
+        product_row_id,
+        ROW_NUMBER() OVER (ORDER BY sponsor_site_product_rank ASC, sponsor_site_first_order ASC, natural_order ASC) AS sponsor_pin_rank
+      FROM sponsor_candidates
+      WHERE sponsor_site_product_rank <= 5
+      ORDER BY sponsor_site_product_rank ASC, sponsor_site_first_order ASC, natural_order ASC
+      LIMIT 10
+    )
     SELECT
-      shop_products.site_id,
-      shop_sites.name AS site_name,
-      shop_sites.url AS site_url,
-      shop_sites.score AS site_score,
-      shop_sites.last_product_refresh_success_at AS site_product_refresh_success_at,
-      shop_products.category_name,
-      shop_products.name,
-      shop_products.price,
-      shop_products.price_number,
-      shop_products.price_unit,
-      shop_products.product_url,
-      shop_products.stock,
-      shop_products.in_stock,
-      shop_products.click_count,
-      shop_products.score,
-      shop_products.refreshed_at
-    FROM shop_products
-    INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
-    WHERE shop_sites.status = 'online'
-      AND shop_sites.type = 'cardShop'
-      ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
-    ORDER BY shop_products.score DESC, shop_sites.score DESC, shop_products.in_stock DESC, shop_products.refreshed_at DESC, shop_products.category_name ASC, shop_products.name ASC
+      base_products.site_id,
+      base_products.site_name,
+      base_products.site_url,
+      base_products.site_score,
+      base_products.site_sponsor,
+      base_products.site_product_refresh_success_at,
+      base_products.category_name,
+      base_products.name,
+      base_products.price,
+      base_products.price_number,
+      base_products.price_unit,
+      base_products.product_url,
+      base_products.stock,
+      base_products.in_stock,
+      base_products.click_count,
+      base_products.score,
+      base_products.refreshed_at
+    FROM base_products
+    LEFT JOIN sponsor_pins ON sponsor_pins.product_row_id = base_products.product_row_id
+    ORDER BY
+      CASE WHEN sponsor_pins.sponsor_pin_rank IS NULL THEN 1 ELSE 0 END ASC,
+      sponsor_pins.sponsor_pin_rank ASC NULLS LAST,
+      base_products.natural_order ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
 
@@ -360,6 +413,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       siteProductRefreshSuccessAt,
       siteProductRefreshSuccessTime: formatBeijingRefreshTime(siteProductRefreshSuccessAt),
       siteScore: Number(row.site_score) || 0,
+      siteSponsor: row.site_sponsor === true,
       score: Number(row.score) || 0,
     };
   });
@@ -372,6 +426,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       lastProductRefreshSuccessAt: row.last_product_refresh_success_at ? String(row.last_product_refresh_success_at) : null,
       lastProductRefreshSuccessTime: formatBeijingRefreshTime(row.last_product_refresh_success_at ? String(row.last_product_refresh_success_at) : null),
       score: Number(row.score) || 0,
+      sponsor: row.sponsor === true,
     }))
     : (() => {
       const siteById = new Map<string, PublicSiteRow>();
@@ -386,6 +441,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
           lastProductRefreshSuccessAt,
           lastProductRefreshSuccessTime: formatBeijingRefreshTime(lastProductRefreshSuccessAt),
           score: Number(row.site_score) || 0,
+          sponsor: row.site_sponsor === true,
         });
       }
       return [...siteById.values()];

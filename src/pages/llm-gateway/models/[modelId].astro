@@ -16,6 +16,7 @@ import { loadGatewayModelDetail } from '../../../store.js';
 import deferredTableCoreScriptUrl from '../../../scripts/deferred-table-core.js?url';
 import gatewayDetailTablesScriptUrl from '../../../scripts/gateway-detail-tables.js?url';
 import dataTableScriptUrl from '../../../scripts/data-table.js?url';
+import sponsorBadgeScriptUrl from '../../../scripts/sponsor-badge.js?url';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -38,6 +39,9 @@ const modelSiteTableConfig = {
   detailLabel: t.llmGateway.viewDetail,
   openLabel: t.actions.open,
   sponsorLabel: t.llmGateway.sponsorLabel,
+  sponsorDescription: t.llmGateway.sponsorDescription,
+  partnershipUrl: linkTo('/partnership'),
+  partnershipLinkLabel: t.sponsors.partnershipLinkLabel,
   labels: {
     sequence: t.labels.sequence,
     basicInfo: t.llmGateway.basicInfo,
@@ -151,6 +155,9 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
             sequenceLabel={t.labels.sequence}
             basicInfoLabel={t.llmGateway.basicInfo}
             sponsorLabel={t.llmGateway.sponsorLabel}
+            sponsorDescription={t.llmGateway.sponsorDescription}
+            sponsorHref={linkTo('/partnership')}
+            sponsorLinkLabel={t.sponsors.partnershipLinkLabel}
             detailLabel={t.llmGateway.viewDetail}
             openLabel={t.actions.open}
             detailHref={linkTo(`/llm-gateway/${site.slug}`)}
@@ -200,5 +207,6 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
   <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(modelSiteTableConfig)}></script>
   <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
   <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
+  <script is:inline slot="scripts" src={sponsorBadgeScriptUrl}></script>
   <script is:inline slot="scripts" defer src={gatewayDetailTablesScriptUrl}></script>
 </PublicPage>

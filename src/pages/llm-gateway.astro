@@ -18,6 +18,7 @@ import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
 import dataTableScriptUrl from '../scripts/data-table.js?url';
+import sponsorBadgeScriptUrl from '../scripts/sponsor-badge.js?url';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -96,6 +97,9 @@ const gatewayHomeConfig = {
   sequenceLabel: t.labels.sequence,
   basicInfoLabel: t.llmGateway.basicInfo,
   sponsorLabel: t.llmGateway.sponsorLabel,
+  sponsorDescription: t.llmGateway.sponsorDescription,
+  partnershipUrl: linkTo('/partnership'),
+  partnershipLinkLabel: t.sponsors.partnershipLinkLabel,
   scoreLabel: t.labels.score,
   supportedModelsLabel: t.llmGateway.supportedModels,
   modelCountLabel: t.llmGateway.modelCount,
@@ -200,6 +204,9 @@ const gatewayHomeConfig = {
                   sequenceLabel={t.labels.sequence}
                   basicInfoLabel={t.llmGateway.basicInfo}
                   sponsorLabel={t.llmGateway.sponsorLabel}
+                  sponsorDescription={t.llmGateway.sponsorDescription}
+                  sponsorHref={linkTo('/partnership')}
+                  sponsorLinkLabel={t.sponsors.partnershipLinkLabel}
                   detailLabel={t.llmGateway.viewDetail}
                   openLabel={t.actions.open}
                   detailHref={linkTo(`/llm-gateway/${site.slug}`)}
@@ -288,6 +295,7 @@ const gatewayHomeConfig = {
     </section>
   )}
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
+  <script is:inline slot="scripts" src={sponsorBadgeScriptUrl}></script>
   <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
   <script>
     import '../scripts/llm-gateway-home.js';

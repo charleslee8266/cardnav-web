@@ -1,7 +1,6 @@
 /*
  * 文件说明: 商家列表视图的懒加载模块，按商家渲染评分、商品数量、热门商品和刷新时间。
  */
-
 let merchantRowsRendered = false;
 let merchantRows = [];
 let rows = [];
@@ -73,15 +72,17 @@ function priceValueForSort(priceNumber, priceUnit) {
   return priceNumber;
 }
 
-function createTrackedMerchantLink(siteUrl, siteName, createTrackedLink) {
+function createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, options = {}) {
   return createTrackedLink(siteUrl, 'merchant-link merchant-text', siteName, siteName, {
     umamiEvent: 'merchant-click',
     productClick: false,
+    sponsor: options.sponsor === true,
   });
 }
 
 function createProductChip(item, shopProductsData, shopsMessages, createTrackedLink, accessors) {
   const site = accessors.shopProductSite(shopProductsData, item);
+  const siteSponsor = accessors.shopSiteSponsor(site);
   const categoryName = text(accessors.shopProductCategoryName(shopProductsData, item));
   const productName = text(accessors.shopProductName(item));
   const priceNumber = accessors.shopProductPriceNumber(item);
@@ -110,6 +111,7 @@ function createProductChip(item, shopProductsData, shopsMessages, createTrackedL
     chip.href = productUrl;
     chip.target = '_blank';
     chip.rel = 'noopener noreferrer';
+    if (siteSponsor) chip.rel = 'noopener noreferrer sponsored';
     chip.dataset.umamiEvent = 'product-click';
     chip.dataset.umamiEventUrl = productUrl;
     chip.dataset.umamiEventName = productTitle;
@@ -172,6 +174,7 @@ export function renderMerchantRows({
       .slice(0, 10);
     const siteName = text(accessors.shopSiteName(site));
     const siteUrl = text(accessors.shopSiteUrl(site)).trim();
+    const siteSponsor = accessors.shopSiteSponsor(site);
     const siteFavoriteKey = siteId || siteName;
     const row = document.createElement('div');
     row.className = 'merchant-row';
@@ -180,6 +183,7 @@ export function renderMerchantRows({
     row.dataset.siteUrl = siteUrl.toLowerCase();
     row.dataset.siteName = siteName;
     row.dataset.siteScore = String(accessors.shopSiteScore(site));
+    row.dataset.sponsor = siteSponsor ? '1' : '0';
     row.dataset.lastProductRefreshSuccessAt = String(accessors.shopSiteLastRefreshMs(site) || 0);
     row.dataset.originalIndex = String(index);
     row.dataset.rank = String(index + 1);
@@ -194,10 +198,11 @@ export function renderMerchantRows({
     merchantHeader.className = 'merchant-header';
     merchantHeader.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
     if (siteUrl) {
-      merchantHeader.appendChild(createTrackedMerchantLink(siteUrl, siteName, createTrackedLink));
+      merchantHeader.appendChild(createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, { sponsor: siteSponsor }));
     } else {
       appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
     }
+    if (siteSponsor) merchantHeader.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || '/partnership', shopsMessages.partnershipLinkLabel || 'How to partner'));
     merchantCell.appendChild(merchantHeader);
     row.appendChild(merchantCell);
 

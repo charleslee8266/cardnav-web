@@ -21,6 +21,8 @@ import { loadGatewayDetail } from '../../store.js';
 import deferredTableCoreScriptUrl from '../../scripts/deferred-table-core.js?url';
 import gatewayDetailTablesScriptUrl from '../../scripts/gateway-detail-tables.js?url';
 import dataTableScriptUrl from '../../scripts/data-table.js?url';
+import sponsorBadgeScriptUrl from '../../scripts/sponsor-badge.js?url';
+import SponsorBadge from '../../components/SponsorBadge.astro';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -38,6 +40,7 @@ const priceTableConfig = {
   totalCount: priceTotalCount,
   apiUrl: `/api/llm-gateway/site-prices/${encodeURIComponent(site.slug)}.json?offset=${prices.length}&locale=${encodeURIComponent(Astro.locals.locale)}`,
   displaySummary: t.labels.displaySummary,
+  partnershipUrl: linkTo('/partnership'),
   modelLinkPrefix: linkTo('/llm-gateway/models'),
   labels: {
     sequence: t.labels.sequence,
@@ -106,6 +109,7 @@ function gatewayModelClickAttrs(modelId: string) {
   >
     <div slot="title" class="flex flex-wrap items-center gap-2">
       <h1 class="page-hero-title mt-0">{site.name}</h1>
+      {site.sponsor ? <SponsorBadge label={t.llmGateway.sponsorLabel} description={t.llmGateway.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
       {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
     </div>
     <div slot="meta" class="page-hero-meta">
@@ -203,5 +207,6 @@ function gatewayModelClickAttrs(modelId: string) {
   <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(priceTableConfig)}></script>
   <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
   <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
+  <script is:inline slot="scripts" src={sponsorBadgeScriptUrl}></script>
   <script is:inline slot="scripts" defer src={gatewayDetailTablesScriptUrl}></script>
 </PublicPage>
