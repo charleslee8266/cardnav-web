@@ -37,6 +37,12 @@ function appendTextElement(parent, tagName, className, content) {
   return element;
 }
 
+function localizedFallbackPath(pathname) {
+  const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  const [, maybeLocale] = window.location.pathname.split('/');
+  return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
+}
+
 function formatDisplayPrice(priceNumber, priceUnit) {
   if (typeof priceNumber === 'number' && Number.isFinite(priceNumber) && priceUnit) {
     return `${priceUnit}${String(priceNumber)}`;
@@ -202,7 +208,7 @@ export function renderMerchantRows({
     } else {
       appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
     }
-    if (siteSponsor) merchantHeader.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || '/partnership', shopsMessages.partnershipLinkLabel || 'How to partner'));
+    if (siteSponsor) merchantHeader.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
     merchantCell.appendChild(merchantHeader);
     row.appendChild(merchantCell);
 

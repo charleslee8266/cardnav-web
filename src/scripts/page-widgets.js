@@ -10,9 +10,15 @@ function parseJsonScript(id, fallback = {}) {
   }
 }
 
+function localizedFallbackPath(pathname) {
+  const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  const [, maybeLocale] = window.location.pathname.split('/');
+  return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
+}
+
 function initHomeSearch() {
   const config = parseJsonScript('home-search-config');
-  const shopsPath = config.shopsPath || '/shops';
+  const shopsPath = config.shopsPath || localizedFallbackPath('/shops');
   const homeSearchForm = document.querySelector('[data-home-search-form]');
   const homeSearchInput = homeSearchForm?.querySelector('[data-home-search-input]');
   const homeSearchButton = homeSearchForm?.querySelector('[data-umami-event="home-search-submit"]');

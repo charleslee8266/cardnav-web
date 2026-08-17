@@ -6,6 +6,15 @@
   if (!root) return;
 
   const config = JSON.parse(document.getElementById('gateway-deferred-table-config')?.textContent || '{}');
+  function localizedFallbackPath(pathname) {
+    const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    const [, maybeLocale] = window.location.pathname.split('/');
+    return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
+  }
+
+  const gatewayLinkPrefix = config.gatewayLinkPrefix || localizedFallbackPath('/llm-gateway');
+  const modelLinkPrefix = config.modelLinkPrefix || localizedFallbackPath('/llm-gateway/models');
+  const partnershipUrl = config.partnershipUrl || localizedFallbackPath('/partnership');
   const table = root.querySelector('[data-table]');
   const tbody = table?.querySelector('tbody');
   const button = root.querySelector('[data-gateway-detail-load-more]');
@@ -163,7 +172,7 @@
 
     const modelCell = tableCell(labels.model || '', 'left', 'min-w-48');
     const modelLink = el('a', 'link link-hover break-words font-mono text-xs font-semibold text-primary', price.modelId || '');
-    modelLink.href = `${config.modelLinkPrefix || '/llm-gateway/models'}/${encodeURIComponent(price.modelId || '')}`;
+    modelLink.href = `${modelLinkPrefix}/${encodeURIComponent(price.modelId || '')}`;
     modelLink.dataset.umamiEvent = 'gateway-model-click';
     modelLink.dataset.umamiEventName = price.modelId || '';
     modelLink.dataset.umamiEventTargetPage = modelLink.href;
@@ -190,7 +199,7 @@
   function modelSiteRowElement(site, index) {
     const labels = config.labels || {};
     const prices = Array.isArray(site.pricesForModel) ? site.pricesForModel : [];
-    const detailHref = `${config.gatewayLinkPrefix || '/llm-gateway'}/${site.slug}`;
+    const detailHref = `${gatewayLinkPrefix}/${site.slug}`;
     const row = document.createElement('tr');
     setDataset(row, {
       sortSticky: site.sponsor ? 1 : 0,
@@ -219,7 +228,7 @@
     siteLink.dataset.umamiEventTargetPage = detailHref;
     siteLink.dataset.umamiEventUrl = detailHref;
     titleWrap.append(siteLink);
-    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', config.partnershipUrl || '/partnership', config.partnershipLinkLabel || 'How to partner'));
+    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));

@@ -8,8 +8,10 @@ import { test } from 'node:test';
 
 const projectRoot = path.resolve('.');
 const sourceRoot = path.join(projectRoot, 'src');
+const scriptRoot = path.join(sourceRoot, 'scripts');
 const localScriptUrlImportPattern = /import\s+([A-Za-z_$][\w$]*)\s+from\s+['"]([^'"]*\/scripts\/[^'"]+\.js)\?url['"]/g;
 const localSourceImportPattern = /(?:^|\n)\s*import(?:\s+[^('"`][\s\S]*?\s+from\s*)?['"](\.{1,2}\/[^'"]+)['"]|import\(\s*['"](\.{1,2}\/[^'"]+)['"]\s*\)/g;
+const defaultLocaleRouteFallbackPattern = /(?:\|\||\?\?|=\s*)\s*['"]\/(?:shops|partnership|llm-gateway|official-price|model-leaderboard|tools)(?:\/[^'"]*)?['"]/g;
 
 function listFiles(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -40,6 +42,20 @@ test('local scripts loaded through ?url do not import project source modules', (
       return `${path.relative(projectRoot, astroFilePath)} imports ${variableName} from ${path.relative(projectRoot, scriptPath)}, but that raw script imports ${importedPath}`;
     });
   });
+
+  assert.deepEqual(failures, []);
+});
+
+test('browser scripts localize dynamic public route fallbacks', () => {
+  const failures = listFiles(scriptRoot)
+    .filter(filePath => filePath.endsWith('.js'))
+    .flatMap(filePath => {
+      const source = fs.readFileSync(filePath, 'utf8');
+      return [...source.matchAll(defaultLocaleRouteFallbackPattern)].map(match => {
+        const line = source.slice(0, match.index).split('\n').length;
+        return `${path.relative(projectRoot, filePath)}:${line} uses default-locale route fallback ${match[0]}`;
+      });
+    });
 
   assert.deepEqual(failures, []);
 });

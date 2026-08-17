@@ -99,9 +99,16 @@ const SEARCH_REPORT_DEDUP_WINDOW_MS = 2 * 60 * 1000;
 let lastReportedQuery = '';
 let lastReportedUmamiFilterKey = '';
 const recentSearchReports = new Map();
+const localizedShopsPath = shopsMessages.shopsPath || localizedFallbackPath('/shops');
 let currentQuickPlanPath = shopsMessages.seoSearchPath || '';
 let currentSearchPageMetaQuery = shopsMessages.seoSearchQuery || '';
 let currentSearchPageMetaPath = shopsMessages.seoSearchPath || '';
+
+function localizedFallbackPath(pathname) {
+  const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  const [, maybeLocale] = window.location.pathname.split('/');
+  return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
+}
 
 function trackUmamiEvent(eventName, eventData = {}) {
   if (typeof window.umami?.track !== 'function') return;
@@ -708,7 +715,7 @@ function createFlatProductRow(item) {
   } else {
     appendTextElement(productInline, 'span', 'product-text', productName);
   }
-  if (siteSponsor) productInline.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || '/partnership', shopsMessages.partnershipLinkLabel || 'How to partner'));
+  if (siteSponsor) productInline.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
   productCell.appendChild(productInline);
   row.appendChild(productCell);
 
@@ -982,7 +989,7 @@ async function applyFilters(options = {}) {
     if (priceMaxValue) params.set('priceMax', priceMaxValue);
   }
   resetSearchPageMeta(productQueryValue);
-  const nextPath = currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : '/shops';
+  const nextPath = currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : localizedShopsPath;
   const nextUrl = params.toString() ? `${nextPath}?${params.toString()}` : nextPath;
   history.replaceState(null, '', nextUrl);
 }

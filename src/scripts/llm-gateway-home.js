@@ -8,6 +8,15 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   if (!gatewayHome) return;
 
   const config = JSON.parse(document.getElementById('gateway-home-config')?.textContent || '{}');
+  function localizedFallbackPath(pathname) {
+    const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    const [, maybeLocale] = window.location.pathname.split('/');
+    return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
+  }
+
+  const gatewayLinkPrefix = config.gatewayLinkPrefix || localizedFallbackPath('/llm-gateway');
+  const modelLinkPrefix = config.modelLinkPrefix || localizedFallbackPath('/llm-gateway/models');
+  const partnershipUrl = config.partnershipUrl || localizedFallbackPath('/partnership');
   const paymentMethodLabels = config.paymentMethodLabels || {};
   const siteSearchInput = gatewayHome.querySelector('[data-home-site-search]');
   const siteFamilySelect = gatewayHome.querySelector('[data-home-site-family]');
@@ -92,7 +101,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function gatewaySiteTracking(site) {
-    const targetPage = `${config.gatewayLinkPrefix}/${site.slug}`;
+    const targetPage = `${gatewayLinkPrefix}/${site.slug}`;
     return {
       umamiEvent: 'gateway-site-click',
       umamiEventName: site.name,
@@ -110,7 +119,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function gatewayModelTracking(model) {
-    const targetPage = `${config.modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
+    const targetPage = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
     return {
       umamiEvent: 'gateway-model-click',
       umamiEventName: model.modelId,
@@ -173,10 +182,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const textWrap = el('div', 'min-w-0 space-y-2');
     const titleWrap = el('div', 'flex flex-wrap items-center gap-2');
     const siteLink = el('a', 'link link-hover break-words text-base font-semibold text-primary', site.name);
-    siteLink.href = `${config.gatewayLinkPrefix}/${site.slug}`;
+    siteLink.href = `${gatewayLinkPrefix}/${site.slug}`;
     setTracking(siteLink, gatewaySiteTracking(site));
     titleWrap.append(siteLink);
-    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', config.partnershipUrl || '/partnership', config.partnershipLinkLabel || 'How to partner'));
+    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));
@@ -185,7 +194,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     textWrap.append(urlWrap);
     const actionWrap = el('div', 'inline-flex shrink-0 items-center gap-2 self-start sm:self-center');
     const detailLink = el('a', 'btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.detailLabel);
-    detailLink.href = `${config.gatewayLinkPrefix}/${site.slug}`;
+    detailLink.href = `${gatewayLinkPrefix}/${site.slug}`;
     setTracking(detailLink, gatewaySiteTracking(site));
     const openLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel);
     openLink.href = site.outboundUrl || site.url;
@@ -237,7 +246,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     row.append(sequenceCell);
     const modelCell = tableCell(config.modelLabel);
     const modelLink = el('a', 'link link-hover break-words font-mono text-sm font-semibold text-primary', model.modelId);
-    modelLink.href = `${config.modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
+    modelLink.href = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
     setTracking(modelLink, gatewayModelTracking(model));
     modelCell.append(modelLink);
     row.append(modelCell);

@@ -4,7 +4,7 @@
  */
 
 window.CardNavSponsorBadge = {
-  create(label = 'Partner', description = '', href = '/partnership', linkLabel = 'How to partner') {
+  create(label = 'Partner', description = '', href = '', linkLabel = 'How to partner') {
     const group = document.createElement('span');
     group.className = 'sponsor-badge-group';
     const badge = document.createElement('span');
@@ -28,7 +28,7 @@ window.CardNavSponsorBadge = {
       link.className = 'sponsor-badge-link';
       link.href = href;
       link.textContent = linkLabel;
-      tooltip.appendChild(link);
+      if (href) tooltip.appendChild(link);
       info.appendChild(tooltip);
       badge.appendChild(info);
     }
