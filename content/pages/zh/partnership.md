@@ -48,4 +48,4 @@ description: 卡网大全为卡网商家和 AI API 中转站提供公开、可�
 
 ## 联系合作
 
-合作详情请联系 Telegram 用户 [@charles8266](https://t.me/charles8266) 咨询。
+合作详情请联系 Telegram [@charles8266](https://t.me/charles8266) 咨询。

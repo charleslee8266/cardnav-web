@@ -38,8 +38,8 @@ const modelSiteTableConfig = {
   gatewayLinkPrefix: linkTo('/llm-gateway'),
   detailLabel: t.llmGateway.viewDetail,
   openLabel: t.actions.open,
-  sponsorLabel: t.llmGateway.sponsorLabel,
-  sponsorDescription: t.llmGateway.sponsorDescription,
+  sponsorLabel: t.sponsors.sponsorLabel,
+  sponsorDescription: t.sponsors.sponsorDescription,
   partnershipUrl: linkTo('/partnership'),
   partnershipLinkLabel: t.sponsors.partnershipLinkLabel,
   labels: {
@@ -154,8 +154,8 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
             sequence={rank}
             sequenceLabel={t.labels.sequence}
             basicInfoLabel={t.llmGateway.basicInfo}
-            sponsorLabel={t.llmGateway.sponsorLabel}
-            sponsorDescription={t.llmGateway.sponsorDescription}
+            sponsorLabel={t.sponsors.sponsorLabel}
+            sponsorDescription={t.sponsors.sponsorDescription}
             sponsorHref={linkTo('/partnership')}
             sponsorLinkLabel={t.sponsors.partnershipLinkLabel}
             detailLabel={t.llmGateway.viewDetail}

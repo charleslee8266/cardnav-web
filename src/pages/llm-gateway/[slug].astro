@@ -109,7 +109,7 @@ function gatewayModelClickAttrs(modelId: string) {
   >
     <div slot="title" class="flex flex-wrap items-center gap-2">
       <h1 class="page-hero-title mt-0">{site.name}</h1>
-      {site.sponsor ? <SponsorBadge label={t.llmGateway.sponsorLabel} description={t.llmGateway.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
+      {site.sponsor ? <SponsorBadge label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
       {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
     </div>
     <div slot="meta" class="page-hero-meta">
