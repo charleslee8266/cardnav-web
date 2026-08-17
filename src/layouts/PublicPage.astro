@@ -168,7 +168,29 @@ function siteLinkClickAttrs(url: string, name: string) {
   'bg-base-200 text-base-content text-[15px] font-sans antialiased',
   isGuidePage ? 'h-dvh overflow-hidden' : 'min-h-screen',
 ]}>
-<header class="fixed inset-x-0 top-0 z-40 max-w-full overflow-visible border-b border-base-300 bg-base-100/90 backdrop-blur md:sticky">
+<div id="publicAnnouncementDesktop" data-announcement-desktop hidden class="public-announcement public-announcement-pending border-b border-primary/20 bg-primary/5 px-2 py-2.5 md:px-3">
+  <div class="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm">
+    <div class="flex min-w-0 max-w-full items-center justify-self-center gap-2">
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="badge inline-flex shrink-0 gap-1 border-primary/30 bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary" {...siteLinkClickAttrs(telegramGroupUrl, 'Announcement Telegram')}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 11 18-5v12L3 13v-2Z"></path>
+          <path d="M11.6 15.2 13 21H9l-1.8-6.7"></path>
+        </svg>
+        {t.announcement.label}
+      </a>
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="min-w-0 overflow-x-auto whitespace-nowrap text-center font-semibold leading-5 text-base-content/75" {...siteLinkClickAttrs(telegramGroupUrl, 'Announcement Telegram')}>
+        {t.announcement.message}
+      </a>
+    </div>
+    <button type="button" data-dismiss-announcement class="btn btn-ghost btn-circle btn-xs shrink-0 text-base-content/70 hover:bg-base-200 hover:text-base-content" aria-label={t.announcement.close} title={t.announcement.close}>
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M6 6l12 12"></path>
+        <path d="M18 6 6 18"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+<header class="sticky inset-x-0 top-0 z-40 max-w-full overflow-visible border-b border-base-300 bg-base-100/90 backdrop-blur">
   <nav class="flex h-12 max-w-full items-center gap-1 overflow-visible px-2 md:hidden">
     <details class="dropdown dropdown-bottom">
       <summary class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/85 hover:bg-base-200" aria-label={t.nav.openMenu} title={t.nav.openMenu}>
@@ -178,7 +200,7 @@ function siteLinkClickAttrs(url: string, name: string) {
           <path d="M4 17h16"></path>
         </svg>
       </summary>
-      <ul class="menu dropdown-content z-50 mt-2 w-48 rounded-2xl border border-base-300 bg-base-100 p-2 shadow-lg">
+      <ul class="menu dropdown-content public-floating-layer z-50 mt-2 w-72 max-w-[calc(100vw-1rem)] rounded-2xl border border-base-300 bg-base-100 p-2">
         {primaryNavItems.map(item => (
           <li><a href={linkTo(item.href)} class={activeNav === item.key ? mobileMoreLinkClass + ' text-primary' : mobileMoreLinkClass} {...navClickAttrs(linkTo(item.href), item.label)}>{item.label}</a></li>
         ))}
@@ -203,7 +225,7 @@ function siteLinkClickAttrs(url: string, name: string) {
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"></path>
           </svg>
         </summary>
-        <ul id="languageMenuMobile" class="menu dropdown-content z-50 mt-2 w-36 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg">
+        <ul id="languageMenuMobile" class="menu dropdown-content public-floating-layer z-50 mt-2 w-36 rounded-xl border border-base-300 bg-base-100 p-2">
           {languageItems.map(item => (
             <li>
               <a
@@ -253,7 +275,7 @@ function siteLinkClickAttrs(url: string, name: string) {
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"></path>
           </svg>
         </summary>
-        <ul id="languageMenuDesktop" class="menu dropdown-content z-50 mt-2 w-36 rounded-xl border border-base-300 bg-base-100 p-2 shadow-lg">
+        <ul id="languageMenuDesktop" class="menu dropdown-content public-floating-layer z-50 mt-2 w-36 rounded-xl border border-base-300 bg-base-100 p-2">
           {languageItems.map(item => (
             <li>
               <a
@@ -302,7 +324,7 @@ function siteLinkClickAttrs(url: string, name: string) {
 </header>
 
 <main class:list={[
-  'grid w-full min-w-0 flex-1 grid-cols-[minmax(0,1fr)] content-start items-start gap-4 p-4 pt-16 md:pt-4',
+  'grid w-full min-w-0 flex-1 grid-cols-[minmax(0,1fr)] content-start items-start gap-4 p-4 pt-4',
   isGuidePage && 'min-h-0 h-full overflow-hidden grid-rows-[minmax(0,1fr)]',
   activeNav !== 'home' && 'site-wide-width',
 ]}>

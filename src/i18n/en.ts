@@ -156,6 +156,11 @@ export const enMessages: Messages = {
     xProfile: 'X @CharlesLee8266',
     chatgptSession: 'ChatGPT Session endpoint',
   },
+  announcement: {
+    label: 'Announcement',
+    message: 'The CardNav Telegram group is now open, share feature suggestions, product ideas, data questions, usage feedback, and business inquiries with us.',
+    close: 'Close announcement',
+  },
   analytics: {
     homeSearch: 'Home search',
   },
@@ -273,7 +278,7 @@ export const enMessages: Messages = {
     note: 'Prices are for reference only. Final prices are determined by each platform.',
     submitMerchant: 'Submit merchant',
     guideTitle: 'Read before buying: how to choose a reliable merchant',
-    guideDescription: 'Quickly screen risk by product count, payment methods, contacts, community activity, and stock updates.',
+    guideDescription: 'CardNav only organizes public information. Judge merchant and product reliability yourself.',
     hotProductsTitle: 'Hot products',
     searchPlaceholder: 'Search products. Separate keywords with spaces. Advanced search is available in the info button on the right.',
     advancedSearchLabel: 'Advanced search help',

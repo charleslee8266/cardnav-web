@@ -531,6 +531,14 @@
     @apply flex flex-wrap items-center gap-0.5 rounded-xl bg-base-100;
   }
 
+  .public-announcement-pending {
+    display: none !important;
+  }
+
+  .public-floating-layer {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
   .nav-top-tab {
     @apply inline-flex min-h-9 items-center rounded-lg bg-base-100 px-2.5 text-[0.95rem] tracking-normal transition-colors duration-200;
   }
@@ -730,11 +738,11 @@
   }
 
   .sponsor-badge-info {
-    @apply relative inline-flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-current text-[8px] font-bold leading-none text-primary outline-none;
+    @apply relative inline-flex h-3 w-3 cursor-pointer items-center justify-center rounded-full border border-current text-[8px] font-bold leading-none text-primary outline-none;
   }
 
   .sponsor-badge-tooltip {
-    @apply pointer-events-auto absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 rounded border border-base-300 bg-base-100 px-3 py-2 text-left text-xs font-normal leading-5 text-base-content opacity-0 shadow-lg transition-opacity;
+    @apply pointer-events-auto absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 rounded border border-base-300 bg-base-100 px-3 py-2 text-left text-xs font-normal leading-5 text-base-content opacity-0 transition-opacity;
   }
 
   .sponsor-badge-tooltip::before {

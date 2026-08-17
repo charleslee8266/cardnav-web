@@ -18,7 +18,7 @@ const { label, description, href, linkLabel } = Astro.props;
     <span>{label}</span>
     <span class="sponsor-badge-info" tabindex="0" role="img" aria-label={description}>
       i
-      <span class="sponsor-badge-tooltip" role="tooltip">
+      <span class="sponsor-badge-tooltip public-floating-layer" role="tooltip">
         {description} <a href={href} class="sponsor-badge-link">{linkLabel}</a>
       </span>
     </span>

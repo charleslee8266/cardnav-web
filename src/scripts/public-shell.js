@@ -13,10 +13,11 @@ function initInlineHelp() {
     button.setAttribute('aria-expanded', 'false');
     const tip = document.createElement('div');
     tip.id = tipId;
-    tip.className = 'inline-help-tooltip hidden';
+    tip.className = 'inline-help-tooltip public-floating-layer hidden';
     tip.textContent = tipText;
     tip.setAttribute('role', 'tooltip');
     document.body.appendChild(tip);
+    let hideTimeout;
 
     const positionTip = () => {
       const triggerRect = button.getBoundingClientRect();
@@ -35,6 +36,7 @@ function initInlineHelp() {
     };
 
     const showTip = () => {
+      window.clearTimeout(hideTimeout);
       tip.classList.remove('hidden');
       button.setAttribute('aria-expanded', 'true');
       positionTip();
@@ -45,16 +47,60 @@ function initInlineHelp() {
       button.setAttribute('aria-expanded', 'false');
     };
 
+    const scheduleHide = () => {
+      window.clearTimeout(hideTimeout);
+      hideTimeout = window.setTimeout(hideTip, 180);
+    };
+
     button.addEventListener('mouseenter', showTip);
     button.addEventListener('focus', showTip);
-    button.addEventListener('mouseleave', hideTip);
-    button.addEventListener('blur', hideTip);
+    button.addEventListener('mouseleave', scheduleHide);
+    button.addEventListener('blur', scheduleHide);
+    tip.addEventListener('mouseenter', showTip);
+    tip.addEventListener('mouseleave', scheduleHide);
     window.addEventListener('resize', () => {
       if (!tip.classList.contains('hidden')) positionTip();
     });
     window.addEventListener('scroll', () => {
       if (!tip.classList.contains('hidden')) positionTip();
     }, true);
+  });
+}
+
+function initAnnouncement() {
+  const announcements = Array.from(document.querySelectorAll('.public-announcement'));
+  const dismissButtons = Array.from(document.querySelectorAll('[data-dismiss-announcement]'));
+  if (announcements.length === 0 || dismissButtons.length === 0) return;
+
+  const storageKey = 'cardnav-announcement-dismissed-at';
+  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+  let dismissedAt = 0;
+
+  try {
+    dismissedAt = Number.parseInt(localStorage.getItem(storageKey) || '0', 10) || 0;
+  } catch {
+    dismissedAt = 0;
+  }
+
+  if (Date.now() - dismissedAt >= oneWeekMs) {
+    announcements.forEach(announcement => {
+      announcement.classList.remove('public-announcement-pending');
+      announcement.removeAttribute('hidden');
+    });
+  }
+
+  dismissButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      announcements.forEach(announcement => {
+        announcement.classList.add('public-announcement-pending');
+        announcement.setAttribute('hidden', '');
+      });
+      try {
+        localStorage.setItem(storageKey, String(Date.now()));
+      } catch {
+        // The announcement can still be dismissed for this page view when storage is unavailable.
+      }
+    });
   });
 }
 
@@ -129,3 +175,4 @@ function initHeaderAd() {
 initPublicShell();
 initHeaderAd();
 initInlineHelp();
+initAnnouncement();

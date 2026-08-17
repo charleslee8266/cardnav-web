@@ -23,7 +23,7 @@ Affiliate-only partnerships do not guarantee a fixed placement. Placement depend
 
 Partner merchants receive a clear partnership label and agreed exposure, including search-result placement, the partner merchant area, optional coupon links, and click reporting where available.
 
-Partner products are labeled “Partner” and appear below user favorites. Up to 10 partner products can be pinned in total and up to 5 products can be pinned for one merchant. When multiple partner merchants match a search, positions are distributed as evenly as possible. A merchant is not guaranteed to appear when its products do not match the search.
+Partner products are labeled “Partner” and prioritized at the top of search and default listings. Up to 10 partner products can be pinned in total and up to 5 products can be pinned for one merchant. When multiple partner merchants match a search, positions are distributed as evenly as possible. A merchant is not guaranteed to appear when its products do not match the search.
 
 ## Review and user judgment
 
@@ -41,4 +41,4 @@ Merchants involved in deception, phishing, impersonation, malicious redirects, o
 
 ## Contact
 
-For partnership details, contact Telegram user [@charles8266](https://t.me/charles8266).
+For partnership details, join the [Telegram group](https://t.me/cardnav_xyz_group).

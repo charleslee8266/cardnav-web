@@ -155,6 +155,11 @@ export const zhMessages = {
     xProfile: 'X @CharlesLee8266',
     chatgptSession: 'ChatGPT Session 获取入口',
   },
+  announcement: {
+    label: '公告',
+    message: '卡网大全电报交流群已开放，欢迎进群交流功能建议、产品想法、数据问题、使用反馈和商务合作',
+    close: '关闭公告',
+  },
   analytics: {
     homeSearch: '首页搜索',
   },
@@ -272,7 +277,7 @@ export const zhMessages = {
     note: '价格数据仅供参考，实际价格以各平台为准。',
     submitMerchant: '提交商家',
     guideTitle: '购前必看：如何挑选靠谱商家',
-    guideDescription: '从商品数量、支付方式、联系方式、社群活跃度和库存更新几个角度快速排雷。',
+    guideDescription: '卡网大全仅整理公开信息，商家是否可靠请自行判断。点击查看如何从商品、支付方式、联系方式、社群活跃度和库存更新等维度判断商家。',
     hotProductsTitle: '热门商品',
     searchPlaceholder: '搜索商品，多个关键词用空格隔开，支持高级搜索，详见右侧说明',
     advancedSearchLabel: '高级搜索说明',

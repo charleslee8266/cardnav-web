@@ -21,7 +21,7 @@ window.CardNavSponsorBadge = {
       info.setAttribute('aria-label', description);
       info.textContent = 'i';
       const tooltip = document.createElement('span');
-      tooltip.className = 'sponsor-badge-tooltip';
+      tooltip.className = 'sponsor-badge-tooltip public-floating-layer';
       tooltip.setAttribute('role', 'tooltip');
       tooltip.append(document.createTextNode(`${description} `));
       const link = document.createElement('a');

@@ -115,7 +115,7 @@ const gatewayHomeConfig = {
   <PageHero title={t.llmGateway.title} description={t.llmGateway.description}>
     <p slot="note" class="page-hero-note">
       {t.llmGateway.notePrefix}
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="link link-primary font-medium" data-umami-event="gateway-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="font-medium text-primary no-underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30" data-umami-event="gateway-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
       {t.llmGateway.noteSuffix}
     </p>
     <div slot="aside" class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
