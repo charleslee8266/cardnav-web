@@ -556,8 +556,8 @@ export const enMessages: Messages = {
     nextStep: 'Next step',
   },
   sponsors: {
-    title: 'Partner merchants',
-    becomeSponsor: 'Business partnership',
+    title: 'Sponsors',
+    becomeSponsor: 'Become a sponsor',
     partnershipLinkLabel: 'How to partner',
     sponsorLabel: 'Partner',
     sponsorDescription: 'Partner listings have received an initial review by CardNav. Please assess reliability yourself. Merchants found to engage in deception will be removed immediately.',

@@ -555,8 +555,8 @@ export const zhMessages = {
     nextStep: '下一步',
   },
   sponsors: {
-    title: '合作商家',
-    becomeSponsor: '商家合作',
+    title: '赞助商列表',
+    becomeSponsor: '成为赞助商',
     partnershipLinkLabel: '如何合作',
     sponsorLabel: '合作商家',
     sponsorDescription: '合作商家表示卡网大全已经对商家进行了初步审核，但仍需用户自行识别可靠性。如果商家存在欺骗行为会立即下架。',

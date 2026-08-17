@@ -556,8 +556,8 @@ export const ruMessages: Messages = {
     nextStep: 'Следующий шаг',
   },
   sponsors: {
-    title: 'Партнёры',
-    becomeSponsor: 'Партнёрство',
+    title: 'Спонсоры',
+    becomeSponsor: 'Стать спонсором',
     partnershipLinkLabel: 'Как стать партнёром',
     sponsorLabel: 'Партнёрский магазин',
     sponsorDescription: 'Карточка партнёра прошла первичную проверку CardNav. Пожалуйста, самостоятельно оценивайте надёжность. При обнаружении обмана продавец будет немедленно удалён.',
