@@ -354,7 +354,7 @@ export const ruMessages: Messages = {
     submitUrlDescription: 'Укажите URL сайта gateway, например https://www.example.com.',
     submitUrl: 'URL',
     submitApiEndpoint: 'Адрес API (необязательно)',
-    submitApiEndpointDescription: 'Укажите URL API, который используется для получения данных о моделях и ценах. Если оставить поле пустым, используется URL сайта. Поддерживаются New API, Sub2API и аналогичные типы; API моделей должен быть доступен без входа, иначе это может повлиять на сбор данных и оценку сайта. Например, если Base URL указан как https://api.example.com/v1, здесь обычно можно указать https://api.example.com.',
+    submitApiEndpointDescription: 'Укажите домен, развернутый для New API, Sub2API или похожего gateway. Если оставить поле пустым, используется URL сайта. Он нужен для получения данных о моделях и ценах для отображения и оценки, поэтому API моделей должен быть доступен без входа. Например, если Base URL указан как https://api.example.com/v1, здесь укажите https://api.example.com.',
     submitName: 'Название',
     submitNameDescription: 'Укажите понятное название сайта, например Example API. Не более 20 символов.',
     submitSummary: 'Описание',

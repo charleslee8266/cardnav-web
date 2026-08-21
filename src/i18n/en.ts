@@ -354,7 +354,7 @@ export const enMessages: Messages = {
     submitUrlDescription: 'Enter the gateway website URL, for example https://www.example.com.',
     submitUrl: 'URL',
     submitApiEndpoint: 'API address (optional)',
-    submitApiEndpointDescription: 'Enter the API URL used to retrieve model and price data. If left blank, the website URL is used. New API, Sub2API, and similar types are supported, and the model API must allow access without login; otherwise data collection and the site score may be affected. For example, if the Base URL is https://api.example.com/v1, you can usually enter https://api.example.com here.',
+    submitApiEndpointDescription: 'Enter the domain deployed for New API, Sub2API, or a similar gateway. If left blank, the website URL is used. It is used to retrieve model and price data for display and scoring, so the model API must allow access without login. For example, if the Base URL is https://api.example.com/v1, enter https://api.example.com here.',
     submitName: 'Name',
     submitNameDescription: 'Use an easy-to-recognize site name, for example Example API. Maximum 20 characters.',
     submitSummary: 'Description',

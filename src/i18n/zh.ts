@@ -354,7 +354,7 @@ export const zhMessages = {
     submitUrlDescription: '填写中转站的网站网址，例如 https://www.example.com。',
     submitUrl: '网址',
     submitApiEndpoint: 'API 地址（可选）',
-    submitApiEndpointDescription: '填写 API 接口网址，用于调用 Models 接口获取模型和价格数据，留空默认使用网站网址。目前支持 New API、Sub2API 等类型，且需要开放非登录访问模型接口，否则会影响数据抓取和网站评分。例如 Base URL 是 https://api.example.com/v1，则通常可填写 https://api.example.com。',
+    submitApiEndpointDescription: '填写 New API、Sub2API 等中转站部署的域名，留空默认使用网站网址。用于获取模型和价格数据，供网站展示和评分，需要开放非登录访问模型接口。例如 Base URL 是 https://api.example.com/v1，这里填写 https://api.example.com。',
     submitName: '名称',
     submitNameDescription: '填写用户容易识别的站点名称，例如 Example API，最多 20 个字。',
     submitSummary: '介绍',
