@@ -15,6 +15,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     : [];
   const result = await submitGatewaySite({
     url: typeof body.url === 'string' ? body.url : '',
+    apiEndpoint: typeof body.apiEndpoint === 'string' ? body.apiEndpoint : '',
     name: typeof body.name === 'string' ? body.name : '',
     summary: typeof body.summary === 'string' ? body.summary : '',
     paymentMethods,

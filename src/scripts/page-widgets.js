@@ -263,6 +263,7 @@ function initGatewaySubmit() {
   const openButton = document.querySelector('#openGatewaySubmitModal');
   const form = document.querySelector('#gatewaySubmitForm');
   const url = document.querySelector('#gatewayUrlInput');
+  const apiEndpoint = document.querySelector('#gatewayApiEndpointInput');
   const name = document.querySelector('#gatewayNameInput');
   const summary = document.querySelector('#gatewaySummaryInput');
   const paymentSelect = document.querySelector('#gatewayPaymentSelect');
@@ -322,7 +323,7 @@ function initGatewaySubmit() {
     button?.setAttribute('disabled', 'disabled');
     let submitted = false;
     try {
-      const response = await fetch(form.action, { method: 'POST', headers: { accept: 'application/json', 'content-type': 'application/json', 'x-requested-with': 'fetch' }, body: JSON.stringify({ locale: config.locale, url: url.value.trim(), name: name.value.trim(), summary: summary.value.trim(), paymentMethods: [...selectedPayments] }) });
+      const response = await fetch(form.action, { method: 'POST', headers: { accept: 'application/json', 'content-type': 'application/json', 'x-requested-with': 'fetch' }, body: JSON.stringify({ locale: config.locale, url: url.value.trim(), apiEndpoint: apiEndpoint?.value.trim() || '', name: name.value.trim(), summary: summary.value.trim(), paymentMethods: [...selectedPayments] }) });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.ok) { show(error, payload?.message || messages.failed); return; }
       submitted = true;

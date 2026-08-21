@@ -117,7 +117,7 @@ export type PopularSearchTermsSnapshot = {
   normalizedTerms: string[];
 };
 
-type SubmitSiteUrlErrorKey = PublicSubmittedUrlRejectReason | 'duplicateUrl' | 'invalidGatewayInfo' | 'gatewayInvalidUrl';
+type SubmitSiteUrlErrorKey = PublicSubmittedUrlRejectReason | 'duplicateUrl' | 'invalidGatewayInfo' | 'gatewayInvalidUrl' | 'gatewayInvalidApiEndpoint';
 type PublicSnapshotKey =
   | 'shop-products'
   | 'shop-products-packed'
@@ -930,9 +930,21 @@ function publicGatewaySlug(host: string) {
   return slug || 'gateway';
 }
 
-export async function submitGatewaySite(input: { url: string; name: string; summary: string; paymentMethods: string[] }) {
+export async function submitGatewaySite(input: { url: string; apiEndpoint?: string; name: string; summary: string; paymentMethods: string[] }) {
   const validation = validatePublicSubmittedUrl(input.url);
   if (!validation.ok) return { ok: false as const, errorKey: 'gatewayInvalidUrl' satisfies SubmitSiteUrlErrorKey };
+  const apiEndpointInput = input.apiEndpoint?.trim() ?? '';
+  let apiEndpoint = '';
+  if (apiEndpointInput) {
+    try {
+      const parsedApiEndpoint = new URL(apiEndpointInput);
+      if (parsedApiEndpoint.protocol !== 'http:' && parsedApiEndpoint.protocol !== 'https:') throw new Error('unsupported protocol');
+      parsedApiEndpoint.hash = '';
+      apiEndpoint = parsedApiEndpoint.toString().replace(/\/$/, '');
+    } catch {
+      return { ok: false as const, errorKey: 'gatewayInvalidApiEndpoint' satisfies SubmitSiteUrlErrorKey };
+    }
+  }
   const name = input.name.trim();
   const summary = input.summary.trim();
   const paymentMethods = [...new Set(input.paymentMethods.map(value => value.trim().toLowerCase()))].filter(value => publicGatewayPaymentMethods.has(value));
@@ -952,10 +964,10 @@ export async function submitGatewaySite(input: { url: string; name: string; summ
     slug = `${baseSlug}-${index}`;
   }
   const result = await db.query(
-    `INSERT INTO gateway_sites (url, status, site_id, name, family, type, slug, host, weight, summary, payment_methods)
-     VALUES ($1, 'accepted', md5($1 || $2), $3, NULL, 'unknown', $4, $5, 50, $6, $7::jsonb)
+    `INSERT INTO gateway_sites (url, api_endpoint, status, site_id, name, family, type, slug, host, weight, summary, payment_methods)
+     VALUES ($1, $2, 'accepted', md5($1 || $3), $4, NULL, 'unknown', $5, $6, 50, $7, $8::jsonb)
      ON CONFLICT (url) DO NOTHING RETURNING url`,
-    [url, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0', name, slug, host, summary, JSON.stringify(paymentMethods)],
+    [url, apiEndpoint, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0', name, slug, host, summary, JSON.stringify(paymentMethods)],
   );
   if (result.rows.length === 0) return { ok: false as const, errorKey: 'duplicateUrl' satisfies SubmitSiteUrlErrorKey };
   return { ok: true as const, url };
