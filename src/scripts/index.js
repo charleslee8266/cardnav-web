@@ -980,6 +980,7 @@ async function applyFilters(options = {}) {
     updateMerchantProgressiveLoadSummary(0, 0);
   }
   const shouldUseCanonicalShopPath = shouldResetSearchPageMeta(productQueryValue);
+  const shouldKeepSubmitDialog = new URLSearchParams(window.location.search).has('submit-dialog');
   const params = new URLSearchParams();
   if (!merchantTabActive) {
     if (productQueryValue && (!currentQuickPlanPath || shouldUseCanonicalShopPath)) params.set('q', productQueryValue);
@@ -990,7 +991,9 @@ async function applyFilters(options = {}) {
   }
   resetSearchPageMeta(productQueryValue);
   const nextPath = currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : localizedShopsPath;
-  const nextUrl = params.toString() ? `${nextPath}?${params.toString()}` : nextPath;
+  const serializedParams = params.toString();
+  const submitDialogSuffix = shouldKeepSubmitDialog ? `${serializedParams ? '&' : '?'}submit-dialog` : '';
+  const nextUrl = `${nextPath}${serializedParams ? `?${serializedParams}` : ''}${submitDialogSuffix}`;
   history.replaceState(null, '', nextUrl);
 }
 

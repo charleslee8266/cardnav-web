@@ -305,6 +305,7 @@ const gatewayHomeConfig = {
       <section class="card bg-base-100 shadow-none"><div class="card-body relative grid gap-5 p-5">
         <h2 class="page-hero-title mt-0">{t.llmGateway.submitGateway}</h2>
         <p class="text-sm leading-6 text-base-content">{t.llmGateway.submitDescription}</p>
+        <p class="text-sm leading-6 text-base-content/80">{t.llmGateway.submitTypeDescription} <a href={`${linkTo('/shops')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="gateway-submit-shop-link" data-umami-event-url={`${linkTo('/shops')}?submit-dialog`}>{t.llmGateway.submitShopLink}</a>{t.llmGateway.submitTypeSentenceEnd}</p>
         <form method="dialog" class="absolute right-5 top-5"><button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.llmGateway.closeSubmitDialog}>✕</button></form>
         <div class="alert alert-info alert-soft flex flex-col items-start gap-1.5 text-left text-base-content">
           <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>

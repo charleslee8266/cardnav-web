@@ -16,6 +16,48 @@ function localizedFallbackPath(pathname) {
   return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
 }
 
+const submitDialogQueryKey = 'submit-dialog';
+
+function hasSubmitDialogQuery() {
+  return new URL(window.location.href).searchParams.has(submitDialogQueryKey);
+}
+
+function updateSubmitDialogQuery(open, replace = false) {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  params.delete(submitDialogQueryKey);
+  const serialized = params.toString();
+  url.search = open
+    ? `${serialized ? `?${serialized}&` : '?'}${submitDialogQueryKey}`
+    : serialized ? `?${serialized}` : '';
+  window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
+}
+
+function initSubmitDialogUrl(dialog, openButton) {
+  if (!dialog) return;
+  let closingFromUrl = false;
+
+  const syncDialogToUrl = () => {
+    const shouldOpen = hasSubmitDialogQuery();
+    if (shouldOpen && !dialog.open) dialog.showModal();
+    if (!shouldOpen && dialog.open) {
+      closingFromUrl = true;
+      dialog.close();
+      closingFromUrl = false;
+    }
+  };
+
+  openButton?.addEventListener('click', () => {
+    updateSubmitDialogQuery(true);
+    if (!dialog.open) dialog.showModal();
+  });
+  dialog.addEventListener('close', () => {
+    if (!closingFromUrl && hasSubmitDialogQuery()) updateSubmitDialogQuery(false, true);
+  });
+  window.addEventListener('popstate', syncDialogToUrl);
+  syncDialogToUrl();
+}
+
 function initHomeSearch() {
   const config = parseJsonScript('home-search-config');
   const shopsPath = config.shopsPath || localizedFallbackPath('/shops');
@@ -147,8 +189,8 @@ function initShopSubmit() {
     }
   }
 
+  initSubmitDialogUrl(shopSubmitDialog, openShopSubmitModalButton);
   openShopSubmitModalButton?.addEventListener('click', () => {
-    shopSubmitDialog?.showModal();
     syncSubmitEventUrl();
   });
   shopSubmitDialog?.addEventListener('close', () => {
@@ -255,7 +297,7 @@ function initGatewaySubmit() {
   });
   const show = (element, text) => { element.textContent = text; element.classList.remove('hidden'); };
   const clear = () => { error?.classList.add('hidden'); success?.classList.add('hidden'); };
-  openButton?.addEventListener('click', () => dialog?.showModal());
+  initSubmitDialogUrl(dialog, openButton);
   dialog?.addEventListener('close', () => {
     form.reset();
     selectedPayments.clear();

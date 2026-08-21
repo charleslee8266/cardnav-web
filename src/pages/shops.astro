@@ -419,6 +419,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
         <div class="card-body relative grid gap-5 p-5">
           <h2 class="page-hero-title mt-0">{t.shops.submitMerchant}</h2>
           <p class="text-sm leading-6 text-base-content">{t.shops.submitDescription}</p>
+          <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="shop-submit-gateway-link" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
           <form method="dialog" class="absolute right-5 top-5">
             <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.shops.closeSubmitDialog}>✕</button>
           </form>
