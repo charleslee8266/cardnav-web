@@ -1,69 +1,52 @@
 [
   {
-    "id": "token-plus",
-    "visible": true,
-    "template": "default",
-    "image": {
-      "src": "/tokenplus.png",
-      "width": 225,
-      "height": 60,
-      "frameClass": "sponsor-logo-frame-dark",
-      "className": "sponsor-logo sponsor-logo-inset",
-      "alt": {
-        "zh": "TokenPlus 赞助商标志",
-        "en": "TokenPlus sponsor logo",
-        "ru": "Логотип спонсора TokenPlus"
-      }
-    },
-    "content": {
-      "zh": {
-        "title": "TokenPlus",
-        "description": "AI资源与服务链接器",
-        "url": "https://www.tokenplus.io/"
-      },
-      "en": {
-        "title": "TokenPlus",
-        "description": "AI Resource & Service Linker Community.",
-        "url": "https://www.tokenplus.io/"
-      },
-      "ru": {
-        "title": "TokenPlus",
-        "description": "AI Resource & Service Linker Community.",
-        "url": "https://www.tokenplus.io/"
-      }
-    }
-  },
-  {
     "id": "geniuscoder",
     "visible": true,
     "template": "default",
     "image": {
-      "src": "/geniuscoder.png",
-      "width": 386,
-      "height": 134,
-      "className": "sponsor-logo sponsor-logo-contain",
+      "src": "/sponsors/geniuscoder.webp",
+      "scaleMode": "contain",
       "alt": {
+        "default": "GeniusCoder sponsor logo",
         "zh": "GeniusCoder 赞助商标志",
-        "en": "GeniusCoder sponsor logo",
         "ru": "Логотип спонсора GeniusCoder"
       }
     },
-    "content": {
-      "zh": {
-        "title": "GeniusCoder",
-        "description": "为 AI 编程等任务提供稳定的 GPT API 接入。保持 OpenAI SDK 兼容，适合个人和小团队长期使用。",
-        "url": "https://api.geniuscoder.net/"
-      },
-      "en": {
-        "title": "GeniusCoder",
-        "description": "Stable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and small teams.",
-        "url": "https://api.geniuscoder.net/"
-      },
-      "ru": {
-        "title": "GeniusCoder",
-        "description": "Стабильный доступ к GPT API для AI-программирования и похожих задач. Совместим с OpenAI SDK для личного использования и небольших команд.",
-        "url": "https://api.geniuscoder.net/"
+    "title": {
+      "default": "GeniusCoder"
+    },
+    "description": {
+      "default": "Stable and affordable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and small teams.",
+      "zh": "为 AI 编程等任务提供稳定经济的 GPT API 接入。保持 OpenAI SDK 兼容，适合个人和小团队长期使用。",
+      "ru": "Стабильный и доступный доступ к GPT API для AI-программирования и похожих задач. Совместим с OpenAI SDK для личного использования и небольших команд."
+    },
+    "url": {
+      "default": "https://api.geniuscoder.net/"
+    }
+  },
+  {
+    "id": "lingxi-ai",
+    "visible": true,
+    "template": "default",
+    "image": {
+      "src": "/sponsors/lingxi-ai.webp",
+      "scaleMode": "contain",
+      "alt": {
+        "default": "Lingxi AI sponsor logo",
+        "zh": "lingxi-ai 赞助商标志",
+        "ru": "Логотип спонсора Lingxi AI"
       }
+    },
+    "title": {
+      "default": "Lingxi AI"
+    },
+    "description": {
+      "default": "Lingxi AI provides unified, efficient, and affordable aggregated API access, with seamless switching between leading Chinese AI models such as DeepSeek, GLM, and Kimi.",
+      "zh": "Lingxi AI 提供统一、高效、经济的聚合 API 接口，让您无缝切换使用 DeepSeek、GLM、Kimi 等国内领先的 AI 模型。",
+      "ru": "Lingxi AI предоставляет единый, эффективный и доступный доступ к агрегированному API с удобным переключением между ведущими китайскими ИИ-моделями, такими как DeepSeek, GLM и Kimi."
+    },
+    "url": {
+      "default": "https://api.lingxiaihub.com/sign-up?aff=Pagp"
     }
   },
   {
@@ -72,31 +55,26 @@
     "template": "default",
     "image": {
       "src": "https://www.packyapi.com/logo-full.svg",
-      "width": 320,
-      "height": 73,
-      "className": "sponsor-logo",
+      "padding": "8px 12px",
+      "scaleMode": "contain",
       "alt": {
+        "default": "PackyAPI AI API aggregation platform sponsor logo",
         "zh": "PackyAPI AI API 聚合平台赞助商标志",
-        "en": "PackyAPI AI API aggregation platform sponsor logo",
-        "ru": "Логотип спонсора PackyAPI AI API aggregation platform"
+        "ru": "Логотип спонсорской платформы PackyAPI для AI API"
       }
     },
-    "content": {
-      "zh": {
-        "title": "PackyAPI 老牌 AI API 中转站",
-        "description": "一站式接入 Claude、GPT、Gemini 等主流 AI 服务，可提供发票。",
-        "url": "https://www.packyapi.com/register?aff=Nulo"
-      },
-      "en": {
-        "title": "PackyAPI established AI API gateway",
-        "description": "One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with invoice support.",
-        "url": "https://www.packyapi.com/register?aff=Nulo"
-      },
-      "ru": {
-        "title": "PackyAPI, опытный AI API gateway",
-        "description": "Единый доступ к Claude, GPT, Gemini и другим популярным AI-сервисам, возможны счета.",
-        "url": "https://www.packyapi.com/register?aff=Nulo"
-      }
+    "title": {
+      "default": "PackyAPI established AI API gateway",
+      "zh": "PackyAPI 老牌 AI API 中转站",
+      "ru": "Опытный AI API-шлюз PackyAPI"
+    },
+    "description": {
+      "default": "One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with invoice support.",
+      "zh": "一站式接入 Claude、GPT、Gemini 等主流 AI 服务，可提供发票。",
+      "ru": "Единый доступ к популярным AI-сервисам, включая Claude, GPT и Gemini; доступны счета."
+    },
+    "url": {
+      "default": "https://www.packyapi.com/register?aff=Nulo"
     }
   },
   {
@@ -104,32 +82,51 @@
     "visible": true,
     "template": "default",
     "image": {
-      "src": "/yunwu-api.png",
-      "width": 324,
-      "height": 110,
-      "className": "sponsor-logo sponsor-logo-cover",
+      "src": "/sponsors/yunwu-api.webp",
+      "scaleMode": "cover",
       "alt": {
+        "default": "Yunwu API sponsor logo",
         "zh": "云雾 API 赞助商标志",
-        "en": "Yunwu API sponsor logo",
         "ru": "Логотип спонсора Yunwu API"
       }
     },
-    "content": {
-      "zh": {
-        "title": "云雾 API",
-        "description": "致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。",
-        "url": "https://yunwu.ai/register?aff=HV01"
-      },
-      "en": {
-        "title": "Yunwu API",
-        "description": "Fast and convenient Web API access for developers through a stable, easy-to-use platform that integrates nearly all major AI models.",
-        "url": "https://yunwu.ai/register?aff=HV01"
-      },
-      "ru": {
-        "title": "Yunwu API",
-        "description": "Быстрый и удобный доступ к Web API для разработчиков через стабильную и простую платформу, объединяющую почти все основные модели ИИ.",
-        "url": "https://yunwu.ai/register?aff=HV01"
+    "title": {
+      "default": "Yunwu API"
+    },
+    "description": {
+      "default": "Fast and convenient Web API access for developers through a stable, easy-to-use platform that integrates nearly all major AI models.",
+      "zh": "致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。",
+      "ru": "Быстрый и удобный доступ к Web API для разработчиков через стабильную и простую платформу, объединяющую почти все основные модели ИИ."
+    },
+    "url": {
+      "default": "https://yunwu.ai/register?aff=HV01"
+    }
+  },
+  {
+    "id": "token-plus",
+    "visible": false,
+    "template": "default",
+    "image": {
+      "src": "/sponsors/tokenplus.webp",
+      "scaleMode": "inset",
+      "padding": "8px 12px",
+      "backgroundColor": "#000",
+      "alt": {
+        "default": "TokenPlus sponsor logo",
+        "zh": "TokenPlus 赞助商标志",
+        "ru": "Логотип спонсора TokenPlus"
       }
+    },
+    "title": {
+      "default": "TokenPlus"
+    },
+    "description": {
+      "default": "AI Resource & Service Linker Community.",
+      "zh": "AI资源与服务链接器",
+      "ru": "Сообщество для поиска AI-ресурсов и сервисов."
+    },
+    "url": {
+      "default": "https://www.tokenplus.io/"
     }
   },
   {
@@ -138,99 +135,69 @@
     "template": "grid",
     "image": {
       "src": "https://racknerd.com/banners/320x100.gif",
-      "width": 320,
-      "height": 100,
-      "className": "sponsor-banner",
+      "scaleMode": "contain",
       "alt": {
+        "default": "RackNerd cloud server sponsor banner",
         "zh": "RackNerd 云主机赞助商横幅",
-        "en": "RackNerd cloud server sponsor banner",
-        "ru": "Баннер спонсора RackNerd cloud servers"
+        "ru": "Баннер спонсора облачных серверов RackNerd"
       }
     },
-    "content": {
-      "zh": {
-        "title": "RackNerd云主机",
-        "description": "1C1G 仅需 $21.99/年",
-        "url": "https://my.racknerd.com/aff.php?aff=20079&pid=952"
-      },
-      "en": {
-        "title": "RackNerd cloud servers",
-        "description": "1C1G from $21.99/year",
-        "url": "https://my.racknerd.com/aff.php?aff=20079&pid=952"
-      },
-      "ru": {
-        "title": "RackNerd cloud servers",
-        "description": "1C1G от $21.99/год",
-        "url": "https://my.racknerd.com/aff.php?aff=20079&pid=952"
-      }
+    "title": {
+      "default": "RackNerd cloud servers",
+      "zh": "RackNerd云主机",
+      "ru": "Облачные серверы RackNerd"
+    },
+    "description": {
+      "default": "1C1G from $21.99/year",
+      "zh": "1C1G 仅需 $21.99/年",
+      "ru": "1C1G от $21.99/год"
+    },
+    "url": {
+      "default": "https://my.racknerd.com/aff.php?aff=20079&pid=952"
     },
     "links": [
       {
         "color": "#333",
-        "content": {
-          "zh": {
-            "text": "2C2G $35.99/年",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=953"
-          },
-          "en": {
-            "text": "2C2G $35.99/year",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=953"
-          },
-          "ru": {
-            "text": "2C2G $35.99/год",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=953"
-          }
+        "text": {
+          "default": "2C2G $35.99/year",
+          "zh": "2C2G $35.99/年",
+          "ru": "2C2G $35.99/год"
+        },
+        "url": {
+          "default": "https://my.racknerd.com/aff.php?aff=20079&pid=953"
         }
       },
       {
         "color": "#333",
-        "content": {
-          "zh": {
-            "text": "3C4G $59.99/年",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=954"
-          },
-          "en": {
-            "text": "3C4G $59.99/year",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=954"
-          },
-          "ru": {
-            "text": "3C4G $59.99/год",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=954"
-          }
+        "text": {
+          "default": "3C4G $59.99/year",
+          "zh": "3C4G $59.99/年",
+          "ru": "3C4G $59.99/год"
+        },
+        "url": {
+          "default": "https://my.racknerd.com/aff.php?aff=20079&pid=954"
         }
       },
       {
         "color": "#333",
-        "content": {
-          "zh": {
-            "text": "6C6G $89.99/年",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=955"
-          },
-          "en": {
-            "text": "6C6G $89.99/year",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=955"
-          },
-          "ru": {
-            "text": "6C6G $89.99/год",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=955"
-          }
+        "text": {
+          "default": "6C6G $89.99/year",
+          "zh": "6C6G $89.99/年",
+          "ru": "6C6G $89.99/год"
+        },
+        "url": {
+          "default": "https://my.racknerd.com/aff.php?aff=20079&pid=955"
         }
       },
       {
         "color": "#333",
-        "content": {
-          "zh": {
-            "text": "7C8G $119.99/年",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=956"
-          },
-          "en": {
-            "text": "7C8G $119.99/year",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=956"
-          },
-          "ru": {
-            "text": "7C8G $119.99/год",
-            "url": "https://my.racknerd.com/aff.php?aff=20079&pid=956"
-          }
+        "text": {
+          "default": "7C8G $119.99/year",
+          "zh": "7C8G $119.99/年",
+          "ru": "7C8G $119.99/год"
+        },
+        "url": {
+          "default": "https://my.racknerd.com/aff.php?aff=20079&pid=956"
         }
       }
     ]

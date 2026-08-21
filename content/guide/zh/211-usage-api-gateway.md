@@ -43,27 +43,27 @@ API 中转站适合想快速接入大模型能力，但暂时不想处理海外�
 ## 推荐中转站
 
 ## GeniusCoder
-<!-- badge="OpenAI SDK 兼容" icon="api" imageAspect="3.44/1" -->
+<!-- badge="OpenAI SDK 兼容" icon="api" imageAspect="3/1" -->
 
-![GeniusCoder 赞助商标志](../../../public/geniuscoder.png)
+![GeniusCoder 赞助商标志](../../../public/sponsors/geniuscoder.webp)
 
 为 AI 编程等任务提供稳定的 GPT API 接入。保持 OpenAI SDK 兼容，适合个人和小团队长期使用。
 
 [前往注册](https://api.geniuscoder.net/)
 
 ## PackyAPI 老牌 AI API 中转站
-<!-- badge="多模型接入" icon="api" imageAspect="3.44/1" -->
+<!-- badge="多模型接入" icon="api" imageAspect="3/1" -->
 
-![PackyAPI AI API 聚合平台赞助商标志](../../../public/packyapi-logo.svg)
+![PackyAPI AI API 聚合平台赞助商标志](../../../public/sponsors/packyapi-logo.svg)
 
 一站式接入 Claude、GPT、Gemini 等主流 AI 服务，可提供发票，适合多模型调用和团队试用。
 
 [前往注册](https://www.packyapi.com/register?aff=Nulo)
 
 ## 云雾 API
-<!-- badge="多模型接入" icon="api" imageAspect="2.95/1" -->
+<!-- badge="多模型接入" icon="api" imageAspect="3/1" -->
 
-![云雾 API 赞助商标志](../../../public/yunwu-api.png)
+![云雾 API 赞助商标志](../../../public/sponsors/yunwu-api.webp)
 
 致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。
 

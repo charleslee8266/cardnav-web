@@ -43,18 +43,18 @@ API gateway sites suit users who want to quickly connect to large model capabili
 ## Recommended gateway sites
 
 ## GeniusCoder
-<!-- badge="OpenAI SDK compatible" icon="api" imageAspect="3.44/1" -->
+<!-- badge="OpenAI SDK compatible" icon="api" imageAspect="3/1" -->
 
-![GeniusCoder sponsor logo](../../../public/geniuscoder.png)
+![GeniusCoder sponsor logo](../../../public/sponsors/geniuscoder.webp)
 
 Stable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and small teams.
 
 [Register](https://api.geniuscoder.net/)
 
 ## PackyAPI established AI API gateway site
-<!-- badge="Multi-model access" icon="api" imageAspect="3.44/1" -->
+<!-- badge="Multi-model access" icon="api" imageAspect="3/1" -->
 
-![PackyAPI AI API aggregation platform sponsor logo](../../../public/packyapi-logo.svg)
+![PackyAPI AI API aggregation platform sponsor logo](../../../public/sponsors/packyapi-logo.svg)
 
 One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with invoice support, suitable for users who need relatively complete service and settlement capability.
 
@@ -69,9 +69,9 @@ One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with 
 [Register](https://www.packyapi.com/register?aff=Nulo)
 
 ## Yunwu API
-<!-- badge="Multi-model access" icon="api" imageAspect="2.95/1" -->
+<!-- badge="Multi-model access" icon="api" imageAspect="3/1" -->
 
-![Yunwu API sponsor logo](../../../public/yunwu-api.png)
+![Yunwu API sponsor logo](../../../public/sponsors/yunwu-api.webp)
 
 Yunwu API provides developers with fast and convenient Web API access through a stable, easy-to-use platform that integrates nearly all major AI models.
 

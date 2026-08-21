@@ -799,36 +799,25 @@
   }
 
   .sponsor-logo-frame {
-    @apply flex w-full items-center justify-center overflow-hidden rounded bg-white;
-    aspect-ratio: 16 / 5;
+    @apply flex w-full items-center justify-center overflow-hidden rounded;
+    padding: var(--sponsor-padding, 0);
+    background-color: var(--sponsor-background-color, white);
+    aspect-ratio: 3 / 1;
   }
 
-  .sponsor-logo-frame-padded {
-    @apply px-4;
-  }
-
-  .sponsor-logo-frame-dark {
-    @apply bg-black px-3 py-2;
-  }
-
-  .sponsor-logo,
-  .sponsor-banner {
+  .sponsor-logo {
     @apply h-full w-full object-contain text-slate-950;
   }
 
-  .sponsor-logo-inset {
+  .sponsor-logo[data-scale-mode='contain'] {
+    @apply object-contain;
+  }
+
+  .sponsor-logo[data-scale-mode='inset'] {
     @apply max-h-[82%] max-w-[88%];
   }
 
-  .sponsor-logo[src$=".svg"] {
-    @apply max-h-[80%] max-w-[90%] object-contain;
-  }
-
-  .sponsor-logo-contain {
-    @apply max-h-[80%] max-w-[90%] object-contain;
-  }
-
-  .sponsor-logo-cover {
+  .sponsor-logo[data-scale-mode='cover'] {
     @apply object-cover;
   }
 

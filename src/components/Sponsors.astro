@@ -19,8 +19,13 @@ const partnershipUrl = Astro.locals.localizePath('/partnership');
       <li class="sponsor-grid-item">
         <article class="sponsor-card">
           <a href={sponsor.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsor.url} class:list={[sponsor.template === 'grid' ? 'sponsor-plan-main-link' : 'sponsor-main-link', 'group']}>
-            <span class:list={['sponsor-logo-frame', sponsor.image.frameClass]}>
-              <img src={sponsor.image.src} alt={sponsor.image.alt} width={sponsor.image.width} height={sponsor.image.height} loading="lazy" class={sponsor.image.className} />
+            <span
+              class="sponsor-logo-frame"
+              style={sponsor.image.padding || sponsor.image.backgroundColor
+                ? `--sponsor-padding: ${sponsor.image.padding ?? '0'}; --sponsor-background-color: ${sponsor.image.backgroundColor ?? 'white'};`
+                : undefined}
+            >
+              <img src={sponsor.image.src} alt={sponsor.image.alt} loading="lazy" class="sponsor-logo" data-scale-mode={sponsor.image.scaleMode} />
             </span>
             {sponsor.template === 'grid'
               ? (

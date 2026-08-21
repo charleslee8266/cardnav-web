@@ -41,10 +41,6 @@ export interface SeoInput {
   enableSiteSearch?: boolean;
 }
 
-function resolveOgImagePath(imagePath: string) {
-  return imagePath === '/og-cardnav.png' ? '/og-cardnav.webp' : imagePath;
-}
-
 export function normalizeSiteUrl(input: string) {
   return input.trim().replace(/\/+$/, '');
 }
@@ -102,7 +98,7 @@ export function buildSeoContext(input: SeoInput) {
     url: resolveUrl(baseUrl, localizePath(input.pathname, itemLocale)),
   }));
   const pageTitle = input.pathname === '/' ? input.title : `${input.title} - ${messages.seo.titleSuffix}`;
-  const ogImageUrl = resolveUrl(baseUrl, resolveOgImagePath(input.imagePath));
+  const ogImageUrl = resolveUrl(baseUrl, input.imagePath);
   const jsonLdNodes: Record<string, unknown>[] = [
     {
       '@type': 'Organization',

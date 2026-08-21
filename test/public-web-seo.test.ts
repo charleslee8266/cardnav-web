@@ -247,7 +247,7 @@ test('cardnav-web serves its own Open Graph image assets', async () => {
   assert.equal(webpMetadata.height, 630);
 });
 
-test('seo context prefers webp Open Graph image for default asset', () => {
+test('seo context keeps the configured Open Graph image format', () => {
   const seo = buildSeoContext({
     baseUrl: 'https://cardnav.xyz',
     pathname: '/shops',
@@ -257,7 +257,7 @@ test('seo context prefers webp Open Graph image for default asset', () => {
     type: 'webpage',
   });
 
-  assert.match(seo.ogImageUrl, /\/og-cardnav\.webp$/);
+  assert.match(seo.ogImageUrl, /\/og-cardnav\.png$/);
 });
 
 test('seo context includes Organization structured data', () => {
@@ -348,7 +348,7 @@ test('non-database public SEO routes build canonical metadata', () => {
     assert.equal(seo.canonicalUrl, new URL(route.pathname, 'https://cardnav.xyz/').toString(), route.pathname);
     assert.equal(seo.robots, 'index,follow', route.pathname);
     assert.equal(seo.description, route.description, route.pathname);
-    assert.match(seo.ogImageUrl, /\/og-cardnav\.webp$/, route.pathname);
+    assert.match(seo.ogImageUrl, /\/og-cardnav\.png$/, route.pathname);
   }
 
   const englishSeo = buildSeoContext({

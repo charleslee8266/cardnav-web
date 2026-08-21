@@ -58,7 +58,7 @@ const seo = buildSeoContext({
   pathname: `/llm-gateway/models/${canonicalModelPath}`,
   title: t.llmGateway.modelDetailSeoTitle.replace('{model}', model.modelId),
   description: t.llmGateway.modelDetailSeoDescription.replace('{model}', model.modelId),
-  imagePath: '/og-cardnav.png',
+  imagePath: '/og-cardnav.webp',
   type: 'webpage',
   locale: Astro.locals.locale,
   noindex: !isIndexableGatewayModel(model),

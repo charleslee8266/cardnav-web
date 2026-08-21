@@ -5,32 +5,22 @@ import sponsorsData from './data/sponsors.json' with { type: 'json' };
 import { defaultLocale, type Locale } from './i18n/config.js';
 
 export type SponsorTemplate = 'default' | 'grid';
+export type SponsorImageScaleMode = 'contain' | 'cover' | 'inset';
 
-type LocalizedValue<T> = Record<Locale, T>;
-
-type SponsorContent = {
-  title: string;
-  description: string;
-  url: string;
-};
-
-type SponsorLinkContent = {
-  text: string;
-  url: string;
-};
+type LocalizedValue<T> = Partial<Record<Locale, T>> & { default?: T };
 
 type SponsorImageConfig = {
   src: string;
-  width: number;
-  height: number;
-  frameClass?: string;
-  className?: string;
+  scaleMode: SponsorImageScaleMode;
+  padding?: string;
+  backgroundColor?: string;
   alt: LocalizedValue<string>;
 };
 
 type SponsorLinkConfig = {
   color?: string;
-  content: LocalizedValue<SponsorLinkContent>;
+  text: LocalizedValue<string>;
+  url: LocalizedValue<string>;
 };
 
 type SponsorConfig = {
@@ -38,7 +28,9 @@ type SponsorConfig = {
   visible: boolean;
   template: SponsorTemplate;
   image: SponsorImageConfig;
-  content: LocalizedValue<SponsorContent>;
+  title: LocalizedValue<string>;
+  description: LocalizedValue<string>;
+  url: LocalizedValue<string>;
   links?: SponsorLinkConfig[];
 };
 
@@ -61,30 +53,31 @@ export type Sponsor = {
 const sponsorConfigs = sponsorsData as SponsorConfig[];
 
 function localize<T>(values: LocalizedValue<T>, locale: Locale): T {
-  return values[locale] ?? values[defaultLocale];
+  const value = values[locale] ?? values.default ?? values[defaultLocale];
+  if (value === undefined) throw new Error(`Missing localized sponsor value for ${locale}`);
+  return value;
 }
 
 export function getVisibleSponsors(locale: Locale): Sponsor[] {
   return sponsorConfigs
     .filter(sponsor => sponsor.visible)
     .map(sponsor => {
-      const content = localize(sponsor.content, locale);
       return {
         id: sponsor.id,
         template: sponsor.template,
-        title: content.title,
-        description: content.description,
-        url: content.url,
+        title: localize(sponsor.title, locale),
+        description: localize(sponsor.description, locale),
+        url: localize(sponsor.url, locale),
         image: {
           src: sponsor.image.src,
-          width: sponsor.image.width,
-          height: sponsor.image.height,
-          frameClass: sponsor.image.frameClass,
-          className: sponsor.image.className,
+          scaleMode: sponsor.image.scaleMode,
+          padding: sponsor.image.padding,
+          backgroundColor: sponsor.image.backgroundColor,
           alt: localize(sponsor.image.alt, locale),
         },
         links: (sponsor.links ?? []).map(link => ({
-          ...localize(link.content, locale),
+          text: localize(link.text, locale),
+          url: localize(link.url, locale),
           color: link.color,
         })),
       };

@@ -43,18 +43,18 @@ API gatewayные сайты подходят пользователям, кот
 ## Рекомендуемые gateway-сайты
 
 ## GeniusCoder
-<!-- badge="Совместим с OpenAI SDK" icon="api" imageAspect="3.44/1" -->
+<!-- badge="Совместим с OpenAI SDK" icon="api" imageAspect="3/1" -->
 
-![Логотип спонсора GeniusCoder](../../../public/geniuscoder.png)
+![Логотип спонсора GeniusCoder](../../../public/sponsors/geniuscoder.webp)
 
 Стабильный доступ к GPT API для AI-программирования и похожих задач. Совместим с OpenAI SDK для личного использования и небольших команд.
 
 [Зарегистрироваться](https://api.geniuscoder.net/)
 
 ## PackyAPI, старый AI API gateway
-<!-- badge="Доступ к нескольким моделям" icon="api" imageAspect="3.44/1" -->
+<!-- badge="Доступ к нескольким моделям" icon="api" imageAspect="3/1" -->
 
-![Логотип спонсора агрегатора AI API PackyAPI](../../../public/packyapi-logo.svg)
+![Логотип спонсора агрегатора AI API PackyAPI](../../../public/sponsors/packyapi-logo.svg)
 
 Единый доступ к основным AI-сервисам вроде Claude, GPT и Gemini, с возможностью выставления счетов, подходит пользователям, которым нужен относительно полный сервис и расчетные возможности.
 
@@ -69,9 +69,9 @@ API gatewayные сайты подходят пользователям, кот
 [Зарегистрироваться](https://www.packyapi.com/register?aff=Nulo)
 
 ## Yunwu API
-<!-- badge="Доступ к нескольким моделям" icon="api" imageAspect="2.95/1" -->
+<!-- badge="Доступ к нескольким моделям" icon="api" imageAspect="3/1" -->
 
-![Логотип спонсора Yunwu API](../../../public/yunwu-api.png)
+![Логотип спонсора Yunwu API](../../../public/sponsors/yunwu-api.webp)
 
 Yunwu API предоставляет разработчикам быстрый и удобный доступ к Web API через стабильную и простую платформу, объединяющую почти все основные модели ИИ.
 

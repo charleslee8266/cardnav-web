@@ -17,7 +17,7 @@ import {
 } from './public-data-cache.js';
 import { submitSiteUrl } from './store.js';
 
-const brandAssetPathPattern = /^\/(favicon\.(?:webp|png)|og-cardnav\.(?:webp|png)|yunwu-api\.png)$/;
+const brandAssetPathPattern = /^\/(favicon\.(?:webp|png)|og-cardnav\.(?:webp|png)|sponsors\/(?:geniuscoder|lingxi-ai|packyapi-logo|tokenplus|yunwu-api)\.(?:webp|png|jpg|svg))$/;
 const publicHomePathnames = new Set(['/']);
 const publicStaticHtmlPathnames = new Set([
   '/about',
