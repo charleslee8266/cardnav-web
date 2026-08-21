@@ -491,7 +491,7 @@
   }
 
   .content-page h2 {
-    @apply mt-8 text-xl font-bold tracking-normal text-base-content;
+    @apply mt-8 text-2xl font-bold tracking-normal text-base-content;
   }
 
   .content-page h3 {
@@ -524,6 +524,362 @@
 
   .content-page pre code {
     @apply bg-transparent p-0 text-inherit;
+  }
+
+  .content-page--partnership {
+    @apply max-w-7xl;
+  }
+
+  .content-page--partnership .partnership-section {
+    @apply mt-10;
+  }
+
+  .content-page--partnership .partnership-section > h2 {
+    @apply mt-0 mb-5 text-xl md:text-2xl;
+  }
+
+  .content-page--partnership .partnership-ways > h3 {
+    @apply mt-5 mb-0 border border-base-300 border-b-0 bg-base-200 px-4 pt-4 text-lg md:px-6 md:pt-5;
+  }
+
+  .content-page--partnership .partnership-ways > h3 + p {
+    @apply mt-0 border-x border-base-300 bg-base-200 px-4 pt-2 text-sm leading-6 text-base-content/70 md:px-6;
+  }
+
+  .content-page--partnership .partnership-ways > h3 + p + ol {
+    @apply mt-0 mb-6 border border-base-300 border-t-0 bg-base-200 px-9 pb-5 pt-3 text-sm leading-7 md:px-11;
+  }
+
+  .content-page--partnership .partnership-rules,
+  .content-page--partnership .partnership-bottom {
+    @apply border-t border-base-300 pt-8;
+  }
+
+  .content-page--partnership .partnership-rules > ol {
+    @apply mt-0 rounded border border-base-300 bg-base-200 px-5 py-4 text-sm leading-7 md:px-6;
+  }
+
+  .content-page--partnership .partnership-bottom > h2 {
+    @apply mb-5;
+  }
+
+  .content-page--partnership .partnership-columns {
+    @apply grid gap-6 md:grid-cols-2;
+  }
+
+  .content-page--partnership .partnership-column {
+    @apply min-w-0 rounded border border-base-300 bg-base-200 px-4 py-5 md:px-6;
+  }
+
+  .content-page--partnership .partnership-column > h3 {
+    @apply mt-0 mb-3 text-lg md:text-xl;
+  }
+
+  .content-page--partnership .partnership-column > ul {
+    @apply mt-0 space-y-2 text-sm leading-6;
+  }
+
+  .content-page--partnership .partnership-contact {
+    @apply border-t border-base-300 pt-8;
+  }
+
+  .content-page--partnership .partnership-contact > h2 {
+    @apply mb-3;
+  }
+
+  .content-page--partnership .partnership-contact > p {
+    @apply mt-0 rounded border border-primary/20 bg-primary/5 px-4 py-3 text-sm leading-6 md:px-5;
+  }
+
+  .content-page--partnership {
+    @apply max-w-7xl;
+  }
+
+  .content-page--partnership .partnership-eyebrow {
+    @apply mt-0 mb-3 text-xs font-bold uppercase tracking-wider text-primary;
+  }
+
+  .content-page--partnership .partnership-lead {
+    @apply max-w-3xl text-base leading-7 text-base-content/70 md:text-lg;
+  }
+
+  .content-page--partnership .partnership-section {
+    @apply mt-12;
+  }
+
+  .content-page--partnership .partnership-section > h2,
+  .content-page--partnership .partnership-details h2 {
+    @apply mt-0 mb-5 text-xl md:text-2xl;
+  }
+
+  .content-page--partnership .partnership-grid,
+  .content-page--partnership .partnership-details,
+  .content-page--partnership .partnership-columns {
+    @apply grid gap-5 md:grid-cols-2;
+  }
+
+  .content-page--partnership .content-card {
+    @apply relative overflow-hidden border border-base-content/15 bg-base-100;
+  }
+
+  .content-page--partnership .content-card::before {
+    @apply block h-1.5 bg-primary;
+    content: '';
+  }
+
+  .content-page--partnership .content-card--teal::before {
+    @apply bg-teal-700;
+  }
+
+  .content-page--partnership .content-card-body {
+    @apply p-5 md:p-7;
+  }
+
+  .content-page--partnership .content-card-kicker {
+    @apply mt-0 mb-2 text-xs font-bold text-primary;
+  }
+
+  .content-page--partnership .content-card--teal .content-card-kicker {
+    @apply text-teal-700;
+  }
+
+  .content-page--partnership .content-card h3 {
+    @apply mt-0 mb-2 text-xl font-bold md:text-2xl;
+  }
+
+  .content-page--partnership .content-card-description {
+    @apply mt-0 mb-5 min-h-0 text-sm leading-6 text-base-content/65;
+  }
+
+  .content-page--partnership .content-card ol,
+  .content-page--partnership .partnership-detail-section > ol,
+  .content-page--partnership .partnership-detail-section > ul {
+    @apply mt-0 space-y-2 text-sm leading-6;
+  }
+
+  .content-page--partnership .partnership-detail-section {
+    @apply min-w-0 border border-base-300 bg-base-100 p-5 md:p-6;
+  }
+
+  .content-page--partnership .partnership-detail-section small {
+    @apply mt-1 block text-xs leading-5 text-base-content/60;
+  }
+
+  .content-page--partnership .partnership-material-list {
+    @apply mt-4 grid gap-2 p-0 sm:grid-cols-2;
+    list-style: none;
+  }
+
+  .content-page--partnership .partnership-material-list li {
+    @apply m-0 border-l-2 border-teal-700 bg-teal-50 px-3 py-2 text-sm leading-6;
+  }
+
+  .content-page--partnership .partnership-bottom-panel {
+    @apply col-span-full border-0 bg-transparent p-0;
+  }
+
+  .content-page--partnership .partnership-bottom-panel > h2 {
+    @apply mt-0 mb-5;
+  }
+
+  .content-page--partnership .partnership-columns .partnership-detail-section {
+    @apply bg-base-200;
+  }
+
+  .content-page--partnership .partnership-columns h3 {
+    @apply mt-0 mb-3 text-lg;
+  }
+
+  .content-page--partnership .partnership-contact {
+    @apply mt-6 flex items-start justify-between gap-5 border-0 bg-base-content p-5 text-base-100 md:p-6;
+  }
+
+  .content-page--partnership .partnership-contact h2 {
+    @apply mt-0 mb-1 text-xl text-base-100;
+  }
+
+  .content-page--partnership .partnership-contact p {
+    @apply mt-0 text-sm leading-6 text-base-300;
+  }
+
+  .content-page--partnership .partnership-contact a {
+    @apply text-primary-content;
+  }
+
+  .content-page--partnership .partnership-contact-link {
+    @apply shrink-0 bg-base-100 px-4 py-2 text-sm font-bold text-base-content no-underline;
+  }
+
+  .content-page--partnership .content-section {
+    @apply mt-12;
+  }
+
+  .content-page--partnership .content-section > h2,
+  .content-page--partnership .detail-panel > h2 {
+    @apply mt-0 mb-5 text-xl md:text-2xl;
+  }
+
+  .content-page--partnership .content-columns {
+    @apply grid gap-5 md:grid-cols-2;
+  }
+
+  .content-page--partnership .content-steps,
+  .content-page--partnership .detail-panel > ul {
+    @apply mt-0 space-y-2 text-sm leading-6;
+  }
+
+  .content-page--partnership .content-steps small {
+    @apply mt-1 block text-xs leading-5 text-base-content/60;
+  }
+
+  .content-page--partnership .detail-panel {
+    @apply min-w-0 rounded-lg border border-base-content/15 bg-base-100 p-5 shadow-none md:p-6;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  }
+
+  .content-page--partnership .partnership-details > .partnership-bottom-panel {
+    @apply col-span-full;
+  }
+
+  .content-page--partnership .partnership-bottom-panel > .content-section {
+    @apply mt-0;
+  }
+
+  .content-page--partnership .partnership-bottom-panel .detail-panel {
+    @apply bg-base-200;
+  }
+
+  .content-page--partnership .detail-panel .partnership-material-list {
+    @apply mt-4 grid gap-2 p-0 sm:grid-cols-2;
+    list-style: none;
+  }
+
+  .content-page--partnership .detail-panel .partnership-material-list li {
+    @apply m-0 border-l-2 border-teal-700 bg-teal-50 px-3 py-2 text-sm leading-6;
+  }
+
+  .content-page--partnership .contact-panel {
+    @apply mt-6 flex items-start justify-between gap-5 bg-base-content p-5 text-base-100 md:p-6;
+  }
+
+  .content-page--partnership .contact-panel h2 {
+    @apply mt-0 mb-1 text-xl text-base-100;
+  }
+
+  .content-page--partnership .contact-panel p {
+    @apply mt-0 text-sm leading-6 text-base-300;
+  }
+
+  .content-page--partnership .contact-panel a {
+    @apply text-primary-content;
+  }
+
+  .content-page--partnership .contact-panel-link {
+    @apply shrink-0 bg-base-100 px-4 py-2 text-sm font-bold text-base-content no-underline;
+  }
+
+  /* Partnership MDX keeps H2/H3 as native Markdown headings. */
+  .content-page--partnership > h2 {
+    @apply mt-12 mb-5 text-xl font-bold tracking-normal text-base-content md:text-2xl;
+  }
+
+  .content-page--partnership .detail-panel > h3 {
+    @apply mt-0 mb-3 text-lg font-bold tracking-normal text-base-content md:text-xl;
+  }
+
+  .content-page--partnership .content-card > .content-card-body > p {
+    @apply mt-0 mb-5 text-base leading-7 text-base-content/70;
+  }
+
+  .content-page--partnership .content-card ol,
+  .content-page--partnership .detail-panel > ol,
+  .content-page--partnership .detail-panel > ul {
+    @apply text-base leading-7;
+  }
+
+  .content-page--partnership .detail-panel > p {
+    @apply text-base leading-7;
+  }
+
+  /* Shared content components. Pages provide layout classes; components own their visual language. */
+  .content-card {
+    @apply relative min-w-0 overflow-hidden rounded-lg border border-base-content/15 bg-base-100 shadow-none;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  }
+
+  .content-card::before {
+    @apply block h-1.5 bg-primary;
+    content: '';
+  }
+
+  .content-card--teal::before {
+    @apply bg-teal-700;
+  }
+
+  .content-card-body {
+    @apply p-5 md:p-7;
+  }
+
+  .content-card h2,
+  .content-card h3 {
+    @apply mt-0 mb-3 font-bold tracking-normal text-base-content;
+  }
+
+  .content-card h2 {
+    @apply text-xl md:text-2xl;
+  }
+
+  .content-card h3 {
+    @apply text-lg md:text-xl;
+  }
+
+  .content-card p {
+    @apply mt-0 mb-5 text-base leading-7 text-base-content/70;
+  }
+
+  .content-card ol,
+  .content-card ul,
+  .detail-panel ol,
+  .detail-panel ul {
+    @apply text-base leading-7;
+  }
+
+  .detail-panel {
+    @apply min-w-0 rounded-lg border border-base-content/15 bg-base-100 p-5 shadow-none md:p-6;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  }
+
+  .detail-panel h2,
+  .detail-panel h3 {
+    @apply mt-0 border-b border-base-300 pb-3 font-bold tracking-normal text-base-content;
+  }
+
+  .detail-panel h2 {
+    @apply mb-5 text-xl md:text-2xl;
+  }
+
+  .detail-panel h3 {
+    @apply mb-4 text-lg md:text-xl;
+  }
+
+  .detail-panel p {
+    @apply text-base leading-7;
+  }
+
+  .content-columns {
+    @apply grid gap-5 md:grid-cols-2;
+  }
+
+  @media (max-width: 767px) {
+    .content-page--partnership .partnership-contact,
+    .content-page--partnership .contact-panel {
+      @apply flex-col;
+    }
+
+    .content-page--partnership .partnership-contact-link,
+    .content-page--partnership .contact-panel-link {
+      @apply w-full text-center;
+    }
   }
 
   .desktop-nav-wrap,

@@ -2,6 +2,7 @@
  * 文件说明: 配置 CardNav 公开站点的 Astro SSR 构建和 Node 独立运行入口。
  */
 import node from '@astrojs/node';
+import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 /*
  * 文件说明: 配置公开站 Astro 构建、Tailwind 集成、开发热更新和前端脚本分包策略。
@@ -16,6 +17,7 @@ function publicContentHotReload() {
       if (
         /\/src\/i18n\//.test(file)
         || /\/content\/guide\//.test(file)
+        || /\/content\/pages\/.*\.mdx$/.test(file)
         || /\/src\/page-content\.ts$/.test(file)
         || /\/src\/guide\.ts$/.test(file)
         || /\/src\/pages\/.*\.astro$/.test(file)
@@ -29,6 +31,7 @@ function publicContentHotReload() {
 }
 
 export default defineConfig({
+  integrations: [mdx()],
   output: 'server',
   adapter: node({
     mode: 'standalone',

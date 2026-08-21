@@ -1,0 +1,12 @@
+---
+/* 通用双栏内容布局，窄屏自动变为单栏。 */
+type Props = {
+  class?: string;
+};
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['content-columns', className]}>
+  <slot />
+</div>

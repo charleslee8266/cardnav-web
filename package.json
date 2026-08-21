@@ -12,6 +12,7 @@
     "typecheck": "astro check && tsc --noEmit"
   },
   "dependencies": {
+    "@astrojs/mdx": "^7.0.7",
     "@astrojs/node": "11.0.3",
     "@highlightjs/cdn-assets": "^11.11.1",
     "astro": "7.1.6",

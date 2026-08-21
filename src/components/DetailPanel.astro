@@ -1,0 +1,12 @@
+---
+/* 通用详情面板，适用于规则、要求和说明内容。 */
+type Props = {
+  class?: string;
+};
+
+const { class: className } = Astro.props;
+---
+
+<article class:list={['detail-panel', className]}>
+  <slot />
+</article>

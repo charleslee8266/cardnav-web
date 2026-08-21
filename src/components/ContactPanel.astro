@@ -1,0 +1,17 @@
+---
+/* 通用深色联系区，文案和行动链接由调用方传入。 */
+type Props = {
+  href: string;
+  label: string;
+  id?: string;
+};
+
+const { href, label, id } = Astro.props;
+---
+
+<section id={id} class="contact-panel">
+  <div>
+    <slot />
+  </div>
+  <a class="contact-panel-link" href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+</section>

@@ -13,7 +13,10 @@ type Props = {
 const { content, showBanner = false } = Astro.props;
 ---
 
-<article class="content-page site-main-width rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7">
+<article class:list={[
+  'content-page site-main-width rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7',
+  content.slug === 'partnership' && 'content-page--partnership',
+]}>
   {
     showBanner && (
       <img

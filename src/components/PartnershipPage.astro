@@ -1,0 +1,14 @@
+---
+/* 商务合作页的 MDX 容器，页面文案和结构由各语言 MDX 真源定义。 */
+import DefaultPartnershipContent from '../../content/pages/zh/partnership.mdx';
+
+type Props = {
+  content?: typeof DefaultPartnershipContent;
+};
+
+const { content: PartnershipContent = DefaultPartnershipContent } = Astro.props;
+---
+
+<article class="content-page content-page--partnership site-main-width rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7">
+  <PartnershipContent />
+</article>

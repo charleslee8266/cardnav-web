@@ -1,0 +1,13 @@
+---
+/* 通用内容区，统一标题和区块间距。 */
+type Props = {
+  id?: string;
+  class?: string;
+};
+
+const { id, class: className } = Astro.props;
+---
+
+<section id={id} class:list={['content-section', className]}>
+  <slot />
+</section>

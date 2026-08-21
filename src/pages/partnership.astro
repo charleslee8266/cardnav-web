@@ -4,22 +4,21 @@
 对应文档: docs/promo/cardnav-partner-offer.md
 */
 import PublicPage from '../layouts/PublicPage.astro';
-import PageContentArticle from '../components/PageContentArticle.astro';
-import { loadPageContent } from '../page-content.js';
+import PartnershipPage from '../components/PartnershipPage.astro';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { applyStaticLocaleLocals } from '../static-locale.js';
+import { frontmatter as partnershipFrontmatter } from '../../content/pages/zh/partnership.mdx';
 
 export const prerender = true;
 
 applyStaticLocaleLocals(Astro, undefined, '/partnership');
 
-const content = loadPageContent('partnership', Astro.locals.locale);
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/partnership',
-  title: content.title,
-  description: content.description,
+  title: partnershipFrontmatter.title,
+  description: partnershipFrontmatter.description,
   imagePath: '/og-cardnav.webp',
   type: 'webpage',
   locale: Astro.locals.locale,
@@ -27,5 +26,5 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="partnership" {...seo}>
-  <PageContentArticle content={content} />
+  <PartnershipPage />
 </PublicPage>

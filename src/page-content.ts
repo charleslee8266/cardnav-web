@@ -28,6 +28,16 @@ const markdownRenderer = new MarkdownIt({
   typographer: true,
 });
 
+function renderPageMarkdown(markdown: string) {
+  const rendered = markdownRenderer
+    .render(markdown)
+    .replace(
+      /<a href="(https:\/\/cardnav\.xyz\/(?:llm-gateway|shops))">/gu,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">',
+    );
+  return rendered;
+}
+
 function isPageContentRoot(candidate: string) {
   return existsSync(path.join(candidate, defaultLocale, 'about.md'));
 }
@@ -113,6 +123,6 @@ export function loadPageContent(slug: PageContentSlug, locale: Locale = defaultL
     title: normalizeFrontmatterString(data.title) ?? titleFromMarkdown(markdown, slug),
     description: normalizeFrontmatterString(data.description) ?? descriptionFromMarkdown(markdown),
     markdown,
-    html: markdownRenderer.render(markdown),
+    html: renderPageMarkdown(markdown),
   };
 }
