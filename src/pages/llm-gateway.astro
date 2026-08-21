@@ -18,6 +18,7 @@ import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
 import dataTableScriptUrl from '../scripts/data-table.js?url';
+import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import sponsorBadgeScriptUrl from '../scripts/sponsor-badge.js?url';
 
 const t = Astro.locals.messages;
@@ -118,18 +119,23 @@ const gatewayHomeConfig = {
       <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="font-medium text-primary no-underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30" data-umami-event="gateway-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
       {t.llmGateway.noteSuffix}
     </p>
-    <div slot="aside" class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
-      <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">{t.llmGateway.listedSites}</div>
-        <div class="stat-value text-2xl text-primary">{gatewayData.totalSiteCount}</div>
-      </div>
-      <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">{t.llmGateway.sitesWithPrices}</div>
-        <div class="stat-value text-2xl text-secondary">{gatewayData.sitesWithPricesCount}</div>
-      </div>
-      <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">{t.llmGateway.modelRecords}</div>
-        <div class="stat-value text-2xl">{gatewayModelData.totalModelCount}</div>
+    <div slot="aside" class="flex flex-col items-stretch gap-3">
+      <button id="openGatewaySubmitModal" type="button" class="btn btn-primary btn-md w-full" data-umami-event="gateway-submit-open-click" data-umami-event-name={t.llmGateway.submitGateway}>
+        {t.llmGateway.submitGateway}
+      </button>
+      <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
+        <div class="stat px-4 py-3">
+          <div class="stat-title text-xs">{t.llmGateway.listedSites}</div>
+          <div class="stat-value text-2xl text-primary">{gatewayData.totalSiteCount}</div>
+        </div>
+        <div class="stat px-4 py-3">
+          <div class="stat-title text-xs">{t.llmGateway.sitesWithPrices}</div>
+          <div class="stat-value text-2xl text-secondary">{gatewayData.sitesWithPricesCount}</div>
+        </div>
+        <div class="stat px-4 py-3">
+          <div class="stat-title text-xs">{t.llmGateway.modelRecords}</div>
+          <div class="stat-value text-2xl">{gatewayModelData.totalModelCount}</div>
+        </div>
       </div>
     </div>
   </PageHero>
@@ -294,9 +300,33 @@ const gatewayHomeConfig = {
       </div>
     </section>
   )}
+  <dialog id="gatewaySubmitDialog" class="modal">
+    <div class="modal-box max-w-3xl p-0">
+      <section class="card bg-base-100 shadow-none"><div class="card-body relative grid gap-5 p-5">
+        <h2 class="page-hero-title mt-0">{t.llmGateway.submitGateway}</h2>
+        <p class="text-sm leading-6 text-base-content">{t.llmGateway.submitDescription}</p>
+        <form method="dialog" class="absolute right-5 top-5"><button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.llmGateway.closeSubmitDialog}>✕</button></form>
+        <div class="alert alert-info alert-soft flex flex-col items-start gap-1.5 text-left text-base-content">
+          <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
+          <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="gateway-submit-partnership-click" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
+        </div>
+        <form id="gatewaySubmitForm" class="form-control grid gap-5" method="post" action="/api/gateway-submit">
+          <div class="grid gap-1.5"><label for="gatewayUrlInput" class="label p-0 font-semibold text-sm">{t.llmGateway.submitUrl}<span class="text-error" aria-hidden="true">*</span></label><p class="text-xs text-base-content">{t.llmGateway.submitUrlDescription}</p><input id="gatewayUrlInput" name="url" type="url" required class="input input-bordered w-full" placeholder="https://api.example.com" autocomplete="url" /></div>
+          <div class="grid gap-1.5"><label for="gatewayNameInput" class="label p-0 font-semibold text-sm">{t.llmGateway.submitName}<span class="text-error" aria-hidden="true">*</span></label><p class="text-xs text-base-content">{t.llmGateway.submitNameDescription}</p><input id="gatewayNameInput" name="name" required maxlength="20" class="input input-bordered w-full" placeholder="Example API" /></div>
+          <div class="grid gap-1.5"><label for="gatewaySummaryInput" class="label p-0 font-semibold text-sm">{t.llmGateway.submitSummary}</label><p class="text-xs text-base-content">{t.llmGateway.submitSummaryDescription}</p><textarea id="gatewaySummaryInput" name="summary" maxlength="150" rows="3" class="textarea textarea-bordered w-full" placeholder={t.llmGateway.submitSummaryPlaceholder}></textarea></div>
+          <div class="grid gap-1.5"><label class="label p-0 font-semibold text-sm" for="gatewayPaymentSelect">{t.llmGateway.paymentMethods}</label><p class="text-xs text-base-content">{t.llmGateway.submitPaymentDescription}</p><details id="gatewayPaymentSelect" class="dropdown dropdown-top w-full"><summary class="select select-bordered flex h-auto min-h-12 w-full cursor-pointer list-none items-center gap-2 px-3 py-2"><span data-payment-selection-label class="text-base-content">{t.llmGateway.selectPaymentMethods}</span></summary><div class="dropdown-content z-50 mb-2 max-h-64 w-full overflow-y-auto rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"><div class="grid gap-1 sm:grid-cols-2">{Object.entries(t.llmGateway.paymentMethodLabels).map(([key, label]) => <button type="button" class="gateway-payment-option flex min-h-10 items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-base-200 disabled:cursor-not-allowed disabled:bg-base-200 disabled:text-base-content/65 disabled:opacity-100" data-payment-key={key} data-payment-label={label} aria-pressed="false"><span>{label}</span><span class="gateway-payment-check hidden text-primary" aria-hidden="true">✓</span></button>)}</div></div></details></div>
+          <p id="gatewaySubmitError" class="hidden text-sm text-error font-medium"></p><p id="gatewaySubmitSuccess" class="hidden text-sm text-primary font-medium"></p>
+          <div class="card-actions justify-start mt-2"><button type="submit" class="btn btn-primary" data-umami-event="gateway-submit-click">{t.actions.submit}</button></div>
+        </form>
+      </div></section>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button type="submit" aria-label={t.llmGateway.closeSubmitBackdrop}>{t.llmGateway.closeSubmitDialog}</button></form>
+  </dialog>
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
+  <script is:inline slot="scripts" type="application/json" id="gateway-submit-messages" set:html={JSON.stringify({ locale: Astro.locals.locale, submit: t.submit, gateway: { selectPaymentMethods: t.llmGateway.selectPaymentMethods, paymentMethodSeparator: t.llmGateway.paymentMethodSeparator } })}></script>
   <script is:inline slot="scripts" src={sponsorBadgeScriptUrl}></script>
   <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
+  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
   <script>
     import '../scripts/llm-gateway-home.js';
   </script>

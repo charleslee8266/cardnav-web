@@ -151,6 +151,14 @@ function initShopSubmit() {
     shopSubmitDialog?.showModal();
     syncSubmitEventUrl();
   });
+  shopSubmitDialog?.addEventListener('close', () => {
+    urlInput.value = '';
+    urlInput.disabled = false;
+    if (submitButton) submitButton.disabled = false;
+    syncSubmitEventUrl();
+    clientError?.classList.add('hidden');
+    hideServerMessages();
+  });
 
   submitForm?.addEventListener('submit', event => {
     syncSubmitEventUrl();
@@ -166,6 +174,7 @@ function initShopSubmit() {
 
     event.preventDefault();
     clientError?.classList.add('hidden');
+    let submitted = false;
     if (submitButton) submitButton.disabled = true;
 
     fetch(submitForm.action, {
@@ -183,15 +192,15 @@ function initShopSubmit() {
           showError(payload && payload.message ? payload.message : submitMessages.failed);
           return;
         }
-        urlInput.value = '';
-        syncSubmitEventUrl();
+        submitted = true;
+        urlInput.disabled = true;
         showSuccess(payload.message || submitMessages.success);
       })
       .catch(() => {
         showError(submitMessages.failed);
       })
       .finally(() => {
-        if (submitButton) submitButton.disabled = false;
+        if (submitButton && !submitted) submitButton.disabled = false;
       });
   });
 
@@ -202,6 +211,86 @@ function initShopSubmit() {
   });
 
   syncSubmitEventUrl();
+}
+
+function initGatewaySubmit() {
+  const config = parseJsonScript('gateway-submit-messages');
+  const messages = config.submit || {};
+  const gatewayMessages = config.gateway || {};
+  const dialog = document.querySelector('#gatewaySubmitDialog');
+  const openButton = document.querySelector('#openGatewaySubmitModal');
+  const form = document.querySelector('#gatewaySubmitForm');
+  const url = document.querySelector('#gatewayUrlInput');
+  const name = document.querySelector('#gatewayNameInput');
+  const summary = document.querySelector('#gatewaySummaryInput');
+  const paymentSelect = document.querySelector('#gatewayPaymentSelect');
+  const paymentSummary = paymentSelect?.querySelector('summary');
+  const paymentLabel = paymentSelect?.querySelector('[data-payment-selection-label]');
+  const error = document.querySelector('#gatewaySubmitError');
+  const success = document.querySelector('#gatewaySubmitSuccess');
+  const button = form?.querySelector('button[type="submit"]');
+  if (!form || !url || !name || !summary) return;
+  const selectedPayments = new Set();
+  const syncPaymentSelection = () => {
+    const labels = [...paymentSelect?.querySelectorAll('.gateway-payment-option[aria-pressed="true"]') || []].map(option => option.dataset.paymentLabel || '');
+    if (paymentLabel) {
+      paymentLabel.textContent = labels.length ? labels.join(gatewayMessages.paymentMethodSeparator || ', ') : gatewayMessages.selectPaymentMethods;
+      paymentLabel.classList.toggle('text-base-content/65', labels.length === 0);
+    }
+  };
+  paymentSelect?.querySelectorAll('.gateway-payment-option').forEach(option => option.addEventListener('click', () => {
+    const key = option.dataset.paymentKey;
+    if (!key) return;
+    if (selectedPayments.has(key)) selectedPayments.delete(key); else selectedPayments.add(key);
+    const active = selectedPayments.has(key);
+    option.setAttribute('aria-pressed', String(active));
+    option.classList.toggle('bg-primary/10', active);
+    option.querySelector('.gateway-payment-check')?.classList.toggle('hidden', !active);
+    syncPaymentSelection();
+  }));
+  document.addEventListener('click', event => {
+    if (paymentSelect?.open && event.target instanceof Node && !paymentSelect.contains(event.target)) {
+      paymentSelect.removeAttribute('open');
+    }
+  });
+  const show = (element, text) => { element.textContent = text; element.classList.remove('hidden'); };
+  const clear = () => { error?.classList.add('hidden'); success?.classList.add('hidden'); };
+  openButton?.addEventListener('click', () => dialog?.showModal());
+  dialog?.addEventListener('close', () => {
+    form.reset();
+    selectedPayments.clear();
+    paymentSelect?.querySelectorAll('.gateway-payment-option').forEach(option => {
+      option.setAttribute('aria-pressed', 'false');
+      option.classList.remove('bg-primary/10');
+      option.querySelector('.gateway-payment-check')?.classList.add('hidden');
+    });
+    syncPaymentSelection();
+    form.querySelectorAll('input, textarea, button.gateway-payment-option').forEach(control => { control.disabled = false; });
+    paymentSelect?.classList.remove('pointer-events-none', 'opacity-75');
+    paymentSummary?.classList.remove('bg-base-200', 'cursor-not-allowed');
+    button?.removeAttribute('disabled');
+    clear();
+  });
+  form.addEventListener('submit', async event => {
+    event.preventDefault(); clear();
+    if (!url.value.trim()) { show(error, messages.invalidUrl || messages.failed); url.focus(); return; }
+    if (!name.value.trim()) { show(error, messages.invalidGatewayName || messages.failed); name.focus(); return; }
+    if (name.value.trim().length > 20) { show(error, messages.gatewayNameTooLong || messages.failed); name.focus(); return; }
+    if (summary.value.trim().length > 150) { show(error, messages.gatewaySummaryTooLong || messages.failed); summary.focus(); return; }
+    button?.setAttribute('disabled', 'disabled');
+    let submitted = false;
+    try {
+      const response = await fetch(form.action, { method: 'POST', headers: { accept: 'application/json', 'content-type': 'application/json', 'x-requested-with': 'fetch' }, body: JSON.stringify({ locale: config.locale, url: url.value.trim(), name: name.value.trim(), summary: summary.value.trim(), paymentMethods: [...selectedPayments] }) });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) { show(error, payload?.message || messages.failed); return; }
+      submitted = true;
+      form.querySelectorAll('input, textarea, button.gateway-payment-option').forEach(control => { control.disabled = true; });
+      paymentSelect?.classList.add('pointer-events-none', 'opacity-75');
+      paymentSummary?.classList.add('bg-base-200', 'cursor-not-allowed');
+      paymentSelect?.removeAttribute('open');
+      show(success, payload.message || messages.success);
+    } catch { show(error, messages.failed); } finally { if (!submitted) button?.removeAttribute('disabled'); }
+  });
 }
 
 function initModelLeaderboard() {
@@ -298,4 +387,5 @@ initHomeSearch();
 initGuideBrowser();
 initHighlightTheme();
 initShopSubmit();
+initGatewaySubmit();
 initModelLeaderboard();
