@@ -56,7 +56,7 @@ For more on the thinking behind CardNav and why it was created, read [About Card
 | Card shop merchants | Aggregates third-party AI card shop merchant and product information, with keyword search, popular searches, price ranges, stock status, merchant grouping, overall sorting, and favorites to help users find purchase entrances worth checking |
 | Model rankings | View mainstream model rankings by tasks such as programming, creative writing, math, and text-to-image generation to judge which model category fits best |
 | Official subscription price comparison | Compare subscription prices and CNY conversions for ChatGPT, Claude, Gemini, Grok, Copilot, Kimi, X, and more across regions to judge whether an official plan is worth buying and which region is more cost-effective |
-| Toolset | Provides ChatGPT Session conversion, IP cleanliness checks, and external helper tools such as Codex credential assistant and Outlook quick pickup to help users complete quick checks and processing before registration, login, payment, import, or format conversion |
+| Toolset | Provides ChatGPT Session conversion, IP cleanliness checks, and external helper tools such as Outlook quick pickup to help users complete quick checks and processing before registration, login, payment, import, or format conversion |
 | Merchant submission and cooperation | Provides merchant submission, public listing, sponsorship slots, and cooperation entrances so quality merchants can get clearer display and exposure paths |
 
 ## Who It Is For
@@ -132,6 +132,16 @@ PUBLIC_SITE_URL=https://cardnav.xyz
 ABUSEIPDB_API_KEY=
 GREYNOISE_API_KEY=
 ```
+
+Contribution payments use the Epay checkout and support Alipay and WeChat Pay. Configure `EASYPAY_PID` (merchant PID), `EASYPAY_PKEY` (merchant secret), and `EASYPAY_API_URL` (HTTPS API base URL). Users can contribute whole amounts from 5 to 5000 CNY as individuals, shop merchants, or gateway operators. A nickname, email, and single-line message are optional for individuals. Confirmed contributions with the same email are combined, using the nickname and message from the most recent confirmed contribution. Email is used only to combine totals and is never public. Contributions without an email are listed separately; a blank nickname appears as anonymous. The secret is used only for server-side signing and must not be committed to the repository.
+
+`PUBLIC_SITE_URL` must be an HTTPS site root URL. The notification endpoint is `/api/support/notify`, for example `https://cardnav.xyz/api/support/notify`. The payment provider must send signed notifications using **GET**. Totals update only after a payment notification is verified; returning to the site does not confirm payment. Browsing and URL submission remain available without Epay configuration. After returning, payment status is checked using a random order token. Nicknames, emails, and messages are not sent to the payment provider.
+
+Confirmed payments refresh related public data and purge Cloudflare page caches. Set `CLOUDFLARE_ZONE_ID` and a `CLOUDFLARE_API_TOKEN` with Cache Purge permission for that zone. Failed cache updates remain pending and are retried when the payment provider resends the notification; confirmed amounts are not counted twice.
+
+`/supporters` displays cumulative contributions. Open the contribution dialog directly with `/shops?support-dialog`, `/llm-gateway?support-dialog`, or `/supporters?support-dialog`. Localized pages retain their language prefix.
+
+For local debugging, set `SUPPORT_PAYMENT_DEBUG=true` in `.env` and start with `npm run dev`. Submitting a contribution creates a simulated paid order, returns to the site, and updates the list and merchant totals without payment configuration or requests to the payment provider or Cloudflare. This option requires `NODE_ENV=development`, a local access URL, and a local database host. Simulated orders are written to the local database and remain after the option is disabled.
 
 ### Common Commands
 

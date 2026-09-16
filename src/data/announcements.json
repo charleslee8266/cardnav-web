@@ -1,0 +1,24 @@
+[
+  {
+    "id": "telegram",
+    "repeatAfterHours": 168,
+    "href": "https://t.me/cardnav_xyz_group",
+    "message": {
+      "zh": "卡网大全电报交流群已开放，欢迎进群交流功能建议、产品想法、数据问题、使用反馈和商务合作",
+      "en": "The CardNav Telegram group is now open, share feature suggestions, product ideas, data questions, usage feedback, and business inquiries with us.",
+      "ru": "Открыта группа CardNav в Telegram, присоединяйтесь, чтобы обсудить функции, идеи продукта, вопросы по данным, отзывы об использовании и деловое сотрудничество."
+    },
+    "priority": 10
+  },
+  {
+    "id": "supporters",
+    "repeatAfterHours": 168,
+    "href": "/supporters?support-dialog",
+    "message": {
+      "zh": "为助力优质中小商家推广，也支持网站持续发展，卡网大全已上线小额自助赞赏，点击了解详情",
+      "en": "To help quality small and medium-sized merchants gain visibility and support the site’s continued development, CardNav now offers a self-service option for small contributions. Click to learn more.",
+      "ru": "Чтобы помочь достойным малым и средним продавцам в продвижении и поддержать дальнейшее развитие сайта, CardNav добавил возможность самостоятельно отправить небольшое пожертвование. Нажмите, чтобы узнать подробности."
+    },
+    "priority": 20
+  }
+]

@@ -1,6 +1,7 @@
 /*
  * 文件说明: 提供公开数据表的远端补齐、渐进渲染、排序状态和加载更多 summary 通用控制器。
  */
+import { pinSiteRows } from '../site-list-pinning.js';
 
 (() => {
   function defaultItems(payload) {
@@ -19,9 +20,6 @@
   function compareEntries(sort) {
     const multiplier = sort.direction === 'asc' ? 1 : -1;
     return (left, right) => {
-      if ('sticky' in left.sort && 'sticky' in right.sort && left.sort.sticky !== right.sort.sticky) {
-        return (Number(right.sort.sticky) || 0) - (Number(left.sort.sticky) || 0);
-      }
       const leftValue = left.sort[sort.key];
       const rightValue = right.sort[sort.key];
       if (typeof leftValue === 'number' && typeof rightValue === 'number') {
@@ -62,9 +60,8 @@
 
     function currentEntries() {
       const entries = state.entries.slice();
-      if (state.sort) entries.sort(compareEntries(state.sort));
-      else entries.sort((left, right) => left.index - right.index);
-      return entries;
+      entries.sort(compareEntries(state.sort || { key: 'sequence', direction: 'asc' }));
+      return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 }))).map(row => row.entry);
     }
 
     function updateSummary() {

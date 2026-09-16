@@ -16,43 +16,48 @@ function localizedFallbackPath(pathname) {
   return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
 }
 
-const submitDialogQueryKey = 'submit-dialog';
-
-function hasSubmitDialogQuery() {
-  return new URL(window.location.href).searchParams.has(submitDialogQueryKey);
-}
-
-function updateSubmitDialogQuery(open, replace = false) {
-  const url = new URL(window.location.href);
-  const params = new URLSearchParams(url.search);
-  params.delete(submitDialogQueryKey);
-  const serialized = params.toString();
-  url.search = open
-    ? `${serialized ? `?${serialized}&` : '?'}${submitDialogQueryKey}`
-    : serialized ? `?${serialized}` : '';
-  window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
-}
-
-function initSubmitDialogUrl(dialog, openButton) {
+function initSubmitDialogUrl(dialog, openButton, queryKey = 'submit-dialog') {
   if (!dialog) return;
   let closingFromUrl = false;
-
+  const hasQuery = () => new URL(window.location.href).searchParams.has(queryKey);
+  const updateQuery = (open, replace = false) => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete(queryKey);
+    if (open) url.searchParams.delete(queryKey === 'submit-dialog' ? 'support-dialog' : 'submit-dialog');
+    const query = url.searchParams.toString();
+    url.search = open ? `${query ? `?${query}&` : '?'}${queryKey}` : query;
+    window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
+  };
+  const show = () => {
+    document.querySelectorAll('#shopSubmitDialog[open], #gatewaySubmitDialog[open], #supportDialog[open]').forEach(other => {
+      if (other !== dialog) other.close();
+    });
+    if (!dialog.open) {
+      dialog.showModal();
+      if (queryKey === 'support-dialog') dialog.dispatchEvent(new Event('support-open'));
+    }
+  };
   const syncDialogToUrl = () => {
-    const shouldOpen = hasSubmitDialogQuery();
-    if (shouldOpen && !dialog.open) dialog.showModal();
-    if (!shouldOpen && dialog.open) {
+    if (hasQuery()) show();
+    else if (dialog.open) {
       closingFromUrl = true;
       dialog.close();
       closingFromUrl = false;
     }
   };
-
-  openButton?.addEventListener('click', () => {
-    updateSubmitDialogQuery(true);
-    if (!dialog.open) dialog.showModal();
-  });
+  const openFromClick = event => {
+    event.preventDefault();
+    updateQuery(true);
+    show();
+  };
+  if (queryKey === 'support-dialog') {
+    document.addEventListener('click', event => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest('[data-open-support], a[href="?support-dialog"]')) openFromClick(event);
+    });
+  } else openButton?.addEventListener('click', openFromClick);
   dialog.addEventListener('close', () => {
-    if (!closingFromUrl && hasSubmitDialogQuery()) updateSubmitDialogQuery(false, true);
+    if (!closingFromUrl && hasQuery()) updateQuery(false, true);
   });
   window.addEventListener('popstate', syncDialogToUrl);
   syncDialogToUrl();
@@ -154,7 +159,7 @@ function initShopSubmit() {
 
     fetch(submitForm.action, {
       method: 'POST',
-      body: JSON.stringify({ url: urlInput.value.trim() }),
+      body: JSON.stringify({ url: urlInput.value.trim(), locale: shopSubmitDialog.dataset.locale }),
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
@@ -367,3 +372,5 @@ initHighlightTheme();
 initShopSubmit();
 initGatewaySubmit();
 initModelLeaderboard();
+
+initSubmitDialogUrl(document.querySelector('#supportDialog'), document.querySelector('[data-open-support]'), 'support-dialog');

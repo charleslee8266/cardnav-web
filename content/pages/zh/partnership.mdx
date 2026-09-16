@@ -30,7 +30,19 @@ import TwoColumn from '../../../src/components/TwoColumn.astro';
 
 <Card tone="teal">
 
-### 方式二：固定合作商家
+### 方式二：小额赞赏
+
+适合希望支持卡网大全维护的用户和商家。
+
+1. 用户或商家自助参与<a href="/supporters?support-dialog">小额赞赏</a>。
+2. 赞赏到账后，将展示在<a href="/supporters">赞赏名单</a>中。
+3. 商家赞赏可关联对应<a href="/llm-gateway">中转站</a>或<a href="/shops">卡网站点</a>，有机会获得置顶展示，具体规则见下方。
+
+</Card>
+
+<Card tone="gold">
+
+### 方式三：固定合作商家
 
 适合需要更多曝光的商家。
 
@@ -42,17 +54,17 @@ import TwoColumn from '../../../src/components/TwoColumn.astro';
 </Card>
 </TwoColumn>
 
-## 固定合作详情
+## 规则详情
 
 <TwoColumn class="partnership-details">
 <DetailPanel>
 
-### 固定合作提供材料
+### 赞赏商家展示规则
 
-1. **名称**：用于页面标题和合作标识
-2. **介绍**：简要说明服务内容
-3. **网址**：用于查看和合作跳转
-4. **图片**：宽高 3:1，用于赞助商列表等位置
+1. **展示位置**：在<a href="/llm-gateway">中转站页面</a>和<a href="/shops">卡网页面</a>中，筛选参数匹配时置顶展示商家或部分商品，并标注“赞赏商家”。
+2. **展示数量**：赞赏置顶区最多展示 10 条，单个商家最多展示 2 条。
+3. **当前排序**：按商家累计赞赏金额从高到低展示。
+4. **后续调整**：若赞赏商家增多，将把每笔赞赏金额按时间衰减后累加为「赞赏积分」，并按积分从高到低排序。
 
 </DetailPanel>
 
@@ -60,12 +72,13 @@ import TwoColumn from '../../../src/components/TwoColumn.astro';
 
 ### 固定合作展示规则
 
-1. 在<a href="https://cardnav.xyz/llm-gateway" target="_blank" rel="noopener noreferrer">中转站页面</a>和<a href="https://cardnav.xyz/shops" target="_blank" rel="noopener noreferrer">卡网页面</a>中，筛选参数匹配时置顶展示商家或部分商品，并标注“合作商家”。
-2. 赞助商列表展示在所有页面底部，需要商家提供图片素材。
-3. 实际展示效果可参考已有商家，例如 `GeniusCoder`。
-4. 如有其他需求，也可以<a href="https://t.me/cardnav_xyz_group" target="_blank" rel="noopener noreferrer">详细讨论</a>。
+1. **赞助商列表**：在所有页面展示，**商家需提供图片素材，宽高 3:1**。
+2. **表格置顶区**：在<a href="https://cardnav.xyz/llm-gateway" target="_blank" rel="noopener noreferrer">中转站页面</a>和<a href="https://cardnav.xyz/shops" target="_blank" rel="noopener noreferrer">卡网页面</a>中，筛选参数匹配时置顶展示商家或部分商品，并标注“合作商家”。
+3. **官方群**：可在<a href="https://t.me/cardnav_xyz_group" target="_blank" rel="noopener noreferrer">官方 TG 群</a>发布推广链接并置顶。
+4. **其他**：实际展示效果可参考已有商家，例如 `GeniusCoder`；如有其他需求，也可以<a href="https://t.me/cardnav_xyz_group" target="_blank" rel="noopener noreferrer">详细讨论</a>。
 
 </DetailPanel>
+
 </TwoColumn>
 
 ## 合作要求与用户判断

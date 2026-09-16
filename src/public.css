@@ -3,6 +3,7 @@
 */
 @import "tailwindcss";
 @import "./components/data-table.css";
+@import "./components/form.css";
 @plugin "daisyui";
 
 @source "./**/*.astro";
@@ -11,8 +12,15 @@
 @theme {
   --color-primary: #2563eb;
   --color-primary-content: #ffffff;
+  --color-support: #db2777;
+  --color-support-content: #ffffff;
   --color-error: #ef4444;
   --color-error-content: #ffffff;
+}
+
+@utility support-button {
+  --btn-color: var(--color-support);
+  --btn-fg: var(--color-support-content);
 }
 
 @layer base {
@@ -21,11 +29,13 @@
     --color-primary: #2563eb !important;
     --color-primary-content: #ffffff !important;
     --color-primary-hover: #2563eb !important;
+    --merchant-partner-text: var(--color-amber-700);
     --color-error: #dc2626 !important; /* 正红色 (red-600) */
     --color-error-content: #ffffff !important;
   }
 
   [data-theme="dark"] {
+    --merchant-partner-text: var(--color-amber-200);
     --color-primary: #2563eb !important;
     --color-primary-content: #ffffff !important;
     --color-primary-hover: #2563eb !important;
@@ -622,15 +632,6 @@
     @apply relative overflow-hidden border border-base-content/15 bg-base-100;
   }
 
-  .content-page--partnership .content-card::before {
-    @apply block h-1.5 bg-primary;
-    content: '';
-  }
-
-  .content-page--partnership .content-card--teal::before {
-    @apply bg-teal-700;
-  }
-
   .content-page--partnership .content-card-body {
     @apply p-5 md:p-7;
   }
@@ -816,6 +817,10 @@
     @apply bg-teal-700;
   }
 
+  .content-card--gold::before {
+    @apply bg-amber-500;
+  }
+
   .content-card-body {
     @apply p-5 md:p-7;
   }
@@ -933,6 +938,122 @@
 
   .page-hero-shell {
     @apply flex flex-col gap-3 md:flex-row md:items-start md:justify-between;
+  }
+
+  .support-identities {
+    @apply grid gap-2;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  }
+
+  .support-identities > label {
+    @apply flex min-h-12 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-base-300 px-3 py-2;
+  }
+
+  .support-identities > label:has(input:checked) {
+    @apply border-primary bg-primary/5;
+  }
+
+  .support-identities > label > input {
+    @apply shrink-0;
+  }
+
+  .support-identities > label > span {
+    @apply whitespace-nowrap;
+  }
+
+  .support-site-combobox {
+    @apply relative min-w-0;
+  }
+
+  .support-site-combobox > input[role="combobox"] {
+    @apply pr-7;
+  }
+
+  .support-site-chevron {
+    @apply pointer-events-none absolute right-3 top-3 text-base-content/60;
+  }
+
+  .support-site-options {
+    @apply absolute left-0 top-full z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-box border border-base-300 bg-base-100 p-1 shadow-lg;
+  }
+
+  .support-site-options > button {
+    @apply flex w-full flex-col items-start gap-1 rounded-lg px-3 py-2 text-left text-sm;
+    overflow-wrap: anywhere;
+  }
+
+  .support-site-options > button:hover,
+  .support-site-options > button:focus-visible,
+  .support-site-options > button[aria-selected="true"] {
+    @apply bg-base-200 outline-none;
+  }
+
+  .support-site-options small {
+    @apply text-xs text-base-content/60;
+  }
+
+  .support-payment-options {
+    @apply grid gap-2;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  }
+
+  .support-payment-options > label {
+    @apply flex min-h-12 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-base-300 px-3 py-2;
+  }
+
+  .support-payment-options > label:has(input:checked) {
+    @apply border-primary bg-primary/5;
+  }
+
+  .support-payment-options > label > img,
+  .support-payment-options > label > input {
+    @apply shrink-0;
+  }
+
+  .support-return-status {
+    @apply mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm;
+  }
+
+  .support-list {
+    @apply overflow-hidden rounded-box border border-base-300 bg-base-100;
+  }
+
+  .support-list-row {
+    @apply grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 border-b border-base-300 p-4 last:border-b-0;
+  }
+
+  .support-rank {
+    @apply min-w-5 pt-0.5 text-sm tabular-nums text-base-content/50;
+  }
+
+  .support-supporter {
+    @apply min-w-0;
+  }
+
+  .support-supporter-name {
+    @apply flex flex-wrap items-center gap-2 font-semibold break-words;
+    overflow-wrap: anywhere;
+  }
+
+  .support-message {
+    @apply mt-2 text-sm leading-6 text-base-content/70;
+    overflow-wrap: anywhere;
+  }
+
+  .support-list-amount {
+    @apply flex flex-col items-end gap-1 tabular-nums;
+  }
+
+  .support-list-amount > span {
+    @apply text-xs text-base-content/60;
+  }
+
+  .support-list-amount > strong {
+    @apply font-semibold text-primary;
+  }
+
+  .support-list-empty {
+    @apply rounded-box border border-base-300 bg-base-100 p-8 text-center text-base-content/70;
   }
 
   .page-hero-submit-summary {
@@ -1082,36 +1203,43 @@
     overflow-wrap: anywhere;
   }
 
-  .sponsor-badge {
+  .merchant-badge {
     @apply inline-flex h-6 min-h-6 shrink-0 items-center gap-1 rounded px-1.5 text-xs font-semibold leading-none;
-    border: 1px solid #93c5fd;
-    background: transparent;
-    color: #2563eb;
+    border: 1px solid color-mix(in oklab, var(--color-primary) 45%, transparent);
+    background: color-mix(in oklab, var(--color-primary) 5%, var(--color-base-100));
+    color: var(--color-primary);
   }
 
-  .sponsor-badge-group {
+  .merchant-badge-group {
     @apply inline-flex shrink-0 items-center;
   }
 
-  .sponsor-badge-link {
+  .merchant-badge[data-kind='sponsor'] {
+    border-color: var(--color-amber-400);
+    background: color-mix(in oklab, var(--color-amber-400) 8%, var(--color-base-100));
+    color: var(--merchant-partner-text);
+    font-weight: 700;
+  }
+
+  .merchant-badge-link {
     @apply text-primary underline underline-offset-2;
   }
 
-  .sponsor-badge-info {
-    @apply relative inline-flex h-3 w-3 cursor-pointer items-center justify-center rounded-full border border-current text-[8px] font-bold leading-none text-primary outline-none;
+  .merchant-badge-info {
+    @apply relative inline-flex h-3 w-3 cursor-pointer items-center justify-center rounded-full border border-current text-[8px] font-bold leading-none outline-none;
   }
 
-  .sponsor-badge-tooltip {
+  .merchant-badge-tooltip {
     @apply pointer-events-none invisible absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 rounded border border-base-300 bg-base-100 px-3 py-2 text-left text-xs font-normal leading-5 text-base-content opacity-0 transition-opacity;
   }
 
-  .sponsor-badge-tooltip::before {
+  .merchant-badge-tooltip::before {
     content: '';
     @apply absolute -top-2 left-0 right-0 h-2;
   }
 
-  .sponsor-badge-info:hover .sponsor-badge-tooltip,
-  .sponsor-badge-info:focus-within .sponsor-badge-tooltip {
+  .merchant-badge-info:hover .merchant-badge-tooltip,
+  .merchant-badge-info:focus-within .merchant-badge-tooltip {
     @apply pointer-events-auto visible opacity-100;
   }
 
@@ -1295,7 +1423,7 @@
   }
 
   .merchant-table-head {
-    @apply hidden items-center grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_160px] border-b border-base-300 bg-base-200 text-sm text-base-content md:grid;
+    @apply hidden items-center grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_116px_160px] border-b border-base-300 bg-base-200 text-sm text-base-content md:grid;
   }
 
   .merchant-table-head-cell {
@@ -1311,7 +1439,7 @@
   }
 
   .merchant-row {
-    @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_160px];
+    @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_116px_160px];
   }
 
   .merchant-table-cell {

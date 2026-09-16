@@ -29,6 +29,7 @@ const publicStaticHtmlPathnames = new Set([
   '/tools/session-converter',
 ]);
 const publicDynamicHtmlPathnames = new Set([
+  '/supporters',
   '/',
   '/llm-gateway',
   '/model-leaderboard',
@@ -180,14 +181,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (context.request.method === 'POST' && url.pathname === '/api/submit') {
     const contentType = context.request.headers.get('content-type') ?? '';
-    const submittedUrl = contentType.includes('application/json')
-      ? String(((await context.request.json().catch(() => null)) as { url?: unknown } | null)?.url ?? '')
-      : String((await context.request.formData()).get('url') ?? '');
+    const body = contentType.includes('application/json')
+      ? await context.request.json().catch(() => ({})) as Record<string, unknown> | null
+      : Object.fromEntries(await context.request.formData());
+    const submittedUrl = String(body?.url ?? '');
+    const locale = typeof body?.locale === 'string' && isLocale(body.locale) ? body.locale : context.locals.locale;
+    const messages = getMessages(locale);
     const result = await submitSiteUrl(submittedUrl);
     if (!result.ok) {
-      return jsonResponse({ ok: false, message: context.locals.messages.submit[result.errorKey] }, { status: 400 });
+      return jsonResponse({ ok: false, message: messages.submit[result.errorKey as keyof typeof messages.submit] }, { status: 400 });
     }
-    return jsonResponse({ ok: true, url: result.url, message: context.locals.messages.submit.success });
+    return jsonResponse({ ok: true, url: result.url, message: messages.submit.success });
   }
 
   if (localePathInfo.hasLocalePrefix) {

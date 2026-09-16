@@ -16,6 +16,8 @@ type Props = {
   helpTip?: string;
   helpLabel?: string;
   helpClass?: string;
+  helpHref?: string;
+  helpLinkLabel?: string;
 };
 
 const {
@@ -29,6 +31,8 @@ const {
   statusText = '',
   helpTip = '',
   helpLabel = '',
+  helpHref = '',
+  helpLinkLabel = '',
   helpClass,
 } = Astro.props;
 const hasHelp = helpTip.trim().length > 0;
@@ -47,13 +51,15 @@ const isSequence = sortKey === 'sequence';
       helpTip={helpTip}
       helpLabel={helpLabel}
       helpClass={helpClass}
+      helpHref={helpHref}
+      helpLinkLabel={helpLinkLabel}
     />
   ) : (
     <div class="data-table-head-content">
       <span class="data-table-head-label-group">
         <span class="data-table-head-label">{label}</span>
         {hasHelp ? (
-          <button type="button" class:list={['inline-help-button', helpClass || 'data-table-help']} aria-label={helpLabel || label} data-inline-help data-tip={helpTip}>i</button>
+          <button type="button" class:list={['inline-help-button', helpClass || 'data-table-help']} aria-label={helpLabel || label} data-inline-help data-tip={helpTip} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>i</button>
         ) : null}
       </span>
     </div>

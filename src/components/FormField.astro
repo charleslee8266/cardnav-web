@@ -1,0 +1,27 @@
+---
+/*
+文件说明: 统一提交表单字段的标签、控件、帮助信息和错误信息，支持单个控件与选项组。
+*/
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'fieldset'> & {
+  label: string;
+  for?: string;
+  group?: boolean;
+  required?: boolean;
+  hint?: string;
+  hintId?: string;
+};
+const { label, for: controlId, group = false, required = false, hint, hintId, ...attributes } = Astro.props;
+const Container = group ? 'fieldset' : 'div';
+const Label = group ? 'legend' : 'label';
+---
+<Container {...attributes} class:list={['form-field', attributes.class]}>
+  <Label for={group ? undefined : controlId} class="form-field-label">
+    <slot name="label">{label}</slot>
+    {required && <span class="text-error" aria-hidden="true"> *</span>}
+  </Label>
+  <slot />
+  {(hint || Astro.slots.has('hint')) && <div id={hintId} class="form-field-hint"><slot name="hint">{hint}</slot></div>}
+  <slot name="error" />
+</Container>

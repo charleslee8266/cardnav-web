@@ -19,11 +19,8 @@ import DataTableHeader from '../../components/DataTableHeader.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 import { loadGatewayDetail } from '../../store.js';
-import deferredTableCoreScriptUrl from '../../scripts/deferred-table-core.js?url';
-import gatewayDetailTablesScriptUrl from '../../scripts/gateway-detail-tables.js?url';
-import dataTableScriptUrl from '../../scripts/data-table.js?url';
-import sponsorBadgeScriptUrl from '../../scripts/sponsor-badge.js?url';
-import SponsorBadge from '../../components/SponsorBadge.astro';
+import merchantBadgeScriptUrl from '../../scripts/merchant-badge.js?url';
+import MerchantBadge from '../../components/MerchantBadge.astro';
 import Sponsors from '../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
@@ -113,7 +110,8 @@ function gatewayModelClickAttrs(modelId: string) {
   >
     <div slot="title" class="flex flex-wrap items-center gap-2">
       <h1 class="page-hero-title mt-0">{site.name}</h1>
-      {site.sponsor ? <SponsorBadge label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
+      {site.sponsor ? <MerchantBadge label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
+      {(site.supportTotalCents || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.viewList} /> : null}
       {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
     </div>
     <div slot="meta" class="page-hero-meta">
@@ -211,8 +209,10 @@ function gatewayModelClickAttrs(modelId: string) {
     </DataTable>
   </section>
   <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(priceTableConfig)}></script>
-  <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
-  <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
-  <script is:inline slot="scripts" src={sponsorBadgeScriptUrl}></script>
-  <script is:inline slot="scripts" defer src={gatewayDetailTablesScriptUrl}></script>
+  <script is:inline slot="scripts" src={merchantBadgeScriptUrl}></script>
+  <script>
+    import '../../scripts/data-table.js';
+    import '../../scripts/deferred-table-core.js';
+    import '../../scripts/gateway-detail-tables.js';
+  </script>
 </PublicPage>

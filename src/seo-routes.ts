@@ -63,6 +63,12 @@ export function getStaticPublicSeoRoutes(locale: Locale = defaultLocale): Public
       changefreq: 'daily',
     },
     {
+      pathname: routePath('/supporters', locale),
+      title: messages.support.seoTitle,
+      description: messages.support.seoDescription,
+      changefreq: 'daily',
+    },
+    {
       pathname: routePath('/tools', locale),
       title: messages.tools.title,
       description: messages.tools.seoDescription,

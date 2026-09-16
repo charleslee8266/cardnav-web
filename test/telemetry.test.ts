@@ -105,7 +105,7 @@ test('sponsor badge links get a single internal event with partnership context',
   const calls: Array<{ name: string; data: Record<string, string> }> = [];
   (context.window as { umami: { track: (name: string, data: Record<string, string>) => void } }).umami.track = (name, data) => calls.push({ name, data });
   const anchor = createAnchor(context, {
-    classList: { contains: name => name === 'sponsor-badge-link' },
+    classList: { contains: name => name === 'merchant-badge-link' },
     href: 'https://cardnav.xyz/partnership',
     textContent: 'How to partner',
     dataset: {

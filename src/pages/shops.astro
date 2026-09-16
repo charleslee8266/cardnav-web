@@ -3,6 +3,8 @@
 文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
+import ShopSubmitDialog from '../components/ShopSubmitDialog.astro';
+import SupportDialog from '../components/SupportDialog.astro';
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import DataTable from '../components/DataTable.astro';
@@ -15,7 +17,7 @@ import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
-import sponsorBadgeScriptUrl from '../scripts/sponsor-badge.js?url';
+import merchantBadgeScriptUrl from '../scripts/merchant-badge.js?url';
 import Sponsors from '../components/Sponsors.astro';
 import type { PageType } from '../page-types.js';
 import { packShopProductsData } from '../shop-products-data.js';
@@ -138,6 +140,11 @@ const shopsScriptMessages = {
   merchantFavorite: t.shops.merchantFavorite,
   cancelProductFavorite: t.shops.cancelProductFavorite,
   cancelMerchantFavorite: t.shops.cancelMerchantFavorite,
+  supportTotalLabel: t.support.amountColumn,
+  supportLabel: t.support.badgeLabel,
+  supportDescription: t.support.badgeDescription,
+  supportersUrl: linkTo('/supporters'),
+  supportLinkLabel: t.support.viewList,
   sponsorLabel: t.sponsors.sponsorLabel,
   sponsorDescription: t.sponsors.sponsorDescription,
   partnershipUrl: linkTo('/partnership'),
@@ -170,6 +177,8 @@ type SortColumn = {
   label: string;
   tip?: string;
   tipLabel?: string;
+  helpHref?: string;
+  helpLinkLabel?: string;
 };
 const flatSortColumns = [
   { key: 'productName', type: 'text', label: t.labels.product },
@@ -178,18 +187,20 @@ const flatSortColumns = [
   { key: 'categoryName', type: 'text', label: t.labels.category },
   { key: 'score', type: 'number', label: t.labels.productScore, tip: t.shops.productScoreTip, tipLabel: t.shops.productScoreHelpLabel },
   { key: 'siteName', type: 'text', label: t.labels.merchant },
+  { key: 'supportTotalCents', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
   { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
 ] satisfies SortColumn[];
-const rightAlignedProductColumns = new Set(['priceValue', 'stockValue', 'score']);
+const rightAlignedProductColumns = new Set(['priceValue', 'stockValue', 'score', 'supportTotalCents']);
 const merchantTabLabel = t.labels.merchant;
 const merchantSortColumns = [
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productCount', type: 'number', label: t.labels.productCount },
   { key: 'hotProducts', type: 'number', label: t.shops.hotProductsTitle },
   { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
+  { key: 'supportTotalCents', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
   { key: 'lastProductRefreshSuccessAt', type: 'number', label: t.labels.latestRefresh },
 ] satisfies SortColumn[];
-const rightAlignedMerchantColumns = new Set(['productCount', 'siteScore']);
+const rightAlignedMerchantColumns = new Set(['productCount', 'siteScore', 'supportTotalCents']);
 const shopProductsJsonValue = JSON.stringify(packShopProductsData({
   ...data,
   initialProductLimit: initialProductLimitValue,
@@ -211,7 +222,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
   >
     <p slot="note" class="page-hero-note">{t.shops.note}</p>
     <div slot="aside" class="page-hero-submit-summary">
-      <button
+      <div class="grid grid-cols-2 gap-2">
+<button
         id="openShopSubmitModal"
         type="button"
         class="btn btn-primary btn-md w-full"
@@ -220,6 +232,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       >
         {t.shops.submitMerchant}
       </button>
+<a href="?support-dialog" data-open-support class="btn support-button btn-md w-full"><span aria-hidden="true">♥</span> {t.support.button}</a>
+</div>
       <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
         <div class="stat px-4 py-3">
           <div class="stat-title text-xs">{t.shops.listedMerchants}</div>
@@ -384,6 +398,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
               align={rightAlignedProductColumns.has(column.key) ? 'right' : 'left'}
               helpTip={column.tip}
               helpLabel={column.tipLabel}
+              helpHref={column.helpHref}
+              helpLinkLabel={column.helpLinkLabel}
             />
           ))}
         </Fragment>
@@ -418,6 +434,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
                   statusText={t.shops.clickSort}
                   helpTip={column.tip}
                   helpLabel={column.tipLabel}
+              helpHref={column.helpHref}
+              helpLinkLabel={column.helpLinkLabel}
                   helpClass="merchant-score-help"
                 />
               </div>
@@ -436,48 +454,12 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
     </div>
   </section>
 
-  <dialog id="shopSubmitDialog" data-telemetry-block={telemetryBlocks.shops.submit} class="modal">
-    <div class="modal-box max-w-3xl p-0">
-      <section class="card bg-base-100 shadow-none">
-        <div class="card-body relative grid gap-5 p-5">
-          <h2 class="page-hero-title mt-0">{t.shops.submitMerchant}</h2>
-          <p class="text-sm leading-6 text-base-content">{t.shops.submitDescription}</p>
-          <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
-          <form method="dialog" class="absolute right-5 top-5">
-            <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.shops.closeSubmitDialog}>✕</button>
-          </form>
-
-          <div class="alert alert-info alert-soft shadow-sm flex flex-col items-start gap-1.5 text-left text-base-content">
-            <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
-            <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-partnership" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
-          </div>
-
-          <form id="submitForm" class="form-control grid gap-5" method="post" action="/api/submit">
-            <div class="grid gap-1.5">
-              <label for="urlInput" class="label p-0 font-semibold text-sm">{t.shops.urlLabel}</label>
-              <input id="urlInput" name="url" type="url" required value="" class="input input-bordered w-full" placeholder="https://example.com" autocomplete="url" aria-describedby="shopUrlHint" />
-              <p id="shopUrlHint" class="text-xs text-base-content/60">{t.shops.urlAliasHint}</p>
-            </div>
-            <p id="clientError" class="hidden text-sm text-error font-medium">{t.submit.invalidUrl}</p>
-            <p id="submitError" class="hidden text-sm text-error font-medium"></p>
-            <p id="submitSuccess" class="hidden text-sm text-primary font-medium"></p>
-            <div class="card-actions justify-start mt-2">
-              <button type="submit" class="btn btn-primary">
-                {t.actions.submit}
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-      <button type="submit" aria-label={t.shops.closeSubmitBackdrop}>close</button>
-    </form>
-  </dialog>
+  <SupportDialog returnPage="shops" />
+  <ShopSubmitDialog />
 
   <script is:inline type="application/json" id="shop-products-data" set:html={shopProductsJsonValue}></script>
   <script is:inline type="application/json" id="shops-messages" set:html={JSON.stringify(shopsScriptMessages)}></script>
-  <script is:inline slot="scripts" src={sponsorBadgeScriptUrl}></script>
+  <script is:inline slot="scripts" src={merchantBadgeScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
   <script>
     import '../scripts/index.js';

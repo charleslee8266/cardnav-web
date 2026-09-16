@@ -1,6 +1,7 @@
 /*
  * 文件说明: 首页商品表格筛选、排序、收藏与商家分组懒渲染交互。
  */
+import { pinSiteRows } from '../site-list-pinning.js';
 import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery } from '../shop-search-query.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import {
@@ -26,6 +27,7 @@ import {
   shopSiteName,
   shopSiteScore,
   shopSiteSponsor,
+  shopSiteSupportTotalCents,
   shopSiteUrl,
   shopSites,
 } from '../shop-products-data.js';
@@ -77,8 +79,6 @@ const DEFAULT_MERCHANT_LIMIT = 20;
 const MERCHANT_LOAD_MORE_STEP = 20;
 const DEFAULT_FLAT_SORT = { key: 'score', direction: 'desc', type: 'number' };
 const FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT = 10;
-const SPONSOR_PRODUCT_PIN_LIMIT = 10;
-const SPONSOR_PRODUCT_PIN_LIMIT_PER_SITE = 3;
 let currentFlatSort = { ...DEFAULT_FLAT_SORT };
 let currentMerchantSort = null;
 let currentFlatRows = flatRows;
@@ -283,8 +283,6 @@ function prioritizeFavoriteFlatRows(rowEntries) {
     favoriteSiteKeys,
   }, {
     favoriteMerchantProductLimit: FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT,
-    sponsorProductLimit: SPONSOR_PRODUCT_PIN_LIMIT,
-    sponsorProductLimitPerSite: SPONSOR_PRODUCT_PIN_LIMIT_PER_SITE,
   });
 }
 
@@ -366,6 +364,7 @@ function buildFlatRows() {
       score: shopProductScore(product),
       siteScore: shopSiteScore(site),
       sponsor: shopSiteSponsor(site),
+      supportTotalCents: shopSiteSupportTotalCents(site),
       productRefreshedAt: shopProductRefreshedMs(product) || 0,
       product,
       element: null,
@@ -716,7 +715,7 @@ function createFlatProductRow(item) {
   productInline.className = 'cell-inline';
   productInline.appendChild(createFavoriteButton('product', productFavoriteKey, `${shopsMessages.productFavorite || 'Favorite product'} ${productTitle}`));
   if (productUrl) {
-    const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle, { sponsor: siteSponsor });
+    const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle, { sponsor: siteSponsor || shopSiteSupportTotalCents(site) > 0 });
     productLink.dataset.productClickSiteId = siteId;
     productLink.dataset.productClickUrl = productUrl;
     productLink.dataset.productClickCategory = categoryName;
@@ -725,7 +724,9 @@ function createFlatProductRow(item) {
   } else {
     appendTextElement(productInline, 'span', 'product-text', productName);
   }
-  if (siteSponsor) productInline.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
+  if (siteSponsor) productInline.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
+  if (shopSiteSupportTotalCents(site) > 0) productInline.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
+
   productCell.appendChild(productInline);
   row.appendChild(productCell);
 
@@ -765,12 +766,19 @@ function createFlatProductRow(item) {
   merchantInline.className = 'cell-inline';
   merchantInline.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
   if (siteUrl) {
-    merchantInline.appendChild(createTrackedMerchantLink(siteUrl, siteName, { sponsor: siteSponsor }));
+    merchantInline.appendChild(createTrackedMerchantLink(siteUrl, siteName, { sponsor: siteSponsor || shopSiteSupportTotalCents(site) > 0 }));
   } else {
     appendTextElement(merchantInline, 'span', 'merchant-text', siteName);
   }
+
   merchantCell.appendChild(merchantInline);
   row.appendChild(merchantCell);
+
+  const supportCell = document.createElement('td');
+  supportCell.className = 'data-table-cell-align-right whitespace-nowrap';
+  supportCell.dataset.label = shopsMessages.supportTotalLabel;
+  supportCell.textContent = `¥${(shopSiteSupportTotalCents(site) / 100).toLocaleString()}`;
+  row.appendChild(supportCell);
 
   const refreshCell = document.createElement('td');
   refreshCell.className = 'flat-refresh-cell';
@@ -888,6 +896,7 @@ function renderMerchantViewModule(module) {
       shopSiteName,
       shopSiteScore,
       shopSiteSponsor,
+      shopSiteSupportTotalCents,
       shopSiteUrl,
     },
     shopsMessages,
@@ -991,7 +1000,7 @@ async function applyFilters(options = {}) {
     updateMerchantProgressiveLoadSummary(0, 0);
   }
   const shouldUseCanonicalShopPath = shouldResetSearchPageMeta(productQueryValue);
-  const shouldKeepSubmitDialog = new URLSearchParams(window.location.search).has('submit-dialog');
+  const openDialogQuery = ['submit-dialog', 'support-dialog'].find(key => new URLSearchParams(window.location.search).has(key));
   const params = new URLSearchParams();
   if (!merchantTabActive) {
     if (productQueryValue && (!currentQuickPlanPath || shouldUseCanonicalShopPath)) params.set('q', productQueryValue);
@@ -1004,7 +1013,7 @@ async function applyFilters(options = {}) {
   resetSearchPageMeta(productQueryValue);
   const nextPath = currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : localizedShopsPath;
   const serializedParams = params.toString();
-  const submitDialogSuffix = shouldKeepSubmitDialog ? `${serializedParams ? '&' : '?'}submit-dialog` : '';
+  const submitDialogSuffix = openDialogQuery ? `${serializedParams ? '&' : '?'}${openDialogQuery}` : '';
   const nextUrl = `${nextPath}${serializedParams ? `?${serializedParams}` : ''}${submitDialogSuffix}`;
   history.replaceState(null, '', nextUrl);
 }
@@ -1014,13 +1023,10 @@ function sortRows(merchantModule) {
   let visibleCount = 0;
   let renderedCount = 0;
 
-  merchantModule.getMerchantRows()
+  const sortedRows = merchantModule.getMerchantRows()
     .slice()
     .sort((a, b) => {
-      const favoriteDiff = Number(b.element.dataset.favorite) - Number(a.element.dataset.favorite);
-      if (favoriteDiff !== 0) return favoriteDiff;
-      const sponsorDiff = Number(b.element.dataset.sponsor) - Number(a.element.dataset.sponsor);
-      if (sponsorDiff !== 0) return sponsorDiff;
+
 
       if (currentMerchantSort) {
         const multiplier = currentMerchantSort.direction === 'asc' ? 1 : -1;
@@ -1039,8 +1045,11 @@ function sortRows(merchantModule) {
       if (siteScoreDiff !== 0) return siteScoreDiff;
 
       return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
-    })
-    .forEach(({ element: row, indexCell }, sortedIndex) => {
+    });
+  const visibleRows = sortedRows.filter(row => row.element.dataset.filterVisible === '1');
+  const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: Number(entry.element.dataset.supportTotalCents) || 0, favorite: Number(entry.element.dataset.favorite) > 0 }))).map(row => row.entry);
+  const hiddenRows = sortedRows.filter(row => row.element.dataset.filterVisible !== '1');
+  [...pinnedRows, ...hiddenRows].forEach(({ element: row, indexCell }, sortedIndex) => {
       row.dataset.sortedIndex = String(sortedIndex);
       rowContainer.appendChild(row);
       const rowVisible = row.dataset.filterVisible === '1';

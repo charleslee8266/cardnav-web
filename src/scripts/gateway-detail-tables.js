@@ -1,6 +1,8 @@
 /*
  * 文件说明: 接管中转站详情类表格的远端补齐、渐进 DOM 渲染和全量本地排序。
  */
+import { GatewayFavorites } from './GatewayFavorites.js';
+
 (() => {
   const root = document.querySelector('[data-gateway-deferred-table]');
   if (!root) return;
@@ -22,6 +24,15 @@
   if (!(table instanceof HTMLElement) || !tbody) return;
   if (typeof window.createDeferredTableController !== 'function') return;
   const tableType = config.type || root.dataset.gatewayDeferredTable || '';
+  const favorites = new GatewayFavorites(root, { favorite: config.favoriteLabel, unfavorite: config.unfavoriteLabel }, () => { void refreshFavorites(); });
+
+  async function refreshFavorites() {
+    if (favorites.hasFavorites) await controller.ensureLoaded();
+    controller.state.entries.forEach(entry => {
+      entry.sort.favorite = favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') ? 1 : 0;
+    });
+    controller.renderRows();
+  }
 
   function el(tagName, className, text) {
     const node = document.createElement(tagName);
@@ -107,7 +118,9 @@
       row,
       item: null,
       sort: {
+        favorite: favorites.has(row.dataset.gatewaySiteKey || '') ? 1 : 0,
         sticky: rowSortValue(row, 'sticky', 'number'),
+        support: rowSortValue(row, 'support', 'number'),
         sequence: rowSortValue(row, 'sequence', 'number') || index + 1,
         name: rowSortValue(row, 'name'),
         unit: rowSortValue(row, 'unit'),
@@ -143,7 +156,9 @@
       row: null,
       item: site,
       sort: {
+        favorite: favorites.has(site.slug) ? 1 : 0,
         sticky: site.sponsor ? 1 : 0,
+        support: Number(site.supportTotalCents) || 0,
         sequence: index + 1,
         name: site.name || '',
         unit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
@@ -205,7 +220,9 @@
     const detailHref = `${gatewayLinkPrefix}/${site.slug}`;
     const row = document.createElement('tr');
     setDataset(row, {
+      gatewaySiteKey: site.slug,
       sortSticky: site.sponsor ? 1 : 0,
+      sortSupport: Number(site.supportTotalCents) || 0,
       sortSequence: index + 1,
       sortName: site.name || '',
       sortUnit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
@@ -231,8 +248,10 @@
     siteLink.dataset.umamiEventName = site.name || '';
     siteLink.dataset.umamiEventTargetPage = detailHref;
     siteLink.dataset.umamiEventUrl = detailHref;
-    titleWrap.append(siteLink);
-    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
+    titleWrap.append(favorites.create(site.slug, site.name), siteLink);
+    if (site.sponsor) titleWrap.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
+    if (Number(site.supportTotalCents) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
+
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));
@@ -250,7 +269,7 @@
     const openLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel || '');
     openLink.href = site.outboundUrl || site.url || '';
     openLink.target = '_blank';
-    openLink.rel = 'noopener noreferrer';
+    openLink.rel = site.sponsor || Number(site.supportTotalCents) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
     openLink.dataset.umamiEvent = 'external-link-click';
     openLink.dataset.umamiEventLinkType = 'gateway-site-open';
     openLink.dataset.umamiEventName = site.name || '';
@@ -259,6 +278,9 @@
     infoWrap.append(textWrap, actionWrap);
     infoCell.append(infoWrap);
     row.append(infoCell);
+    const supportCell = tableCell(config.supportTotalLabel, 'right', 'font-mono whitespace-nowrap');
+    supportCell.textContent = `¥${((Number(site.supportTotalCents) || 0) / 100).toLocaleString()}`;
+    row.append(supportCell);
     row.append(priceStackCell(labels.unit || '', prices, price => displayPriceUnit(price.unit || '', price.currency)));
     row.append(priceStackCell(labels.inputPrice || '', prices, price => formatPrice(price.inputPrice)));
     row.append(priceStackCell(labels.outputPrice || '', prices, price => formatPrice(price.outputPrice)));
@@ -273,6 +295,7 @@
         ? modelSiteRowElement(entry.item, entry.index)
         : priceRowElement(entry.item, entry.index);
     }
+    favorites.sync(entry.row);
     entry.row.classList.remove('hidden');
     return entry.row;
   }
@@ -312,6 +335,7 @@
   }
 
   controller.initialize();
+  if (tableType === 'modelSites') void refreshFavorites();
 
   button?.addEventListener('click', async () => {
     try {

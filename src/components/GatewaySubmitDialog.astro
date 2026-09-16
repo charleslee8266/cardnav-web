@@ -1,0 +1,62 @@
+---
+/*
+文件说明: 渲染中转站提交弹窗，组织提交字段、填写说明和提交反馈。
+*/
+import { telemetryBlocks } from '../telemetry-blocks.js';
+import FormField from './FormField.astro';
+import Dialog from './Dialog.astro';
+
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
+---
+<Dialog
+  id="gatewaySubmitDialog"
+  title={t.llmGateway.submitGateway}
+  description={t.llmGateway.submitDescription}
+  closeLabel={t.llmGateway.closeSubmitDialog}
+  backdropLabel={t.llmGateway.closeSubmitBackdrop}
+  data-telemetry-block={telemetryBlocks.gateways.submit}
+  size="wide"
+>
+  <p class="text-sm leading-6 text-base-content/80">{t.llmGateway.submitTypeDescription} <a href={`${linkTo('/shops')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="gateway-submit-shop" data-umami-event-url={`${linkTo('/shops')}?submit-dialog`}>{t.llmGateway.submitShopLink}</a>{t.llmGateway.submitTypeSentenceEnd}</p>
+
+  <div class="alert alert-info alert-soft flex flex-col items-start gap-1.5 text-left text-base-content">
+    <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
+    <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="internal-link-click" data-umami-event-link-type="gateway-submit-partnership" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
+  </div>
+  <form id="gatewaySubmitForm" class="submission-form" method="post" action="/api/gateway-submit">
+    <FormField label={t.llmGateway.submitName} for="gatewayNameInput" required hint={t.llmGateway.submitNameDescription} hintId="gatewayNameInputHint">
+      <input id="gatewayNameInput" aria-describedby="gatewayNameInputHint" name="name" required maxlength="20" class="input input-bordered form-input" placeholder="Example API" />
+    </FormField>
+    <FormField label={t.llmGateway.submitSummary} for="gatewaySummaryInput" hint={t.llmGateway.submitSummaryDescription} hintId="gatewaySummaryInputHint">
+      <textarea id="gatewaySummaryInput" aria-describedby="gatewaySummaryInputHint" name="summary" maxlength="150" rows="3" class="textarea textarea-bordered form-input" placeholder={t.llmGateway.submitSummaryPlaceholder}></textarea>
+    </FormField>
+    <FormField label={t.llmGateway.submitUrl} for="gatewayUrlInput" required hint={t.llmGateway.submitUrlDescription} hintId="gatewayUrlInputHint">
+      <input id="gatewayUrlInput" aria-describedby="gatewayUrlInputHint" name="url" type="url" required class="input input-bordered form-input" placeholder="https://www.example.com" autocomplete="url" />
+    </FormField>
+    <FormField label={t.llmGateway.submitApiEndpoint} for="gatewayApiEndpointInput" hint={t.llmGateway.submitApiEndpointDescription} hintId="gatewayApiEndpointInputHint">
+      <input id="gatewayApiEndpointInput" aria-describedby="gatewayApiEndpointInputHint" name="apiEndpoint" type="url" class="input input-bordered form-input" placeholder="https://api.example.com" autocomplete="url" />
+    </FormField>
+    <FormField label={t.llmGateway.paymentMethods} group hint={t.llmGateway.submitPaymentDescription} hintId="gatewayPaymentHint">
+      <details id="gatewayPaymentSelect" class="dropdown dropdown-top w-full">
+        <summary aria-describedby="gatewayPaymentHint" class="form-input select select-bordered flex h-auto min-h-12 w-full cursor-pointer list-none items-center gap-2 px-3 py-2">
+          <span data-payment-selection-label class="text-base-content">{t.llmGateway.selectPaymentMethods}</span>
+        </summary>
+        <div class="dropdown-content z-50 mb-2 max-h-64 w-full overflow-y-auto rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
+          <div class="grid gap-1 sm:grid-cols-2">
+            {Object.entries(t.llmGateway.paymentMethodLabels).map(([key, label]) => (
+              <button type="button" class="gateway-payment-option flex min-h-10 items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-base-200 disabled:cursor-not-allowed disabled:bg-base-200 disabled:text-base-content/65 disabled:opacity-100" data-payment-key={key} data-payment-label={label} aria-pressed="false">
+                <span>{label}</span>
+                <span class="gateway-payment-check hidden text-primary" aria-hidden="true">✓</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </details>
+    </FormField>
+    <p id="gatewaySubmitError" class="hidden form-field-error"></p>
+    <p id="gatewaySubmitSuccess" class="hidden text-sm text-primary font-medium"></p>
+    <div class="card-actions justify-start mt-2"><button type="submit" class="btn btn-primary">{t.actions.submit}</button></div>
+  </form>
+</Dialog>
+<script is:inline type="application/json" id="gateway-submit-messages" set:html={JSON.stringify({ locale: Astro.locals.locale, submit: t.submit, gateway: { selectPaymentMethods: t.llmGateway.selectPaymentMethods, paymentMethodSeparator: t.llmGateway.paymentMethodSeparator } })}></script>

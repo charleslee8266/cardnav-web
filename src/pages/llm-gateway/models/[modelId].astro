@@ -4,6 +4,7 @@
 */
 import { telemetryBlocks } from '../../../telemetry-blocks.js';
 import PageHero from '../../../components/PageHero.astro';
+import SupportDialog from '../../../components/SupportDialog.astro';
 import GatewaySiteTableRow from '../../../components/GatewaySiteTableRow.astro';
 import DataTable from '../../../components/DataTable.astro';
 import DataTableCell from '../../../components/DataTableCell.astro';
@@ -14,10 +15,7 @@ import { buildSeoContext } from '../../../seo.js';
 import { isIndexableGatewayModel } from '../../../seo-routes.js';
 import { publicSiteUrl } from '../../../site.js';
 import { loadGatewayModelDetail } from '../../../store.js';
-import deferredTableCoreScriptUrl from '../../../scripts/deferred-table-core.js?url';
-import gatewayDetailTablesScriptUrl from '../../../scripts/gateway-detail-tables.js?url';
-import dataTableScriptUrl from '../../../scripts/data-table.js?url';
-import sponsorBadgeScriptUrl from '../../../scripts/sponsor-badge.js?url';
+import merchantBadgeScriptUrl from '../../../scripts/merchant-badge.js?url';
 import Sponsors from '../../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
@@ -40,6 +38,13 @@ const modelSiteTableConfig = {
   gatewayLinkPrefix: linkTo('/llm-gateway'),
   detailLabel: t.llmGateway.viewDetail,
   openLabel: t.actions.open,
+  favoriteLabel: t.shops.merchantFavorite,
+  unfavoriteLabel: t.shops.cancelMerchantFavorite,
+  supportTotalLabel: t.support.amountColumn,
+  supportLabel: t.support.badgeLabel,
+  supportDescription: t.support.badgeDescription,
+  supportersUrl: linkTo('/supporters'),
+  supportLinkLabel: t.support.viewList,
   sponsorLabel: t.sponsors.sponsorLabel,
   sponsorDescription: t.sponsors.sponsorDescription,
   partnershipUrl: linkTo('/partnership'),
@@ -141,6 +146,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
         <DataTableHeader label={t.llmGateway.basicInfo} sortKey="name" />
+              <DataTableHeader label={t.support.amountColumn} sortKey="support" sortType="number" align="right" helpTip={t.support.amountTip} helpLabel={t.support.amountHelpLabel} helpHref="?support-dialog" helpLinkLabel={t.support.amountLinkLabel} />
         <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
         <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" align="right" />
@@ -211,8 +217,12 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
     </DataTable>
   </section>
   <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(modelSiteTableConfig)}></script>
-  <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
-  <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
-  <script is:inline slot="scripts" src={sponsorBadgeScriptUrl}></script>
-  <script is:inline slot="scripts" defer src={gatewayDetailTablesScriptUrl}></script>
+  <script is:inline slot="scripts" src={merchantBadgeScriptUrl}></script>
+  <SupportDialog returnPage="gateways" />
+  <script>
+    import '../../../scripts/data-table.js';
+    import '../../../scripts/deferred-table-core.js';
+    import '../../../scripts/gateway-detail-tables.js';
+    import '../../../scripts/page-widgets.js';
+  </script>
 </PublicPage>

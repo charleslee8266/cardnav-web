@@ -1,6 +1,8 @@
 /*
  * 文件说明: 中转站首页标签页、本地筛选、URL 查询参数同步、懒加载与排序埋点交互。
  */
+import { pinSiteRows } from '../site-list-pinning.js';
+import { GatewayFavorites } from './GatewayFavorites.js';
 import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-display.js';
 
 (() => {
@@ -8,6 +10,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   if (!gatewayHome) return;
 
   const config = JSON.parse(document.getElementById('gateway-home-config')?.textContent || '{}');
+  const favorites = new GatewayFavorites(gatewayHome, { favorite: config.favoriteLabel, unfavorite: config.unfavoriteLabel }, () => {
+    void applySiteFiltersWithDeferred({ track: false });
+  });
   function localizedFallbackPath(pathname) {
     const normalizedPathname = pathname.startsWith('/') ? pathname : `/${pathname}`;
     const [, maybeLocale] = window.location.pathname.split('/');
@@ -169,6 +174,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       originalOrder: index,
       sortSequence: index + 1,
       sortSticky: isStickySite(site) ? 1 : 0,
+      sortSupport: Number(site.supportTotalCents) || 0,
       sortName: site.name,
       sortScore: Number(site.siteScore) || 0,
       sortFamilies: families.join(' '),
@@ -178,6 +184,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
     const sequenceCell = tableCell(config.sequenceLabel, 'center', '', { sequence: true });
     sequenceCell.textContent = String(index + 1);
+    row.dataset.gatewaySiteKey = site.slug;
     row.append(sequenceCell);
 
     const infoCell = tableCell(config.basicInfoLabel);
@@ -187,8 +194,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const siteLink = el('a', 'link link-hover break-words text-base font-semibold text-primary', site.name);
     siteLink.href = `${gatewayLinkPrefix}/${site.slug}`;
     setTracking(siteLink, gatewaySiteTracking(site));
-    titleWrap.append(siteLink);
-    if (site.sponsor) titleWrap.append(window.CardNavSponsorBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
+    titleWrap.append(favorites.create(site.slug, site.name), siteLink);
+    if (site.sponsor) titleWrap.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
+    if (Number(site.supportTotalCents) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
+
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));
@@ -202,12 +211,15 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const openLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel);
     openLink.href = site.outboundUrl || site.url;
     openLink.target = '_blank';
-    openLink.rel = 'noopener noreferrer';
+    openLink.rel = site.sponsor || Number(site.supportTotalCents) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
     setTracking(openLink, gatewaySiteOpenTracking(site));
     actionWrap.append(detailLink, openLink);
     infoWrap.append(textWrap, actionWrap);
     infoCell.append(infoWrap);
     row.append(infoCell);
+    const supportCell = tableCell(config.supportTotalLabel, 'right', 'font-mono whitespace-nowrap');
+    supportCell.textContent = `¥${((Number(site.supportTotalCents) || 0) / 100).toLocaleString()}`;
+    row.append(supportCell);
 
     const scoreCell = tableCell(config.scoreLabel, 'right', 'font-mono');
     scoreCell.textContent = formatPositiveScore(site.siteScore);
@@ -292,6 +304,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       payments: row.dataset.payments || '',
       sort: type === 'sites' ? {
         sticky: rowSortValue(row, 'sticky', 'number'),
+        support: rowSortValue(row, 'support', 'number'),
         sequence: rowSortValue(row, 'sequence', 'number') || index + 1,
         name: rowSortValue(row, 'name'),
         score: rowSortValue(row, 'score', 'number'),
@@ -320,6 +333,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       payments: payments.join(','),
       sort: {
         sticky: isStickySite(site) ? 1 : 0,
+        support: Number(site.supportTotalCents) || 0,
         sequence: index + 1,
         name: site.name,
         score: Number(site.siteScore) || 0,
@@ -353,6 +367,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
         ? siteRowElement(entry.item, entry.index)
         : modelRowElement(entry.item, entry.index);
     }
+    favorites.sync(entry.row);
     entry.row.classList.remove('hidden');
     return entry.row;
   }
@@ -362,9 +377,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     return (left, right) => {
       const leftValue = left.sort[sort.key];
       const rightValue = right.sort[sort.key];
-      if ('sticky' in left.sort && 'sticky' in right.sort && left.sort.sticky !== right.sort.sticky) {
-        return (Number(right.sort.sticky) || 0) - (Number(left.sort.sticky) || 0);
-      }
       if (typeof leftValue === 'number' && typeof rightValue === 'number') {
         if (leftValue !== rightValue) return (leftValue - rightValue) * multiplier;
         return left.index - right.index;
@@ -376,9 +388,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
   function currentEntries(state) {
     const entries = state.filteredEntries.slice();
-    if (state.sort) entries.sort(compareEntries(state.sort));
-    else entries.sort((left, right) => left.index - right.index);
-    return entries;
+    if (state.type === 'sites') entries.forEach(entry => {
+      entry.sort.favorite = favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') ? 1 : 0;
+    });
+    entries.sort(compareEntries(state.sort || { key: 'sequence', direction: 'asc' }));
+    return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 }))).map(row => row.entry);
   }
 
   function loadMoreWrap(type) {
@@ -572,7 +586,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
   async function applySiteFiltersWithDeferred({ track = true, resetLimit = false } = {}) {
     if (resetLimit) resetVisibleLimit('sites');
-    if (hasActiveSiteFilters()) await ensureGatewayDataLoaded('sites');
+    if (hasActiveSiteFilters() || favorites.hasFavorites) await ensureGatewayDataLoaded('sites');
     applySiteFilters({ track });
   }
 

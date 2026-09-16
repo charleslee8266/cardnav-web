@@ -118,7 +118,7 @@ function createProductChip(item, shopProductsData, shopsMessages, createTrackedL
     chip.href = productUrl;
     chip.target = '_blank';
     chip.rel = 'noopener noreferrer';
-    if (siteSponsor) chip.rel = 'noopener noreferrer sponsored';
+    if (siteSponsor || accessors.shopSiteSupportTotalCents(site) > 0) chip.rel = 'noopener noreferrer sponsored';
     chip.dataset.umamiEvent = 'external-link-click';
     chip.dataset.umamiEventLinkType = 'product';
     chip.dataset.umamiEventUrl = productUrl;
@@ -192,6 +192,7 @@ export function renderMerchantRows({
     row.dataset.siteName = siteName;
     row.dataset.siteScore = String(accessors.shopSiteScore(site));
     row.dataset.sponsor = siteSponsor ? '1' : '0';
+    row.dataset.supportTotalCents = String(accessors.shopSiteSupportTotalCents(site));
     row.dataset.lastProductRefreshSuccessAt = String(accessors.shopSiteLastRefreshMs(site) || 0);
     row.dataset.originalIndex = String(index);
     row.dataset.rank = String(index + 1);
@@ -206,11 +207,13 @@ export function renderMerchantRows({
     merchantHeader.className = 'merchant-header';
     merchantHeader.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
     if (siteUrl) {
-      merchantHeader.appendChild(createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, { sponsor: siteSponsor }));
+      merchantHeader.appendChild(createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, { sponsor: siteSponsor || accessors.shopSiteSupportTotalCents(site) > 0 }));
     } else {
       appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
     }
-    if (siteSponsor) merchantHeader.appendChild(window.CardNavSponsorBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
+    if (siteSponsor) merchantHeader.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
+    if (accessors.shopSiteSupportTotalCents(site) > 0) merchantHeader.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
+
     merchantCell.appendChild(merchantHeader);
     row.appendChild(merchantCell);
 
@@ -248,6 +251,12 @@ export function renderMerchantRows({
     appendTextElement(scoreCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
     appendTextElement(scoreCell, 'span', 'merchant-table-value', formatScore(accessors.shopSiteScore(site)));
     row.appendChild(scoreCell);
+
+    const supportCell = document.createElement('div');
+    supportCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';
+    appendTextElement(supportCell, 'span', 'merchant-table-mobile-label', shopsMessages.supportTotalLabel);
+    appendTextElement(supportCell, 'span', 'merchant-table-value', `¥${(accessors.shopSiteSupportTotalCents(site) / 100).toLocaleString()}`);
+    row.appendChild(supportCell);
 
     const refreshCell = document.createElement('div');
     refreshCell.className = 'merchant-table-cell merchant-table-cell-value';

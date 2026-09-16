@@ -1,0 +1,42 @@
+---
+/*
+文件说明: 渲染卡网站点提交弹窗，组织提交字段、填写说明和提交反馈。
+*/
+import { telemetryBlocks } from '../telemetry-blocks.js';
+import FormField from './FormField.astro';
+import Dialog from './Dialog.astro';
+
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
+---
+<Dialog
+  id="shopSubmitDialog"
+  data-locale={Astro.locals.locale}
+  title={t.shops.submitMerchant}
+  description={t.shops.submitDescription}
+  closeLabel={t.shops.closeSubmitDialog}
+  backdropLabel={t.shops.closeSubmitBackdrop}
+  data-telemetry-block={telemetryBlocks.shops.submit}
+  size="wide"
+>
+  <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
+
+  <div class="alert alert-info alert-soft shadow-sm flex flex-col items-start gap-1.5 text-left text-base-content">
+    <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
+    <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-partnership" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
+  </div>
+
+  <form id="submitForm" class="submission-form" method="post" action="/api/submit">
+    <FormField label={t.shops.urlLabel} for="urlInput" required hint={t.shops.urlAliasHint} hintId="shopUrlHint">
+      <input id="urlInput" name="url" type="url" required value="" class="input input-bordered form-input" placeholder="https://example.com" autocomplete="url" aria-describedby="shopUrlHint clientError" />
+      <p slot="error" id="clientError" class="hidden form-field-error">{t.submit.invalidUrl}</p>
+    </FormField>
+    <p id="submitError" class="hidden form-field-error"></p>
+    <p id="submitSuccess" class="hidden text-sm text-primary font-medium"></p>
+    <div class="card-actions justify-start mt-2">
+      <button type="submit" class="btn btn-primary">
+        {t.actions.submit}
+      </button>
+    </div>
+  </form>
+</Dialog>

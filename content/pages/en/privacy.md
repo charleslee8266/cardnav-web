@@ -13,6 +13,8 @@ When you visit CardNav, servers and analytics tools may record basic access data
 
 When you submit a merchant site URL or contact us through Telegram, we receive the URL, message content, and account information shown by the corresponding platform that you voluntarily provide. This information is used to process submissions, communicate about partnerships, and maintain site content.
 
+When contributing, you may provide a nickname, email and message, or select a listed merchant or gateway. Nicknames, messages, selected sites and total confirmed amounts appear on the supporters list; a blank nickname is shown as anonymous. Email is used only for statistics and combining contributions from the same supporter. It is not published, sent to Epay or provided to third parties. Epay processes payments, while CardNav stores order amounts, payment status and related information needed to confirm receipt.
+
 ### How We Use Information
 
 We use collected information to maintain site operation, analyze visit trends, improve search and page experience, process merchant submissions, identify spam submissions or abnormal access, and respond to users or merchants.

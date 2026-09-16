@@ -19,6 +19,7 @@ export const pageTypes = [
   'guide-detail',
   'about',
   'partnership',
+  'supporters',
   'privacy',
   'disclaimer',
 ] as const;

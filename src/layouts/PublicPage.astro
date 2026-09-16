@@ -5,6 +5,7 @@
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import '../public.css';
 import Sponsors from '../components/Sponsors.astro';
+import announcements from '../data/announcements.json';
 import { getSponsors } from '../sponsor-provider.js';
 import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '../i18n/config.js';
 import { switchLocalePath } from '../i18n/paths.js';
@@ -60,6 +61,7 @@ const {
 } = Astro.props;
 
 const t = Astro.locals.messages;
+const locale: Locale = Astro.locals.locale;
 const linkTo = Astro.locals.localizePath;
 const globalSponsors = getSponsors({ placement: 'page-bottom', pageType, locale: Astro.locals.locale });
 const inactiveClass = 'nav-top-tab shrink-0 text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
@@ -76,6 +78,7 @@ const primaryNavItems = [
   { key: 'model-leaderboard', href: '/model-leaderboard', label: t.nav.modelLeaderboard },
   { key: 'guide', href: '/guide', label: t.nav.guide },
   { key: 'tools', href: '/tools', label: t.nav.tools },
+  { key: 'supporters', href: '/supporters', label: t.support.listTitle },
   { key: 'partnership', href: '/partnership', label: t.nav.partnership },
 ];
 const mobilePrimaryNavItems = [
@@ -85,6 +88,7 @@ const mobilePrimaryNavItems = [
   { key: 'official-price', href: '/official-price', label: t.nav.mobileOfficialPrice },
   { key: 'model-leaderboard', href: '/model-leaderboard', label: t.nav.mobileModelLeaderboard },
   { key: 'guide', href: '/guide', label: t.nav.mobileGuide },
+  { key: 'supporters', href: '/supporters', label: t.support.listTitle },
   { key: 'partnership', href: '/partnership', label: t.nav.partnership },
 ];
 const footerLinks = [
@@ -125,6 +129,16 @@ function siteLinkClickAttrs(url: string, name: string) {
 <!DOCTYPE html>
 <html lang={htmlLang}>
 <head>
+  <script is:inline>
+    (() => {
+      const url = new URL(window.location.href);
+      const token = url.searchParams.get('support-order');
+      if (!token) return;
+      window.cardnavSupportStatusToken = token;
+      url.searchParams.delete('support-order');
+      window.history.replaceState(window.history.state, '', url);
+    })();
+  </script>
   <script is:inline>
     (function () {
       const savedTheme = localStorage.getItem('theme');
@@ -174,28 +188,34 @@ function siteLinkClickAttrs(url: string, name: string) {
   'bg-base-200 text-base-content text-[15px] font-sans antialiased',
   isGuidePage ? 'h-dvh overflow-hidden' : 'min-h-screen',
 ]}>
-<div id="publicAnnouncementDesktop" data-telemetry-block={telemetryBlocks.shared.announcement} data-announcement-desktop hidden class="public-announcement public-announcement-pending border-b border-primary/20 bg-primary/5 px-2 py-2.5 md:px-3">
-  <div class="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm">
-    <div class="flex min-w-0 max-w-full items-center justify-self-center gap-2">
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="badge inline-flex shrink-0 gap-1 border-primary/30 bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary" {...siteLinkClickAttrs(telegramGroupUrl, 'Announcement Telegram')}>
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m3 11 18-5v12L3 13v-2Z"></path>
-          <path d="M11.6 15.2 13 21H9l-1.8-6.7"></path>
-        </svg>
-        {t.announcement.label}
-      </a>
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="min-w-0 overflow-x-auto whitespace-nowrap text-center font-semibold leading-5 text-base-content/75" {...siteLinkClickAttrs(telegramGroupUrl, 'Announcement Telegram')}>
-        {t.announcement.message}
-      </a>
+{[...announcements].sort((a, b) => b.priority - a.priority).map(announcement => {
+  const external = !announcement.href.startsWith('/');
+  const href = external ? announcement.href : linkTo(announcement.href);
+  return (
+    <div data-announcement-id={announcement.id} data-repeat-after-hours={announcement.repeatAfterHours} data-telemetry-block={telemetryBlocks.shared.announcement} hidden class="public-announcement public-announcement-pending border-b border-primary/20 bg-primary/5 px-2 py-2.5 md:px-3">
+      <div class="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm">
+        <div class="flex min-w-0 max-w-full items-center justify-self-center gap-2">
+          <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined} class="badge inline-flex shrink-0 gap-1 border-primary/30 bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary" {...(external ? siteLinkClickAttrs(href, `Announcement ${announcement.id}`) : navClickAttrs(href, `Announcement ${announcement.id}`))}>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m3 11 18-5v12L3 13v-2Z"></path>
+              <path d="M11.6 15.2 13 21H9l-1.8-6.7"></path>
+            </svg>
+            {t.announcement.label}
+          </a>
+          <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined} class="min-w-0 break-words text-center font-semibold leading-5 text-base-content/75" {...(external ? siteLinkClickAttrs(href, `Announcement ${announcement.id}`) : navClickAttrs(href, `Announcement ${announcement.id}`))}>
+            {announcement.message[locale]}
+          </a>
+        </div>
+        <button type="button" data-dismiss-announcement class="btn btn-ghost btn-circle btn-xs shrink-0 text-base-content/70 hover:bg-base-200 hover:text-base-content" aria-label={t.announcement.close} title={t.announcement.close}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M6 6l12 12"></path>
+            <path d="M18 6 6 18"></path>
+          </svg>
+        </button>
+      </div>
     </div>
-    <button type="button" data-dismiss-announcement class="btn btn-ghost btn-circle btn-xs shrink-0 text-base-content/70 hover:bg-base-200 hover:text-base-content" aria-label={t.announcement.close} title={t.announcement.close}>
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <path d="M6 6l12 12"></path>
-        <path d="M18 6 6 18"></path>
-      </svg>
-    </button>
-  </div>
-</div>
+  );
+})}
 <header data-telemetry-block={telemetryBlocks.shared.header} class="sticky inset-x-0 top-0 z-40 max-w-full overflow-visible border-b border-base-300 bg-base-100/90 backdrop-blur">
   <nav class="flex h-12 max-w-full items-center gap-1 overflow-visible px-2 md:hidden">
     <details class="dropdown dropdown-bottom">

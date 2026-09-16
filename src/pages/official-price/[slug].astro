@@ -7,7 +7,6 @@ import { localizeOfficialPriceGroups } from '../../localized-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildOfficialPriceGroupsForActiveSlug, resolveOfficialPriceSlug } from '../../official-price.js';
 import { buildSeoContext } from '../../seo.js';
-import dataTableScriptUrl from '../../scripts/data-table.js?url';
 import { publicSiteUrl } from '../../site.js';
 import { formatBeijingRefreshTime, loadOfficialPriceCatalog, loadOfficialPricesByUrlSlug } from '../../store.js';
 
@@ -47,5 +46,7 @@ const seo = buildSeoContext({
 
 <PublicPage activeNav="official-price" pageType="official-price-detail" {...seo}>
   <OfficialPriceContent pageType="official-price-detail" groups={groups} currentGroup={currentGroup} updateTime={updateTime} />
-  <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
+  <script>
+    import '../../scripts/data-table.js';
+  </script>
 </PublicPage>

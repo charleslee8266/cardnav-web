@@ -1,0 +1,69 @@
+---
+/*
+文件说明: 公开页面共用的赞赏弹窗，提供个人、卡网和中转站身份及支付入口。
+*/
+import FormField from './FormField.astro';
+import Dialog from './Dialog.astro';
+type Props = { returnPage: 'shops' | 'gateways' | 'supporters' };
+const { returnPage } = Astro.props;
+const t = Astro.locals.messages.support;
+---
+<Dialog
+  id="supportDialog"
+  titleId="supportTitle"
+  title={t.title}
+  description={t.description}
+  closeLabel={t.close}
+  data-return-page={returnPage}
+  data-locale={Astro.locals.locale}
+  data-messages={JSON.stringify(t)}
+>
+  <div data-return-status-panel hidden class="support-return-status">
+    <p data-return-status role="status"></p>
+    <button data-check-payment type="button" class="btn btn-outline btn-sm mt-3" data-umami-event="button-click" data-umami-event-scope="support" data-umami-event-action="check-status">{t.checkStatus}</button>
+  </div>
+  <form data-support-form class="submission-form" novalidate>
+    <FormField group label={t.identity} required>
+      <div class="support-identities">
+        <label><input type="radio" name="kind" value="person" class="radio radio-sm" checked /><span>{t.personChoice}</span></label>
+        <label><input type="radio" name="kind" value="gateway" class="radio radio-sm" /><span>{t.gatewayChoice}</span></label>
+        <label><input type="radio" name="kind" value="shop" class="radio radio-sm" /><span>{t.shopChoice}</span></label>
+      </div>
+      <div slot="hint" data-identity-benefit role="status">
+        {(['person', 'gateway', 'shop'] as const).map((kind) => {
+          const [before, after] = t[`${kind}Benefit`].split('{list}');
+          return <p data-benefit-kind={kind} hidden={kind !== 'person'}>{before}{t.benefitListLabel}{after}{' '}<a href={Astro.locals.localizePath('/partnership')} target="_blank" rel="noopener noreferrer" class="link link-primary whitespace-nowrap">{t.viewRules}</a></p>;
+        })}
+      </div>
+    </FormField>
+    <fieldset data-person-fields class="submission-form">
+      <FormField label={t.nickname} for="supportNickname" hint={t.nicknameHint} hintId="supportNicknameHint"><input id="supportNickname" name="nickname" aria-describedby="supportNicknameHint" maxlength="40" autocomplete="nickname" class="input input-bordered form-input" /></FormField>
+      <FormField label={t.email} for="supportEmail" hint={t.emailHint} hintId="supportEmailHint"><input id="supportEmail" name="email" type="email" aria-describedby="supportEmailHint" maxlength="254" autocomplete="email" class="input input-bordered form-input" /></FormField>
+      <FormField label={t.message} for="supportMessage" hint={t.messageHint} hintId="supportMessageHint"><input id="supportMessage" name="message" maxlength="120" aria-describedby="supportMessageHint" class="input input-bordered form-input" /></FormField>
+    </fieldset>
+    <FormField group label={t.gateway} required data-site-fields hidden disabled hintId="supportSiteHint">
+      <span slot="label" data-site-label>{t.gateway}</span>
+      <div data-site-combobox class="support-site-combobox">
+        <input data-site-search type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="supportSiteOptions" aria-describedby="supportSiteHint supportSiteStatus" class="input input-bordered form-input" placeholder={t.search} aria-label={t.gateway} autocomplete="off" />
+        <span class="support-site-chevron" aria-hidden="true">▾</span>
+        <input data-site-value type="hidden" name="siteId" />
+        <div id="supportSiteOptions" data-site-options role="listbox" aria-label={t.select} class="support-site-options" hidden></div>
+      </div>
+      <p slot="hint"><span data-site-submit-hint>{t.submitGatewayHint}</span> <a data-site-submit data-shop-submit={Astro.locals.localizePath('/shops?submit-dialog')} data-gateway-submit={Astro.locals.localizePath('/llm-gateway?submit-dialog')} href={Astro.locals.localizePath('/llm-gateway?submit-dialog')} data-umami-event="internal-link-click" data-umami-event-link-type="support-submit-site" data-umami-event-url={Astro.locals.localizePath('/llm-gateway?submit-dialog')} class="link link-primary">{t.submitSite}</a></p>
+      <p slot="error" id="supportSiteStatus" data-site-status role="status" class="form-field-hint"></p>
+    </FormField>
+    <FormField label={t.amount} for="supportAmount" required hint={t.limit} hintId="supportAmountHint"><input id="supportAmount" name="amount" type="number" aria-describedby="supportAmountHint" min="5" max="5000" step="1" value="20" required inputmode="numeric" class="input input-bordered form-input" /></FormField>
+    <FormField group label={t.paymentMethod} required>
+      <div class="support-payment-options">
+        <label><input type="radio" name="paymentType" value="wxpay" class="radio radio-sm" checked /><img src="/assets/payment-icons/wechat.svg" width="24" height="24" alt="" /><span>{t.wxpay}</span></label>
+        <label><input type="radio" name="paymentType" value="alipay" class="radio radio-sm" /><img src="/assets/payment-icons/alipay.svg" width="24" height="24" alt="" /><span>{t.alipay}</span></label>
+      </div>
+    </FormField>
+    <p data-payment-status role="status" class="form-field-hint"></p>
+    <button data-pay-button type="submit" class="btn btn-primary w-full">{t.pay}</button>
+    <p class="form-field-hint">{t.returned}</p>
+  </form>
+</Dialog>
+<script>
+  import '../scripts/SupportDialog.js';
+</script>

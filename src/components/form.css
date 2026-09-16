@@ -1,0 +1,61 @@
+/*
+文件说明: 提交表单的共享文字层级、字段间距和控件样式，以及弹窗表单的外层布局。
+*/
+@utility form-input {
+  @apply w-full min-w-0 text-sm font-normal;
+
+  &::placeholder {
+    @apply text-base-content/70 opacity-100;
+  }
+}
+
+@utility form-dialog-body {
+  @apply relative grid gap-5 p-5;
+}
+
+@layer components {
+  .submission-form {
+    @apply grid gap-5 min-w-0;
+  }
+
+  .form-field {
+    @apply min-w-0 m-0 border-0 p-0;
+  }
+
+  .form-field > :not(legend) + * {
+    @apply mt-1.5;
+  }
+
+  .form-field-label {
+    @apply block p-0 text-sm font-semibold leading-5 text-base-content;
+  }
+
+  .form-field > legend {
+    @apply mb-1.5;
+  }
+
+  .form-field-hint {
+    @apply text-xs font-normal leading-5 text-base-content/70;
+  }
+
+  .form-field-error {
+    @apply text-xs font-normal leading-5 text-error;
+  }
+
+  .form-field-hint:empty,
+  .form-field-error:empty {
+    display: none;
+  }
+
+  .form-dialog-title {
+    @apply m-0 pr-10 text-xl font-bold leading-7;
+  }
+
+  .form-dialog-description {
+    @apply text-sm font-normal leading-6 text-base-content;
+  }
+
+  .form-dialog-close {
+    @apply absolute right-5 top-5;
+  }
+}

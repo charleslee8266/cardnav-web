@@ -1,0 +1,50 @@
+---
+/*
+文件说明: 展示已到账的个人、卡网及中转站累计赞赏名单，并提供统一赞赏入口。
+*/
+import { loadSupportLeaderboard } from '../support/SupportStore.js';
+import SupportDialog from '../components/SupportDialog.astro';
+import PageHero from '../components/PageHero.astro';
+import PublicPage from '../layouts/PublicPage.astro';
+import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
+import { buildSeoContext } from '../seo.js';
+import { publicSiteUrl } from '../site.js';
+
+const t = Astro.locals.messages.support;
+const supporters = await loadSupportLeaderboard();
+const identities = { person: t.person, gateway: t.gatewayIdentity, shop: t.shopIdentity };
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: '/supporters',
+  title: t.seoTitle,
+  description: t.seoDescription,
+  imagePath: '/og-cardnav.webp',
+  type: 'webpage',
+  locale: Astro.locals.locale,
+  noindex: new URL(Astro.request.url).search.length > 0,
+});
+---
+<PublicPage activeNav="supporters" pageType="supporters" {...seo}>
+  <PageHero title={t.listTitle} description={t.listDescription}>
+    <a slot="aside" href="?support-dialog" data-open-support class="btn support-button"><span aria-hidden="true">♥</span> {t.button}</a>
+  </PageHero>
+  {supporters.length > 0 ? (
+    <ol class="support-list" aria-label={t.listTitle}>
+      {supporters.map((supporter, index) => (
+        <li class="support-list-row">
+          <span class="support-rank" aria-hidden="true">{index + 1}</span>
+          <div class="support-supporter">
+            <div class="support-supporter-name">
+              {supporter.url ? <a href={supporter.url} target="_blank" rel="sponsored noopener noreferrer" class="link link-primary link-hover">{supporter.name || t.anonymous}</a> : <span>{supporter.name || t.anonymous}</span>}
+              <span class="badge badge-ghost badge-sm">{identities[supporter.kind]}</span>
+            </div>
+            {supporter.message && <p class="support-message">{supporter.message}</p>}
+          </div>
+          <div class="support-list-amount"><span>{t.total}</span><strong>¥{(supporter.amountCents / 100).toLocaleString(Astro.locals.locale)}</strong></div>
+        </li>
+      ))}
+    </ol>
+  ) : <p class="support-list-empty">{t.listEmpty}</p>}
+  <SupportDialog returnPage="supporters" />
+  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+</PublicPage>

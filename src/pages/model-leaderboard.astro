@@ -6,9 +6,6 @@ import ModelLeaderboardContent from '../components/ModelLeaderboardContent.astro
 import { localizeModelLeaderboardGroups } from '../localized-display.js';
 import PublicPage from '../layouts/PublicPage.astro';
 import { buildModelLeaderboardGroupsForActiveTask } from '../model-leaderboard.js';
-import dataTableScriptUrl from '../scripts/data-table.js?url';
-import deferredTableCoreScriptUrl from '../scripts/deferred-table-core.js?url';
-import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { formatBeijingRefreshTime, loadModelLeaderboardRowsForTaskPage, loadModelLeaderboardTaskSlugs } from '../store.js';
@@ -39,7 +36,9 @@ const seo = buildSeoContext({
 
 <PublicPage activeNav="model-leaderboard" pageType="model-leaderboard" {...seo}>
   <ModelLeaderboardContent pageType="model-leaderboard" groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updateTime={updateTime} />
-  <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
-  <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
-  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+  <script>
+    import '../scripts/data-table.js';
+    import '../scripts/deferred-table-core.js';
+    import '../scripts/page-widgets.js';
+  </script>
 </PublicPage>

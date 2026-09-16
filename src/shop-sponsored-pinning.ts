@@ -1,11 +1,12 @@
 /**
- * 文件说明: 维护卡网商品列表中收藏和赞助商家商品的展示层置顶规则。
+ * 文件说明: 维护卡网商品列表中合作、累计赞赏及收藏商品的展示优先级。
  * 对应文档: docs/specs/shop-sorting-and-score.md
  */
 export type ShopPinnedRow = {
   productFavoriteKey: string;
   siteFavoriteKey: string;
   sponsor?: boolean;
+  supportTotalCents?: number;
 };
 
 export type ShopPinFavorites = {
@@ -15,13 +16,12 @@ export type ShopPinFavorites = {
 
 export type ShopPinOptions = {
   favoriteMerchantProductLimit?: number;
-  sponsorProductLimit?: number;
-  sponsorProductLimitPerSite?: number;
 };
 
 const DEFAULT_FAVORITE_MERCHANT_PRODUCT_LIMIT = 10;
-const DEFAULT_SPONSOR_PRODUCT_LIMIT = 10;
-const DEFAULT_SPONSOR_PRODUCT_LIMIT_PER_SITE = 3;
+const MERCHANT_GROUP_PRODUCT_LIMIT = 10;
+const SPONSOR_PRODUCT_LIMIT_PER_SITE = 3;
+const SUPPORT_PRODUCT_LIMIT_PER_SITE = 2;
 
 function safePositiveInteger(value: number | undefined, fallback: number) {
   return typeof value === 'number' && Number.isFinite(value)
@@ -60,21 +60,15 @@ function balancedRowsBySite<Row extends ShopPinnedRow>(
   return selectedRows;
 }
 
-function evenlyAllocatedRowsBySite<Row extends ShopPinnedRow>(
-  rowsBySite: Map<string, Row[]>,
-  options: { totalLimit: number; siteLimit: number },
-) {
-  const totalLimit = Math.max(0, options.totalLimit);
-  const siteLimit = Math.max(0, options.siteLimit);
-  const perSiteLimit = Math.min(siteLimit, Math.floor(totalLimit / rowsBySite.size));
-  if (perSiteLimit === 0) return [];
-
+function limitedMerchantRows<Row extends ShopPinnedRow>(rows: Row[], siteLimit: number) {
+  const counts = new Map<string, number>();
   const selectedRows: Row[] = [];
-  for (let rowIndex = 0; rowIndex < perSiteLimit; rowIndex += 1) {
-    for (const rows of rowsBySite.values()) {
-      const row = rows[rowIndex];
-      if (row) selectedRows.push(row);
-    }
+  for (const row of rows) {
+    if (selectedRows.length >= MERCHANT_GROUP_PRODUCT_LIMIT) break;
+    const count = counts.get(row.siteFavoriteKey) ?? 0;
+    if (count >= siteLimit) continue;
+    selectedRows.push(row);
+    counts.set(row.siteFavoriteKey, count + 1);
   }
   return selectedRows;
 }
@@ -88,18 +82,14 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
     options.favoriteMerchantProductLimit,
     DEFAULT_FAVORITE_MERCHANT_PRODUCT_LIMIT,
   );
-  const sponsorProductLimit = safePositiveInteger(
-    options.sponsorProductLimit,
-    DEFAULT_SPONSOR_PRODUCT_LIMIT,
-  );
-  const sponsorProductLimitPerSite = safePositiveInteger(
-    options.sponsorProductLimitPerSite,
-    DEFAULT_SPONSOR_PRODUCT_LIMIT_PER_SITE,
-  );
+  const sponsorRows = limitedMerchantRows(rowEntries.filter(row => row.sponsor), SPONSOR_PRODUCT_LIMIT_PER_SITE);
+  const supportRows = limitedMerchantRows(rowEntries.filter(row => !row.sponsor && (row.supportTotalCents ?? 0) > 0), SUPPORT_PRODUCT_LIMIT_PER_SITE);
+  const merchantPinnedRows = new Set<Row>([...sponsorRows, ...supportRows]);
+  const ordinaryRows = rowEntries.filter(row => !merchantPinnedRows.has(row));
 
   const favoriteProductRows: Row[] = [];
   const favoriteMerchantRowsBySite = new Map<string, Row[]>();
-  rowEntries.forEach(rowEntry => {
+  ordinaryRows.forEach(rowEntry => {
     if (favorites.favoriteProductKeys.has(rowEntry.productFavoriteKey)) {
       favoriteProductRows.push(rowEntry);
     } else if (favorites.favoriteSiteKeys.has(rowEntry.siteFavoriteKey)) {
@@ -116,19 +106,6 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   });
   favoriteMerchantRows.forEach(row => pinnedRows.add(row));
 
-  const sponsorRowsBySite = new Map<string, Row[]>();
-  rowEntries.forEach(rowEntry => {
-    if (pinnedRows.has(rowEntry) || !rowEntry.sponsor) return;
-    const rows = sponsorRowsBySite.get(rowEntry.siteFavoriteKey) ?? [];
-    rows.push(rowEntry);
-    sponsorRowsBySite.set(rowEntry.siteFavoriteKey, rows);
-  });
-  const sponsorRows = evenlyAllocatedRowsBySite(sponsorRowsBySite, {
-    totalLimit: sponsorProductLimit,
-    siteLimit: sponsorProductLimitPerSite,
-  });
-  sponsorRows.forEach(row => pinnedRows.add(row));
-
-  const regularRows = rowEntries.filter(rowEntry => !pinnedRows.has(rowEntry));
-  return [...favoriteProductRows, ...favoriteMerchantRows, ...sponsorRows, ...regularRows];
+  const regularRows = ordinaryRows.filter(rowEntry => !pinnedRows.has(rowEntry));
+  return [...sponsorRows, ...supportRows, ...favoriteProductRows, ...favoriteMerchantRows, ...regularRows];
 }

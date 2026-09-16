@@ -1,6 +1,7 @@
 /*
 文件说明: 负责公开 DataTable 的排序、表头状态同步和渐进加载交互。
 */
+import { pinSiteRows } from '../site-list-pinning.js';
 const dataTables = new WeakMap();
 const tablePagination = new WeakMap();
 
@@ -27,13 +28,10 @@ function stickySortKey(table) {
   return table.dataset.tableStickyKey || '';
 }
 
-function compareStickyRows(table, leftRow, rightRow) {
+function pinTableRows(table, rows) {
   const key = stickySortKey(table);
-  if (!key) return 0;
-  const leftSticky = rowValue(leftRow, key, 'number');
-  const rightSticky = rowValue(rightRow, key, 'number');
-  if (leftSticky === rightSticky) return 0;
-  return rightSticky - leftSticky;
+  if (!key) return rows;
+  return pinSiteRows(rows.map(entry => ({ entry, sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 }))).map(row => row.entry);
 }
 
 function syncDataTableHeaders(table, currentSort = null) {
@@ -118,17 +116,15 @@ function sortTable(table, nextSort) {
   if (nextSort !== undefined) dataTables.set(table, nextSort);
   const currentSort = dataTables.get(table) ?? null;
   if (!currentSort) {
-    tableRows(table)
+    const rows = tableRows(table)
       .map((row, index) => ({ row, index }))
       .sort((left, right) => {
-        const stickyCompared = compareStickyRows(table, left.row, right.row);
-        if (stickyCompared !== 0) return stickyCompared;
         const leftOrder = Number(left.row.dataset.originalOrder);
         const rightOrder = Number(right.row.dataset.originalOrder);
         if (Number.isFinite(leftOrder) && Number.isFinite(rightOrder) && leftOrder !== rightOrder) return leftOrder - rightOrder;
         return left.index - right.index;
-      })
-      .forEach(({ row }) => tbody.append(row));
+      });
+    pinTableRows(table, rows).forEach(({ row }) => tbody.append(row));
     updateSortButtons(table);
     applyPagination(table);
     return;
@@ -137,8 +133,6 @@ function sortTable(table, nextSort) {
   const multiplier = currentSort.direction === 'asc' ? 1 : -1;
   const rows = tableRows(table).map((row, index) => ({ row, index }));
   rows.sort((left, right) => {
-    const stickyCompared = compareStickyRows(table, left.row, right.row);
-    if (stickyCompared !== 0) return stickyCompared;
     const leftValue = rowValue(left.row, currentSort.key, currentSort.type);
     const rightValue = rowValue(right.row, currentSort.key, currentSort.type);
     if (typeof leftValue === 'number' && typeof rightValue === 'number') {
@@ -148,7 +142,7 @@ function sortTable(table, nextSort) {
     const compared = String(leftValue).localeCompare(String(rightValue), 'zh-Hans-CN', { numeric: true });
     return compared === 0 ? left.index - right.index : compared * multiplier;
   });
-  rows.forEach(({ row }) => tbody.append(row));
+  pinTableRows(table, rows).forEach(({ row }) => tbody.append(row));
   updateSortButtons(table);
   applyPagination(table);
 }

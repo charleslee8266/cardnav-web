@@ -13,6 +13,8 @@ type Props = {
   helpTip?: string;
   helpLabel?: string;
   helpClass?: string;
+  helpHref?: string;
+  helpLinkLabel?: string;
 };
 
 const {
@@ -24,6 +26,8 @@ const {
   statusText = '',
   helpTip = '',
   helpLabel = '',
+  helpHref = '',
+  helpLinkLabel = '',
   helpClass = 'data-table-help',
 } = Astro.props;
 const hasHelp = helpTip.trim().length > 0;
@@ -42,7 +46,7 @@ const buttonAttrs = {
       {statusText ? <span class="data-table-sort-status sr-only">{statusText}</span> : null}
     </button>
     {hasHelp ? (
-      <button type="button" class:list={['inline-help-button', helpClass]} aria-label={helpLabel || label} data-inline-help data-tip={helpTip}>i</button>
+      <button type="button" class:list={['inline-help-button', helpClass]} aria-label={helpLabel || label} data-inline-help data-tip={helpTip} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>i</button>
     ) : null}
   </span>
   <span class="data-table-sort-indicator" aria-hidden="true">

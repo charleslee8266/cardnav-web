@@ -1,0 +1,27 @@
+---
+/*
+文件说明: 渲染公开页面共用的合作与赞赏商家 badge 和说明。
+对应文档: docs/promo/cardnav-partner-offer.md
+*/
+type Props = {
+  kind?: 'sponsor' | 'support';
+  label: string;
+  description: string;
+  href: string;
+  linkLabel: string;
+};
+
+const { kind = 'sponsor', label, description, href, linkLabel } = Astro.props;
+---
+
+<span class="merchant-badge-group">
+  <span class="merchant-badge" data-kind={kind}>
+    <span>{label}</span>
+    <span class="merchant-badge-info" tabindex="0" role="img" aria-label={description}>
+      i
+      <span class="merchant-badge-tooltip public-floating-layer" role="tooltip">
+        {description} <a href={href} class="merchant-badge-link" data-umami-event="internal-link-click" data-umami-event-link-type={kind === 'support' ? 'support-list' : 'sponsor-lead'} data-umami-event-url={href}>{linkLabel}</a>
+      </span>
+    </span>
+  </span>
+</span>

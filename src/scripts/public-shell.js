@@ -1,5 +1,5 @@
 /*
-文件说明: 承载公开站点全局前端增强，包括语言菜单、主题切换、页头广告加载和通用行内说明浮层。
+文件说明: 承载公开站点全局前端增强，包括语言菜单、主题切换、公告独立关闭与重显、页头广告加载和通用行内说明浮层。
 */
 
 function initInlineHelp() {
@@ -15,7 +15,20 @@ function initInlineHelp() {
     tip.id = tipId;
     tip.className = 'inline-help-tooltip public-floating-layer hidden';
     tip.textContent = tipText;
-    tip.setAttribute('role', 'tooltip');
+    const linkHref = button.dataset.tipHref;
+    const linkLabel = button.dataset.tipLinkLabel;
+    let link;
+    if (linkHref && linkLabel) {
+      tip.setAttribute('role', 'dialog');
+      tip.setAttribute('aria-label', button.getAttribute('aria-label') || tipText);
+      button.setAttribute('aria-controls', tipId);
+      button.setAttribute('aria-haspopup', 'dialog');
+      link = document.createElement('a');
+      link.href = linkHref;
+      link.className = 'link link-primary';
+      link.textContent = linkLabel;
+      tip.append(document.createTextNode(' '), link);
+    } else tip.setAttribute('role', 'tooltip');
     document.body.appendChild(tip);
     let hideTimeout;
 
@@ -49,13 +62,43 @@ function initInlineHelp() {
 
     const scheduleHide = () => {
       window.clearTimeout(hideTimeout);
-      hideTimeout = window.setTimeout(hideTip, 180);
+      hideTimeout = window.setTimeout(() => {
+        if (!link || !tip.contains(document.activeElement)) hideTip();
+      }, 180);
     };
 
+    if (link) {
+      button.addEventListener('click', showTip);
+      button.addEventListener('keydown', event => {
+        if (event.key === 'Tab' && !event.shiftKey) {
+          event.preventDefault();
+          showTip();
+          link.focus();
+        }
+      });
+      link.addEventListener('click', hideTip);
+      tip.addEventListener('focusin', showTip);
+      tip.addEventListener('focusout', event => {
+        if (!tip.contains(event.relatedTarget) && event.relatedTarget !== button) hideTip();
+      });
+      document.addEventListener('click', event => {
+        if (!button.contains(event.target) && !tip.contains(event.target)) hideTip();
+      });
+      const dismiss = event => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        button.focus();
+        hideTip();
+      };
+      button.addEventListener('keydown', dismiss);
+      tip.addEventListener('keydown', dismiss);
+    }
     button.addEventListener('mouseenter', showTip);
     button.addEventListener('focus', showTip);
     button.addEventListener('mouseleave', scheduleHide);
-    button.addEventListener('blur', scheduleHide);
+    button.addEventListener('blur', event => {
+      if (!tip.contains(event.relatedTarget)) scheduleHide();
+    });
     tip.addEventListener('mouseenter', showTip);
     tip.addEventListener('mouseleave', scheduleHide);
     window.addEventListener('resize', () => {
@@ -68,41 +111,46 @@ function initInlineHelp() {
 }
 
 function initAnnouncement() {
-  const announcements = Array.from(document.querySelectorAll('.public-announcement'));
-  const dismissButtons = Array.from(document.querySelectorAll('[data-dismiss-announcement]'));
-  if (announcements.length === 0 || dismissButtons.length === 0) return;
+  const pendingAnnouncements = [];
+  const showNextAnnouncement = () => {
+    const next = pendingAnnouncements[0];
+    if (!next) return;
+    next.classList.remove('public-announcement-pending');
+    next.removeAttribute('hidden');
+  };
 
-  const storageKey = 'cardnav-announcement-dismissed-at';
-  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
-  let dismissedAt = 0;
+  document.querySelectorAll('[data-announcement-id]').forEach(announcement => {
+    const button = announcement.querySelector('[data-dismiss-announcement]');
+    if (!button) return;
 
-  try {
-    dismissedAt = Number.parseInt(localStorage.getItem(storageKey) || '0', 10) || 0;
-  } catch {
-    dismissedAt = 0;
-  }
+    const storageKey = `cardnav-announcement-${announcement.dataset.announcementId}-dismissed-at`;
+    const repeatAfterHours = Number(announcement.dataset.repeatAfterHours);
+    let dismissedAt = null;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored !== null && Number.isFinite(Number(stored))) dismissedAt = Number(stored);
+    } catch {
+      // 浏览器无法保存记录时，仍允许关闭当前页面上的公告。
+    }
 
-  if (Date.now() - dismissedAt >= oneWeekMs) {
-    announcements.forEach(announcement => {
-      announcement.classList.remove('public-announcement-pending');
-      announcement.removeAttribute('hidden');
-    });
-  }
+    const eligible = dismissedAt === null || (repeatAfterHours > 0 && Date.now() - dismissedAt >= repeatAfterHours * 60 * 60 * 1000);
+    if (!eligible) return;
+    pendingAnnouncements.push(announcement);
 
-  dismissButtons.forEach(button => {
     button.addEventListener('click', () => {
       window.CardNavTelemetry?.track('button-click', { scope: 'site', action: 'dismiss-announcement' }, button);
-      announcements.forEach(announcement => {
-        announcement.classList.add('public-announcement-pending');
-        announcement.setAttribute('hidden', '');
-      });
+      announcement.classList.add('public-announcement-pending');
+      announcement.setAttribute('hidden', '');
+      pendingAnnouncements.shift();
+      showNextAnnouncement();
       try {
         localStorage.setItem(storageKey, String(Date.now()));
       } catch {
-        // The announcement can still be dismissed for this page view when storage is unavailable.
+        // 浏览器无法保存记录时，仍允许关闭当前页面上的公告。
       }
     });
   });
+  showNextAnnouncement();
 }
 
 function initPublicShell() {

@@ -1,96 +1,50 @@
 /**
- * 文件说明: 验证卡网商品列表的收藏和赞助商家商品置顶规则。
+ * 文件说明: 验证合作、累计赞赏及收藏在商品列表中的排序优先级。
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { prioritizeShopProductRows, type ShopPinnedRow } from '../src/shop-sponsored-pinning.js';
-
-type Row = ShopPinnedRow & {
-  id: string;
-};
-
-function row(site: string, index: number, sponsor = true): Row {
-  return {
-    id: `${site}-${index}`,
-    productFavoriteKey: `${site}-product-${index}`,
-    siteFavoriteKey: site,
-    sponsor,
-  };
+function row(key: string, sponsor = false, supportTotalCents = 0): ShopPinnedRow {
+  return { productFavoriteKey: key, siteFavoriteKey: key, sponsor, supportTotalCents };
 }
-
-test('sponsored products are pinned below favorites with total and per-merchant limits', () => {
-  const rows = [
-    row('sponsor-a', 1),
-    row('sponsor-a', 2),
-    row('sponsor-a', 3),
-    row('sponsor-a', 4),
-    row('sponsor-a', 5),
-    row('sponsor-a', 6),
-    row('normal', 1, false),
-  ];
-
-  const sorted = prioritizeShopProductRows(rows, {
-    favoriteProductKeys: new Set(['normal-product-1']),
-    favoriteSiteKeys: new Set<string>(),
-  });
-
-  assert.equal(sorted[0]?.id, 'normal-1');
-  assert.deepEqual(sorted.slice(1, 4).map(item => item.id), [
-    'sponsor-a-1',
-    'sponsor-a-2',
-    'sponsor-a-3',
-  ]);
-  assert.equal(sorted[4]?.id, 'sponsor-a-4');
+test('partner pins precede support and favorites while overflow keeps its place', () => {
+  const partners = Array.from({ length: 12 }, (_, i) => row(`partner-${i}`, true));
+  const rows = [row('ordinary'), row('low', false, 100), row('favorite'), row('high', false, 50000), ...partners];
+  const sorted = prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(['favorite']), favoriteSiteKeys: new Set() });
+  assert.deepEqual(sorted.map(item => item.productFavoriteKey), [...partners.slice(0, 10).map(item => item.productFavoriteKey), 'low', 'high', 'favorite', 'ordinary', 'partner-10', 'partner-11']);
+  assert.equal(new Set(sorted).size, rows.length);
+});
+test('partners and supportd merchants preserve selected order across amounts and favorites', () => {
+  const rows = [row('first', false, 100), row('favorite', false, 300), row('partner', true, 0), row('partner-high', true, 900)];
+  const sorted = prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(['favorite', 'partner']), favoriteSiteKeys: new Set(['first']) });
+  assert.deepEqual(sorted.map(item => item.productFavoriteKey), ['partner', 'partner-high', 'first', 'favorite']);
+});
+test('ordinary merchant favorites keep their bounded allocation', () => {
+  const ordinary = Array.from({ length: 12 }, (_, i) => ({ ...row(`ordinary-${i}`), siteFavoriteKey: 'favorite-site' }));
+  const sorted = prioritizeShopProductRows([row('normal'), ...ordinary], { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(['favorite-site']) });
+  assert.equal(sorted[10].productFavoriteKey, 'normal');
+  assert.equal(sorted.length, 13);
 });
 
-test('sponsored products use an integer per-merchant quota without redistributing the remainder', () => {
-  const rows = [
-    ...Array.from({ length: 4 }, (_, index) => row('sponsor-a', index + 1)),
-    ...Array.from({ length: 4 }, (_, index) => row('sponsor-b', index + 1)),
-    ...Array.from({ length: 4 }, (_, index) => row('sponsor-c', index + 1)),
-  ];
-
-  const sorted = prioritizeShopProductRows(rows, {
-    favoriteProductKeys: new Set<string>(),
-    favoriteSiteKeys: new Set<string>(),
+for (const [kind, siteLimit] of [['partner', 3], ['support', 2]] as const) {
+  test(`${kind} pins allow ${siteLimit} products per merchant and ten per group without dropping overflow`, () => {
+    const merchants = Array.from({ length: 6 }, (_, siteIndex) =>
+      Array.from({ length: 4 }, (_, productIndex) => ({
+        ...row(`${kind}-${siteIndex}-${productIndex}`, kind === 'partner', kind === 'support' ? 100 : 0),
+        siteFavoriteKey: `site-${siteIndex}`,
+      })),
+    ).flat();
+    const rows = [row('normal'), ...merchants];
+    const sorted = prioritizeShopProductRows(rows, {
+      favoriteProductKeys: new Set([`${kind}-0-3`]),
+      favoriteSiteKeys: new Set(),
+    });
+    const expectedPins = merchants.filter((_, index) => index % 4 < siteLimit).slice(0, 10);
+    assert.deepEqual(sorted.slice(0, 10), expectedPins);
+    assert.equal(sorted[10].productFavoriteKey, `${kind}-0-3`);
+    assert.equal(sorted[11].productFavoriteKey, 'normal');
+    assert.equal(new Set(sorted).size, rows.length);
+    const pins = new Set([...expectedPins, merchants[3]]);
+    assert.deepEqual(sorted.slice(12), merchants.filter(item => !pins.has(item)));
   });
-
-  assert.deepEqual(sorted.slice(0, 9).map(item => item.id), [
-    'sponsor-a-1', 'sponsor-b-1', 'sponsor-c-1',
-    'sponsor-a-2', 'sponsor-b-2', 'sponsor-c-2',
-    'sponsor-a-3', 'sponsor-b-3', 'sponsor-c-3',
-  ]);
-  assert.deepEqual(sorted.slice(9).map(item => item.id), [
-    'sponsor-a-4', 'sponsor-b-4', 'sponsor-c-4',
-  ]);
-});
-
-test('sponsored pinning distributes slots across merchants as evenly as possible', () => {
-  const rows = Array.from({ length: 10 }).flatMap((_, siteIndex) => [
-    row(`sponsor-${siteIndex}`, 1),
-    row(`sponsor-${siteIndex}`, 2),
-  ]);
-
-  const sorted = prioritizeShopProductRows(rows, {
-    favoriteProductKeys: new Set<string>(),
-    favoriteSiteKeys: new Set<string>(),
-  });
-
-  assert.deepEqual(sorted.slice(0, 10).map(item => item.id), Array.from({ length: 10 }).map((_, siteIndex) => `sponsor-${siteIndex}-1`));
-  assert.deepEqual(sorted.slice(10).map(item => item.id), Array.from({ length: 10 }).map((_, siteIndex) => `sponsor-${siteIndex}-2`));
-});
-
-test('sponsored pinning keeps favorite merchant products above sponsored products', () => {
-  const rows = [
-    row('sponsor-a', 1),
-    row('favorite-site', 1, false),
-    row('sponsor-b', 1),
-  ];
-
-  const sorted = prioritizeShopProductRows(rows, {
-    favoriteProductKeys: new Set<string>(),
-    favoriteSiteKeys: new Set(['favorite-site']),
-  });
-
-  assert.deepEqual(sorted.map(item => item.id), ['favorite-site-1', 'sponsor-a-1', 'sponsor-b-1']);
-});
+}
