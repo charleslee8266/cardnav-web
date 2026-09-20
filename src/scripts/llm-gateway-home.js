@@ -174,7 +174,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       originalOrder: index,
       sortSequence: index + 1,
       sortSticky: isStickySite(site) ? 1 : 0,
-      sortSupport: Number(site.supportTotalCents) || 0,
+      sortSupport: Number(site.supportPoints) || 0,
       sortName: site.name,
       sortScore: Number(site.siteScore) || 0,
       sortFamilies: families.join(' '),
@@ -196,7 +196,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     setTracking(siteLink, gatewaySiteTracking(site));
     titleWrap.append(favorites.create(site.slug, site.name), siteLink);
     if (site.sponsor) titleWrap.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
-    if (Number(site.supportTotalCents) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
+    if (Number(site.supportPoints) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
 
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
@@ -211,14 +211,14 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const openLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel);
     openLink.href = site.outboundUrl || site.url;
     openLink.target = '_blank';
-    openLink.rel = site.sponsor || Number(site.supportTotalCents) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
+    openLink.rel = site.sponsor || Number(site.supportPoints) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
     setTracking(openLink, gatewaySiteOpenTracking(site));
     actionWrap.append(detailLink, openLink);
     infoWrap.append(textWrap, actionWrap);
     infoCell.append(infoWrap);
     row.append(infoCell);
     const supportCell = tableCell(config.supportTotalLabel, 'right', 'font-mono whitespace-nowrap');
-    supportCell.textContent = `¥${((Number(site.supportTotalCents) || 0) / 100).toLocaleString()}`;
+    supportCell.textContent = (Number(site.supportPoints) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
     row.append(supportCell);
 
     const scoreCell = tableCell(config.scoreLabel, 'right', 'font-mono');
@@ -333,7 +333,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       payments: payments.join(','),
       sort: {
         sticky: isStickySite(site) ? 1 : 0,
-        support: Number(site.supportTotalCents) || 0,
+        support: Number(site.supportPoints) || 0,
         sequence: index + 1,
         name: site.name,
         score: Number(site.siteScore) || 0,
@@ -392,7 +392,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       entry.sort.favorite = favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') ? 1 : 0;
     });
     entries.sort(compareEntries(state.sort || { key: 'sequence', direction: 'asc' }));
-    return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 }))).map(row => row.entry);
+    return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 }))).map(row => row.entry);
   }
 
   function loadMoreWrap(type) {

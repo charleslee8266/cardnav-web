@@ -18,6 +18,7 @@ type GatewaySite = {
   siteScore?: number | null;
   sponsor?: boolean;
   supportTotalCents?: number;
+  supportPoints?: number;
 };
 
 type Props = {
@@ -69,7 +70,7 @@ const mergedRowAttrs = {
   'data-gateway-site-key': site.slug,
   'data-sort-sequence': String(sequence),
   'data-sort-sticky': sticky ? '1' : '0',
-  'data-sort-support': String(site.supportTotalCents || 0),
+  'data-sort-support': String(site.supportPoints || 0),
 };
 ---
 
@@ -82,7 +83,7 @@ const mergedRowAttrs = {
           <button type="button" class="favorite-toggle" data-gateway-favorite={site.slug} data-site-name={site.name} aria-label={`${Astro.locals.messages.shops.merchantFavorite} ${site.name}`} aria-pressed="false"><span aria-hidden="true">♡</span></button>
           <a href={detailHref} class="link link-hover break-words text-base font-semibold text-primary" {...clickAttrs}>{site.name}</a>
           {site.sponsor ? <MerchantBadge label={sponsorLabel} description={sponsorDescription} href={sponsorHref} linkLabel={sponsorLinkLabel} /> : null}
-          {(site.supportTotalCents || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.viewList} /> : null}
+          {(site.supportPoints || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.viewList} /> : null}
           {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
         </div>
         {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
@@ -90,11 +91,11 @@ const mergedRowAttrs = {
       </div>
       <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
         <a href={detailHref} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...clickAttrs}>{detailLabel}</a>
-        <a href={site.outboundUrl} target="_blank" rel={site.sponsor || (site.supportTotalCents || 0) > 0 ? "noopener noreferrer sponsored" : "noopener noreferrer"} class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...openAttrs}>{openLabel}</a>
+        <a href={site.outboundUrl} target="_blank" rel={site.sponsor || (site.supportPoints || 0) > 0 ? "noopener noreferrer sponsored" : "noopener noreferrer"} class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...openAttrs}>{openLabel}</a>
       </div>
     </div>
   </DataTableCell>
-  <DataTableCell label={Astro.locals.messages.support.amountColumn} align="right" class="font-mono whitespace-nowrap">¥{((site.supportTotalCents || 0) / 100).toLocaleString(Astro.locals.locale)}</DataTableCell>
+  <DataTableCell label={Astro.locals.messages.support.amountColumn} align="right" class="font-mono whitespace-nowrap">{(site.supportPoints || 0).toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</DataTableCell>
   {showScore ? <DataTableCell label={scoreLabel} align={scoreAlign} class={scoreClass}>{formatPositiveScore(site.siteScore ?? null)}</DataTableCell> : null}
   <slot />
 </tr>

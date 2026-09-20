@@ -20,6 +20,14 @@ const t = Astro.locals.messages.support;
 >
   <div data-return-status-panel hidden class="support-return-status">
     <p data-return-status role="status"></p>
+    <div data-success-details hidden class="support-success-details">
+      <h3>{t.successTitle}</h3>
+      <dl>
+        <div><dt>{t.summaryIdentity}</dt><dd data-success-identity></dd></div>
+        <div><dt>{t.summaryAmount}</dt><dd data-success-amount></dd></div>
+        <div data-success-message-row hidden><dt>{t.message}</dt><dd data-success-message></dd></div>
+      </dl>
+    </div>
     <button data-check-payment type="button" class="btn btn-outline btn-sm mt-3" data-umami-event="button-click" data-umami-event-scope="support" data-umami-event-action="check-status">{t.checkStatus}</button>
   </div>
   <form data-support-form class="submission-form" novalidate>

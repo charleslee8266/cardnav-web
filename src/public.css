@@ -1014,6 +1014,31 @@
     @apply mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm;
   }
 
+  .support-success-details {
+    @apply mt-3 border-t border-primary/20 pt-3;
+  }
+
+  .support-success-details h3 {
+    @apply text-sm font-semibold;
+  }
+
+  .support-success-details dl {
+    @apply mt-2 grid gap-2;
+  }
+
+  .support-success-details dl > div {
+    @apply grid grid-cols-[auto_minmax(0,1fr)] gap-3;
+  }
+
+  .support-success-details dt {
+    @apply text-base-content/60;
+  }
+
+  .support-success-details dd {
+    @apply min-w-0 break-words text-right;
+    overflow-wrap: anywhere;
+  }
+
   .support-list {
     @apply overflow-hidden rounded-box border border-base-300 bg-base-100;
   }

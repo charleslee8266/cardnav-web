@@ -31,7 +31,7 @@ function stickySortKey(table) {
 function pinTableRows(table, rows) {
   const key = stickySortKey(table);
   if (!key) return rows;
-  return pinSiteRows(rows.map(entry => ({ entry, sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 }))).map(row => row.entry);
+  return pinSiteRows(rows.map(entry => ({ entry, sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: 0, supportPoints: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 }))).map(row => row.entry);
 }
 
 function syncDataTableHeaders(table, currentSort = null) {

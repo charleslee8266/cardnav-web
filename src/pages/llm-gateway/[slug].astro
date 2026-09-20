@@ -111,7 +111,7 @@ function gatewayModelClickAttrs(modelId: string) {
     <div slot="title" class="flex flex-wrap items-center gap-2">
       <h1 class="page-hero-title mt-0">{site.name}</h1>
       {site.sponsor ? <MerchantBadge label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
-      {(site.supportTotalCents || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.viewList} /> : null}
+      {(site.supportPoints || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.viewList} /> : null}
       {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
     </div>
     <div slot="meta" class="page-hero-meta">

@@ -28,6 +28,7 @@ import {
   shopSiteScore,
   shopSiteSponsor,
   shopSiteSupportTotalCents,
+  shopSiteSupportPoints,
   shopSiteUrl,
   shopSites,
 } from '../shop-products-data.js';
@@ -365,6 +366,7 @@ function buildFlatRows() {
       siteScore: shopSiteScore(site),
       sponsor: shopSiteSponsor(site),
       supportTotalCents: shopSiteSupportTotalCents(site),
+      supportPoints: shopSiteSupportPoints(site),
       productRefreshedAt: shopProductRefreshedMs(product) || 0,
       product,
       element: null,
@@ -897,6 +899,7 @@ function renderMerchantViewModule(module) {
       shopSiteScore,
       shopSiteSponsor,
       shopSiteSupportTotalCents,
+      shopSiteSupportPoints,
       shopSiteUrl,
     },
     shopsMessages,
@@ -1047,7 +1050,7 @@ function sortRows(merchantModule) {
       return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
     });
   const visibleRows = sortedRows.filter(row => row.element.dataset.filterVisible === '1');
-  const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: Number(entry.element.dataset.supportTotalCents) || 0, favorite: Number(entry.element.dataset.favorite) > 0 }))).map(row => row.entry);
+  const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: 0, supportPoints: Number(entry.element.dataset.supportPoints) || 0, favorite: Number(entry.element.dataset.favorite) > 0 }))).map(row => row.entry);
   const hiddenRows = sortedRows.filter(row => row.element.dataset.filterVisible !== '1');
   [...pinnedRows, ...hiddenRows].forEach(({ element: row, indexCell }, sortedIndex) => {
       row.dataset.sortedIndex = String(sortedIndex);

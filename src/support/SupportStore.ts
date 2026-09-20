@@ -10,6 +10,7 @@ export type Supporter = {
   name: string;
   url: string | null;
   amountCents: number;
+  supportPoints: number;
   message: string;
 };
 
@@ -34,7 +35,7 @@ export class SupportStore {
     const result = await this.pool.query<{ id: string; name: string; url: string }>(`
       SELECT ${id} AS id, COALESCE(NULLIF(name, ''), url) AS name, url FROM ${table}
       WHERE status = 'online' AND type = $1 AND ${id} IS NOT NULL
-      ORDER BY sponsor DESC, support_total_cents DESC, name ASC, ${id} ASC
+      ORDER BY sponsor DESC, support_points DESC, name ASC, ${id} ASC
     `, [type]);
     return result.rows;
   }
@@ -146,7 +147,10 @@ export class SupportStore {
           ELSE COALESCE(NULLIF(gateways.name, ''), NULLIF(supporters.site_name, ''), supporters.site_url) END AS name,
         CASE WHEN supporters.kind = 'shop' THEN shops.url
           WHEN supporters.kind = 'gateway' THEN COALESCE(NULLIF(btrim(gateways.invite_url), ''), gateways.url) END AS url,
-        supporters.amount_cents, supporters.message
+        supporters.amount_cents, supporters.message,
+        CASE WHEN supporters.kind = 'shop' THEN COALESCE(shops.support_points, 0)
+          WHEN supporters.kind = 'gateway' THEN COALESCE(gateways.support_points, 0)
+          ELSE 0 END AS support_points
       FROM supporters
       LEFT JOIN shop_sites AS shops ON supporters.kind = 'shop' AND supporters.site_id = shops.id
         AND shops.status = 'online' AND shops.type = 'cardShop'
@@ -162,7 +166,7 @@ export class SupportStore {
           if (['https:', 'http:'].includes(parsed.protocol) && !parsed.username && !parsed.password) url = parsed.href;
         } catch { /* 无效站点链接只展示名称。 */ }
       }
-      return { kind: row.kind, name: row.name, url, amountCents: Number(row.amount_cents), message: row.message };
+      return { kind: row.kind, name: row.name, url, amountCents: Number(row.amount_cents), supportPoints: Number(row.support_points) || 0, message: row.message };
     });
   }
 }

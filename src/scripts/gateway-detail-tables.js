@@ -158,7 +158,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       sort: {
         favorite: favorites.has(site.slug) ? 1 : 0,
         sticky: site.sponsor ? 1 : 0,
-        support: Number(site.supportTotalCents) || 0,
+        support: Number(site.supportPoints) || 0,
         sequence: index + 1,
         name: site.name || '',
         unit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
@@ -222,7 +222,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     setDataset(row, {
       gatewaySiteKey: site.slug,
       sortSticky: site.sponsor ? 1 : 0,
-      sortSupport: Number(site.supportTotalCents) || 0,
+      sortSupport: Number(site.supportPoints) || 0,
       sortSequence: index + 1,
       sortName: site.name || '',
       sortUnit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
@@ -250,7 +250,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     siteLink.dataset.umamiEventUrl = detailHref;
     titleWrap.append(favorites.create(site.slug, site.name), siteLink);
     if (site.sponsor) titleWrap.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
-    if (Number(site.supportTotalCents) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
+    if (Number(site.supportPoints) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
 
     if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
@@ -269,7 +269,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     const openLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel || '');
     openLink.href = site.outboundUrl || site.url || '';
     openLink.target = '_blank';
-    openLink.rel = site.sponsor || Number(site.supportTotalCents) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
+    openLink.rel = site.sponsor || Number(site.supportPoints) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
     openLink.dataset.umamiEvent = 'external-link-click';
     openLink.dataset.umamiEventLinkType = 'gateway-site-open';
     openLink.dataset.umamiEventName = site.name || '';
@@ -279,7 +279,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     infoCell.append(infoWrap);
     row.append(infoCell);
     const supportCell = tableCell(config.supportTotalLabel, 'right', 'font-mono whitespace-nowrap');
-    supportCell.textContent = `¥${((Number(site.supportTotalCents) || 0) / 100).toLocaleString()}`;
+    supportCell.textContent = (Number(site.supportPoints) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
     row.append(supportCell);
     row.append(priceStackCell(labels.unit || '', prices, price => displayPriceUnit(price.unit || '', price.currency)));
     row.append(priceStackCell(labels.inputPrice || '', prices, price => formatPrice(price.inputPrice)));

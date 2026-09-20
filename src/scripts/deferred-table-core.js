@@ -61,7 +61,7 @@ import { pinSiteRows } from '../site-list-pinning.js';
     function currentEntries() {
       const entries = state.entries.slice();
       entries.sort(compareEntries(state.sort || { key: 'sequence', direction: 'asc' }));
-      return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 }))).map(row => row.entry);
+      return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 }))).map(row => row.entry);
     }
 
     function updateSummary() {

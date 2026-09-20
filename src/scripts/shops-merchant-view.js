@@ -193,6 +193,7 @@ export function renderMerchantRows({
     row.dataset.siteScore = String(accessors.shopSiteScore(site));
     row.dataset.sponsor = siteSponsor ? '1' : '0';
     row.dataset.supportTotalCents = String(accessors.shopSiteSupportTotalCents(site));
+    row.dataset.supportPoints = String(accessors.shopSiteSupportPoints(site));
     row.dataset.lastProductRefreshSuccessAt = String(accessors.shopSiteLastRefreshMs(site) || 0);
     row.dataset.originalIndex = String(index);
     row.dataset.rank = String(index + 1);
@@ -212,7 +213,7 @@ export function renderMerchantRows({
       appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
     }
     if (siteSponsor) merchantHeader.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
-    if (accessors.shopSiteSupportTotalCents(site) > 0) merchantHeader.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
+    if (accessors.shopSiteSupportPoints(site) > 0) merchantHeader.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
 
     merchantCell.appendChild(merchantHeader);
     row.appendChild(merchantCell);
@@ -255,7 +256,7 @@ export function renderMerchantRows({
     const supportCell = document.createElement('div');
     supportCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';
     appendTextElement(supportCell, 'span', 'merchant-table-mobile-label', shopsMessages.supportTotalLabel);
-    appendTextElement(supportCell, 'span', 'merchant-table-value', `¥${(accessors.shopSiteSupportTotalCents(site) / 100).toLocaleString()}`);
+    appendTextElement(supportCell, 'span', 'merchant-table-value', accessors.shopSiteSupportPoints(site).toLocaleString(undefined, { maximumFractionDigits: 2 }));
     row.appendChild(supportCell);
 
     const refreshCell = document.createElement('div');

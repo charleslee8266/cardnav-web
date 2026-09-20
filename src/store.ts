@@ -16,6 +16,7 @@ export type PublicSiteRow = {
   score: number;
   sponsor: boolean;
   supportTotalCents: number;
+  supportPoints?: number;
 };
 
 export type PublicGatewaySiteRow = {
@@ -34,6 +35,7 @@ export type PublicGatewaySiteRow = {
   siteScore: number | null;
   sponsor: boolean;
   supportTotalCents: number;
+  supportPoints?: number;
   availabilityPercent: number;
   avgSuccessLatencyMs: number | null;
   summary: string;
@@ -106,6 +108,7 @@ export type PublicProductRow = {
   siteScore: number;
   siteSponsor: boolean;
   siteSupportTotalCents: number;
+  siteSupportPoints?: number;
   clickCount: number;
   score: number;
 };
@@ -230,6 +233,7 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     siteScore: Number(row.score) || 0,
     sponsor: row.sponsor === true,
     supportTotalCents: Number(row.support_total_cents) || 0,
+    supportPoints: Number(row.support_points) || 0,
     availabilityPercent: Number(row.availability_percent) || 0,
     avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
     summary: String(row.summary || ''),
@@ -309,6 +313,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         siteFavoriteKey: product.siteId,
         sponsor: product.siteSponsor,
         supportTotalCents: product.siteSupportTotalCents,
+        supportPoints: product.siteSupportPoints,
       })), { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set() }).map(row => row.product);
     }
     const products = safeProductLimit === null ? sourceProducts : sourceProducts.slice(0, safeProductLimit);
@@ -342,6 +347,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         score,
         sponsor,
         support_total_cents,
+        support_points,
         last_product_refresh_success_at
       FROM shop_sites
       WHERE status = 'online'
@@ -349,12 +355,12 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       ORDER BY
         CASE
           WHEN ROW_NUMBER() OVER (
-            PARTITION BY CASE WHEN sponsor THEN 0 WHEN support_total_cents > 0 THEN 1 ELSE 2 END
-            ORDER BY score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
-          ) <= 10 THEN CASE WHEN sponsor THEN 0 WHEN support_total_cents > 0 THEN 1 ELSE 2 END
+            PARTITION BY CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END
+            ORDER BY support_points DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
+          ) <= 10 THEN CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END
           ELSE 2
         END,
-        score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
+        CASE WHEN support_points > 0 THEN support_points ELSE 0 END DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
     : null;
   const productsResult = await db.query(`
@@ -367,6 +373,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         shop_sites.score AS site_score,
         shop_sites.sponsor AS site_sponsor,
         shop_sites.support_total_cents AS site_support_total_cents,
+        shop_sites.support_points AS site_support_points,
         shop_sites.last_product_refresh_success_at AS site_product_refresh_success_at,
         shop_products.category_name,
         shop_products.name,
@@ -389,7 +396,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
     ), site_ranked_products AS (
       SELECT base_products.*,
-        CASE WHEN site_sponsor THEN 0 WHEN site_support_total_cents > 0 THEN 1 ELSE 2 END AS pin_group,
+        CASE WHEN site_sponsor THEN 0 WHEN site_support_points > 0 THEN 1 ELSE 2 END AS pin_group,
         CASE WHEN site_sponsor THEN 3 ELSE 2 END AS site_pin_limit,
         ROW_NUMBER() OVER (PARTITION BY site_id ORDER BY natural_order) AS site_position
       FROM base_products
@@ -405,6 +412,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       base_products.site_score,
       base_products.site_sponsor,
       base_products.site_support_total_cents,
+      base_products.site_support_points,
       base_products.site_product_refresh_success_at,
       base_products.category_name,
       base_products.name,
@@ -420,6 +428,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     FROM ranked_products AS base_products
     ORDER BY
       CASE WHEN base_products.site_position <= base_products.site_pin_limit AND base_products.group_position <= 10 THEN base_products.pin_group ELSE 2 END,
+      CASE WHEN base_products.pin_group = 1 THEN base_products.site_support_points ELSE 0 END DESC,
       base_products.natural_order ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
@@ -447,6 +456,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       siteScore: Number(row.site_score) || 0,
       siteSponsor: row.site_sponsor === true,
       siteSupportTotalCents: Number(row.site_support_total_cents) || 0,
+      siteSupportPoints: Number(row.site_support_points) || 0,
       score: Number(row.score) || 0,
     };
   });
@@ -461,6 +471,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       score: Number(row.score) || 0,
       sponsor: row.sponsor === true,
       supportTotalCents: Number(row.support_total_cents) || 0,
+      supportPoints: Number(row.support_points) || 0,
     }))
     : (() => {
       const siteById = new Map<string, PublicSiteRow>();
@@ -477,6 +488,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
           score: Number(row.site_score) || 0,
           sponsor: row.site_sponsor === true,
           supportTotalCents: Number(row.site_support_total_cents) || 0,
+          supportPoints: Number(row.site_support_points) || 0,
         });
       }
       return [...siteById.values()];
@@ -571,6 +583,7 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
       gateway_sites.invite_url,
       gateway_sites.sponsor,
       gateway_sites.support_total_cents,
+      gateway_sites.support_points,
       gateway_sites.model_types,
       gateway_sites.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
@@ -590,11 +603,12 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
     ORDER BY
       CASE
         WHEN ROW_NUMBER() OVER (
-          PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_total_cents > 0 THEN 1 ELSE 2 END
-          ORDER BY gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
-        ) <= 10 THEN CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_total_cents > 0 THEN 1 ELSE 2 END
+          PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
+          ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+        ) <= 10 THEN CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
         ELSE 2
       END,
+      CASE WHEN gateway_sites.support_points > 0 THEN gateway_sites.support_points ELSE 0 END DESC,
       gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
     ${limit ? 'LIMIT $1' : ''}
   `, limit ? [limit] : []);
@@ -744,6 +758,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
       gateway_sites.invite_url,
       gateway_sites.sponsor,
       gateway_sites.support_total_cents,
+      gateway_sites.support_points,
       gateway_sites.model_types,
       gateway_sites.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
@@ -906,6 +921,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       gateway_sites.invite_url,
       gateway_sites.sponsor,
       gateway_sites.support_total_cents,
+      gateway_sites.support_points,
       gateway_sites.model_types,
       gateway_sites.payment_methods,
       COALESCE(site_price_summary.model_count, 0) AS model_count,
@@ -930,12 +946,13 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
     ORDER BY
       CASE
         WHEN ROW_NUMBER() OVER (
-          PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_total_cents > 0 THEN 1 ELSE 2 END
-          ORDER BY gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
-        ) <= 10 THEN CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_total_cents > 0 THEN 1 ELSE 2 END
+          PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
+          ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+        ) <= 10 THEN CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
         ELSE 2
       END,
-      gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+        CASE WHEN gateway_sites.support_points > 0 THEN gateway_sites.support_points ELSE 0 END DESC,
+        gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
     ${siteLimit ? 'LIMIT $2' : ''}
   `, siteLimit ? [modelId, siteLimit] : [modelId]);
 

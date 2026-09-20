@@ -187,20 +187,20 @@ const flatSortColumns = [
   { key: 'categoryName', type: 'text', label: t.labels.category },
   { key: 'score', type: 'number', label: t.labels.productScore, tip: t.shops.productScoreTip, tipLabel: t.shops.productScoreHelpLabel },
   { key: 'siteName', type: 'text', label: t.labels.merchant },
-  { key: 'supportTotalCents', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
+  { key: 'supportPoints', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
   { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
 ] satisfies SortColumn[];
-const rightAlignedProductColumns = new Set(['priceValue', 'stockValue', 'score', 'supportTotalCents']);
+const rightAlignedProductColumns = new Set(['priceValue', 'stockValue', 'score', 'supportPoints']);
 const merchantTabLabel = t.labels.merchant;
 const merchantSortColumns = [
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productCount', type: 'number', label: t.labels.productCount },
   { key: 'hotProducts', type: 'number', label: t.shops.hotProductsTitle },
   { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
-  { key: 'supportTotalCents', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
+  { key: 'supportPoints', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
   { key: 'lastProductRefreshSuccessAt', type: 'number', label: t.labels.latestRefresh },
 ] satisfies SortColumn[];
-const rightAlignedMerchantColumns = new Set(['productCount', 'siteScore', 'supportTotalCents']);
+const rightAlignedMerchantColumns = new Set(['productCount', 'siteScore', 'supportPoints']);
 const shopProductsJsonValue = JSON.stringify(packShopProductsData({
   ...data,
   initialProductLimit: initialProductLimitValue,

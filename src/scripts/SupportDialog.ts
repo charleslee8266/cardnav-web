@@ -16,6 +16,11 @@ class SupportDialog {
   private status: HTMLElement;
   private paymentStatus: HTMLElement;
   private returnStatus: HTMLElement;
+  private successDetails: HTMLElement;
+  private successIdentity: HTMLElement;
+  private successAmount: HTMLElement;
+  private successMessageRow: HTMLElement;
+  private successMessage: HTMLElement;
   private checkButton: HTMLButtonElement;
   private payButton: HTMLButtonElement;
   private messages: Record<string, string>;
@@ -43,6 +48,11 @@ class SupportDialog {
     this.status = dialog.querySelector('[data-site-status]')!;
     this.paymentStatus = dialog.querySelector('[data-payment-status]')!;
     this.returnStatus = dialog.querySelector('[data-return-status]')!;
+    this.successDetails = dialog.querySelector('[data-success-details]')!;
+    this.successIdentity = dialog.querySelector('[data-success-identity]')!;
+    this.successAmount = dialog.querySelector('[data-success-amount]')!;
+    this.successMessageRow = dialog.querySelector('[data-success-message-row]')!;
+    this.successMessage = dialog.querySelector('[data-success-message]')!;
     this.checkButton = dialog.querySelector('[data-check-payment]')!;
     this.payButton = dialog.querySelector('[data-pay-button]')!;
     this.messages = JSON.parse(dialog.dataset.messages || '{}');
@@ -261,11 +271,38 @@ class SupportDialog {
       const paid = data.status === 'paid';
       this.returnStatus.textContent = paid ? this.messages.paid : this.messages.pending;
       this.checkButton.hidden = paid;
+      if (paid) this.showPaidSummary(token);
       if (!paid && attempt < 19 && this.dialog.open) this.statusTimer = setTimeout(() => void this.checkPayment(attempt + 1), 3000);
     } catch {
       if (!request.signal.aborted) this.returnStatus.textContent = this.messages.statusFailed;
     } finally {
       if (!request.signal.aborted) this.checkButton.disabled = false;
+    }
+  }
+
+  private showPaidSummary(token: string) {
+    this.form.hidden = true;
+    this.successDetails.hidden = false;
+    this.successIdentity.textContent = this.messages.anonymous;
+    this.successAmount.textContent = '';
+    this.successMessage.textContent = '';
+    this.successMessageRow.hidden = true;
+    const storageKey = `cardnav-support-order:${token}`;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null') as {
+        identity?: string;
+        amount?: string;
+        message?: string;
+      } | null;
+      if (saved) {
+        this.successIdentity.textContent = saved.identity || this.messages.anonymous;
+        this.successAmount.textContent = saved.amount ? `${saved.amount} CNY` : '';
+        this.successMessage.textContent = saved.message || '';
+        this.successMessageRow.hidden = !saved.message;
+        sessionStorage.removeItem(storageKey);
+      }
+    } catch {
+      // 会话存储不可用时仍保留赞赏成功状态。
     }
   }
 
@@ -301,6 +338,18 @@ class SupportDialog {
         this.paymentStatus.textContent = typeof data.message === 'string' ? data.message : this.messages.failed;
         this.setBusy(false);
         return;
+      }
+      const identity = this.kind === 'person'
+        ? String(fields.get('nickname') || '').trim() || this.messages.anonymous
+        : this.search.value.trim();
+      try {
+        sessionStorage.setItem(`cardnav-support-order:${data.statusToken}`, JSON.stringify({
+          identity,
+          amount: this.amount.value,
+          message: this.kind === 'person' ? String(fields.get('message') || '').trim() : '',
+        }));
+      } catch {
+        // 会话存储不可用时不影响跳转收银台。
       }
       const target = new URL(data.payUrl);
       if (!['http:', 'https:'].includes(target.protocol)) throw new Error();

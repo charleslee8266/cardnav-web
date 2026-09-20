@@ -27,6 +27,7 @@ export type PackedShopSiteRow = [
   score: number,
   sponsor?: 0 | 1,
   supportTotalCents?: number,
+  supportPoints?: number,
 ];
 
 export type PackedShopProductRow = [
@@ -120,6 +121,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
       Number(site.score) || 0,
       site.sponsor ? 1 : 0,
       Number(site.supportTotalCents) || 0,
+      Number(site.supportPoints) || 0,
     ];
   });
   const categories: string[] = [];
@@ -137,6 +139,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
         Number(product.siteScore) || 0,
         product.siteSponsor ? 1 : 0,
         Number(product.siteSupportTotalCents) || 0,
+        Number(product.siteSupportPoints) || 0,
       ]);
     }
     return [
@@ -271,4 +274,8 @@ export function shopProductScore(product: PackedShopProductRow) {
 
 export function shopSiteSupportTotalCents(site: PackedShopSiteRow | null | undefined) {
   return Number(site?.[6]) || 0;
+}
+
+export function shopSiteSupportPoints(site: PackedShopSiteRow | null | undefined) {
+  return Number(site?.[7]) || 0;
 }

@@ -41,6 +41,7 @@ const seo = buildSeoContext({
             {supporter.message && <p class="support-message">{supporter.message}</p>}
           </div>
           <div class="support-list-amount"><span>{t.total}</span><strong>¥{(supporter.amountCents / 100).toLocaleString(Astro.locals.locale)}</strong></div>
+          <div class="support-list-amount"><span>{t.amountColumn}</span><strong>{supporter.kind === 'person' ? '-' : supporter.supportPoints.toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</strong></div>
         </li>
       ))}
     </ol>
