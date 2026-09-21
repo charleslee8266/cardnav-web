@@ -1069,7 +1069,7 @@ function sortRows(merchantModule) {
       row.classList.toggle('hidden', !rowRendered);
       if (rowRendered) {
         renderedCount += 1;
-        if (indexCell) indexCell.textContent = row.dataset.rank || String(Number(row.dataset.originalIndex) + 1);
+        if (indexCell) indexCell.textContent = String(visibleCount);
       } else if (indexCell) {
         indexCell.textContent = '';
       }
