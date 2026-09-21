@@ -33,6 +33,12 @@ function publicContentHotReload() {
 export default defineConfig({
   integrations: [mdx()],
   output: 'server',
+  // Caddy terminates HTTPS before forwarding requests to the local Node port.
+  // The API applies its own strict PUBLIC_SITE_URL origin check, while Astro's
+  // default check would compare against the internal proxy URL and reject it.
+  security: {
+    checkOrigin: false,
+  },
   adapter: node({
     mode: 'standalone',
   }),
