@@ -143,8 +143,8 @@ const shopsScriptMessages = {
   supportTotalLabel: t.support.amountColumn,
   supportLabel: t.support.badgeLabel,
   supportDescription: t.support.badgeDescription,
-  supportersUrl: linkTo('/supporters'),
-  supportLinkLabel: t.support.viewList,
+  supportersUrl: linkTo('/supporters?support-dialog'),
+  supportLinkLabel: t.support.amountLinkLabel,
   sponsorLabel: t.sponsors.sponsorLabel,
   sponsorDescription: t.sponsors.sponsorDescription,
   partnershipUrl: linkTo('/partnership'),
@@ -232,7 +232,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       >
         {t.shops.submitMerchant}
       </button>
-<a href="?support-dialog" data-open-support class="btn support-button btn-md w-full"><span aria-hidden="true">♥</span> {t.support.button}</a>
+<a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-md w-full"><span aria-hidden="true">♥</span> {t.support.button}</a>
 </div>
       <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
         <div class="stat px-4 py-3">

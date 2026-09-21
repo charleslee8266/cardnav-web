@@ -5,13 +5,12 @@ import type { APIRoute } from 'astro';
 import { isLocale } from '../../../i18n/config.js';
 import { EasyPay, SupportError, isSupportReturnPage } from '../../../support/EasyPay.js';
 import { getSupportStore } from '../../../support/SupportStore.js';
-import { SupportDebugPayment } from '../../../support/SupportDebugPayment.js';
 import { supportKind, failure, json, orderParameters, OrderRateLimit } from '../../../support/http.js';
 
 const limit = new OrderRateLimit();
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
-    const provider = SupportDebugPayment.fromEnv(request.url) ?? new EasyPay();
+    const provider = new EasyPay();
     limit.take(clientAddress);
     const params = await orderParameters(request, provider.origin);
     const kind = supportKind(params.kind);

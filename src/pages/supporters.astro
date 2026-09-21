@@ -12,6 +12,7 @@ import DataTableHeader from '../components/DataTableHeader.astro';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
+import { telemetryBlocks } from '../telemetry-blocks.js';
 
 const messages = Astro.locals.messages;
 const t = messages.support;
@@ -30,7 +31,7 @@ const seo = buildSeoContext({
 ---
 <PublicPage activeNav="supporters" pageType="supporters" {...seo}>
   <PageHero title={t.listTitle} description={t.listDescription}>
-    <a slot="aside" href="?support-dialog" data-open-support class="btn support-button"><span aria-hidden="true">♥</span> {t.button}</a>
+    <a slot="aside" href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button"><span aria-hidden="true">♥</span> {t.button}</a>
   </PageHero>
   {supporters.length > 0 ? (
     <section class="supporters-table-card card overflow-hidden border border-base-300 bg-base-100 shadow-sm">
@@ -41,7 +42,16 @@ const seo = buildSeoContext({
           <DataTableHeader label={t.identityColumn} sortKey="identity" />
           <DataTableHeader label={t.messageColumn} sortKey="message" />
           <DataTableHeader label={t.total} sortKey="total" sortType="number" align="right" />
-          <DataTableHeader label={t.amountColumn} sortKey="support" sortType="number" align="right" />
+          <DataTableHeader
+            label={t.amountColumn}
+            sortKey="support"
+            sortType="number"
+            align="right"
+            helpTip={t.pointsRuleTip}
+            helpLabel={t.amountHelpLabel}
+            helpHref={Astro.locals.localizePath('/partnership')}
+            helpLinkLabel={t.pointsRuleLinkLabel}
+          />
         </Fragment>
         {supporters.map((supporter, index) => {
           const sequence = index + 1;

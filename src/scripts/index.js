@@ -779,7 +779,7 @@ function createFlatProductRow(item) {
   const supportCell = document.createElement('td');
   supportCell.className = 'data-table-cell-align-right whitespace-nowrap';
   supportCell.dataset.label = shopsMessages.supportTotalLabel;
-  supportCell.textContent = `¥${(shopSiteSupportTotalCents(site) / 100).toLocaleString()}`;
+  supportCell.textContent = shopSiteSupportPoints(site).toLocaleString(undefined, { maximumFractionDigits: 2 });
   row.appendChild(supportCell);
 
   const refreshCell = document.createElement('td');

@@ -1,0 +1,49 @@
+---
+/*
+文件说明: 展示赞赏支付窗口回跳后的成功、失败或等待确认结果。
+*/
+const query = new URL(Astro.request.url).searchParams;
+const token = query.get('token') || '';
+const failed = query.get('payment') === 'failed';
+const t = Astro.locals.messages.support;
+---
+<main style="display:grid;place-items:start center;min-height:100vh;padding:48px 20px 20px;box-sizing:border-box;background:#f8fafc;font-family:system-ui,-apple-system,sans-serif;color:#1f2937">
+  <section style="width:min(100%,420px);box-sizing:border-box;padding:28px 24px;border:1px solid #dbe3ef;border-radius:14px;background:#fff;text-align:center;box-shadow:0 8px 24px rgba(15,23,42,.08)" data-payment-result data-token={token} data-failed={String(failed)} data-messages={JSON.stringify({ success: t.paid, failed: t.paymentFailed, pending: t.pending, title: t.paymentResultTitle, close: t.closeResult })}>
+    <div data-result-icon style="margin:0 auto 16px;width:52px;height:52px;display:grid;place-items:center;border-radius:50%;background:#eef2f7;font-size:26px">…</div>
+    <h1 data-result-title style="margin:0;font-size:20px;line-height:1.4;font-weight:700">{t.paymentResultTitle}</h1>
+    <p data-result-message style="margin:10px 0 0;color:#64748b;line-height:1.6">{failed ? t.paymentFailed : t.checking}</p>
+    <button data-close-result type="button" style="margin-top:20px;padding:9px 20px;border:0;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;font-size:14px">{t.closeResult}</button>
+  </section>
+</main>
+<style>
+  :global(body) { margin: 0; }
+</style>
+<script is:inline>
+  const root = document.querySelector('[data-payment-result]');
+  if (root) {
+    const token = root.dataset.token || '';
+    const failed = root.dataset.failed === 'true';
+    const messages = JSON.parse(root.dataset.messages || '{}');
+    const icon = root.querySelector('[data-result-icon]');
+    const title = root.querySelector('[data-result-title]');
+    const message = root.querySelector('[data-result-message]');
+    const close = root.querySelector('[data-close-result]');
+    close?.addEventListener('click', () => { window.close(); window.setTimeout(() => window.history.back(), 100); });
+    const finish = (status) => {
+      if (status === 'paid') { icon.textContent = '✓'; icon.style.background = '#dcfce7'; icon.style.color = '#16a34a'; title.textContent = messages.success; message.textContent = ''; return true; }
+      if (status === 'cancelled') { icon.textContent = '×'; icon.style.background = '#fee2e2'; icon.style.color = '#dc2626'; title.textContent = messages.failed; message.textContent = ''; return true; }
+      return false;
+    };
+    const poll = async (attempt = 0) => {
+      if (failed) { finish('cancelled'); return; }
+      try {
+        const response = await fetch(`/api/support/status?token=${encodeURIComponent(token)}`);
+        const data = await response.json();
+        if (data.ok && finish(data.status)) return;
+      } catch { /* 页面保持等待状态，下一轮继续查询。 */ }
+      if (attempt < 19) window.setTimeout(() => poll(attempt + 1), 3000);
+      else message.textContent = messages.pending;
+    };
+    void poll();
+  }
+</script>

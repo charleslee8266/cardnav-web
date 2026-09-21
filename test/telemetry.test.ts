@@ -234,3 +234,19 @@ test('unannotated internal links and explicit buttons each emit only their own e
   assert.equal(calls[0].data.url, '/en/guide/start#risk');
   assert.equal(calls[1].data.action, 'open-submit');
 });
+
+test('support entry links defer to the support-open event instead of emitting navigation telemetry', async () => {
+  const { context, telemetryClick } = await loadTelemetry();
+  const calls: Array<{ name: string; data: Record<string, string> }> = [];
+  context.window.umami = { track: (name: string, data: Record<string, string>) => calls.push({ name, data }) };
+  const anchor = createAnchor(context, {
+    href: 'https://cardnav.xyz/shops?support-dialog',
+    dataset: { openSupport: '' },
+  });
+  const fallbackClosest = anchor.closest;
+  anchor.closest = selector => selector === '[data-open-support]' ? anchor : fallbackClosest(selector);
+
+  telemetryClick({ target: anchor });
+
+  assert.deepEqual(calls, []);
+});

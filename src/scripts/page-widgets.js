@@ -28,13 +28,17 @@ function initSubmitDialogUrl(dialog, openButton, queryKey = 'submit-dialog') {
     url.search = open ? `${query ? `?${query}&` : '?'}${queryKey}` : query;
     window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
   };
-  const show = () => {
+  const show = (sourceElement = null) => {
     document.querySelectorAll('#shopSubmitDialog[open], #gatewaySubmitDialog[open], #supportDialog[open]').forEach(other => {
       if (other !== dialog) other.close();
     });
     if (!dialog.open) {
       dialog.showModal();
-      if (queryKey === 'support-dialog') dialog.dispatchEvent(new Event('support-open'));
+      if (queryKey === 'support-dialog') {
+        dialog.dispatchEvent(new CustomEvent('support-open', {
+          detail: { entry: sourceElement ? 'cta' : 'url', sourceElement: sourceElement || dialog },
+        }));
+      }
     }
   };
   const syncDialogToUrl = () => {
@@ -48,7 +52,7 @@ function initSubmitDialogUrl(dialog, openButton, queryKey = 'submit-dialog') {
   const openFromClick = event => {
     event.preventDefault();
     updateQuery(true);
-    show();
+    show(event.target instanceof Element ? event.target.closest('[data-open-support]') : null);
   };
   if (queryKey === 'support-dialog') {
     document.addEventListener('click', event => {

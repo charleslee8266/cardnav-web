@@ -93,7 +93,7 @@ export class SupportStore {
       const result = await client.query(`SELECT kind, site_id, amount_cents, merchant_pid, payment_type, status, trade_no, effects_pending
         FROM support_orders WHERE id = $1 FOR UPDATE`, [notification.orderId]);
       const order = result.rows[0];
-      if (!order || order.amount_cents !== notification.amountCents || order.merchant_pid !== notification.pid
+      if (!order || order.status === 'cancelled' || order.amount_cents !== notification.amountCents || order.merchant_pid !== notification.pid
         || order.payment_type !== notification.paymentType
         || (order.status === 'paid' && order.trade_no !== notification.tradeNo)) {
         throw new SupportError('notificationMismatch');
@@ -105,8 +105,19 @@ export class SupportStore {
           const field = order.kind === 'shop' ? 'id' : 'site_id';
           const credited = await client.query(`UPDATE ${table} SET support_total_cents = support_total_cents + $2 WHERE ${field} = $1`, [order.site_id, order.amount_cents]);
           if (credited.rowCount !== 1) throw new SupportError('siteUnavailable', 503);
-          const keys = order.kind === 'shop' ? ['shop-products', 'shop-products-packed'] : ['gateway-sites'];
-          await client.query('DELETE FROM public_snapshot_entries WHERE key = ANY($1::text[])', [keys]);
+          // 到账回调成功后立即重算该商家的近期积分，避免必须等待每日 worker 才能看到排序和表格结果。
+          await client.query(`
+            UPDATE ${table}
+            SET support_points = (
+              SELECT COALESCE(SUM((amount_cents / 100.0) * POWER(0.5, EXTRACT(EPOCH FROM (now() - paid_at)) / (30 * 86400))), 0)
+              FROM support_orders
+              WHERE kind = $2
+                AND site_id = $1
+                AND status = 'paid'
+                AND paid_at >= now() - interval '1 year'
+            )
+            WHERE ${field} = $1
+          `, [order.site_id, order.kind]);
         }
       }
       await client.query('COMMIT');
@@ -121,7 +132,14 @@ export class SupportStore {
     await this.pool.query("UPDATE support_orders SET effects_pending = false WHERE id = $1 AND status = 'paid'", [orderId]);
   }
 
-  async status(token: string): Promise<'pending' | 'paid' | null> {
+  async cancel(token: string) {
+    if (!/^[0-9a-f]{64}$/.test(token)) return false;
+    const hash = createHash('sha256').update(token).digest('hex');
+    const result = await this.pool.query("UPDATE support_orders SET status = 'cancelled' WHERE status_token_hash = $1 AND status = 'pending'", [hash]);
+    return result.rowCount === 1;
+  }
+
+  async status(token: string): Promise<'pending' | 'paid' | 'cancelled' | null> {
     if (!/^[0-9a-f]{64}$/.test(token)) return null;
     const hash = createHash('sha256').update(token).digest('hex');
     const result = await this.pool.query<{ status: 'pending' | 'paid' }>('SELECT status FROM support_orders WHERE status_token_hash = $1', [hash]);

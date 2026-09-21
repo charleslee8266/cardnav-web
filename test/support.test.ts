@@ -32,7 +32,7 @@ test('hosted checkout signs trusted order and callbacks without exposing merchan
     assert.equal(url.pathname, '/epay/submit.php');
     assert.equal(url.searchParams.get('money'), '5000.00');
     assert.equal(url.searchParams.get('notify_url'), 'https://cardnav.example.test/api/support/notify');
-    assert.equal(url.searchParams.get('return_url'), `https://cardnav.example.test${locale === 'zh' ? '' : `/${locale}`}/llm-gateway?support-dialog&support-order=${'b'.repeat(64)}`);
+    assert.equal(url.searchParams.get('return_url'), `https://cardnav.example.test${locale === 'zh' ? '' : `/${locale}`}/payment-result?token=${'b'.repeat(64)}`);
     assert.ok(!url.href.includes(key));
     const values = Object.fromEntries(url.searchParams);
     const canonical = Object.keys(values).filter(k => k !== 'sign' && k !== 'sign_type').sort().map(k => `${k}=${values[k]}`).join('&');

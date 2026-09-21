@@ -29,6 +29,7 @@ const publicStaticHtmlPathnames = new Set([
   '/tools/session-converter',
 ]);
 const publicDynamicHtmlPathnames = new Set([
+  '/payment-result',
   '/supporters',
   '/',
   '/llm-gateway',

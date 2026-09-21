@@ -4,6 +4,7 @@
 */
 import FormField from './FormField.astro';
 import Dialog from './Dialog.astro';
+import { telemetryBlocks } from '../telemetry-blocks.js';
 type Props = { returnPage: 'shops' | 'gateways' | 'supporters' };
 const { returnPage } = Astro.props;
 const t = Astro.locals.messages.support;
@@ -17,8 +18,14 @@ const t = Astro.locals.messages.support;
   data-return-page={returnPage}
   data-locale={Astro.locals.locale}
   data-messages={JSON.stringify(t)}
+  data-telemetry-block={telemetryBlocks.support.dialog}
 >
   <div data-return-status-panel hidden class="support-return-status">
+    <h3 data-payment-state-title class="support-payment-state-title"></h3>
+    <div data-payment-window-notice class="support-payment-window-notice">
+      <span data-payment-loading class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+      <p data-payment-window-hint></p>
+    </div>
     <p data-return-status role="status"></p>
     <div data-success-details hidden class="support-success-details">
       <h3>{t.successTitle}</h3>
@@ -28,7 +35,10 @@ const t = Astro.locals.messages.support;
         <div data-success-message-row hidden><dt>{t.message}</dt><dd data-success-message></dd></div>
       </dl>
     </div>
-    <button data-check-payment type="button" class="btn btn-outline btn-sm mt-3" data-umami-event="button-click" data-umami-event-scope="support" data-umami-event-action="check-status">{t.checkStatus}</button>
+    <div class="mt-3 flex flex-wrap gap-3">
+      <button data-open-payment type="button" class="btn btn-primary btn-sm" hidden>{t.openPayment}</button>
+      <button data-cancel-payment type="button" class="btn btn-outline btn-sm">{t.cancelPayment}</button>
+    </div>
   </div>
   <form data-support-form class="submission-form" novalidate>
     <FormField group label={t.identity} required>

@@ -77,6 +77,7 @@ function initClickTelemetry() {
       ? event.target.closest('[data-umami-event], a[href]')
       : null;
     if (!(target instanceof Element)) return;
+    if (target.closest('[data-open-support]')) return;
 
     const isAnchor = target instanceof HTMLAnchorElement;
     if (event.type === 'auxclick' && !isAnchor) return;

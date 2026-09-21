@@ -14,6 +14,11 @@ const returnPaths = { shops: '/shops', gateways: '/llm-gateway', supporters: '/s
 export function supportReturnPath(page: SupportReturnPage, token: string, locale: Locale) {
   return localizePath(`${returnPaths[page]}?support-dialog&support-order=${token}`, locale);
 }
+export function supportResultPath(token: string, locale: Locale, outcome = '') {
+  const suffix = new URLSearchParams({ token });
+  if (outcome) suffix.set('payment', outcome);
+  return localizePath(`/payment-result?${suffix.toString()}`, locale);
+}
 export type SupportReturnPage = keyof typeof returnPaths;
 export function isSupportReturnPage(value: string | undefined): value is SupportReturnPage {
   return value !== undefined && Object.hasOwn(returnPaths, value);
@@ -39,8 +44,11 @@ export class EasyPay {
     try {
       const site = new URL(process.env.PUBLIC_SITE_URL || '');
       const api = new URL(process.env.EASYPAY_API_URL || '');
-    if (!/^[A-Za-z0-9._-]{1,128}$/.test(this.pid) || !this.key || this.key.length > 512
-        || site.protocol !== 'https:' || api.protocol !== 'https:'
+      const localHttp = site.protocol === 'http:' && api.protocol === 'http:'
+        && ['localhost', '127.0.0.1'].includes(site.hostname)
+        && ['localhost', '127.0.0.1'].includes(api.hostname);
+      if (!/^[A-Za-z0-9._-]{1,128}$/.test(this.pid) || !this.key || this.key.length > 512
+        || (!localHttp && (site.protocol !== 'https:' || api.protocol !== 'https:'))
         || site.username || site.password || site.search || site.hash || site.pathname !== '/'
         || api.username || api.password || api.search || api.hash) throw new Error();
       this.origin = site.origin;
@@ -58,7 +66,7 @@ export class EasyPay {
   }
 
   checkout(order: { id: string; amountCents: number; paymentType: PaymentType; statusToken: string; returnPage: SupportReturnPage }, locale: Locale) {
-    const returnPath = supportReturnPath(order.returnPage, order.statusToken, locale);
+    const returnPath = supportResultPath(order.statusToken, locale);
     const params: Record<string, string> = {
       pid: this.pid, type: order.paymentType, out_trade_no: order.id,
       notify_url: `${this.origin}/api/support/notify`, return_url: `${this.origin}${returnPath}`,

@@ -133,7 +133,7 @@ ABUSEIPDB_API_KEY=
 GREYNOISE_API_KEY=
 ```
 
-赞赏支付使用易支付收银台，支持支付宝和微信支付。配置 `EASYPAY_PID`（商户 PID）、`EASYPAY_PKEY`（商户密钥）与 `EASYPAY_API_URL`（HTTPS API 基础地址）后，用户可填写 5–5000 元整数金额，以普通用户、卡网商家或中转站商家身份赞赏。个人昵称、邮箱和单行留言均可选；同邮箱的已到账赞赏累计展示，并采用最近提交且已到账的昵称和留言。邮箱仅用于统计归并，不会公开；不填邮箱的赞赏各自展示，不填昵称时显示匿名用户。密钥只用于服务端签名，不应提交到代码仓库。
+赞赏支付使用易支付收银台，支持支付宝和微信支付。配置 `EASYPAY_PID`（商户 PID）、`EASYPAY_PKEY`（商户密钥）与 `EASYPAY_API_URL`（HTTPS API 基础地址）后，用户可填写 5–5000 元整数金额，以普通用户、卡网商家或中转站商家身份赞赏。个人昵称、邮箱和单行留言均可选；同邮箱的已到账赞赏累计展示，并采用最近提交且已到账的昵称和留言。邮箱用于订单异常确认和必要的后续沟通，也用于统计归并；不会公开。不填邮箱的赞赏各自展示，不填昵称时显示匿名用户。密钥只用于服务端签名，不应提交到代码仓库。
 
 `PUBLIC_SITE_URL` 必须填写 HTTPS 站点根地址。异步回调地址固定为 `/api/support/notify`，例如 `https://cardnav.xyz/api/support/notify`；支付平台须通过 **GET** 发送已签名的通知。累计金额只在到账通知验证通过后更新，浏览器返回本站不会确认到账。未配置易支付时，浏览和网址提交仍可使用。支付返回后，通过随机订单令牌查询到账状态；昵称、邮箱和留言不会传给支付平台。
 
@@ -141,7 +141,7 @@ GREYNOISE_API_KEY=
 
 `/supporters` 展示累计赞赏名单。赞赏弹窗可通过 `/shops?support-dialog`、`/llm-gateway?support-dialog`、`/supporters?support-dialog` 直接打开，多语言页面保留相应语言前缀。
 
-本地调试可在 `.env` 中设置 `SUPPORT_PAYMENT_DEBUG=true`，使用 `npm run dev` 启动。提交赞赏后会直接生成模拟已到账订单并返回本站，更新名单与商家累计金额，无需支付配置，也不会访问支付平台或 Cloudflare。此开关只允许 `NODE_ENV=development`，且访问地址与数据库主机均为本机；模拟订单写入本地数据库，关闭开关后仍会保留。
+本地调试可单独启动仓库根目录的 `npm run dev:easypay-mock`，再让本地 Web 的 `EASYPAY_PID`、`EASYPAY_PKEY` 和 `EASYPAY_API_URL` 指向这个 mock server。支付页会提供成功和失败按钮，验证真实的易支付签名、收银台跳转和异步通知链路。
 
 ### 常用命令
 

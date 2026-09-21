@@ -147,6 +147,32 @@ function safeListLimit(limit: number | undefined) {
     : null;
 }
 
+type LiveSupportValues = { supportTotalCents: number; supportPoints: number };
+
+async function loadLiveShopSupport(db: pg.Pool | pg.PoolClient) {
+  const result = await db.query(`
+    SELECT id, support_total_cents, support_points
+    FROM shop_sites
+    WHERE status = 'online' AND type = 'cardShop'
+  `);
+  return new Map<string, LiveSupportValues>(result.rows.map(row => [String(row.id), {
+    supportTotalCents: Number(row.support_total_cents) || 0,
+    supportPoints: Number(row.support_points) || 0,
+  }]));
+}
+
+async function loadLiveGatewaySupport(db: pg.Pool | pg.PoolClient) {
+  const result = await db.query(`
+    SELECT site_id, support_total_cents, support_points
+    FROM gateway_sites
+    WHERE status = 'online' AND type = 'gateway'
+  `);
+  return new Map<string, LiveSupportValues>(result.rows.map(row => [String(row.site_id), {
+    supportTotalCents: Number(row.support_total_cents) || 0,
+    supportPoints: Number(row.support_points) || 0,
+  }]));
+}
+
 let pool: pg.Pool | null = null;
 const beijingDateFormatter = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Asia/Shanghai',
@@ -291,11 +317,26 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     ? Math.max(1, Math.floor(options.productLimit))
     : null;
   if (snapshot) {
-    const normalizedSites = snapshot.sites.map(site => ({ ...site, sponsor: site.sponsor === true }));
+    const liveSupport = await loadLiveShopSupport(db);
+    const normalizedSites = snapshot.sites.map(site => {
+      const support = liveSupport.get(site.id);
+      return {
+        ...site,
+        sponsor: site.sponsor === true,
+        ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
+      };
+    });
     let sourceProducts = (options.inStockOnly
       ? snapshot.products.filter(product => product.inStock)
       : snapshot.products)
-      .map(product => ({ ...product, siteSponsor: product.siteSponsor === true }));
+      .map(product => {
+        const support = liveSupport.get(product.siteId);
+        return {
+          ...product,
+          siteSponsor: product.siteSponsor === true,
+          ...(support ? { siteSupportTotalCents: support.supportTotalCents, siteSupportPoints: support.supportPoints } : {}),
+        };
+      });
     if (options.inStockOnly) {
       // 有货筛选改变置顶候选，按原顺序补足名额后再截取首屏。
       sourceProducts.sort((left, right) =>
@@ -307,6 +348,15 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         || left.categoryName.localeCompare(right.categoryName)
         || left.name.localeCompare(right.name),
       );
+      sourceProducts = prioritizeShopProductRows(sourceProducts.map(product => ({
+        product,
+        productFavoriteKey: product.name,
+        siteFavoriteKey: product.siteId,
+        sponsor: product.siteSponsor,
+        supportTotalCents: product.siteSupportTotalCents,
+        supportPoints: product.siteSupportPoints,
+      })), { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set() }).map(row => row.product);
+    } else {
       sourceProducts = prioritizeShopProductRows(sourceProducts.map(product => ({
         product,
         productFavoriteKey: product.name,
@@ -535,7 +585,17 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
 }
 
 export async function loadPackedShopProductsSnapshot(): Promise<PackedShopProductsData | null> {
-  return loadPublicSnapshot<PackedShopProductsData>('shop-products-packed');
+  const snapshot = await loadPublicSnapshot<PackedShopProductsData>('shop-products-packed');
+  if (!snapshot) return null;
+  const liveSupport = await loadLiveShopSupport(getPool());
+  return {
+    ...snapshot,
+    s: snapshot.s.map(site => {
+      const support = liveSupport.get(site[0]);
+      if (!support) return site;
+      return [site[0], site[1], site[2], site[3], site[4], site[5], support.supportTotalCents, support.supportPoints];
+    }),
+  };
 }
 
 export async function loadGatewaySites(options: PublicListLimitOptions & PublicSnapshotReadOptions = {}) {
@@ -549,11 +609,24 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
     totalPriceCount: number;
   }>('gateway-sites', options.queryClient);
   if (snapshot) {
+    const liveSupport = await loadLiveGatewaySupport(db);
     return {
       ...snapshot,
       sites: snapshot.sites
-        .slice(0, limit ?? snapshot.sites.length)
-        .map(site => ({ ...site, sponsor: site.sponsor === true })),
+        .map(site => {
+          const support = liveSupport.get(site.id);
+          return {
+            ...site,
+            sponsor: site.sponsor === true,
+            ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
+          };
+        })
+        .sort((left, right) => Number(right.sponsor) - Number(left.sponsor)
+          || Number(right.supportPoints || 0) - Number(left.supportPoints || 0)
+          || (right.siteScore || 0) - (left.siteScore || 0)
+          || left.name.localeCompare(right.name)
+          || left.id.localeCompare(right.id))
+        .slice(0, limit ?? snapshot.sites.length),
     };
   }
 
@@ -730,7 +803,15 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
     sites: PublicGatewaySiteRow[];
   }>('gateway-sites');
   const snapshotSite = sitesSnapshot?.sites.find(site => site.slug === normalizedSlug) ?? null;
-  if (snapshotSite) return { ...snapshotSite, sponsor: snapshotSite.sponsor === true };
+  if (snapshotSite) {
+    const liveSupport = await loadLiveGatewaySupport(getPool());
+    const support = liveSupport.get(snapshotSite.id);
+    return {
+      ...snapshotSite,
+      sponsor: snapshotSite.sponsor === true,
+      ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
+    };
+  }
 
   const result = await getPool().query(`
     WITH price_summary AS (

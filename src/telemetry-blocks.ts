@@ -62,6 +62,11 @@ export const telemetryBlocks = {
     article: 'article', // 关于、隐私政策和免责声明正文
     partnership: 'partnership-content', // 合作说明和联系入口
   },
+  // 跨页面复用的赞赏入口与弹窗
+  support: {
+    entry: 'support-entry', // 赞赏按钮与直接打开赞赏弹窗的入口
+    dialog: 'support-dialog', // 赞赏身份、支付和到账确认流程
+  },
   // 跨页面复用的赞助模块，按组件 placement 取值
   sponsors: {
     'page-bottom': 'sponsor-page-bottom', // 页面底部赞助区

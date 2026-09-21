@@ -1014,12 +1014,28 @@
     @apply mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm;
   }
 
+  .support-payment-state-title {
+    @apply m-0 text-base font-bold;
+  }
+
+  .support-payment-window-notice {
+    @apply mt-3 flex items-start gap-2 text-base font-medium leading-6 text-base-content;
+  }
+
+  .support-payment-window-notice .loading {
+    @apply mt-0.5 shrink-0;
+  }
+
+  .support-payment-window-notice p {
+    @apply m-0;
+  }
+
   .support-success-details {
     @apply mt-3 border-t border-primary/20 pt-3;
   }
 
   .support-success-details h3 {
-    @apply text-sm font-semibold;
+    @apply text-sm font-bold;
   }
 
   .support-success-details dl {
