@@ -315,6 +315,10 @@ class SupportDialog {
     if (this.busy) return;
     this.normalizeAmount();
     if (!this.form.reportValidity()) return;
+    // Open the payment tab during the user gesture; navigating it after the
+    // async order request avoids popup blockers treating the checkout as a
+    // non-user-initiated window.
+    const paymentTab = window.open('', '_blank', 'noopener,noreferrer');
     this.setBusy(true);
     this.paymentStatus.className = 'form-field-hint';
     this.paymentStatus.textContent = this.messages.paying;
@@ -334,6 +338,7 @@ class SupportDialog {
       const response = await fetch('/api/support', { method: 'POST', headers: { 'x-cardnav-locale': this.dialog.dataset.locale! }, body: params });
       const data = await response.json();
       if (!response.ok || !data.ok) {
+        paymentTab?.close();
         this.paymentStatus.className = 'form-field-error';
         this.paymentStatus.textContent = typeof data.message === 'string' ? data.message : this.messages.failed;
         this.setBusy(false);
@@ -353,8 +358,10 @@ class SupportDialog {
       }
       const target = new URL(data.payUrl);
       if (!['http:', 'https:'].includes(target.protocol)) throw new Error();
-      window.location.assign(target.href);
+      if (paymentTab) paymentTab.location.href = target.href;
+      else window.open(target.href, '_blank', 'noopener,noreferrer');
     } catch {
+      paymentTab?.close();
       this.paymentStatus.className = 'form-field-error';
       this.paymentStatus.textContent = this.messages.failed;
       this.setBusy(false);
