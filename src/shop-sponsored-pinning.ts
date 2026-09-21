@@ -83,8 +83,9 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
     options.favoriteMerchantProductLimit,
     DEFAULT_FAVORITE_MERCHANT_PRODUCT_LIMIT,
   );
-  const sponsorRows = limitedMerchantRows(rowEntries.filter(row => row.sponsor), SPONSOR_PRODUCT_LIMIT_PER_SITE);
-  const supportRows = limitedMerchantRows(rowEntries.filter(row => !row.sponsor && (row.supportPoints ?? row.supportTotalCents ?? 0) > 0), SUPPORT_PRODUCT_LIMIT_PER_SITE);
+  const bySupportPoints = (left: Row, right: Row) => (right.supportPoints ?? right.supportTotalCents ?? 0) - (left.supportPoints ?? left.supportTotalCents ?? 0);
+  const sponsorRows = limitedMerchantRows(rowEntries.filter(row => row.sponsor).sort(bySupportPoints), SPONSOR_PRODUCT_LIMIT_PER_SITE);
+  const supportRows = limitedMerchantRows(rowEntries.filter(row => !row.sponsor && (row.supportPoints ?? row.supportTotalCents ?? 0) > 0).sort(bySupportPoints), SUPPORT_PRODUCT_LIMIT_PER_SITE);
   const merchantPinnedRows = new Set<Row>([...sponsorRows, ...supportRows]);
   const ordinaryRows = rowEntries.filter(row => !merchantPinnedRows.has(row));
 

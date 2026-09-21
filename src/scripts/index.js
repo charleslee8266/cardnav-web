@@ -1053,8 +1053,8 @@ function sortRows(merchantModule) {
         return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
       }
 
-      const siteScoreDiff = Number(b.element.dataset.siteScore) - Number(a.element.dataset.siteScore);
-      if (siteScoreDiff !== 0) return siteScoreDiff;
+      const supportPointsDiff = Number(b.element.dataset.supportPoints) - Number(a.element.dataset.supportPoints);
+      if (supportPointsDiff !== 0) return supportPointsDiff;
 
       return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
     });

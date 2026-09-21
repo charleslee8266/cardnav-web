@@ -410,7 +410,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
           ) <= 10 THEN CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END
           ELSE 2
         END,
-        CASE WHEN NOT sponsor AND support_points > 0 THEN support_points ELSE 0 END DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
+        CASE WHEN support_points > 0 THEN support_points ELSE 0 END DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
     : null;
   const productsResult = await db.query(`

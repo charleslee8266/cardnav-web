@@ -11,13 +11,13 @@ test('partner pins precede support and favorites while overflow keeps its place'
   const partners = Array.from({ length: 12 }, (_, i) => row(`partner-${i}`, true));
   const rows = [row('ordinary'), row('low', false, 100), row('favorite'), row('high', false, 50000), ...partners];
   const sorted = prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(['favorite']), favoriteSiteKeys: new Set() });
-  assert.deepEqual(sorted.map(item => item.productFavoriteKey), [...partners.slice(0, 10).map(item => item.productFavoriteKey), 'low', 'high', 'favorite', 'ordinary', 'partner-10', 'partner-11']);
+  assert.deepEqual(sorted.map(item => item.productFavoriteKey), [...partners.slice(0, 10).map(item => item.productFavoriteKey), 'high', 'low', 'favorite', 'ordinary', 'partner-10', 'partner-11']);
   assert.equal(new Set(sorted).size, rows.length);
 });
-test('partners and supportd merchants preserve selected order across amounts and favorites', () => {
+test('partners and supported merchants sort by support points and preserve ties', () => {
   const rows = [row('first', false, 100), row('favorite', false, 300), row('partner', true, 0), row('partner-high', true, 900)];
   const sorted = prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(['favorite', 'partner']), favoriteSiteKeys: new Set(['first']) });
-  assert.deepEqual(sorted.map(item => item.productFavoriteKey), ['partner', 'partner-high', 'first', 'favorite']);
+  assert.deepEqual(sorted.map(item => item.productFavoriteKey), ['partner-high', 'partner', 'favorite', 'first']);
 });
 test('ordinary merchant favorites keep their bounded allocation', () => {
   const ordinary = Array.from({ length: 12 }, (_, i) => ({ ...row(`ordinary-${i}`), siteFavoriteKey: 'favorite-site' }));
