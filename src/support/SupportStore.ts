@@ -52,7 +52,7 @@ export class SupportStore {
       || (email !== null && (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)))) {
       throw new SupportError('invalidProfile');
     }
-    if (input.kind === 'person' ? input.siteId !== null : !input.siteId || nickname || email || message) {
+    if (input.kind === 'person' ? input.siteId !== null || email === null : !input.siteId || nickname || email === null) {
       throw new SupportError('identityMismatch');
     }
     const statusToken = randomBytes(32).toString('hex');

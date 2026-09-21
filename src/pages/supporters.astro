@@ -6,11 +6,15 @@ import { loadSupportLeaderboard } from '../support/SupportStore.js';
 import SupportDialog from '../components/SupportDialog.astro';
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
+import DataTable from '../components/DataTable.astro';
+import DataTableCell from '../components/DataTableCell.astro';
+import DataTableHeader from '../components/DataTableHeader.astro';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 
-const t = Astro.locals.messages.support;
+const messages = Astro.locals.messages;
+const t = messages.support;
 const supporters = await loadSupportLeaderboard();
 const identities = { person: t.person, gateway: t.gatewayIdentity, shop: t.shopIdentity };
 const seo = buildSeoContext({
@@ -29,23 +33,49 @@ const seo = buildSeoContext({
     <a slot="aside" href="?support-dialog" data-open-support class="btn support-button"><span aria-hidden="true">♥</span> {t.button}</a>
   </PageHero>
   {supporters.length > 0 ? (
-    <ol class="support-list" aria-label={t.listTitle}>
-      {supporters.map((supporter, index) => (
-        <li class="support-list-row">
-          <span class="support-rank" aria-hidden="true">{index + 1}</span>
-          <div class="support-supporter">
-            <div class="support-supporter-name">
-              {supporter.url ? <a href={supporter.url} target="_blank" rel="sponsored noopener noreferrer" class="link link-primary link-hover">{supporter.name || t.anonymous}</a> : <span>{supporter.name || t.anonymous}</span>}
-              <span class="badge badge-ghost badge-sm">{identities[supporter.kind]}</span>
-            </div>
-            {supporter.message && <p class="support-message">{supporter.message}</p>}
-          </div>
-          <div class="support-list-amount"><span>{t.total}</span><strong>¥{(supporter.amountCents / 100).toLocaleString(Astro.locals.locale)}</strong></div>
-          <div class="support-list-amount"><span>{t.amountColumn}</span><strong>{supporter.kind === 'person' ? '-' : supporter.supportPoints.toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</strong></div>
-        </li>
-      ))}
-    </ol>
+    <section class="supporters-table-card card overflow-hidden border border-base-300 bg-base-100 shadow-sm">
+      <DataTable variant="gatewaySites">
+        <Fragment slot="head">
+          <DataTableHeader label={messages.labels.sequence} sortKey="sequence" sortType="number" align="center" />
+          <DataTableHeader label={t.userColumn} sortKey="user" />
+          <DataTableHeader label={t.identityColumn} sortKey="identity" />
+          <DataTableHeader label={t.messageColumn} sortKey="message" />
+          <DataTableHeader label={t.total} sortKey="total" sortType="number" align="right" />
+          <DataTableHeader label={t.amountColumn} sortKey="support" sortType="number" align="right" />
+        </Fragment>
+        {supporters.map((supporter, index) => {
+          const sequence = index + 1;
+          const name = supporter.name || t.anonymous;
+          const identity = identities[supporter.kind];
+          const message = supporter.message || '';
+          const total = supporter.amountCents / 100;
+          const supportPoints = supporter.kind === 'person' ? 0 : supporter.supportPoints;
+          return (
+            <tr
+              data-sort-sequence={String(sequence)}
+              data-sort-user={name}
+              data-sort-identity={identity}
+              data-sort-message={message}
+              data-sort-total={String(total)}
+              data-sort-support={String(supportPoints)}
+            >
+              <DataTableCell label={messages.labels.sequence} align="center" sequence>{sequence}</DataTableCell>
+              <DataTableCell label={t.userColumn}>
+                {supporter.url ? <a href={supporter.url} target="_blank" rel="sponsored noopener noreferrer" class="link link-hover break-words font-semibold text-primary">{name}</a> : <span class="font-semibold">{name}</span>}
+              </DataTableCell>
+              <DataTableCell label={t.identityColumn}><span class="badge badge-ghost badge-sm">{identity}</span></DataTableCell>
+              <DataTableCell label={t.messageColumn}>{message || <span class="text-base-content/35">-</span>}</DataTableCell>
+              <DataTableCell label={t.total} align="right" class="font-bold font-mono text-primary">¥{total.toLocaleString(Astro.locals.locale)}</DataTableCell>
+              <DataTableCell label={t.amountColumn} align="right" class="font-mono">{supporter.kind === 'person' ? '-' : supporter.supportPoints.toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</DataTableCell>
+            </tr>
+          );
+        })}
+      </DataTable>
+    </section>
   ) : <p class="support-list-empty">{t.listEmpty}</p>}
   <SupportDialog returnPage="supporters" />
+  <script>
+    import '../scripts/data-table.js';
+  </script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>

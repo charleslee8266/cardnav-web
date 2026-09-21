@@ -46,8 +46,6 @@ const t = Astro.locals.messages.support;
     </FormField>
     <fieldset data-person-fields class="submission-form">
       <FormField label={t.nickname} for="supportNickname" hint={t.nicknameHint} hintId="supportNicknameHint"><input id="supportNickname" name="nickname" aria-describedby="supportNicknameHint" maxlength="40" autocomplete="nickname" class="input input-bordered form-input" /></FormField>
-      <FormField label={t.email} for="supportEmail" hint={t.emailHint} hintId="supportEmailHint"><input id="supportEmail" name="email" type="email" aria-describedby="supportEmailHint" maxlength="254" autocomplete="email" class="input input-bordered form-input" /></FormField>
-      <FormField label={t.message} for="supportMessage" hint={t.messageHint} hintId="supportMessageHint"><input id="supportMessage" name="message" maxlength="120" aria-describedby="supportMessageHint" class="input input-bordered form-input" /></FormField>
     </fieldset>
     <FormField group label={t.gateway} required data-site-fields hidden disabled hintId="supportSiteHint">
       <span slot="label" data-site-label>{t.gateway}</span>
@@ -60,6 +58,8 @@ const t = Astro.locals.messages.support;
       <p slot="hint"><span data-site-submit-hint>{t.submitGatewayHint}</span> <a data-site-submit data-shop-submit={Astro.locals.localizePath('/shops?submit-dialog')} data-gateway-submit={Astro.locals.localizePath('/llm-gateway?submit-dialog')} href={Astro.locals.localizePath('/llm-gateway?submit-dialog')} data-umami-event="internal-link-click" data-umami-event-link-type="support-submit-site" data-umami-event-url={Astro.locals.localizePath('/llm-gateway?submit-dialog')} class="link link-primary">{t.submitSite}</a></p>
       <p slot="error" id="supportSiteStatus" data-site-status role="status" class="form-field-hint"></p>
     </FormField>
+    <FormField label={t.email} for="supportEmail" required hint={t.emailHint} hintId="supportEmailHint"><input id="supportEmail" name="email" type="email" required aria-describedby="supportEmailHint" maxlength="254" autocomplete="email" class="input input-bordered form-input" /></FormField>
+    <FormField label={t.message} for="supportMessage" hint={t.messageHint} hintId="supportMessageHint"><input id="supportMessage" name="message" maxlength="120" aria-describedby="supportMessageHint" class="input input-bordered form-input" /></FormField>
     <FormField label={t.amount} for="supportAmount" required hint={t.limit} hintId="supportAmountHint"><input id="supportAmount" name="amount" type="number" aria-describedby="supportAmountHint" min="5" max="5000" step="1" value="20" required inputmode="numeric" class="input input-bordered form-input" /></FormField>
     <FormField group label={t.paymentMethod} required>
       <div class="support-payment-options">

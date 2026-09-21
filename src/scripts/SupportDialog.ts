@@ -327,9 +327,9 @@ class SupportDialog {
       amount: this.amount.value,
       paymentType,
     });
-    if (this.kind === 'person') {
-      for (const name of ['nickname', 'email', 'message']) params.set(name, String(fields.get(name) || ''));
-    }
+    if (this.kind === 'person') params.set('nickname', String(fields.get('nickname') || ''));
+    params.set('email', String(fields.get('email') || ''));
+    params.set('message', String(fields.get('message') || ''));
     try {
       const response = await fetch('/api/support', { method: 'POST', headers: { 'x-cardnav-locale': this.dialog.dataset.locale! }, body: params });
       const data = await response.json();
@@ -346,7 +346,7 @@ class SupportDialog {
         sessionStorage.setItem(`cardnav-support-order:${data.statusToken}`, JSON.stringify({
           identity,
           amount: this.amount.value,
-          message: this.kind === 'person' ? String(fields.get('message') || '').trim() : '',
+          message: String(fields.get('message') || '').trim(),
         }));
       } catch {
         // 会话存储不可用时不影响跳转收银台。

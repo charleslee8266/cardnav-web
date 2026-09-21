@@ -1039,46 +1039,27 @@
     overflow-wrap: anywhere;
   }
 
-  .support-list {
-    @apply overflow-hidden rounded-box border border-base-300 bg-base-100;
-  }
-
-  .support-list-row {
-    @apply grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 border-b border-base-300 p-4 last:border-b-0;
-  }
-
-  .support-rank {
-    @apply min-w-5 pt-0.5 text-sm tabular-nums text-base-content/50;
-  }
-
-  .support-supporter {
-    @apply min-w-0;
-  }
-
-  .support-supporter-name {
-    @apply flex flex-wrap items-center gap-2 font-semibold break-words;
-    overflow-wrap: anywhere;
-  }
-
-  .support-message {
-    @apply mt-2 text-sm leading-6 text-base-content/70;
-    overflow-wrap: anywhere;
-  }
-
-  .support-list-amount {
-    @apply flex flex-col items-end gap-1 tabular-nums;
-  }
-
-  .support-list-amount > span {
-    @apply text-xs text-base-content/60;
-  }
-
-  .support-list-amount > strong {
-    @apply font-semibold text-primary;
-  }
-
   .support-list-empty {
     @apply rounded-box border border-base-300 bg-base-100 p-8 text-center text-base-content/70;
+  }
+
+  @media (min-width: 768px) {
+    .supporters-table-card .gateway-site-table th:nth-child(2) {
+      width: 16%;
+    }
+
+    .supporters-table-card .gateway-site-table th:nth-child(3) {
+      width: 7rem;
+    }
+
+    .supporters-table-card .gateway-site-table th:nth-child(4) {
+      width: 40%;
+    }
+
+    .supporters-table-card .gateway-site-table th:nth-child(5),
+    .supporters-table-card .gateway-site-table th:nth-child(6) {
+      width: 6.5rem;
+    }
   }
 
   .page-hero-submit-summary {

@@ -72,7 +72,7 @@ test('duplicate fields, oversized requests and cross-origin order creation are r
   const request = (body: string, requestOrigin = origin) => new Request(`${origin}/api/support`, {
     method: 'POST', headers: { origin: requestOrigin, 'content-type': 'application/x-www-form-urlencoded' }, body,
   });
-  assert.equal((await orderParameters(request('kind=shop&amount=5'), origin)).amount, '5');
+  assert.equal((await orderParameters(request('kind=shop&amount=5&email=a@example.com'), origin)).amount, '5');
   await assert.rejects(orderParameters(request('amount=5', 'https://evil.example'), origin));
   await assert.rejects(orderParameters(request('amount=5&amount=5000'), origin));
   await assert.rejects(orderParameters(request(`siteId=${'a'.repeat(5000)}`), origin));
