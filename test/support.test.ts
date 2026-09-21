@@ -40,6 +40,15 @@ test('hosted checkout signs trusted order and callbacks without exposing merchan
   }
 });
 
+test('checkout accepts a safe string merchant ID and rejects signature delimiters', () => {
+  configure();
+  process.env.EASYPAY_PID = 'merchant_01-kyren.pay';
+  const url = new URL(new EasyPay().checkout({ id: `cn_${'a'.repeat(32)}`, amountCents: 500, returnPage: 'shops', statusToken: 'b'.repeat(64), paymentType: 'alipay' }, 'zh'));
+  assert.equal(url.searchParams.get('pid'), 'merchant_01-kyren.pay');
+  process.env.EASYPAY_PID = 'merchant&injected=true';
+  assert.throws(() => new EasyPay());
+});
+
 test('only correctly signed successful notifications with bounded whole-yuan amounts are accepted', () => {
   configure();
   const provider = new EasyPay();

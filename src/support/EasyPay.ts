@@ -39,7 +39,7 @@ export class EasyPay {
     try {
       const site = new URL(process.env.PUBLIC_SITE_URL || '');
       const api = new URL(process.env.EASYPAY_API_URL || '');
-      if (!/^\d{1,32}$/.test(this.pid) || !this.key || this.key.length > 512
+    if (!/^[A-Za-z0-9._-]{1,128}$/.test(this.pid) || !this.key || this.key.length > 512
         || site.protocol !== 'https:' || api.protocol !== 'https:'
         || site.username || site.password || site.search || site.hash || site.pathname !== '/'
         || api.username || api.password || api.search || api.hash) throw new Error();
