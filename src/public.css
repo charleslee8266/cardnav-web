@@ -1453,7 +1453,7 @@
   }
 
   .merchant-table-head {
-    @apply hidden items-center grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_116px_160px] border-b border-base-300 bg-base-200 text-sm text-base-content md:grid;
+    @apply hidden items-center grid-cols-[72px_300px_96px_minmax(360px,1fr)_116px_116px_160px] border-b border-base-300 bg-base-200 text-sm text-base-content md:grid;
   }
 
   .merchant-table-head-cell {
