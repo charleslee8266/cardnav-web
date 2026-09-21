@@ -49,12 +49,12 @@ test('checkout accepts a safe string merchant ID and rejects signature delimiter
   assert.throws(() => new EasyPay());
 });
 
-test('only correctly signed successful notifications with bounded whole-yuan amounts are accepted', () => {
+test('only correctly signed successful notifications with bounded two-decimal amounts are accepted', () => {
   configure();
   const provider = new EasyPay();
   assert.equal(provider.verify(notification()).amountCents, 2000);
-  for (const amount of ['5', '5.0', '5.00', '5000.00']) assert.equal(provider.verify(notification({ money: amount })).amountCents, Number(amount) * 100);
-  const invalidNotifications: Record<string, string>[] = [{ pid: '456' }, { trade_status: 'WAIT_BUYER_PAY' }, { money: '0.00' }, { money: '1.00' }, { money: '4.00' }, { money: '20.01' },
+  for (const amount of ['5', '5.0', '5.00', '20.01', '5000.00']) assert.equal(provider.verify(notification({ money: amount })).amountCents, Math.round(Number(amount) * 100));
+  const invalidNotifications: Record<string, string>[] = [{ pid: '456' }, { trade_status: 'WAIT_BUYER_PAY' }, { money: '0.00' }, { money: '1.00' }, { money: '4.00' }, { money: '20.001' },
     { money: '5001' }, { money: '2e1' }, { money: '-20' }, { out_trade_no: 'unknown' }, { trade_no: '' }, { type: 'qqpay' }];
   for (const overrides of invalidNotifications) {
     assert.throws(() => provider.verify(notification(overrides)));

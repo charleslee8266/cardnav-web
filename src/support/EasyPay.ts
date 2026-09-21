@@ -86,12 +86,12 @@ export class EasyPay {
       || params.pid !== this.pid || params.trade_status !== 'TRADE_SUCCESS'
       || !/^cn_[0-9a-f]{32}$/.test(params.out_trade_no || '')
       || !/^[a-zA-Z0-9_-]{1,128}$/.test(params.trade_no || '')
-      || !/^(?:[1-9]\d{0,3})(?:\.0{1,2})?$/.test(params.money || '')
+      || !/^(?:[1-9]\d{0,3})(?:\.\d{1,2})?$/.test(params.money || '')
       || Number(params.money) < 5 || Number(params.money) > 5000
       || (params.type !== 'alipay' && params.type !== 'wxpay')) {
       throw new SupportError('invalidNotification');
     }
-    return { orderId: params.out_trade_no!, tradeNo: params.trade_no!, amountCents: Number(params.money) * 100,
+    return { orderId: params.out_trade_no!, tradeNo: params.trade_no!, amountCents: Math.round(Number(params.money) * 100),
       pid: params.pid, paymentType: params.type };
   }
 }

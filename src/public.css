@@ -982,6 +982,10 @@
     overflow-wrap: anywhere;
   }
 
+  .support-site-option-loading {
+    @apply cursor-not-allowed px-3 py-2 text-sm text-base-content/50;
+  }
+
   .support-site-options > button:hover,
   .support-site-options > button:focus-visible,
   .support-site-options > button[aria-selected="true"] {

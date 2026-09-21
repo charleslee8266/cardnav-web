@@ -44,7 +44,7 @@ export class SupportStore {
     const nickname = (input.nickname || '').trim();
     const email = (input.email || '').trim().toLowerCase() || null;
     const message = (input.message || '').trim();
-    if (!Number.isInteger(input.amountCents) || input.amountCents % 100 !== 0 || input.amountCents < 500 || input.amountCents > 500000) {
+    if (!Number.isInteger(input.amountCents) || input.amountCents < 500 || input.amountCents > 500000) {
       throw new SupportError('invalidAmount');
     }
     if ([...nickname].length > 40 || [...message].length > 120

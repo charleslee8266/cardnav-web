@@ -173,7 +173,7 @@ class SupportDialog {
 
   private normalizeAmount() {
     const value = Number(this.amount.value);
-    this.amount.value = String(Number.isFinite(value) ? Math.min(5000, Math.max(5, Math.round(value))) : 5);
+    this.amount.value = Number.isFinite(value) ? Math.min(5000, Math.max(5, Math.round(value * 100) / 100)).toFixed(2) : '5.00';
   }
 
   private async loadSites() {
@@ -189,7 +189,9 @@ class SupportDialog {
     this.request = request;
     this.loadingKind = kind;
     this.status.className = 'form-field-hint';
-    this.status.textContent = this.messages.loading;
+    this.status.textContent = '';
+    this.renderLoadingOption();
+    this.search.disabled = true;
     this.search.setAttribute('aria-busy', 'true');
     try {
       const response = await fetch(`/api/support/sites?${new URLSearchParams({ kind })}`, { signal: request.signal, headers: { 'x-cardnav-locale': this.dialog.dataset.locale! } });
@@ -200,15 +202,28 @@ class SupportDialog {
       if (this.kind === kind) this.filterSites();
     } catch {
       if (!request.signal.aborted) {
+        this.options.replaceChildren();
+        this.closeOptions();
         this.status.className = 'form-field-error';
         this.status.textContent = this.messages.failed;
       }
     } finally {
       if (this.request === request) {
         this.loadingKind = null;
+        this.search.disabled = false;
         this.search.removeAttribute('aria-busy');
       }
     }
+  }
+
+  private renderLoadingOption() {
+    const option = document.createElement('div');
+    option.setAttribute('aria-disabled', 'true');
+    option.className = 'support-site-option-loading';
+    option.textContent = this.messages.loading;
+    this.options.replaceChildren(option);
+    this.options.hidden = false;
+    this.search.setAttribute('aria-expanded', 'true');
   }
 
   private filterSites() {
@@ -291,13 +306,13 @@ class SupportDialog {
     }
   }
 
-  private reportPaymentStatus(status: SupportPaymentStatus) {
+  private reportPaymentStatus(status: SupportPaymentStatus, trigger: 'automatic' | 'manual' = 'automatic') {
     const token = this.statusToken;
     if (!token) return;
     const key = `${token}:${status}`;
     if (this.reportedPaymentStatuses.has(key)) return;
     this.reportedPaymentStatuses.add(key);
-    this.track('support-payment-status', { status, trigger: 'automatic' });
+    this.track('support-payment-status', { status, trigger });
   }
 
   private async checkPayment(attempt = 0) {
