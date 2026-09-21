@@ -16,7 +16,7 @@ const { kind = 'sponsor', label, description, href, linkLabel } = Astro.props;
 
 <span class="merchant-badge-group">
   <span class="merchant-badge" data-kind={kind}>
-    <span>{label}</span>
+    <span class="min-w-0 truncate">{label}</span>
     <span class="merchant-badge-info" tabindex="0" role="img" aria-label={description}>
       i
       <span class="merchant-badge-tooltip public-floating-layer" role="tooltip">

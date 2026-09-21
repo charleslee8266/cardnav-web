@@ -11,6 +11,7 @@ window.CardNavMerchantBadge = {
     badge.className = 'merchant-badge';
     badge.dataset.kind = kind;
     const labelElement = document.createElement('span');
+    labelElement.className = 'merchant-badge-label';
     labelElement.textContent = label;
     badge.appendChild(labelElement);
     group.appendChild(badge);

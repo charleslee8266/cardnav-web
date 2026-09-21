@@ -21,7 +21,7 @@ export type ShopPinOptions = {
 
 const DEFAULT_FAVORITE_MERCHANT_PRODUCT_LIMIT = 10;
 const MERCHANT_GROUP_PRODUCT_LIMIT = 10;
-const SPONSOR_PRODUCT_LIMIT_PER_SITE = 3;
+const SPONSOR_PRODUCT_LIMIT_PER_SITE = 2;
 const SUPPORT_PRODUCT_LIMIT_PER_SITE = 2;
 
 function safePositiveInteger(value: number | undefined, fallback: number) {

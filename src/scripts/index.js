@@ -714,20 +714,29 @@ function createFlatProductRow(item) {
   productCell.className = 'flat-product-cell';
   productCell.setAttribute('data-label', tableLabel('product'));
   const productInline = document.createElement('div');
-  productInline.className = 'cell-inline';
+  productInline.className = 'merchant-header';
   productInline.appendChild(createFavoriteButton('product', productFavoriteKey, `${shopsMessages.productFavorite || 'Favorite product'} ${productTitle}`));
+  const productContent = document.createElement('div');
+  productContent.className = 'merchant-header-content';
+  const productTitleRow = document.createElement('div');
+  productTitleRow.className = 'merchant-title-row';
   if (productUrl) {
     const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle, { sponsor: siteSponsor || shopSiteSupportTotalCents(site) > 0 });
     productLink.dataset.productClickSiteId = siteId;
     productLink.dataset.productClickUrl = productUrl;
     productLink.dataset.productClickCategory = categoryName;
     productLink.dataset.productClickName = productName;
-    productInline.appendChild(productLink);
+    productTitleRow.appendChild(productLink);
   } else {
-    appendTextElement(productInline, 'span', 'product-text', productName);
+    appendTextElement(productTitleRow, 'span', 'product-text', productName);
   }
-  if (siteSponsor) productInline.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
-  if (shopSiteSupportTotalCents(site) > 0) productInline.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
+  productContent.appendChild(productTitleRow);
+  const productTags = document.createElement('div');
+  productTags.className = 'merchant-tag-row';
+  if (siteSponsor) productTags.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
+  if (shopSiteSupportTotalCents(site) > 0) productTags.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
+  if (productTags.childElementCount > 0) productContent.appendChild(productTags);
+  productInline.appendChild(productContent);
 
   productCell.appendChild(productInline);
   row.appendChild(productCell);

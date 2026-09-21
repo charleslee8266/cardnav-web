@@ -692,7 +692,7 @@ export const ruMessages: Messages = {
     title: 'Спонсоры',
     becomeSponsor: 'Стать спонсором',
     partnershipLinkLabel: 'Как стать партнёром',
-    sponsorLabel: 'Партнёрский магазин',
+    sponsorLabel: 'Партнёр',
     sponsorDescription: 'Карточка партнёра прошла первичную проверку CardNav. Пожалуйста, самостоятельно оценивайте надёжность. При обнаружении обмана продавец будет немедленно удалён.',
   },
   submit: {

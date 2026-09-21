@@ -26,7 +26,7 @@ test('ordinary merchant favorites keep their bounded allocation', () => {
   assert.equal(sorted.length, 13);
 });
 
-for (const [kind, siteLimit] of [['partner', 3], ['support', 2]] as const) {
+for (const [kind, siteLimit] of [['partner', 2], ['support', 2]] as const) {
   test(`${kind} pins allow ${siteLimit} products per merchant and ten per group without dropping overflow`, () => {
     const merchants = Array.from({ length: 6 }, (_, siteIndex) =>
       Array.from({ length: 4 }, (_, productIndex) => ({

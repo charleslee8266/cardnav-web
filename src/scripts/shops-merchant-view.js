@@ -207,13 +207,22 @@ export function renderMerchantRows({
     const merchantHeader = document.createElement('div');
     merchantHeader.className = 'merchant-header';
     merchantHeader.appendChild(createFavoriteButton('site', siteFavoriteKey, `${shopsMessages.merchantFavorite || 'Favorite merchant'} ${siteName}`));
+    const merchantContent = document.createElement('div');
+    merchantContent.className = 'merchant-header-content';
+    const merchantTitle = document.createElement('div');
+    merchantTitle.className = 'merchant-title-row';
     if (siteUrl) {
-      merchantHeader.appendChild(createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, { sponsor: siteSponsor || accessors.shopSiteSupportTotalCents(site) > 0 }));
+      merchantTitle.appendChild(createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, { sponsor: siteSponsor || accessors.shopSiteSupportTotalCents(site) > 0 }));
     } else {
-      appendTextElement(merchantHeader, 'span', 'merchant-primary-text', siteName);
+      appendTextElement(merchantTitle, 'span', 'merchant-primary-text', siteName);
     }
-    if (siteSponsor) merchantHeader.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
-    if (accessors.shopSiteSupportPoints(site) > 0) merchantHeader.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
+    merchantContent.appendChild(merchantTitle);
+    const merchantTags = document.createElement('div');
+    merchantTags.className = 'merchant-tag-row';
+    if (siteSponsor) merchantTags.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
+    if (accessors.shopSiteSupportPoints(site) > 0) merchantTags.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
+    if (merchantTags.childElementCount > 0) merchantContent.appendChild(merchantTags);
+    merchantHeader.appendChild(merchantContent);
 
     merchantCell.appendChild(merchantHeader);
     row.appendChild(merchantCell);

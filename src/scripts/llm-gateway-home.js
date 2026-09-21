@@ -190,15 +190,21 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const infoCell = tableCell(config.basicInfoLabel);
     const infoWrap = el('div', 'flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between');
     const textWrap = el('div', 'min-w-0 space-y-2');
-    const titleWrap = el('div', 'flex flex-wrap items-center gap-2');
+    const titleWrap = el('div', 'merchant-header');
     const siteLink = el('a', 'link link-hover break-words text-base font-semibold text-primary', site.name);
     siteLink.href = `${gatewayLinkPrefix}/${site.slug}`;
     setTracking(siteLink, gatewaySiteTracking(site));
-    titleWrap.append(favorites.create(site.slug, site.name), siteLink);
-    if (site.sponsor) titleWrap.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
-    if (Number(site.supportPoints) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
+    titleWrap.append(favorites.create(site.slug, site.name));
+    const titleContent = el('div', 'merchant-header-content');
+    const titleRow = el('div', 'merchant-title-row');
+    titleRow.append(siteLink);
+    titleContent.append(titleRow);
+    const tagRow = el('div', 'merchant-tag-row');
+    if (site.sponsor) tagRow.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
+    if (Number(site.supportPoints) > 0) tagRow.append(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
+    if (tagRow.childElementCount > 0) titleContent.append(tagRow);
+    titleWrap.append(titleContent);
 
-    if (site.displayFamily) titleWrap.append(el('span', 'badge badge-ghost font-medium', site.displayFamily));
     textWrap.append(titleWrap);
     if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));
     const urlWrap = el('div', 'text-xs text-base-content/55');

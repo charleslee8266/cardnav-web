@@ -79,12 +79,17 @@ const mergedRowAttrs = {
   <DataTableCell label={basicInfoLabel}>
     <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
       <div class="min-w-0 space-y-2">
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="merchant-header">
           <button type="button" class="favorite-toggle" data-gateway-favorite={site.slug} data-site-name={site.name} aria-label={`${Astro.locals.messages.shops.merchantFavorite} ${site.name}`} aria-pressed="false"><span aria-hidden="true">♡</span></button>
-          <a href={detailHref} class="link link-hover break-words text-base font-semibold text-primary" {...clickAttrs}>{site.name}</a>
-          {site.sponsor ? <MerchantBadge label={sponsorLabel} description={sponsorDescription} href={sponsorHref} linkLabel={sponsorLinkLabel} /> : null}
-          {(site.supportPoints || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.viewList} /> : null}
-          {site.displayFamily ? <span class="badge badge-ghost font-medium">{site.displayFamily}</span> : null}
+          <div class="merchant-header-content">
+            <div class="merchant-title-row gap-2">
+              <a href={detailHref} class="link link-hover min-w-0 break-words text-base font-semibold text-primary" {...clickAttrs}>{site.name}</a>
+            </div>
+            {(site.sponsor || (site.supportPoints || 0) > 0) ? <div class="merchant-tag-row">
+              {site.sponsor ? <MerchantBadge label={sponsorLabel} description={sponsorDescription} href={sponsorHref} linkLabel={sponsorLinkLabel} /> : null}
+              {(site.supportPoints || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.amountLinkLabel} /> : null}
+            </div> : null}
+          </div>
         </div>
         {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
         <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>

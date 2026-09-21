@@ -1230,14 +1230,18 @@
   }
 
   .merchant-badge {
-    @apply inline-flex h-6 min-h-6 shrink-0 items-center gap-1 rounded px-1.5 text-xs font-semibold leading-none;
+    @apply inline-flex h-6 min-h-6 max-w-full min-w-0 shrink-0 items-center gap-1 rounded px-1.5 text-xs font-semibold leading-none;
     border: 1px solid color-mix(in oklab, var(--color-primary) 45%, transparent);
     background: color-mix(in oklab, var(--color-primary) 5%, var(--color-base-100));
     color: var(--color-primary);
   }
 
   .merchant-badge-group {
-    @apply inline-flex shrink-0 items-center;
+    @apply inline-flex max-w-full min-w-0 shrink-0 items-center;
+  }
+
+  .merchant-badge-label {
+    @apply min-w-0 truncate;
   }
 
   .merchant-badge[data-kind='sponsor'] {
@@ -1465,7 +1469,7 @@
   }
 
   .merchant-row {
-    @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_240px_96px_minmax(360px,1fr)_116px_116px_160px];
+    @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_300px_96px_minmax(360px,1fr)_116px_116px_160px];
   }
 
   .merchant-table-cell {
@@ -1509,7 +1513,19 @@
   }
 
   .merchant-header {
-    @apply flex items-center gap-2.5;
+    @apply flex min-w-0 items-center gap-2.5;
+  }
+
+  .merchant-header-content {
+    @apply flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-2;
+  }
+
+  .merchant-title-row {
+    @apply flex min-w-0 flex-1 items-center md:flex-[0_1_auto];
+  }
+
+  .merchant-tag-row {
+    @apply flex max-w-full min-w-0 flex-wrap items-center gap-2 md:shrink-0;
   }
 
   .merchant-primary-text {
