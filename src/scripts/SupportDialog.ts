@@ -351,6 +351,8 @@ class SupportDialog {
       } catch {
         // 会话存储不可用时不影响跳转收银台。
       }
+      this.statusToken = data.statusToken;
+      void this.checkPayment();
       const target = new URL(data.payUrl);
       if (!['http:', 'https:'].includes(target.protocol)) throw new Error();
       const paymentTab = window.open(target.href, 'paymentPopup');
