@@ -3,6 +3,15 @@
  */
 import 'dotenv/config';
 import pg from 'pg';
+import {
+  MAX_PINNED_PARTNER_PRODUCTS,
+  MAX_PINNED_PARTNER_PRODUCTS_PER_SITE,
+  MAX_PINNED_PARTNER_SITES,
+  MAX_PINNED_SUPPORT_PRODUCTS,
+  MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE,
+  MAX_PINNED_SUPPORT_SITES,
+} from './list-ranking-policy.js';
+import { pinSiteRows } from './site-list-pinning.js';
 import { prioritizeShopProductRows } from './shop-sponsored-pinning.js';
 import type { PackedShopProductsData } from './shop-products-data.js';
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
@@ -325,8 +334,9 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         sponsor: site.sponsor === true,
         ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
       };
-    });
-    let sourceProducts = (options.inStockOnly
+    }).sort((left, right) => right.score - left.score);
+    const rankedSites = pinSiteRows(normalizedSites.map(site => ({ ...site, favorite: false }))).map(({ favorite: _favorite, ...site }) => site);
+    const sourceProducts = (options.inStockOnly
       ? snapshot.products.filter(product => product.inStock)
       : snapshot.products)
       .map(product => {
@@ -336,19 +346,18 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
           siteSponsor: product.siteSponsor === true,
           ...(support ? { siteSupportTotalCents: support.supportTotalCents, siteSupportPoints: support.supportPoints } : {}),
         };
-      });
-    if (options.inStockOnly) {
-      // 有货筛选改变置顶候选，按原顺序补足名额后再截取首屏。
-      sourceProducts.sort((left, right) =>
+      })
+      .sort((left, right) =>
         right.score - left.score
         || right.siteScore - left.siteScore
         || Number(right.inStock) - Number(left.inStock)
         || (right.refreshedAt === null ? Number.POSITIVE_INFINITY : Date.parse(right.refreshedAt))
           - (left.refreshedAt === null ? Number.POSITIVE_INFINITY : Date.parse(left.refreshedAt))
         || left.categoryName.localeCompare(right.categoryName)
-        || left.name.localeCompare(right.name),
+        || left.name.localeCompare(right.name)
+        || left.siteId.localeCompare(right.siteId),
       );
-      sourceProducts = prioritizeShopProductRows(sourceProducts.map(product => ({
+    const rankedProducts = prioritizeShopProductRows(sourceProducts.map(product => ({
         product,
         productFavoriteKey: product.name,
         siteFavoriteKey: product.siteId,
@@ -356,22 +365,12 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         supportTotalCents: product.siteSupportTotalCents,
         supportPoints: product.siteSupportPoints,
       })), { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set() }).map(row => row.product);
-    } else {
-      sourceProducts = prioritizeShopProductRows(sourceProducts.map(product => ({
-        product,
-        productFavoriteKey: product.name,
-        siteFavoriteKey: product.siteId,
-        sponsor: product.siteSponsor,
-        supportTotalCents: product.siteSupportTotalCents,
-        supportPoints: product.siteSupportPoints,
-      })), { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set() }).map(row => row.product);
-    }
-    const products = safeProductLimit === null ? sourceProducts : sourceProducts.slice(0, safeProductLimit);
+    const products = safeProductLimit === null ? rankedProducts : rankedProducts.slice(0, safeProductLimit);
     const sites = safeProductLimit === null
-      ? normalizedSites
+      ? rankedSites
       : (() => {
         const selectedSiteIds = new Set(products.map(product => product.siteId));
-        return normalizedSites.filter(site => selectedSiteIds.has(site.id));
+        return rankedSites.filter(site => selectedSiteIds.has(site.id));
       })();
     const totalInStockProductCount = typeof snapshot.totalInStockProductCount === 'number'
       ? snapshot.totalInStockProductCount
@@ -390,6 +389,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
   }
   const sitesResult = safeProductLimit === null
     ? await db.query(`
+      WITH ranked_sites AS (
       SELECT
         id,
         name,
@@ -398,19 +398,28 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         sponsor,
         support_total_cents,
         support_points,
-        last_product_refresh_success_at
+        last_product_refresh_success_at,
+        product_count,
+        in_stock_product_count,
+        ROW_NUMBER() OVER (
+          PARTITION BY CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END
+          ORDER BY support_points DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
+        ) AS group_position
       FROM shop_sites
       WHERE status = 'online'
         AND type = 'cardShop'
+      )
+      SELECT * FROM ranked_sites
       ORDER BY
         CASE
-          WHEN ROW_NUMBER() OVER (
-            PARTITION BY CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END
-            ORDER BY support_points DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
-          ) <= 10 THEN CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END
+          WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES} THEN 0
+          WHEN support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
           ELSE 2
         END,
-        CASE WHEN support_points > 0 THEN support_points ELSE 0 END DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
+        CASE WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES}
+            OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES}
+          THEN support_points END DESC NULLS LAST,
+        score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
     : null;
   const productsResult = await db.query(`
@@ -447,13 +456,14 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     ), site_ranked_products AS (
       SELECT base_products.*,
         CASE WHEN site_sponsor THEN 0 WHEN site_support_points > 0 THEN 1 ELSE 2 END AS pin_group,
-        CASE WHEN site_sponsor THEN 3 ELSE 2 END AS site_pin_limit,
         ROW_NUMBER() OVER (PARTITION BY site_id ORDER BY natural_order) AS site_position
       FROM base_products
-    ), ranked_products AS (
-      SELECT site_ranked_products.*,
-        COUNT(*) FILTER (WHERE site_position <= site_pin_limit) OVER (PARTITION BY pin_group ORDER BY natural_order) AS group_position
+    ), pin_candidates AS (
+      SELECT product_row_id, pin_group, site_support_points,
+        ROW_NUMBER() OVER (PARTITION BY pin_group ORDER BY site_support_points DESC, natural_order) AS group_position
       FROM site_ranked_products
+      WHERE site_position <= CASE WHEN pin_group = 0 THEN ${MAX_PINNED_PARTNER_PRODUCTS_PER_SITE} ELSE ${MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE} END
+        AND pin_group < 2
     )
     SELECT
       base_products.site_id,
@@ -475,10 +485,14 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       base_products.click_count,
       base_products.score,
       base_products.refreshed_at
-    FROM ranked_products AS base_products
+    FROM base_products
+    LEFT JOIN pin_candidates AS pinned ON pinned.product_row_id = base_products.product_row_id
     ORDER BY
-      CASE WHEN base_products.site_position <= base_products.site_pin_limit AND base_products.group_position <= 10 THEN base_products.pin_group ELSE 2 END,
-      CASE WHEN base_products.pin_group = 1 THEN base_products.site_support_points ELSE 0 END DESC,
+      CASE WHEN pinned.pin_group = 0 AND pinned.group_position <= ${MAX_PINNED_PARTNER_PRODUCTS} THEN 0
+        WHEN pinned.pin_group = 1 AND pinned.group_position <= ${MAX_PINNED_SUPPORT_PRODUCTS} THEN 1 ELSE 2 END,
+      CASE WHEN pinned.pin_group = 0 AND pinned.group_position <= ${MAX_PINNED_PARTNER_PRODUCTS}
+          OR pinned.pin_group = 1 AND pinned.group_position <= ${MAX_PINNED_SUPPORT_PRODUCTS}
+        THEN pinned.site_support_points END DESC NULLS LAST,
       base_products.natural_order ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
@@ -612,21 +626,18 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
     const liveSupport = await loadLiveGatewaySupport(db);
     return {
       ...snapshot,
-      sites: snapshot.sites
+      sites: pinSiteRows(snapshot.sites
         .map(site => {
           const support = liveSupport.get(site.id);
           return {
             ...site,
             sponsor: site.sponsor === true,
+            favorite: false,
             ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
           };
         })
-        .sort((left, right) => Number(right.sponsor) - Number(left.sponsor)
-          || Number(right.supportPoints || 0) - Number(left.supportPoints || 0)
-          || (right.siteScore || 0) - (left.siteScore || 0)
-          || left.name.localeCompare(right.name)
-          || left.id.localeCompare(right.id))
-        .slice(0, limit ?? snapshot.sites.length),
+        .sort((left, right) => (right.siteScore || 0) - (left.siteScore || 0)))
+        .slice(0, limit ?? snapshot.sites.length).map(({ favorite: _favorite, ...site }) => site),
     };
   }
 
@@ -640,13 +651,14 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
         MAX(fetched_at) AS latest_price_fetched_at
       FROM gateway_model_prices
       GROUP BY site_id
-    )
+    ), ranked_sites AS (
     SELECT
       gateway_sites.site_id AS id,
       gateway_sites.name AS site_name,
       gateway_sites.url,
       gateway_sites.family,
       gateway_sites.score,
+      gateway_sites.weight AS sort_weight,
       gateway_sites.availability_percent,
       gateway_sites.avg_success_latency_ms,
       gateway_sites.created_at,
@@ -669,20 +681,26 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
           SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_types, '[]'::jsonb))
         )
       END AS display_model_families,
-      price_summary.latest_price_fetched_at AS latest_gateway_refresh_at
+      price_summary.latest_price_fetched_at AS latest_gateway_refresh_at,
+      ROW_NUMBER() OVER (
+        PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
+        ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+      ) AS group_position
     FROM gateway_sites
     LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
+    )
+    SELECT * FROM ranked_sites
     ORDER BY
       CASE
-        WHEN ROW_NUMBER() OVER (
-          PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
-          ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
-        ) <= 10 THEN CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
+        WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES} THEN 0
+        WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
         ELSE 2
       END,
-      CASE WHEN gateway_sites.support_points > 0 THEN gateway_sites.support_points ELSE 0 END DESC,
-      gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+      CASE WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES}
+          OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES}
+        THEN support_points END DESC NULLS LAST,
+      score DESC, sort_weight DESC, created_at DESC NULLS LAST, site_name ASC, id ASC
     ${limit ? 'LIMIT $1' : ''}
   `, limit ? [limit] : []);
 
@@ -986,13 +1004,14 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
         MAX(fetched_at) AS latest_price_fetched_at
       FROM gateway_model_prices
       GROUP BY site_id
-    )
+    ), ranked_sites AS (
     SELECT
       gateway_sites.site_id AS id,
       gateway_sites.name AS site_name,
       gateway_sites.url,
       gateway_sites.family,
       gateway_sites.score,
+      gateway_sites.weight AS sort_weight,
       gateway_sites.availability_percent,
       gateway_sites.avg_success_latency_ms,
       gateway_sites.created_at,
@@ -1019,21 +1038,27 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       model_price_summary.price_count_for_model,
       COALESCE(model_price_summary.units_for_model, ARRAY[]::text[]) AS units_for_model,
       COALESCE(model_price_summary.prices_for_model, '[]'::jsonb) AS prices_for_model,
-      model_price_summary.latest_model_refresh_at
+      model_price_summary.latest_model_refresh_at,
+      ROW_NUMBER() OVER (
+        PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
+        ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+      ) AS group_position
     FROM model_price_summary
     INNER JOIN gateway_sites ON gateway_sites.site_id = model_price_summary.site_id
     LEFT JOIN site_price_summary ON site_price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
+    )
+    SELECT * FROM ranked_sites
     ORDER BY
       CASE
-        WHEN ROW_NUMBER() OVER (
-          PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
-          ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
-        ) <= 10 THEN CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
+        WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES} THEN 0
+        WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
         ELSE 2
       END,
-        CASE WHEN gateway_sites.support_points > 0 THEN gateway_sites.support_points ELSE 0 END DESC,
-        gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+      CASE WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES}
+          OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES}
+        THEN support_points END DESC NULLS LAST,
+      score DESC, sort_weight DESC, created_at DESC NULLS LAST, site_name ASC, id ASC
     ${siteLimit ? 'LIMIT $2' : ''}
   `, siteLimit ? [modelId, siteLimit] : [modelId]);
 

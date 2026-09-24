@@ -24,10 +24,9 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   if (!(table instanceof HTMLElement) || !tbody) return;
   if (typeof window.createDeferredTableController !== 'function') return;
   const tableType = config.type || root.dataset.gatewayDeferredTable || '';
-  const favorites = new GatewayFavorites(root, { favorite: config.favoriteLabel, unfavorite: config.unfavoriteLabel }, () => { void refreshFavorites(); });
+  const favorites = new GatewayFavorites(root, { favorite: config.favoriteLabel, unfavorite: config.unfavoriteLabel }, () => { refreshFavorites(); });
 
-  async function refreshFavorites() {
-    if (favorites.hasFavorites) await controller.ensureLoaded();
+  function refreshFavorites() {
     controller.state.entries.forEach(entry => {
       entry.sort.favorite = favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') ? 1 : 0;
     });
@@ -334,7 +333,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   }
 
   controller.initialize();
-  if (tableType === 'modelSites') void refreshFavorites();
+  if (tableType === 'modelSites') refreshFavorites();
 
   button?.addEventListener('click', async () => {
     try {

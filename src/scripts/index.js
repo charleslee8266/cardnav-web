@@ -78,7 +78,6 @@ const DEFAULT_FLAT_PRODUCT_LIMIT = 100;
 const FLAT_PRODUCT_LOAD_MORE_STEP = 100;
 const DEFAULT_MERCHANT_LIMIT = 20;
 const MERCHANT_LOAD_MORE_STEP = 20;
-const FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT = 10;
 let currentFlatSort = null;
 let currentMerchantSort = null;
 let currentFlatRows = flatRows;
@@ -281,8 +280,6 @@ function prioritizeFavoriteFlatRows(rowEntries) {
   return prioritizeShopProductRows(rowEntries, {
     favoriteProductKeys,
     favoriteSiteKeys,
-  }, {
-    favoriteMerchantProductLimit: FAVORITE_MERCHANT_PRODUCT_PIN_LIMIT,
   });
 }
 
@@ -372,6 +369,16 @@ function buildFlatRows() {
       indexCell: null,
       originalIndex: index,
     });
+  });
+  flatRows.sort((left, right) => right.score - left.score
+    || right.siteScore - left.siteScore
+    || right.inStock - left.inStock
+    || right.productRefreshedAt - left.productRefreshedAt
+    || left.categoryName.localeCompare(right.categoryName)
+    || left.productName.localeCompare(right.productName));
+  flatRows.forEach((row, index) => {
+    row.sequence = index + 1;
+    row.originalIndex = index;
   });
 }
 
@@ -1052,10 +1059,8 @@ function sortRows(merchantModule) {
         return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
       }
 
-      const supportPointsDiff = Number(b.element.dataset.supportPoints) - Number(a.element.dataset.supportPoints);
-      if (supportPointsDiff !== 0) return supportPointsDiff;
-
-      return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
+      return Number(b.element.dataset.siteScore) - Number(a.element.dataset.siteScore)
+        || Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
     });
   const visibleRows = sortedRows.filter(row => row.element.dataset.filterVisible === '1');
   const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: 0, supportPoints: Number(entry.element.dataset.supportPoints) || 0, favorite: Number(entry.element.dataset.favorite) > 0 }))).map(row => row.entry);

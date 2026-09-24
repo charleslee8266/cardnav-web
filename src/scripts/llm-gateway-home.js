@@ -592,7 +592,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
   async function applySiteFiltersWithDeferred({ track = true, resetLimit = false } = {}) {
     if (resetLimit) resetVisibleLimit('sites');
-    if (hasActiveSiteFilters() || favorites.hasFavorites) await ensureGatewayDataLoaded('sites');
+    if (hasActiveSiteFilters()) await ensureGatewayDataLoaded('sites');
     applySiteFilters({ track });
   }
 
