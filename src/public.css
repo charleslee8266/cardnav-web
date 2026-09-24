@@ -1216,17 +1216,15 @@
   }
 
   /* 横向溢出折行保护 */
-  .merchant-text {
+  .merchant-text,
+  .product-link,
+  .product-text {
     overflow-wrap: anywhere;
   }
 
   .merchant-link,
   .product-link {
     @apply inline no-underline text-primary transition hover:underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30;
-  }
-
-  .product-text {
-    overflow-wrap: anywhere;
   }
 
   .merchant-badge {
