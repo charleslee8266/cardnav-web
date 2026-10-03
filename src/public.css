@@ -1,11 +1,121 @@
 /*
-文件说明: 全站共享样式，包含首页列表、收藏按钮、向导页和公共组件的视觉规则。
+文件说明: 公开站点样式入口，统一浅深主题与基础规则，并导入各职责组件样式。
 */
 @import "tailwindcss";
+@import "./components/help-tooltip.css";
 @import "./components/data-table.css";
 @import "./components/shop-plan-groups.css";
 @import "./components/form.css";
-@plugin "daisyui";
+@import "./styles/shell.css";
+@import "./styles/home.css";
+@import "./styles/page.css";
+@import "./styles/commercial.css";
+@plugin "daisyui" { themes: false; }
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f5f6f8;
+  --color-base-300: #e5e7eb;
+  --color-base-content: #0f172a;
+  --color-ink-secondary: #334155;
+  --color-muted: #64748b;
+  --color-surface-soft: #f8fafc;
+  --color-surface-raised: #f1f5f9;
+  --color-line-strong: #d1d5db;
+  --color-faint: #94a3b8;
+  --color-warning-soft: #fffbeb;
+  --shadow-1: 0 1px 2px rgb(15 23 42 / .05);
+  --shadow-2: 0 4px 16px rgb(15 23 42 / .07);
+  --shadow-3: 0 18px 50px rgb(15 23 42 / .18);
+  --color-brand-soft: #eff4ff;
+  --color-brand-line: #c7d7fe;
+  --color-partner-soft: #fef6dc;
+  --color-partner-line: #f3d48a;
+  --color-support-soft: #fdf0f6;
+  --color-support-line: #f7c4dc;
+  --color-primary: #2563eb;
+  --color-primary-content: #ffffff;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #475569;
+  --color-secondary-content: #ffffff;
+  --color-accent: #0f766e;
+  --color-accent-content: #ffffff;
+  --color-neutral: #334155;
+  --color-neutral-content: #ffffff;
+  --color-info: #2563eb;
+  --color-info-content: #ffffff;
+  --color-success: #15803d;
+  --color-success-content: #ffffff;
+  --color-warning: #b45309;
+  --color-warning-content: #ffffff;
+  --color-error: #b91c1c;
+  --color-error-content: #ffffff;
+  --color-support: #be185d;
+  --color-support-content: #ffffff;
+  --merchant-partner-text: #a16207;
+  --radius-selector: 0.375rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.875rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+@plugin "daisyui/theme" {
+  name: "dark";
+  color-scheme: dark;
+  --color-base-100: #151a22;
+  --color-base-200: #0d1117;
+  --color-base-300: #262f3c;
+  --color-base-content: #e8ecf3;
+  --color-ink-secondary: #c3cad6;
+  --color-muted: #8d98aa;
+  --color-surface-soft: #19202a;
+  --color-surface-raised: #1f2733;
+  --color-line-strong: #344052;
+  --color-faint: #667085;
+  --color-warning-soft: #2a2110;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / .3);
+  --shadow-2: 0 4px 16px rgb(0 0 0 / .35);
+  --shadow-3: 0 18px 50px rgb(0 0 0 / .55);
+  --color-brand-soft: #18233d;
+  --color-brand-line: #2b3d66;
+  --color-partner-soft: #2a2310;
+  --color-partner-line: #5b4715;
+  --color-support-soft: #2a1320;
+  --color-support-line: #5c2443;
+  --color-primary: #5b8cff;
+  --color-primary-content: #0d1117;
+  --color-primary-hover: #7aa2ff;
+  --color-secondary: #c3cad6;
+  --color-secondary-content: #151a22;
+  --color-accent: #5eead4;
+  --color-accent-content: #151a22;
+  --color-neutral: #c3cad6;
+  --color-neutral-content: #151a22;
+  --color-info: #5b8cff;
+  --color-info-content: #0d1117;
+  --color-success: #4ade80;
+  --color-success-content: #10261a;
+  --color-warning: #fbbf24;
+  --color-warning-content: #2a2110;
+  --color-error: #f87171;
+  --color-error-content: #2b1414;
+  --color-support: #f472b6;
+  --color-support-content: #2a1320;
+  --merchant-partner-text: #f5c451;
+  --radius-selector: 0.375rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.875rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
 
 @source "./**/*.astro";
 @source "./scripts/*.js";
@@ -13,68 +123,54 @@
 @theme {
   --color-primary: #2563eb;
   --color-primary-content: #ffffff;
-  --color-support: #db2777;
+  --color-support: #be185d;
   --color-support-content: #ffffff;
-  --color-error: #ef4444;
+  --color-error: #b91c1c;
   --color-error-content: #ffffff;
 }
 
 @utility support-button {
-  --btn-color: var(--color-support);
-  --btn-fg: var(--color-support-content);
+  --btn-color: var(--color-support-soft);
+  --btn-fg: var(--color-support);
+  background-color: var(--color-support-soft);
+  border-color: var(--color-support-line);
+  color: var(--color-support);
+  &:hover:not(:disabled) {
+    --btn-color: var(--color-support);
+    --btn-fg: var(--color-support);
+    background-color: color-mix(in srgb, var(--color-support) 12%, var(--color-base-100));
+    border-color: var(--color-support);
+    color: var(--color-support);
+  }
 }
 
 @utility open-shop-button {
-  --btn-color: var(--color-green-700);
-  --btn-fg: #ffffff;
+  --btn-color: var(--color-brand-soft);
+  --btn-fg: var(--color-primary);
+  background-color: var(--color-brand-soft);
+  border-color: var(--color-brand-line);
+  color: var(--color-primary);
+  &:hover:not(:disabled) {
+    --btn-color: var(--color-primary);
+    --btn-fg: var(--color-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100));
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
 }
 
 @layer base {
-  table th,
-  table td {
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-all;
-  }
-
-  table thead th {
-    white-space: nowrap;
-    overflow-wrap: normal;
-    word-break: normal;
-  }
-
-
-  [data-theme="light"],
-  :root {
-    --color-primary: #2563eb !important;
-    --color-primary-content: #ffffff !important;
-    --color-primary-hover: #2563eb !important;
-    --merchant-partner-text: var(--color-amber-700);
-    --color-error: #dc2626 !important; /* 正红色 (red-600) */
-    --color-error-content: #ffffff !important;
-  }
-
-  [data-theme="dark"] {
-    --merchant-partner-text: var(--color-amber-200);
-    --color-primary: #2563eb !important;
-    --color-primary-content: #ffffff !important;
-    --color-primary-hover: #2563eb !important;
-    --color-error: #f87171 !important; /* 适合暗色背景的亮正红 (red-400) */
-    --color-error-content: #ffffff !important;
-  }
-
   html {
     @apply min-h-full bg-base-200 text-base-content;
-    overflow-x: clip;
   }
 
   body {
     @apply flex min-h-screen flex-col bg-base-200 text-base-content;
-    overflow-x: clip;
   }
 
   :root,
   [data-theme] {
+    --category-hover-border: color-mix(in srgb, var(--color-primary) 35%, var(--color-base-300));
     --root-bg: var(--color-base-200);
     --page-scroll-bg: var(--color-base-200);
   }
@@ -88,1525 +184,10 @@
   }
 }
 
-@layer components {
-  .guide-browser-grid {
-    @apply items-stretch;
-    --guide-sidebar-floating-height: 4.75rem;
-    position: relative;
-    height: 100%;
-    min-height: 0;
-    grid-template-rows: minmax(0, 1fr);
-    padding-top: var(--guide-sidebar-floating-height);
-    overflow: visible;
-  }
 
-  .guide-sidebar {
-    @apply self-start;
-    position: absolute;
-    top: calc(-1 * var(--guide-sidebar-floating-height));
-    left: 0;
-    right: 0;
-    z-index: 20;
-    min-height: 0;
-    max-height: min(58vh, 32rem);
-    overflow: hidden !important;
-    background: var(--color-base-100);
-  }
-
-  .guide-sidebar-disclosure {
-    @apply block;
-  }
-
-  .guide-sidebar-disclosure[open] + .guide-sidebar-header + .guide-sidebar-scroll {
-    display: block;
-  }
-
-  .guide-sidebar-summary {
-    @apply flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left;
-    min-height: var(--guide-sidebar-floating-height);
-  }
-
-  .guide-sidebar-summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .guide-sidebar-summary:focus {
-    outline: none;
-  }
-
-  .guide-sidebar-summary:focus-visible {
-    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-primary) 32%, transparent);
-    border-radius: 1rem;
-  }
-
-  .guide-sidebar-kicker {
-    @apply block text-[11px] font-semibold uppercase tracking-[0.16em] text-base-content/45;
-  }
-
-  .guide-sidebar-current {
-    @apply mt-0.5 block truncate text-sm font-bold text-base-content;
-  }
-
-  .guide-sidebar-summary-icon {
-    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-base-300 bg-base-200 text-base-content/60 transition-transform;
-  }
-
-  .guide-sidebar-disclosure[open] .guide-sidebar-summary-icon {
-    transform: rotate(180deg);
-  }
-
-  .guide-sidebar:has(.guide-sidebar-disclosure[open]) {
-    box-shadow: 0 20px 42px color-mix(in srgb, var(--color-base-content) 14%, transparent);
-  }
-
-  .guide-sidebar-header {
-    @apply hidden;
-  }
-
-  .guide-sidebar-link {
-    @apply no-underline;
-  }
-
-  .guide-sidebar-link-child {
-    position: relative;
-  }
-
-  .guide-sidebar-link-child::before {
-    content: "";
-    position: absolute;
-    left: 0.85rem;
-    top: 0.5rem;
-    bottom: 0.5rem;
-    width: 1px;
-    background: color-mix(in srgb, var(--color-base-content) 12%, transparent);
-  }
-
-  .guide-sidebar-scroll {
-    display: none;
-    max-height: calc(min(58vh, 32rem) - var(--guide-sidebar-floating-height));
-    overflow-y: auto;
-  }
-
-  .guide-content-scroll {
-    height: 100%;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 0.25rem;
-  }
-
-  @media (min-width: 64rem) {
-    .guide-browser-grid {
-      position: static;
-      grid-template-rows: minmax(0, 1fr);
-      padding-top: 0;
-      overflow: hidden;
-    }
-
-    .guide-sidebar {
-      @apply grid self-stretch;
-      position: static;
-      top: auto;
-      grid-template-rows: auto minmax(0, 1fr);
-      z-index: auto;
-      max-height: none;
-      overflow: hidden !important;
-      background: var(--color-base-100);
-      border-radius: var(--radius-box);
-    }
-
-    .guide-sidebar-disclosure {
-      display: none;
-    }
-
-    .guide-sidebar-header {
-      display: block;
-    }
-
-    .guide-sidebar-scroll {
-      display: block;
-      height: 100%;
-      max-height: none;
-      min-height: 0;
-    }
-  }
-
-  .guide-article {
-    @apply rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7;
-  }
-
-  .guide-shell {
-    background:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 38%),
-      linear-gradient(180deg, color-mix(in srgb, var(--color-base-100) 92%, white), var(--color-base-100));
-  }
-
-  .guide-shell .guide-article {
-    @apply p-0 border-0 bg-transparent shadow-none rounded-none;
-  }
-
-  .guide-shell .guide-article > h1:first-child {
-    display: none;
-  }
-
-  .guide-hero {
-  }
-
-  .guide-eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.18em] text-primary;
-  }
-
-  .guide-title {
-    @apply mt-2 text-3xl font-bold tracking-tight text-base-content md:text-[2.2rem];
-  }
-
-  .guide-intro {
-    @apply mt-3 text-base leading-7 text-base-content/75;
-  }
-
-  .guide-intro h3 {
-    @apply mt-6 text-lg font-bold text-base-content;
-  }
-
-  .guide-intro p {
-    @apply mt-3;
-  }
-
-  .guide-intro ol {
-    @apply mt-3 list-decimal space-y-2 pl-6 text-base leading-7;
-  }
-
-  .guide-intro ul {
-    @apply mt-3 list-disc space-y-2 pl-6 text-base leading-7;
-  }
-
-  .guide-intro a {
-    @apply font-semibold text-primary hover:underline;
-  }
-
-  .guide-grid {
-    @apply mt-6 grid gap-4 lg:grid-cols-2;
-  }
-
-  .guide-card {
-    @apply relative isolate block overflow-hidden rounded-[1.4rem] border border-base-300/90 bg-transparent p-5 no-underline shadow-sm;
-  }
-
-  .guide-card::before {
-    content: "";
-    @apply absolute inset-0 z-0 bg-base-100 transition-colors duration-200;
-  }
-
-  .guide-card > * {
-    @apply relative z-10;
-  }
-
-  a.guide-card-clickable,
-  a.guide-card-clickable:hover,
-  a.guide-card-clickable:focus,
-  a.guide-card-clickable:active {
-    @apply text-inherit;
-    text-decoration: none !important;
-  }
-
-  a.guide-card-clickable *,
-  a.guide-card-clickable:hover * {
-    text-decoration: none !important;
-  }
-
-  .guide-card-clickable {
-    @apply transition duration-200;
-  }
-
-  .guide-card-clickable:hover {
-    @apply -translate-y-0.5 border-primary/28 shadow-md;
-  }
-
-  .guide-card-clickable:hover .guide-card-title {
-    @apply text-base-content;
-  }
-
-  .guide-card-clickable:hover .guide-badge {
-    @apply border-primary/18 bg-primary/10 text-primary;
-  }
-
-  .guide-card-clickable:hover .guide-card-icon {
-    @apply border-primary/20 bg-primary/12 text-primary;
-  }
-
-  .guide-card-clickable:hover::before {
-    background-color: color-mix(in oklab, var(--color-base-100) 96%, var(--color-primary) 4%);
-  }
-
-  /* Card specific article formatting */
-  .guide-card .guide-article {
-    @apply mt-3 text-sm font-normal leading-6 text-base-content/78;
-  }
-
-  .guide-card .guide-article p {
-    @apply mt-3 text-sm font-normal leading-6 text-base-content/78;
-  }
-
-  .guide-card .guide-article h3 {
-    color: color-mix(in oklab, var(--color-primary) 68%, var(--color-base-content) 32%);
-    @apply mt-5 mb-2.5 flex items-center gap-2 text-[15px] font-bold;
-  }
-
-  .guide-card .guide-article h3::after {
-    content: "";
-    @apply h-[1px] flex-1 bg-base-300/85;
-  }
-
-  .guide-card .guide-article ul {
-    @apply space-y-2.5 pl-0 list-none mt-1;
-  }
-
-  .guide-card .guide-article li {
-    @apply relative pl-3.5 text-sm font-normal leading-6 text-base-content/78;
-  }
-
-  .guide-card .guide-article li::before {
-    content: "";
-    @apply absolute left-0 top-[8px] h-1.5 w-1.5 rounded-full bg-primary/40;
-  }
-
-  .guide-card .guide-article li strong {
-    @apply text-base-content/90 font-semibold text-sm;
-  }
-
-  .guide-card .guide-article a {
-    @apply inline-flex items-center gap-0.5 rounded bg-primary/8 px-1.5 py-0.5 text-[13px] font-semibold text-primary no-underline transition hover:bg-primary/15;
-  }
-
-  .guide-card-top {
-    @apply flex items-center justify-between gap-3;
-  }
-
-  .guide-badge {
-    @apply inline-flex rounded-full border border-primary/18 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.04em] text-primary;
-  }
-
-  .guide-card-icon {
-    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-base-300 bg-base-200/75 text-base-content/55 transition-colors duration-200;
-  }
-
-  .guide-card-icon svg {
-    @apply h-4.5 w-4.5;
-  }
-
-  .guide-arrow {
-    @apply text-xs font-semibold text-base-content/45;
-  }
-
-  .guide-card-title {
-    @apply mt-4 text-xl font-bold tracking-tight text-base-content;
-  }
-
-  .guide-card-image-frame {
-    aspect-ratio: var(--guide-card-image-aspect, 3.44 / 1);
-    @apply mx-auto mt-4 flex w-full max-w-[344px] items-center justify-center overflow-hidden rounded-xl border border-base-300 bg-white;
-  }
-
-  .guide-card-image {
-    @apply h-full w-full object-cover text-slate-950;
-  }
-
-  .guide-card-image[src$=".svg"] {
-    @apply p-4 object-contain;
-  }
-
-  .guide-card-summary {
-    @apply mt-2 text-sm leading-6 text-base-content/78;
-  }
-
-  .guide-card-action {
-    @apply mt-5 inline-flex items-center gap-1.5 rounded-full border border-primary/16 bg-primary/8 px-3 py-1.5 text-sm font-bold text-primary transition-colors duration-200;
-  }
-
-  .guide-card-clickable:hover .guide-card-action {
-    @apply border-primary/24 bg-primary/12;
-  }
-
-  .guide-meta {
-    @apply mt-5 space-y-3;
-  }
-
-  .guide-meta dt {
-    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-base-content/45;
-  }
-
-  .guide-meta dd {
-    @apply mt-1 text-sm leading-6 text-base-content/88;
-  }
-
-  .guide-example {
-    @apply mt-5;
-  }
-
-  .guide-example-label {
-    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-base-content/45;
-  }
-
-  .guide-example-pre {
-    @apply mt-2 overflow-x-auto rounded-2xl border border-base-300 bg-base-200 p-3 text-xs leading-6 text-base-content;
-  }
-
-  .guide-next-step-label {
-    @apply text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45;
-  }
-
-  .guide-next-step-link {
-    @apply mt-2 inline-flex text-lg font-bold text-primary no-underline transition hover:opacity-80;
-  }
-
-  .guide-article h1 {
-    @apply text-3xl font-bold tracking-normal text-base-content;
-  }
-
-  .guide-article h2 {
-    @apply mt-8 text-xl font-bold tracking-normal text-base-content;
-  }
-
-  .guide-article h3 {
-    @apply mt-6 text-lg font-semibold tracking-normal text-base-content;
-  }
-
-  .guide-article p {
-    @apply mt-4 text-base leading-8;
-  }
-
-  .guide-article ul {
-    @apply mt-3 list-disc space-y-2 pl-6 text-base leading-7;
-  }
-
-  .guide-article ol {
-    @apply mt-3 list-decimal space-y-2 pl-6 text-base leading-7;
-  }
-
-  .guide-article a:not(.guide-card) {
-    @apply font-semibold text-primary hover:underline;
-  }
-
-  .guide-article code {
-    @apply rounded bg-base-300 px-1 py-0.5 text-sm text-base-content;
-  }
-
-  .guide-article pre {
-    @apply mt-4 overflow-x-auto rounded-xl border border-base-300 bg-base-200 p-4 text-sm leading-6 text-base-content;
-  }
-
-  .guide-article pre code {
-    @apply bg-transparent p-0 text-inherit;
-  }
-
-  .site-main-width {
-    @apply mx-auto w-full max-w-7xl;
-  }
-
-  .site-wide-width {
-    @apply mx-auto w-full max-w-[110rem];
-  }
-
-  .guide-article > :first-child,
-  .content-page > :first-child {
-    @apply mt-0;
-  }
-
-  .content-page h1 {
-    @apply text-3xl font-bold tracking-normal text-base-content;
-  }
-
-  .content-page-banner {
-    @apply mb-6 block w-full rounded-lg border border-base-300 bg-base-200 object-cover;
-  }
-
-  .content-page h2 {
-    @apply mt-8 text-2xl font-bold tracking-normal text-base-content;
-  }
-
-  .content-page h3 {
-    @apply mt-6 text-lg font-semibold tracking-normal text-base-content;
-  }
-
-  .content-page p {
-    @apply mt-4 text-base leading-8;
-  }
-
-  .content-page ul {
-    @apply mt-3 list-disc space-y-2 pl-6 text-base leading-7;
-  }
-
-  .content-page ol {
-    @apply mt-3 list-decimal space-y-2 pl-6 text-base leading-7;
-  }
-
-  .content-page a {
-    @apply font-semibold text-primary hover:underline;
-  }
-
-  .content-page code {
-    @apply rounded bg-base-300 px-1 py-0.5 text-sm text-base-content;
-  }
-
-  .content-page pre {
-    @apply mt-4 overflow-x-auto rounded-xl border border-base-300 bg-base-200 p-4 text-sm leading-6 text-base-content;
-  }
-
-  .content-page pre code {
-    @apply bg-transparent p-0 text-inherit;
-  }
-
-  .content-page--partnership {
-    @apply max-w-7xl;
-  }
-
-  .content-page--partnership .partnership-section {
-    @apply mt-10;
-  }
-
-  .content-page--partnership .partnership-section > h2 {
-    @apply mt-0 mb-5 text-xl md:text-2xl;
-  }
-
-  .content-page--partnership .partnership-ways > h3 {
-    @apply mt-5 mb-0 border border-base-300 border-b-0 bg-base-200 px-4 pt-4 text-lg md:px-6 md:pt-5;
-  }
-
-  .content-page--partnership .partnership-ways > h3 + p {
-    @apply mt-0 border-x border-base-300 bg-base-200 px-4 pt-2 text-sm leading-6 text-base-content/70 md:px-6;
-  }
-
-  .content-page--partnership .partnership-ways > h3 + p + ol {
-    @apply mt-0 mb-6 border border-base-300 border-t-0 bg-base-200 px-9 pb-5 pt-3 text-sm leading-7 md:px-11;
-  }
-
-  .content-page--partnership .partnership-rules,
-  .content-page--partnership .partnership-bottom {
-    @apply border-t border-base-300 pt-8;
-  }
-
-  .content-page--partnership .partnership-rules > ol {
-    @apply mt-0 rounded border border-base-300 bg-base-200 px-5 py-4 text-sm leading-7 md:px-6;
-  }
-
-  .content-page--partnership .partnership-bottom > h2 {
-    @apply mb-5;
-  }
-
-  .content-page--partnership .partnership-columns {
-    @apply grid gap-6 md:grid-cols-2;
-  }
-
-  .content-page--partnership .partnership-column {
-    @apply min-w-0 rounded border border-base-300 bg-base-200 px-4 py-5 md:px-6;
-  }
-
-  .content-page--partnership .partnership-column > h3 {
-    @apply mt-0 mb-3 text-lg md:text-xl;
-  }
-
-  .content-page--partnership .partnership-column > ul {
-    @apply mt-0 space-y-2 text-sm leading-6;
-  }
-
-  .content-page--partnership .partnership-contact {
-    @apply border-t border-base-300 pt-8;
-  }
-
-  .content-page--partnership .partnership-contact > h2 {
-    @apply mb-3;
-  }
-
-  .content-page--partnership .partnership-contact > p {
-    @apply mt-0 rounded border border-primary/20 bg-primary/5 px-4 py-3 text-sm leading-6 md:px-5;
-  }
-
-  .content-page--partnership {
-    @apply max-w-7xl;
-  }
-
-  .content-page--partnership .partnership-eyebrow {
-    @apply mt-0 mb-3 text-xs font-bold uppercase tracking-wider text-primary;
-  }
-
-  .content-page--partnership .partnership-lead {
-    @apply max-w-3xl text-base leading-7 text-base-content/70 md:text-lg;
-  }
-
-  .content-page--partnership .partnership-section {
-    @apply mt-12;
-  }
-
-  .content-page--partnership .partnership-section > h2,
-  .content-page--partnership .partnership-details h2 {
-    @apply mt-0 mb-5 text-xl md:text-2xl;
-  }
-
-  .content-page--partnership .partnership-grid,
-  .content-page--partnership .partnership-details,
-  .content-page--partnership .partnership-columns {
-    @apply grid gap-5 md:grid-cols-2;
-  }
-
-  .content-page--partnership .content-card {
-    @apply relative overflow-hidden border border-base-content/15 bg-base-100;
-  }
-
-  .content-page--partnership .content-card-body {
-    @apply p-5 md:p-7;
-  }
-
-  .content-page--partnership .content-card-kicker {
-    @apply mt-0 mb-2 text-xs font-bold text-primary;
-  }
-
-  .content-page--partnership .content-card--teal .content-card-kicker {
-    @apply text-teal-700;
-  }
-
-  .content-page--partnership .content-card h3 {
-    @apply mt-0 mb-2 text-xl font-bold md:text-2xl;
-  }
-
-  .content-page--partnership .content-card-description {
-    @apply mt-0 mb-5 min-h-0 text-sm leading-6 text-base-content/65;
-  }
-
-  .content-page--partnership .content-card ol,
-  .content-page--partnership .partnership-detail-section > ol,
-  .content-page--partnership .partnership-detail-section > ul {
-    @apply mt-0 space-y-2 text-sm leading-6;
-  }
-
-  .content-page--partnership .partnership-detail-section {
-    @apply min-w-0 border border-base-300 bg-base-100 p-5 md:p-6;
-  }
-
-  .content-page--partnership .partnership-detail-section small {
-    @apply mt-1 block text-xs leading-5 text-base-content/60;
-  }
-
-  .content-page--partnership .partnership-material-list {
-    @apply mt-4 grid gap-2 p-0 sm:grid-cols-2;
-    list-style: none;
-  }
-
-  .content-page--partnership .partnership-material-list li {
-    @apply m-0 border-l-2 border-teal-700 bg-teal-50 px-3 py-2 text-sm leading-6;
-  }
-
-  .content-page--partnership .partnership-bottom-panel {
-    @apply col-span-full border-0 bg-transparent p-0;
-  }
-
-  .content-page--partnership .partnership-bottom-panel > h2 {
-    @apply mt-0 mb-5;
-  }
-
-  .content-page--partnership .partnership-columns .partnership-detail-section {
-    @apply bg-base-200;
-  }
-
-  .content-page--partnership .partnership-columns h3 {
-    @apply mt-0 mb-3 text-lg;
-  }
-
-  .content-page--partnership .partnership-contact {
-    @apply mt-6 flex items-start justify-between gap-5 border-0 bg-base-content p-5 text-base-100 md:p-6;
-  }
-
-  .content-page--partnership .partnership-contact h2 {
-    @apply mt-0 mb-1 text-xl text-base-100;
-  }
-
-  .content-page--partnership .partnership-contact p {
-    @apply mt-0 text-sm leading-6 text-base-300;
-  }
-
-  .content-page--partnership .partnership-contact a {
-    @apply text-primary-content;
-  }
-
-  .content-page--partnership .partnership-contact-link {
-    @apply shrink-0 bg-base-100 px-4 py-2 text-sm font-bold text-base-content no-underline;
-  }
-
-  .content-page--partnership .content-section {
-    @apply mt-12;
-  }
-
-  .content-page--partnership .content-section > h2,
-  .content-page--partnership .detail-panel > h2 {
-    @apply mt-0 mb-5 text-xl md:text-2xl;
-  }
-
-  .content-page--partnership .content-columns {
-    @apply grid gap-5 md:grid-cols-2;
-  }
-
-  .content-page--partnership .content-steps,
-  .content-page--partnership .detail-panel > ul {
-    @apply mt-0 space-y-2 text-sm leading-6;
-  }
-
-  .content-page--partnership .content-steps small {
-    @apply mt-1 block text-xs leading-5 text-base-content/60;
-  }
-
-  .content-page--partnership .detail-panel {
-    @apply min-w-0 rounded-lg border border-base-content/15 bg-base-100 p-5 shadow-none md:p-6;
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
-  }
-
-  .content-page--partnership .partnership-details > .partnership-bottom-panel {
-    @apply col-span-full;
-  }
-
-  .content-page--partnership .partnership-bottom-panel > .content-section {
-    @apply mt-0;
-  }
-
-  .content-page--partnership .partnership-bottom-panel .detail-panel {
-    @apply bg-base-200;
-  }
-
-  .content-page--partnership .detail-panel .partnership-material-list {
-    @apply mt-4 grid gap-2 p-0 sm:grid-cols-2;
-    list-style: none;
-  }
-
-  .content-page--partnership .detail-panel .partnership-material-list li {
-    @apply m-0 border-l-2 border-teal-700 bg-teal-50 px-3 py-2 text-sm leading-6;
-  }
-
-  .content-page--partnership .contact-panel {
-    @apply mt-6 flex items-start justify-between gap-5 bg-base-content p-5 text-base-100 md:p-6;
-  }
-
-  .content-page--partnership .contact-panel h2 {
-    @apply mt-0 mb-1 text-xl text-base-100;
-  }
-
-  .content-page--partnership .contact-panel p {
-    @apply mt-0 text-sm leading-6 text-base-300;
-  }
-
-  .content-page--partnership .contact-panel a {
-    @apply text-primary-content;
-  }
-
-  .content-page--partnership .contact-panel-link {
-    @apply shrink-0 bg-base-100 px-4 py-2 text-sm font-bold text-base-content no-underline;
-  }
-
-  /* Partnership MDX keeps H2/H3 as native Markdown headings. */
-  .content-page--partnership > h2 {
-    @apply mt-12 mb-5 text-xl font-bold tracking-normal text-base-content md:text-2xl;
-  }
-
-  .content-page--partnership .detail-panel > h3 {
-    @apply mt-0 mb-3 text-lg font-bold tracking-normal text-base-content md:text-xl;
-  }
-
-  .content-page--partnership .content-card > .content-card-body > p {
-    @apply mt-0 mb-5 text-base leading-7 text-base-content/70;
-  }
-
-  .content-page--partnership .content-card ol,
-  .content-page--partnership .detail-panel > ol,
-  .content-page--partnership .detail-panel > ul {
-    @apply text-base leading-7;
-  }
-
-  .content-page--partnership .detail-panel > p {
-    @apply text-base leading-7;
-  }
-
-  /* Shared content components. Pages provide layout classes; components own their visual language. */
-  .content-card {
-    @apply relative min-w-0 overflow-hidden rounded-lg border border-base-content/15 bg-base-100 shadow-none;
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
-  }
-
-  .content-card::before {
-    @apply block h-1.5 bg-primary;
-    content: '';
-  }
-
-  .content-card--teal::before {
-    @apply bg-teal-700;
-  }
-
-  .content-card--gold::before {
-    @apply bg-amber-500;
-  }
-
-  .content-card-body {
-    @apply p-5 md:p-7;
-  }
-
-  .content-card h2,
-  .content-card h3 {
-    @apply mt-0 mb-3 font-bold tracking-normal text-base-content;
-  }
-
-  .content-card h2 {
-    @apply text-xl md:text-2xl;
-  }
-
-  .content-card h3 {
-    @apply text-lg md:text-xl;
-  }
-
-  .content-card p {
-    @apply mt-0 mb-5 text-base leading-7 text-base-content/70;
-  }
-
-  .content-card ol,
-  .content-card ul,
-  .detail-panel ol,
-  .detail-panel ul {
-    @apply text-base leading-7;
-  }
-
-  .detail-panel {
-    @apply min-w-0 rounded-lg border border-base-content/15 bg-base-100 p-5 shadow-none md:p-6;
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
-  }
-
-  .detail-panel h2,
-  .detail-panel h3 {
-    @apply mt-0 border-b border-base-300 pb-3 font-bold tracking-normal text-base-content;
-  }
-
-  .detail-panel h2 {
-    @apply mb-5 text-xl md:text-2xl;
-  }
-
-  .detail-panel h3 {
-    @apply mb-4 text-lg md:text-xl;
-  }
-
-  .detail-panel p {
-    @apply text-base leading-7;
-  }
-
-  .content-columns {
-    @apply grid gap-5 md:grid-cols-2;
-  }
-
-  @media (max-width: 767px) {
-    .content-page--partnership .partnership-contact,
-    .content-page--partnership .contact-panel {
-      @apply flex-col;
-    }
-
-    .content-page--partnership .partnership-contact-link,
-    .content-page--partnership .contact-panel-link {
-      @apply w-full text-center;
-    }
-  }
-
-  .desktop-nav-wrap,
-  .nav-top-tablist {
-    @apply flex flex-wrap items-center gap-0.5 rounded-xl bg-base-100;
-  }
-
-  .public-announcement-pending {
-    display: none !important;
-  }
-
-  .public-floating-layer {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  }
-
-  .nav-top-tab {
-    @apply inline-flex min-h-9 items-center rounded-lg bg-base-100 px-2.5 text-[0.95rem] tracking-normal transition-colors duration-200;
-  }
-
-  .nav-top-tab-compact {
-    @apply rounded-lg px-2.5 text-[0.78rem];
-  }
-
-  .nav-top-tab-mobile {
-    @apply inline-flex min-w-0 items-center justify-center rounded-none bg-base-100 px-1 text-[0.78rem];
-  }
-
-  .nav-top-tab:hover {
-    @apply bg-base-200/70 text-primary;
-  }
-
-  .nav-top-tab-active {
-    @apply bg-base-100 text-primary shadow-none;
-  }
-
-  .nav-top-tab-mobile.nav-top-tab-active {
-    @apply bg-base-100 text-primary shadow-none;
-  }
-
-  .mobile-nav-scroll {
-    scrollbar-width: none;
-  }
-
-  .mobile-nav-scroll::-webkit-scrollbar {
-    display: none;
-  }
-
-  .page-hero-wrap {
-    @apply w-full;
-  }
-
-  .page-hero-shell {
-    @apply flex flex-col gap-3 md:flex-row md:items-start md:justify-between;
-  }
-
-  .support-identities {
-    @apply grid gap-2;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
-  }
-
-  .support-identities > label {
-    @apply flex min-h-12 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-base-300 px-3 py-2;
-  }
-
-  .support-identities > label:has(input:checked) {
-    @apply border-primary bg-primary/5;
-  }
-
-  .support-identities > label > input {
-    @apply shrink-0;
-  }
-
-  .support-identities > label > span {
-    @apply whitespace-nowrap;
-  }
-
-  .support-site-combobox {
-    @apply relative min-w-0;
-  }
-
-  .support-site-combobox > input[role="combobox"] {
-    @apply pr-7;
-  }
-
-  .support-site-chevron {
-    @apply pointer-events-none absolute right-3 top-3 text-base-content/60;
-  }
-
-  .support-site-options {
-    @apply absolute left-0 top-full z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-box border border-base-300 bg-base-100 p-1 shadow-lg;
-  }
-
-  .support-site-options > button {
-    @apply flex w-full flex-col items-start gap-1 rounded-lg px-3 py-2 text-left text-sm;
-    overflow-wrap: anywhere;
-  }
-
-  .support-site-option-loading {
-    @apply cursor-not-allowed px-3 py-2 text-sm text-base-content/50;
-  }
-
-  .support-site-options > button:hover,
-  .support-site-options > button:focus-visible,
-  .support-site-options > button[aria-selected="true"] {
-    @apply bg-base-200 outline-none;
-  }
-
-  .support-site-options small {
-    @apply text-xs text-base-content/60;
-  }
-
-  .support-payment-options {
-    @apply grid gap-2;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
-  }
-
-  .support-payment-options > label {
-    @apply flex min-h-12 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-base-300 px-3 py-2;
-  }
-
-  .support-payment-options > label:has(input:checked) {
-    @apply border-primary bg-primary/5;
-  }
-
-  .support-payment-options > label > img,
-  .support-payment-options > label > input {
-    @apply shrink-0;
-  }
-
-  .support-return-status {
-    @apply mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm;
-  }
-
-  .support-payment-state-title {
-    @apply m-0 text-base font-bold;
-  }
-
-  .support-payment-window-notice {
-    @apply mt-3 flex items-start gap-2 text-base font-medium leading-6 text-base-content;
-  }
-
-  .support-payment-window-notice .loading {
-    @apply mt-0.5 shrink-0;
-  }
-
-  .support-payment-window-notice p {
-    @apply m-0;
-  }
-
-  .support-success-details {
-    @apply mt-3 border-t border-primary/20 pt-3;
-  }
-
-  .support-success-details h3 {
-    @apply text-sm font-bold;
-  }
-
-  .support-success-details dl {
-    @apply mt-2 grid gap-2;
-  }
-
-  .support-success-details dl > div {
-    @apply grid grid-cols-[auto_minmax(0,1fr)] gap-3;
-  }
-
-  .support-success-details dt {
-    @apply text-base-content/60;
-  }
-
-  .support-success-details dd {
-    @apply min-w-0 break-words text-right;
-    overflow-wrap: anywhere;
-  }
-
-  .support-list-empty {
-    @apply rounded-box border border-base-300 bg-base-100 p-8 text-center text-base-content/70;
-  }
-
-  @media (min-width: 768px) {
-    .supporters-table-card .gateway-site-table th[data-column-key="user"] {
-      width: 16%;
-    }
-
-    .supporters-table-card .gateway-site-table th[data-column-key="identity"] {
-      width: 7rem;
-    }
-
-    .supporters-table-card .gateway-site-table th[data-column-key="message"] {
-      width: 40%;
-    }
-
-    .supporters-table-card .gateway-site-table th[data-column-key="total"],
-    .supporters-table-card .gateway-site-table th[data-column-key="support"] {
-      width: 6.5rem;
-    }
-  }
-
-  .page-hero-submit-summary {
-    @apply flex w-full min-w-0 shrink-0 flex-col items-stretch gap-3 md:w-96;
-  }
-
-  .page-hero-main {
-    @apply min-w-0 flex-1;
-  }
-
-  .page-hero-kicker {
-    @apply text-sm font-semibold text-primary;
-  }
-
-  .page-hero-title {
-    @apply mt-1 text-2xl font-bold tracking-normal text-base-content md:text-[1.95rem];
-  }
-
-  .page-hero-copy {
-    @apply mt-2 text-sm leading-6 text-base-content/80;
-  }
-
-  .page-hero-meta {
-    @apply mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-base-content/60;
-  }
-
-  .page-hero-note {
-    @apply mt-1 text-xs leading-5 text-base-content/55;
-  }
-
-  .page-back-link {
-    @apply inline-flex w-fit items-center gap-2 rounded-md border border-base-300 bg-transparent px-2.5 py-2 text-sm font-semibold text-base-content transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
-  }
-
-  .page-back-icon {
-    @apply inline-flex h-5 w-5 shrink-0 items-center justify-center text-base-content transition-colors;
-  }
-
-  .tool-tablist-wrap {
-    @apply overflow-x-auto;
-  }
-
-  .tabs-box .tab {
-    @apply font-semibold;
-  }
-
-  .tool-tab-badge {
-    @apply ml-2 rounded-full bg-base-200 px-2 py-0.5 text-[11px] font-semibold text-base-content/60;
-  }
-
-  .content-tablist {
-    @apply w-fit max-w-full flex-wrap;
-  }
-
-  .content-tab {
-    @apply whitespace-nowrap;
-  }
-
-  .gateway-home-tablist {
-    @apply w-fit max-w-full flex-wrap;
-  }
-
-  .ip-purity-facts-grid {
-    @apply grid gap-3 sm:grid-cols-2;
-  }
-
-  .ip-purity-fact-card {
-    @apply rounded-xl border border-base-300 bg-base-200/70 px-4 py-3;
-  }
-
-  .ip-purity-fact-card dt {
-    @apply text-xs font-semibold uppercase tracking-wide text-base-content/50;
-  }
-
-  .ip-purity-fact-card dd {
-    @apply mt-2 break-words text-sm font-semibold leading-6 text-base-content;
-  }
-
-  .ip-purity-map-card {
-    @apply rounded-2xl border border-base-300 bg-base-200/60 p-4;
-  }
-
-  .ip-purity-map {
-    @apply mt-3 overflow-hidden rounded-2xl border border-base-300 bg-base-100;
-    min-height: 250px;
-  }
-
-  .ip-purity-map-empty {
-    @apply flex h-full min-h-[250px] flex-col items-center justify-center gap-2 px-6 text-center text-sm text-base-content/65;
-  }
-
-  .ip-purity-map .maplibregl-ctrl-attrib,
-  .ip-purity-map .maplibregl-ctrl-attrib a {
-    @apply text-[10px] text-base-content/55;
-  }
-
-  .ip-purity-map .maplibregl-popup-content {
-    @apply rounded-xl border border-base-300 bg-base-100 px-3 py-2 shadow-lg;
-  }
-
-  .ip-purity-map-popup {
-    @apply flex flex-col gap-1 text-xs text-base-content;
-  }
-
-  .ip-purity-map-popup strong {
-    @apply font-semibold text-base-content;
-  }
-
-  .ip-purity-map-popup span {
-    @apply text-base-content/72;
-  }
-
-  .ip-purity-signals,
-  .ip-purity-sources {
-    @apply grid gap-3;
-  }
-
-  .ip-purity-signal-card,
-  .ip-purity-source-card {
-    @apply rounded-xl border border-base-300 bg-base-200/55 px-4 py-4;
-  }
-
-  /* 收藏功能高亮状态 */
-  .favorite-toggle {
-    @apply inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center text-lg leading-none text-slate-300 transition hover:text-red-400 focus:outline-none;
-  }
-
-  .favorite-toggle[aria-pressed="true"] {
-    @apply text-red-500 hover:text-red-600!;
-  }
-
-  .cell-inline {
-    @apply flex items-center gap-2;
-  }
-
-  /* 横向溢出折行保护 */
-  .merchant-text,
-  .product-link,
-  .product-text {
-    overflow-wrap: anywhere;
-  }
-
-  .merchant-link,
-  .product-link {
-    @apply inline no-underline text-primary transition hover:underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30;
-  }
-
-  .merchant-badge {
-    @apply inline-flex h-6 min-h-6 max-w-full min-w-0 shrink-0 items-center gap-1 rounded px-1.5 text-xs font-semibold leading-none;
-    border: 1px solid color-mix(in oklab, var(--color-primary) 45%, transparent);
-    background: color-mix(in oklab, var(--color-primary) 5%, var(--color-base-100));
-    color: var(--color-primary);
-  }
-
-  .merchant-badge-group {
-    @apply inline-flex max-w-full min-w-0 shrink-0 items-center;
-  }
-
-  .merchant-badge-label {
-    @apply min-w-0 truncate;
-  }
-
-  .merchant-badge[data-kind='sponsor'] {
-    border-color: var(--color-amber-400);
-    background: color-mix(in oklab, var(--color-amber-400) 8%, var(--color-base-100));
-    color: var(--merchant-partner-text);
-    font-weight: 700;
-  }
-
-  .merchant-badge-link {
-    @apply text-primary underline underline-offset-2;
-  }
-
-  .merchant-badge-info {
-    @apply relative inline-flex h-3 w-3 cursor-pointer items-center justify-center rounded-full border border-current text-[8px] font-bold leading-none outline-none;
-  }
-
-  .merchant-badge-tooltip {
-    @apply pointer-events-none invisible absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 rounded border border-base-300 bg-base-100 px-3 py-2 text-left text-xs font-normal leading-5 text-base-content opacity-0 transition-opacity;
-  }
-
-  .merchant-badge-tooltip::before {
-    content: '';
-    @apply absolute -top-2 left-0 right-0 h-2;
-  }
-
-  .merchant-badge-info:hover .merchant-badge-tooltip,
-  .merchant-badge-info:focus-within .merchant-badge-tooltip {
-    @apply pointer-events-auto visible opacity-100;
-  }
-
-  .hero-domain {
-    overflow-wrap: anywhere;
-  }
-
-  /* 赞助位卡片与排版 */
-  .sponsor-section {
-    @apply rounded border border-base-300 bg-base-100 shadow-sm p-3 text-sm;
-    container-type: inline-size;
-  }
-
-  .sponsor-header {
-    @apply mb-2 flex items-center gap-3;
-  }
-
-  .sponsor-title {
-    @apply text-lg font-bold text-base-content;
-  }
-
-  .sponsor-join-link {
-    @apply text-xs font-medium text-primary hover:opacity-80;
-  }
-
-  .sponsor-grid {
-    @apply grid gap-3 list-none p-0;
-    grid-template-columns: 1fr;
-  }
-
-  .sponsor-grid-item {
-    @apply min-w-0;
-  }
-
-  .sponsor-card {
-    @apply flex h-full min-w-0 w-full flex-col rounded border border-base-content/15 bg-base-200 transition-all hover:border-primary/50 hover:shadow-sm;
-  }
-
-  .sponsor-main-link {
-    @apply flex flex-1 flex-col gap-2 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
-  }
-
-  .sponsor-plan-main-link {
-    @apply flex flex-col gap-1 p-3 pb-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
-  }
-
-  .sponsor-logo-frame {
-    @apply flex w-full items-center justify-center overflow-hidden rounded;
-    padding: var(--sponsor-padding, 0);
-    background-color: var(--sponsor-background-color, white);
-    aspect-ratio: 3 / 1;
-  }
-
-  .sponsor-logo {
-    @apply h-full w-full object-contain text-slate-950;
-  }
-
-  .sponsor-logo[data-scale-mode='contain'] {
-    @apply object-contain;
-  }
-
-  .sponsor-logo[data-scale-mode='inset'] {
-    @apply max-h-[82%] max-w-[88%];
-  }
-
-  .sponsor-logo[data-scale-mode='cover'] {
-    @apply object-cover;
-  }
-
-  .sponsor-name {
-    @apply block text-center text-sm font-semibold leading-5 text-base-content underline-offset-2 group-hover:underline;
-  }
-
-  .sponsor-copy {
-    @apply block text-center text-xs leading-5 text-base-content/70;
-  }
-
-  .sponsor-plan-title {
-    @apply block text-center;
-  }
-
-  .sponsor-plan-name {
-    @apply text-sm font-semibold text-base-content;
-  }
-
-  .sponsor-plan-price {
-    @apply ml-1 text-sm font-semibold leading-5 text-rose-500 underline-offset-2 group-hover:underline;
-  }
-
-  .sponsor-plan-grid {
-    @apply grid grid-cols-2 gap-y-0 pb-2 text-sm leading-5 text-base-content/70;
-  }
-
-  .sponsor-plan-link {
-    @apply block px-3 py-0.5 text-center hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30;
-    color: var(--sponsor-link-color, color-mix(in oklab, currentColor 80%, transparent));
-  }
-
-  @container (min-width: 38rem) {
-    .sponsor-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @container (min-width: 58rem) {
-    .sponsor-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @container (min-width: 78rem) {
-    .sponsor-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
-  /* 首页及大表格列宽微调 */
-  .shops-empty-state {
-    @apply mx-auto my-8 max-w-md px-4 text-center text-sm text-base-content/55;
-  }
-
-  .progressive-load-panel {
-    @apply px-4 py-5;
-  }
-
-  .gateway-filter-grid > .input,
-  .gateway-filter-grid > .select,
-  .gateway-filter-grid > div {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .gateway-filter-grid input {
-    min-width: 0;
-  }
-
-  /* Session 工具页面高度约束媒体查询 */
-  @media (min-width: 80rem) {
-    .session-converter-grid {
-      height: clamp(460px, calc(100vh - 22rem), 620px);
-      min-height: 0;
-    }
-
-    .session-converter-grid .card {
-      display: flex;
-      min-height: 0;
-      flex-direction: column;
-    }
-
-    .session-converter-grid .card-body {
-      display: flex;
-      min-height: 0;
-      flex: 1 1 auto;
-      flex-direction: column;
-    }
-
-    .session-converter-textarea {
-      min-height: 0;
-      flex: 1 1 auto;
-      resize: none;
-    }
-
-    .session-account-table {
-      flex: 0 0 auto;
-    }
-
-    .session-account-table > div {
-      max-height: 8.75rem;
-    }
-  }
-
-  /* 商家视图芯片高亮及排列 */
-  .merchant-table {
-    @apply w-full;
-  }
-
-  @media (min-width: 768px) {
-    .merchant-table {
-      min-width: 980px;
-    }
-  }
-
-  .merchant-table-head {
-    @apply hidden items-center grid-cols-[72px_300px_96px_minmax(360px,1fr)_116px_116px_160px] border-b border-base-300 bg-base-200 text-sm text-base-content md:grid;
-  }
-
-  .merchant-table-head-cell {
-    @apply flex h-full min-h-12 items-center border-r border-base-300 px-2 py-3 font-bold text-base-content last:border-r-0;
-  }
-
-  .merchant-table-head-cell.data-table-head-cell-sortable {
-    @apply cursor-pointer select-none p-0;
-  }
-
-  .merchant-table-head-index {
-    @apply justify-center text-center;
-  }
-
-  .merchant-row {
-    @apply grid grid-cols-1 border-b border-base-300 last:border-b-0 md:grid-cols-[72px_300px_96px_minmax(360px,1fr)_116px_116px_160px];
-  }
-
-  .merchant-table-cell {
-    @apply flex items-center border-b border-base-300 bg-base-100 px-3 py-3 text-sm font-normal text-base-content md:border-b-0 md:border-r;
-  }
-
-  .merchant-row > .merchant-table-cell:last-child {
-    @apply md:border-r-0;
-  }
-
-  .merchant-table-cell-index {
-    @apply justify-center text-center;
-  }
-
-  .merchant-table-cell-merchant {
-    @apply justify-start;
-  }
-
-  .merchant-table-cell-value {
-    @apply justify-between gap-3;
-  }
-
-  .merchant-table-cell.data-table-cell-align-right {
-    @apply md:justify-end;
-  }
-
-  .merchant-table-cell-products {
-    @apply flex-col items-stretch md:items-start md:justify-center;
-  }
-
-  .merchant-table-mobile-label {
-    @apply text-xs font-semibold text-base-content/45 md:hidden;
-  }
-
-  .merchant-table-products-mobile-label {
-    @apply mb-2;
-  }
-
-  .merchant-table-value {
-    @apply text-sm font-normal text-base-content;
-  }
-
-  .merchant-header {
-    @apply flex min-w-0 items-center gap-2.5;
-  }
-
-  .merchant-header-content {
-    @apply flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-2;
-  }
-
-  .merchant-title-row {
-    @apply flex min-w-0 flex-1 items-center md:flex-[0_1_auto];
-  }
-
-  .merchant-tag-row {
-    @apply flex max-w-full min-w-0 flex-wrap items-center gap-2 md:shrink-0;
-  }
-
-  .merchant-primary-text {
-    @apply pt-0.5 font-medium text-base-content;
-  }
-
-  .no-products {
-    @apply rounded border border-dashed border-base-300 px-3 py-3 text-sm text-base-content/40;
-  }
-
-  .product-list {
-    @apply flex flex-wrap gap-2;
-  }
-
-  .product-chip-link-in-stock {
-    @apply inline-block max-w-full rounded border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs leading-snug text-slate-900 no-underline transition hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1;
-  }
-
-  .product-chip-link-sold-out {
-    @apply inline-block max-w-full rounded border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs leading-snug text-slate-400 no-underline opacity-70 grayscale transition hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1;
-  }
-
-  .product-chip-static-in-stock {
-    @apply max-w-full rounded border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs leading-snug text-slate-900;
-  }
-
-  .product-chip-static-sold-out {
-    @apply max-w-full rounded border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs leading-snug text-slate-400 opacity-70 grayscale;
-  }
-
-  .product-category {
-    @apply text-xs font-semibold text-emerald-700;
-  }
-
-  .product-name {
-    @apply ml-1.5 font-medium text-slate-900;
-  }
-
-  .product-price {
-    @apply ml-1.5 text-slate-500;
-  }
-
-  .product-status-in-stock {
-    @apply ml-1.5 text-emerald-700;
-  }
-
-  .product-status-sold-out {
-    @apply ml-1.5 text-red-500;
-  }
-
-  /* 全局输入框、文本域与选择框焦点样式优化，移除粗 outline，以平滑品牌色边框代替 */
-  .input,
-  .textarea,
-  .select {
-    @apply transition-colors duration-200;
-  }
-
-  .input:focus,
-  .input:focus-within,
-  .textarea:focus,
-  .select:focus {
-    outline: none !important;
-    border-color: var(--color-primary) !important;
-    box-shadow: none !important;
-  }
+/* Standalone text links retain their semantic color on hover. */
+.link-primary:hover { color: var(--color-primary); }
+.btn-outline:hover, .btn-ghost:hover {
+  color: var(--btn-rest-fg, var(--btn-color, var(--color-base-content)));
+  background-color: color-mix(in srgb, var(--btn-color, var(--color-base-content)) 8%, var(--color-base-100));
 }

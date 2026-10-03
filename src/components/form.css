@@ -1,61 +1,43 @@
-/*
-文件说明: 提交表单的共享文字层级、字段间距和控件样式，以及弹窗表单的外层布局。
-*/
+/* 提交与赞赏弹窗的共享结构、字段及反馈。 */
 @utility form-input {
-  @apply w-full min-w-0 text-sm font-normal;
-
-  &::placeholder {
-    @apply text-base-content/70 opacity-100;
-  }
+  display: block; box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 12px;
+  border: 1px solid var(--color-line-strong); border-radius: 8px; background: var(--color-base-100);
+  color: var(--color-base-content); font-size: 13px; font-weight: 400; line-height: 1.5;
+  outline: none; box-shadow: none; transition: border-color .15s, box-shadow .15s;
+  &:is(textarea) { height: auto; min-height: 96px; padding: 10px 12px; resize: vertical; }
+  &:is(summary) { display: flex; align-items: center; justify-content: space-between; cursor: pointer; list-style: none; }
+  &::placeholder { color: var(--color-muted); opacity: 1; }
+  &:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent); }
+  &[aria-invalid="true"], &:user-invalid { border-color: var(--color-error); }
+  &:disabled { background: var(--color-surface-raised); color: var(--color-muted); cursor: not-allowed; }
 }
-
 @utility form-dialog-body {
-  @apply relative grid gap-5 p-5;
+  position: relative; padding: 0; border: 1px solid var(--color-base-300); border-radius: 16px; background: var(--color-base-100); color: var(--color-base-content); box-shadow: var(--shadow-3); max-height: 90dvh;
 }
-
 @layer components {
-  .submission-form {
-    @apply grid gap-5 min-w-0;
-  }
-
-  .form-field {
-    @apply min-w-0 m-0 border-0 p-0;
-  }
-
-  .form-field > :not(legend) + * {
-    @apply mt-1.5;
-  }
-
-  .form-field-label {
-    @apply block p-0 text-sm font-semibold leading-5 text-base-content;
-  }
-
-  .form-field > legend {
-    @apply mb-1.5;
-  }
-
-  .form-field-hint {
-    @apply text-xs font-normal leading-5 text-base-content/70;
-  }
-
-  .form-field-error {
-    @apply text-xs font-normal leading-5 text-error;
-  }
-
-  .form-field-hint:empty,
-  .form-field-error:empty {
-    display: none;
-  }
-
-  .form-dialog-title {
-    @apply m-0 pr-10 text-xl font-bold leading-7;
-  }
-
-  .form-dialog-description {
-    @apply text-sm font-normal leading-6 text-base-content;
-  }
-
-  .form-dialog-close {
-    @apply absolute right-5 top-5;
+  .form-dialog-compact { max-width: 560px; }
+  .form-dialog-wide { max-width: 680px; }
+  .form-dialog-header { padding: 18px 20px 12px; }
+  .form-dialog-title { margin: 0; padding-right: 32px; font-size: 18px; line-height: 1.4; font-weight: 700; }
+  .form-dialog-description { margin-top: 6px; font-size: 13px; line-height: 1.65; color: var(--color-muted); }
+  .form-dialog-close { position: absolute; top: 14px; right: 14px; }
+  .form-dialog-content { display: grid; gap: 16px; padding: 4px 20px 20px; }
+  .submission-form { display: grid; gap: 16px; min-width: 0; }
+  .form-field { min-width: 0; margin: 0; border: 0; padding: 0; }
+  .form-field > :not(legend) + * { margin-top: 6px; }
+  .form-field-label { display: block; padding: 0; font-size: 13px; font-weight: 600; line-height: 20px; color: var(--color-ink-secondary); }
+  .form-field > legend { margin-bottom: 6px; }
+  .form-field-hint { font-size: 12px; font-weight: 400; line-height: 1.6; color: var(--color-muted); }
+  .form-field-error { font-size: 12px; font-weight: 400; line-height: 1.6; color: var(--color-error); }
+  .form-field-hint:empty,.form-field-error:empty { display: none; }
+  .form-dialog-content > .alert { border-radius: 10px; box-shadow: none; font-size: 13px; }
+  summary.form-input::-webkit-details-marker { display: none; }
+  summary.form-input::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); margin: -3px 2px 0 12px; }
+  .form-dialog-content .card-actions { justify-content: flex-end; margin-top: 2px; padding-top: 14px; border-top: 1px solid var(--color-base-300); }
+  .form-dialog-content .form-field-error:not(:empty) { padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb,var(--color-error) 7%,transparent); }
+  @media (max-width: 600px) {
+    .modal:has(.form-dialog-body) { align-items: end; }
+    .form-dialog-body { width: 100%; max-width: none; max-height: 92dvh; border-radius: 16px 16px 0 0; }
+    .form-dialog-content { padding-bottom: max(20px,env(safe-area-inset-bottom)); }
   }
 }

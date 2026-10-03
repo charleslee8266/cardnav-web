@@ -16,7 +16,10 @@ import { telemetryBlocks } from '../telemetry-blocks.js';
 
 const messages = Astro.locals.messages;
 const t = messages.support;
-const supporters = await loadSupportLeaderboard();
+const allSupporters = await loadSupportLeaderboard();
+const identityQuery = new URL(Astro.request.url).searchParams.get('identity');
+const activeIdentity = ['person', 'shop', 'gateway'].includes(identityQuery || '') ? identityQuery : 'all';
+const supporters = activeIdentity === 'all' ? allSupporters : allSupporters.filter(supporter => supporter.kind === activeIdentity);
 const identities = { person: t.person, gateway: t.gatewayIdentity, shop: t.shopIdentity };
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -30,11 +33,17 @@ const seo = buildSeoContext({
 });
 ---
 <PublicPage activeNav="supporters" pageType="supporters" {...seo}>
-  <PageHero title={t.listTitle} description={t.listDescription}>
+  <PageHero title={t.listTitle} description={t.listHeroDescription}>
     <a slot="aside" href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button"><span aria-hidden="true">♥</span> {t.button}</a>
   </PageHero>
+  <section class="supporters-table-card card overflow-hidden border border-base-300 bg-base-100">
+  <nav class="supporter-filters" aria-label={t.identity}>
+    {(['all', 'person', 'shop', 'gateway'] as const).map(kind => <a href={Astro.locals.localizePath(`/supporters${kind === 'all' ? '' : `?identity=${kind}`}`)} class:list={['btn btn-sm', activeIdentity === kind ? 'support-button' : 'btn-ghost']} aria-current={activeIdentity === kind ? 'page' : undefined} data-umami-event="internal-link-click" data-umami-event-link-type="supporter-filter" data-umami-event-url={Astro.locals.localizePath(`/supporters${kind === 'all' ? '' : `?identity=${kind}`}`)}>
+      {kind === 'all' ? t.all : identities[kind]}<span class="supporter-filter-count">{kind === 'all' ? allSupporters.length : allSupporters.filter(supporter => supporter.kind === kind).length}</span>
+    </a>)}
+    <a class="supporter-rules" href={Astro.locals.localizePath('/partnership')}>{t.viewRules} ↗</a>
+  </nav>
   {supporters.length > 0 ? (
-    <section class="supporters-table-card card overflow-hidden border border-base-300 bg-base-100 shadow-sm">
       <DataTable variant="gatewaySites">
         <Fragment slot="head">
           <DataTableHeader label={messages.labels.sequence} sortKey="sequence" sortType="number" align="center" />
@@ -81,11 +90,19 @@ const seo = buildSeoContext({
           );
         })}
       </DataTable>
-    </section>
   ) : <p class="support-list-empty">{t.listEmpty}</p>}
+  </section>
   <SupportDialog returnPage="supporters" />
   <script>
     import '../scripts/data-table.js';
   </script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>
+
+<style>
+  .supporter-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--color-base-300); background: var(--color-base-100); }
+  .supporter-filter-count { font-size: 11px; font-variant-numeric: tabular-nums; opacity: .8; }
+  .supporter-rules { margin-left: auto; padding: 6px 8px; color: var(--merchant-partner-text); font-size: 12px; }
+  .supporters-table-card { border-radius: 14px; box-shadow: var(--shadow-1); }
+  .supporters-table-card .support-list-empty { border: 0; }
+</style>

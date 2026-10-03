@@ -1,6 +1,6 @@
 ---
 /*
-文件说明: 统一公开站内页（非首页）Hero 区块的卡片容器、标题层级和可选返回链接。
+文件说明: 统一公开站内页的紧凑页头、标题层级、操作区和可选返回链接。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import PageBackLink from './PageBackLink.astro';
@@ -13,8 +13,6 @@ type Props = {
   titleId?: string;
   descriptionId?: string;
   heading?: 'h1' | 'h2';
-  compact?: boolean;
-  wrapCard?: boolean;
   titleClass?: string;
   copyClass?: string;
 };
@@ -27,77 +25,29 @@ const {
   titleId,
   descriptionId,
   heading = 'h1',
-  compact = false,
-  wrapCard = true,
   titleClass = '',
   copyClass = '',
 } = Astro.props;
 
 const HeadingTag = heading;
 const hasAside = Astro.slots.has('aside');
+const hasMeta = Astro.slots.has('meta');
 const linkTo = Astro.locals.localizePath;
 const backLinkHref = backHref ? linkTo(backHref) : '';
 
-const heroBodyClass = ['page-hero-wrap', compact && 'space-y-3'].filter(Boolean);
-const titleClassName = ['page-hero-title', compact && 'mt-0', titleClass].filter(Boolean);
+const titleClassName = ['page-hero-title', titleClass].filter(Boolean);
 const copyClassName = ['page-hero-copy', copyClass].filter(Boolean);
 ---
-
-{wrapCard ? (
-  <section data-telemetry-block={telemetryBlocks.shared.hero} class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body p-5">
-      {hasAside ? (
-        <div class="page-hero-shell">
-          <div class="page-hero-main">
-            <div data-telemetry-block={telemetryBlocks.shared.hero} class:list={heroBodyClass}>
-              {backLinkHref && backLabel && (
-                <div class="flex flex-wrap items-center gap-2">
-                  <PageBackLink href={backLinkHref} label={backLabel} />
-                </div>
-              )}
-              <slot name="title">
-                <HeadingTag id={titleId} class:list={titleClassName}>{title}</HeadingTag>
-              </slot>
-              {description && <p id={descriptionId} class:list={copyClassName}>{description}</p>}
-              <slot name="note" />
-              <slot name="meta" />
-              <slot name="actions" />
-            </div>
-          </div>
-          <slot name="aside" />
-        </div>
-      ) : (
-        <div data-telemetry-block={telemetryBlocks.shared.hero} class:list={heroBodyClass}>
-          {backLinkHref && backLabel && (
-            <div class="flex flex-wrap items-center gap-2">
-              <PageBackLink href={backLinkHref} label={backLabel} />
-            </div>
-          )}
-          <slot name="title">
-            <HeadingTag id={titleId} class:list={titleClassName}>{title}</HeadingTag>
-          </slot>
-          {description && <p id={descriptionId} class:list={copyClassName}>{description}</p>}
-          <slot name="note" />
-          <slot name="meta" />
-          <slot name="actions" />
-        </div>
-      )}
-      <slot name="footer" />
+<header data-telemetry-block={telemetryBlocks.shared.hero} class="page-heading">
+  <div class:list={["page-hero-shell", hasMeta && "page-hero-with-metrics", hasAside && "page-hero-with-aside"]}>
+    <div class="page-hero-main">
+      {backLinkHref && backLabel && <PageBackLink href={backLinkHref} label={backLabel} />}
+      <slot name="title"><HeadingTag id={titleId} class:list={titleClassName}>{title}</HeadingTag></slot>
+      {description && <p id={descriptionId} class:list={copyClassName}>{description}</p>}
+      <slot name="note" />
+      <slot name="actions" />
     </div>
-  </section>
-) : (
-  <div data-telemetry-block={telemetryBlocks.shared.hero} class:list={heroBodyClass}>
-    {backLinkHref && backLabel && (
-      <div class="flex flex-wrap items-center gap-2">
-        <PageBackLink href={backLinkHref} label={backLabel} />
-      </div>
-    )}
-    <slot name="title">
-      <HeadingTag id={titleId} class:list={titleClassName}>{title}</HeadingTag>
-    </slot>
-    {description && <p id={descriptionId} class:list={copyClassName}>{description}</p>}
-    <slot name="note" />
-    <slot name="meta" />
-    <slot name="actions" />
+    {(hasAside || hasMeta) && <div class="page-hero-side"><slot name="aside" /><slot name="meta" /></div>}
   </div>
-)}
+  <slot name="footer" />
+</header>

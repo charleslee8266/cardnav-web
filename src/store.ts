@@ -1,3 +1,4 @@
+import { shopPlatformName } from './shop-platform.js';
 import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice } from './shop-plan-search.js';
 /**
  * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
@@ -15,6 +16,7 @@ import {
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
 export type PublicSiteRow = {
+  platformName?: string;
   id: string;
   name: string;
   url: string;
@@ -97,6 +99,7 @@ export type PublicGatewayModelDetail = {
 };
 
 export type PublicProductRow = {
+  sitePlatformName?: string;
   id: string;
   categoryName: string;
   autoCategory: string;
@@ -302,6 +305,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       SELECT
         id,
         name,
+        family,
         url,
         score,
         sponsor,
@@ -337,6 +341,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         shop_products.id AS product_row_id,
         shop_products.site_id,
         shop_sites.name AS site_name,
+        shop_sites.family AS site_family,
         shop_sites.url AS site_url,
         shop_sites.score AS site_score,
         shop_sites.sponsor AS site_sponsor,
@@ -384,6 +389,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       base_products.product_row_id,
       base_products.site_id,
       base_products.site_name,
+      base_products.site_family,
       base_products.site_url,
       base_products.site_score,
       base_products.site_sponsor,
@@ -433,6 +439,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       refreshTime: formatBeijingRefreshTime(refreshedAt),
       siteId: String(row.site_id),
       siteName: String(row.site_name),
+      sitePlatformName: shopPlatformName(row.site_family),
       siteUrl: String(row.site_url),
       siteProductRefreshSuccessAt,
       siteProductRefreshSuccessTime: formatBeijingRefreshTime(siteProductRefreshSuccessAt),
@@ -448,6 +455,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     ? sitesResult.rows.map(row => ({
       id: String(row.id),
       name: String(row.name),
+      platformName: shopPlatformName(row.family),
       url: String(row.url),
       lastProductRefreshSuccessAt: isoTimestamp(row.last_product_refresh_success_at),
       lastProductRefreshSuccessTime: formatBeijingRefreshTime(isoTimestamp(row.last_product_refresh_success_at)),
@@ -465,6 +473,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         siteById.set(siteId, {
           id: siteId,
           name: String(row.site_name),
+          platformName: shopPlatformName(row.site_family),
           url: String(row.site_url),
           lastProductRefreshSuccessAt,
           lastProductRefreshSuccessTime: formatBeijingRefreshTime(lastProductRefreshSuccessAt),
@@ -557,7 +566,8 @@ export async function loadGatewaySites(options: PublicListLimitOptions & { query
     SELECT COUNT(*)::INTEGER AS total_site_count,
       COUNT(*) FILTER (WHERE price_count > 0)::INTEGER AS sites_with_prices_count,
       COALESCE(SUM(model_count), 0)::INTEGER AS total_model_count,
-      COALESCE(SUM(price_count), 0)::INTEGER AS total_price_count
+      COALESCE(SUM(price_count), 0)::INTEGER AS total_price_count,
+      MAX(latest_price_fetched_at) AS latest_refreshed_at
     FROM gateway_sites WHERE status = 'online' AND type = 'gateway'
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
@@ -567,6 +577,7 @@ export async function loadGatewaySites(options: PublicListLimitOptions & { query
   return {
     sites,
     totalSiteCount: Number(summaryRow.total_site_count) || 0,
+    latestRefreshedAt: isoTimestamp(summaryRow.latest_refreshed_at),
     sitesWithPricesCount: Number(summaryRow.sites_with_prices_count) || 0,
     totalModelCount: Number(summaryRow.total_model_count) || 0,
     totalPriceCount: Number(summaryRow.total_price_count) || 0,
@@ -1153,6 +1164,28 @@ export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<Publ
   return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(mapOfficialPriceRow);
 }
 
+/** Read the three lowest regional prices and the recorded U.S. baseline per subscription. */
+export async function loadOfficialPriceHighlights(): Promise<PublicOfficialPriceRow[]> {
+  const result = await getPool().query(`
+    WITH ranked_prices AS (
+      SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug,
+        is_default, display_order, country_code, country_label, currency_code,
+        price_text, price_value, cny_price, usd_price, rub_price, fetched_at,
+        ROW_NUMBER() OVER (PARTITION BY app_slug, plan_slug ORDER BY cny_price ASC, country_code ASC) AS position
+      FROM official_prices
+      WHERE trim(url_slug) <> ''
+        AND lower(trim(url_slug)) NOT IN ('default', 'official-price')
+        AND trim(display_name) <> ''
+    )
+    SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug,
+      is_default, display_order, country_code, country_label, currency_code,
+      price_text, price_value, cny_price, usd_price, rub_price, fetched_at
+    FROM ranked_prices WHERE position <= 3 OR country_code = 'US'
+    ORDER BY display_order ASC, app_slug ASC, plan_slug ASC, cny_price ASC, country_code ASC
+  `);
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(mapOfficialPriceRow);
+}
+
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
   const db = getPool();
   const result = await db.query(`
@@ -1271,4 +1304,27 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
       rank ASC
   `);
   return result.rows.map(row => mapModelLeaderboardRow(row));
+}
+
+export type PublicOfficialPriceStats = { productCount: number; regionCount: number };
+export async function loadOfficialPriceStats(): Promise<PublicOfficialPriceStats> {
+  const result = await getPool().query(`
+    SELECT COUNT(DISTINCT (app_slug, plan_slug)) AS product_count,
+      COUNT(DISTINCT NULLIF(upper(trim(country_code)), '')) AS region_count
+    FROM official_prices
+    WHERE trim(url_slug) <> '' AND lower(trim(url_slug)) NOT IN ('default', 'official-price')
+      AND trim(display_name) <> '' AND app_slug <> 'copilot'
+  `);
+  return { productCount: Number(result.rows[0]?.product_count) || 0, regionCount: Number(result.rows[0]?.region_count) || 0 };
+}
+
+export type PublicModelLeaderboardStats = { scenarioCount: number; modelCount: number };
+export async function loadModelLeaderboardStats(): Promise<PublicModelLeaderboardStats> {
+  const result = await getPool().query(`
+    SELECT COUNT(DISTINCT task_slug) AS scenario_count,
+      COUNT(DISTINCT NULLIF(trim(model_name), '')) AS model_count
+    FROM model_leaderboards
+    WHERE task_slug IN ('coding', 'creative-writing', 'math', 'text-to-image')
+  `);
+  return { scenarioCount: Number(result.rows[0]?.scenario_count) || 0, modelCount: Number(result.rows[0]?.model_count) || 0 };
 }

@@ -40,11 +40,12 @@ const buttonAttrs = {
 ---
 
 <div class:list={['data-table-head-content', 'data-table-sort-content', hasHelp && 'data-table-sort-content-with-help']}>
-  <button type="button" class="data-table-sort-button" {...buttonAttrs}>
-    <span class="data-table-head-label-group">
-      <span class="data-table-head-label">{label}</span>
-      {statusText ? <span class="data-table-sort-status sr-only">{statusText}</span> : null}
-    </span>
+  <span class="data-table-head-label-group">
+    <span class="data-table-head-label">{label}</span>
+    {hasHelp ? <button type="button" class:list={['inline-help-button', helpClass]} aria-label={helpLabel || label} data-inline-help data-tip={helpTip} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>i</button> : null}
+  </span>
+  <button type="button" class="data-table-sort-button" aria-label={label} {...buttonAttrs}>
+    {statusText ? <span class="data-table-sort-status sr-only">{statusText}</span> : null}
   <span class="data-table-sort-indicator" aria-hidden="true">
     <svg class="data-table-sort-icon data-table-sort-icon-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="m7 15 5 5 5-5"></path>
@@ -60,7 +61,4 @@ const buttonAttrs = {
     </svg>
   </span>
   </button>
-  {hasHelp ? (
-    <button type="button" class:list={['inline-help-button', helpClass]} aria-label={helpLabel || label} data-inline-help data-tip={helpTip} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>i</button>
-  ) : null}
 </div>

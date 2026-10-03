@@ -2,7 +2,7 @@
 /*
 文件说明: 渲染中转站列表与模型详情页共用的中转站表格行，统一站点信息、赞助标签、评分列和操作入口。
 */
-import { formatPositiveScore } from '../gateway-display.js';
+import ScoreDisplay from './ScoreDisplay.astro';
 import DataTableCell from './DataTableCell.astro';
 import MerchantBadge from './MerchantBadge.astro';
 
@@ -15,6 +15,8 @@ type GatewaySite = {
   outboundUrl: string;
   displayFamily?: string;
   summary?: string;
+  modelCount?: number;
+  priceCount?: number;
   siteScore?: number | null;
   sponsor?: boolean;
   supportTotalCents?: number;
@@ -77,30 +79,32 @@ const mergedRowAttrs = {
 <tr {...mergedRowAttrs}>
   <DataTableCell label={sequenceLabel} align="center" sequence>{sequence}</DataTableCell>
   <DataTableCell label={basicInfoLabel}>
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
-      <div class="min-w-0 space-y-2">
-        <div class="merchant-header">
+    <div class="data-entity-cell">
+      <div class="data-entity-copy">
           <button type="button" class="favorite-toggle" data-gateway-favorite={site.slug} data-site-name={site.name} aria-label={`${Astro.locals.messages.shops.merchantFavorite} ${site.name}`} aria-pressed="false"><span aria-hidden="true">♡</span></button>
+        <div class="merchant-header">
+
           <div class="merchant-header-content">
             <div class="merchant-title-row gap-2">
-              <a href={detailHref} class="link link-hover min-w-0 break-words text-base font-semibold text-primary" {...clickAttrs}>{site.name}</a>
-            </div>
-            {(site.sponsor || (site.supportPoints || 0) > 0) ? <div class="merchant-tag-row">
+              <a data-row-primary href={detailHref} class="merchant-link" {...clickAttrs}>{site.name}</a>
+            {(site.sponsor || (site.supportPoints || 0) > 0) ? <>
               {site.sponsor ? <MerchantBadge label={sponsorLabel} description={sponsorDescription} href={sponsorHref} linkLabel={sponsorLinkLabel} /> : null}
               {(site.supportPoints || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.amountLinkLabel} /> : null}
-            </div> : null}
+            </> : null}
+            </div>
           </div>
         </div>
-        {site.summary ? <p class="max-w-3xl text-sm leading-6 text-base-content/72">{site.summary}</p> : null}
+        {site.summary ? <p class="data-entity-description">{site.summary}</p> : null}
         <div class="text-xs text-base-content/55"><span class="break-all">{site.url}</span></div>
+        {site.priceCount === 0 && <p class="text-xs text-base-content/45">{site.modelCount ? Astro.locals.messages.llmGateway.dataStatusLabels.noPrice : Astro.locals.messages.llmGateway.dataStatusLabels.noData}</p>}
+        {(site.supportPoints || 0) > 0 && <div class="data-support-inline">{Astro.locals.messages.support.amountColumn} <strong>{site.supportPoints?.toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</strong></div>}
       </div>
-      <div class="inline-flex shrink-0 items-center gap-2 self-start sm:self-center">
-        <a href={detailHref} class="btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...clickAttrs}>{detailLabel}</a>
-        <a href={site.outboundUrl} target="_blank" rel={site.sponsor || (site.supportPoints || 0) > 0 ? "noopener noreferrer sponsored" : "noopener noreferrer"} class="btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none" {...openAttrs}>{openLabel}</a>
+      <div class="data-entity-actions">
+        <a href={detailHref} class="data-entity-action" {...clickAttrs}>{detailLabel}</a>
+        <a href={site.outboundUrl} target="_blank" rel={site.sponsor || (site.supportPoints || 0) > 0 ? "noopener noreferrer sponsored" : "noopener noreferrer"} class="data-entity-action" {...openAttrs}>{openLabel}<svg class="gateway-external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 3h7v7M21 3l-10 10M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5" /></svg></a>
       </div>
     </div>
   </DataTableCell>
-  <DataTableCell label={Astro.locals.messages.support.amountColumn} align="right" class="font-mono whitespace-nowrap">{(site.supportPoints || 0).toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</DataTableCell>
-  {showScore ? <DataTableCell label={scoreLabel} align={scoreAlign} class={scoreClass}>{formatPositiveScore(site.siteScore ?? null)}</DataTableCell> : null}
+  {showScore ? <DataTableCell label={scoreLabel} align={scoreAlign} class={scoreClass}><ScoreDisplay value={site.siteScore} /></DataTableCell> : null}
   <slot />
 </tr>

@@ -8,11 +8,11 @@ import PublicPage from '../layouts/PublicPage.astro';
 import { buildModelLeaderboardGroupsForActiveTask } from '../model-leaderboard.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
-import { formatBeijingRefreshTime, loadModelLeaderboardRowsForTaskPage, loadModelLeaderboardTaskSlugs } from '../store.js';
+import { loadModelLeaderboardStats, loadModelLeaderboardRowsForTaskPage, loadModelLeaderboardTaskSlugs } from '../store.js';
 
 const activeTaskSlug = 'coding';
 const initialRowCount = 30;
-const taskSlugs = await loadModelLeaderboardTaskSlugs();
+const [taskSlugs, stats] = await Promise.all([loadModelLeaderboardTaskSlugs(), loadModelLeaderboardStats()]);
 const activePage = await loadModelLeaderboardRowsForTaskPage(activeTaskSlug, { limit: initialRowCount });
 const activeRows = activePage.rows;
 const groups = localizeModelLeaderboardGroups(
@@ -21,7 +21,6 @@ const groups = localizeModelLeaderboardGroups(
 );
 const currentGroup = groups.find(group => group.taskSlug === activeTaskSlug) || groups[0] || null;
 const latestFetchedAt = activePage.latestFetchedAt;
-const updateTime = latestFetchedAt ? formatBeijingRefreshTime(latestFetchedAt) : Astro.locals.messages.labels.notRecorded;
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -35,7 +34,7 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="model-leaderboard" pageType="model-leaderboard" {...seo}>
-  <ModelLeaderboardContent pageType="model-leaderboard" groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updateTime={updateTime} />
+  <ModelLeaderboardContent stats={stats} pageType="model-leaderboard" groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updatedAt={latestFetchedAt} />
   <script>
     import '../scripts/data-table.js';
     import '../scripts/deferred-table-core.js';

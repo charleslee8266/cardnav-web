@@ -71,6 +71,7 @@ function limitedMerchantRows<Row extends ShopPinnedRow>(rows: Row[], siteLimit: 
 export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   rowEntries: Row[],
   favorites: ShopPinFavorites,
+  onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void,
 ) {
   const bySupportPoints = (left: Row, right: Row) => (right.supportPoints ?? 0) - (left.supportPoints ?? 0);
   const sponsorRows = limitedMerchantRows(rowEntries.filter(row => row.sponsor).sort(bySupportPoints), MAX_PINNED_PARTNER_PRODUCTS_PER_SITE, MAX_PINNED_PARTNER_PRODUCTS);
@@ -98,5 +99,9 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   favoriteMerchantRows.forEach(row => pinnedRows.add(row));
 
   const regularRows = ordinaryRows.filter(rowEntry => !pinnedRows.has(rowEntry));
+  sponsorRows.forEach(row => onPin?.(row, 'partner'));
+  supportRows.forEach(row => onPin?.(row, 'support'));
+  [...favoriteProductRows, ...favoriteMerchantRows].forEach(row => onPin?.(row, 'favorite'));
+  regularRows.forEach(row => onPin?.(row, ''));
   return [...sponsorRows, ...supportRows, ...favoriteProductRows, ...favoriteMerchantRows, ...regularRows];
 }

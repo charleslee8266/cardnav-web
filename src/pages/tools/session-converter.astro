@@ -3,6 +3,7 @@
 文件说明: 渲染 Session 转换工具页，承载本地 JSON 输入、输出格式选择、预览、复制和下载操作。
 参考资料: GPTSession2CPAandSub2API 行为逻辑
 */
+import '../../components/tools.css';
 import { telemetryBlocks } from '../../telemetry-blocks.js';
 import DataTableHeader from '../../components/DataTableHeader.astro';
 import PageHero from '../../components/PageHero.astro';
@@ -33,10 +34,9 @@ const seo = buildSeoContext({
 
   <PageHero
     title={t.sessionConverter.title}
-    description={t.sessionConverter.description}
+    description={t.tools.sessionConverter.description}
     backHref="/tools"
     backLabel={t.tools.backToList}
-    compact
   >
     <div slot="aside" class="alert border border-error/25 bg-error/5 py-2 px-3 rounded-md text-left text-xs font-semibold text-error lg:max-w-xl shrink-0">
       <span class="leading-relaxed">{t.sessionConverter.sensitiveNotice}</span>

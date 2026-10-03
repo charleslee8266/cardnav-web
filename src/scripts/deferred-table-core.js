@@ -60,15 +60,16 @@ import { pinSiteRows } from '../site-list-pinning.js';
     const getTotalCount = options.getTotalCount || defaultTotalCount;
 
     function currentEntries() {
-      const entries = state.entries.slice();
+      const entries = options.filterEntry ? state.entries.filter(options.filterEntry) : state.entries.slice();
       entries.sort(compareEntries(state.sort || { key: 'sequence', direction: 'asc' }));
-      return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 }))).map(row => row.entry);
+      return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 })), (row, kind) => { row.entry.pinKind = kind; }).map(row => row.entry);
     }
 
     function updateSummary() {
       if (!(summary instanceof HTMLElement)) return;
-      const renderedCount = Math.min(state.visibleLimit, state.entries.length);
-      const totalCount = Math.max(state.totalCount, state.entries.length);
+      const filteredCount = currentEntries().length;
+      const renderedCount = Math.min(state.visibleLimit, filteredCount);
+      const totalCount = options.isFilterActive?.() ? filteredCount : Math.max(state.totalCount, state.entries.length);
       const template = options.summaryTemplate || 'Showing {rendered} / {total}';
       summary.textContent = template
         .replace('{rendered}', String(renderedCount))
@@ -76,12 +77,13 @@ import { pinSiteRows } from '../site-list-pinning.js';
     }
 
     function updateButton() {
-      button?.classList.toggle('hidden', state.loaded && state.entries.length <= state.visibleLimit);
+      button?.classList.toggle('hidden', state.loaded && currentEntries().length <= state.visibleLimit);
     }
 
     function renderRows() {
       tbody.replaceChildren(...currentEntries().slice(0, state.visibleLimit).map((entry, index) => {
         const row = options.ensureRow(entry);
+        row.dataset.pinKind = entry.pinKind || '';
         setTableRowSequence(row, index + 1);
         return row;
       }));

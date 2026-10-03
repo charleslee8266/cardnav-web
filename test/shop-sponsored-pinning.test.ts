@@ -71,12 +71,17 @@ for (const [kind, siteLimit] of [['partner', 2], ['support', 2]] as const) {
       })),
     ).flat();
     const rows = [row('normal'), ...merchants];
+    const kinds = new Map<ShopPinnedRow, string>();
     const sorted = prioritizeShopProductRows(rows, {
       favoriteProductKeys: new Set([`${kind}-0-3`]),
       favoriteSiteKeys: new Set(),
-    });
+    }, (item, kind) => kinds.set(item, kind));
     const expectedPins = merchants.filter((_, index) => index % 4 < siteLimit).slice(0, 10);
     assert.deepEqual(sorted.slice(0, 10), expectedPins);
+    for (const item of expectedPins) assert.equal(kinds.get(item), kind);
+    assert.equal(kinds.get(merchants[3]), 'favorite');
+    assert.equal(kinds.get(merchants[2]), '');
+    assert.equal(kinds.get(merchants[20]), '');
     assert.equal(sorted[10].productFavoriteKey, `${kind}-0-3`);
     assert.equal(sorted[11].productFavoriteKey, 'normal');
     assert.equal(new Set(sorted).size, rows.length);

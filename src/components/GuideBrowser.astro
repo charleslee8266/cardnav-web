@@ -1,9 +1,12 @@
 ---
 /*
-文件说明: 渲染向导双栏浏览界面，左侧显示文档列表，右侧显示当前文档正文和赞助区。
+文件说明: 渲染向导文档树、文章与本页目录，并在窄屏提供可展开的文档导航。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import Sponsors from './Sponsors.astro';
+import GuideTree from './GuideTree.astro';
+import ArticleToc from './ArticleToc.astro';
+import './content.css';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
 import type { PageType } from '../page-types.js';
@@ -44,65 +47,23 @@ function localizeRenderedGuideLinks(html: string) {
 const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 ---
 
-<section class="guide-browser-grid h-full min-h-0 grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
-  <aside class="guide-sidebar card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
-    <details class="guide-sidebar-disclosure">
-      <summary class="guide-sidebar-summary">
-        <span class="min-w-0">
-          <span class="guide-sidebar-kicker">Guide</span>
-          <span class="guide-sidebar-current">{currentArticle.title}</span>
-        </span>
-        <span class="guide-sidebar-summary-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6 9 6 6 6-6"></path>
-          </svg>
-        </span>
-      </summary>
-    </details>
-    <div class="guide-sidebar-header border-b border-base-300 bg-base-200 px-4 py-3">
-      <h2 class="mt-1 text-lg font-bold text-base-content">{t.guide.allDocs}</h2>
-    </div>
-    <nav data-telemetry-block={telemetryBlocks.guide.navigation} aria-label={t.guide.docListLabel} class="guide-sidebar-scroll p-2">
-      <ul class="space-y-1">
-        {navItems.map(item => {
-          const article = item.article;
-          const isActive = article.slug === currentArticle.slug;
-          return (
-            <li>
-              <a
-                href={linkTo(`/guide/${article.slug}`)}
-                aria-current={isActive ? 'page' : undefined}
-                data-guide-current={isActive ? 'true' : undefined}
-                {...guideUrlClickAttrs(`/guide/${article.slug}`)}
-                class:list={[
-                  'guide-sidebar-link block rounded-xl border px-3 py-1.5 transition-colors',
-                  item.depth > 0 && 'guide-sidebar-link-child',
-                  isActive
-                    ? 'border-primary/25 bg-primary/8 text-primary'
-                    : 'border-transparent text-base-content/80 hover:border-base-300 hover:bg-base-200/70 hover:text-base-content',
-                ]}
-                style={`padding-left: ${0.75 + item.depth * 1.1}rem;`}
-              >
-                <span class:list={[
-                  'block leading-5',
-                  item.depth === 0 ? 'text-sm font-semibold' : 'text-[13px] font-medium',
-                  isActive && 'font-bold'
-                ]}>{article.title}</span>
-              </a>
-            </li>
-          );
-        })}
-      </ul>
+<section class="reading-guide" data-reading-layout>
+  <aside class="reading-tree">
+    <details class="reading-tree-disclosure" open>
+      <summary class="reading-tree-summary"><span>{t.guide.allDocs}</span><span class="reading-tree-current">{currentArticle.title}</span><span aria-hidden="true">⌄</span></summary>
+    <nav data-telemetry-block={telemetryBlocks.guide.navigation} aria-label={t.guide.docListLabel} class="reading-tree-nav">
+      <GuideTree items={navItems} currentSlug={currentArticle.slug} sourcePage={sourcePage} />
     </nav>
+    </details>
   </aside>
 
-  <section class="guide-content-scroll min-w-0 space-y-4">
-    <section data-telemetry-block={telemetryBlocks.guide.content} class="guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
+  <section class="reading-content">
+    <section data-telemetry-block={telemetryBlocks.guide.content} class="reading-article">
       <div class="guide-hero">
-        <p class="guide-eyebrow">{t.guide.eyebrow}</p>
-        <h1 class="guide-title">{currentArticle.title}</h1>
+        <h1 class="reading-title">{currentArticle.title}</h1>
+        <p class="reading-description">{(t.guide.heroDescriptions as Record<string, string>)[currentArticle.slug] || currentArticle.description}</p>
       </div>
-      <div class="guide-article guide-intro mt-6 p-0 border-0 bg-transparent text-base-content/90" set:html={localizedArticleHtml} />
+      <div id="guide-article" class="guide-article reading-prose" set:html={localizedArticleHtml} />
     </section>
 
     {currentArticle.nextLink && (
@@ -110,24 +71,17 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
         data-telemetry-block={telemetryBlocks.guide.next}
         href={linkTo(`/guide/${currentArticle.nextLink.slug}`)}
         {...guideUrlClickAttrs(`/guide/${currentArticle.nextLink.slug}`)}
-        class="guide-next-step block rounded-2xl border border-base-300 bg-base-100 px-5 py-4 shadow-sm no-underline transition duration-200 hover:border-primary/30 hover:bg-primary/[0.02] active:scale-[0.99]"
+        class="guide-next-step"
       >
         <p class="guide-next-step-label">{t.guide.nextStep}</p>
-        <span class="guide-next-step-link mt-2 inline-flex text-lg font-bold text-primary">
+        <span class="guide-next-step-link">
           {currentArticle.nextLink.title || currentArticle.nextLink.slug}
         </span>
       </a>
     )}
 
-    <Sponsors placement="content-bottom" pageType={pageType} />
-
-    <nav data-telemetry-block={telemetryBlocks.shared.footer} class="guide-mini-footer flex flex-wrap items-center justify-center gap-2 border-t border-base-300 pt-4 text-xs text-base-content/60" aria-label={t.nav.about}>
-      <a href={linkTo('/about')} class="link link-hover font-semibold text-base-content/75">{t.nav.about}</a>
-      <span aria-hidden="true">|</span>
-      <a href={linkTo('/disclaimer')} class="link link-hover font-semibold text-base-content/75">{t.nav.disclaimer}</a>
-      <span aria-hidden="true">|</span>
-      <a href={linkTo('/privacy')} class="link link-hover font-semibold text-base-content/75">{t.nav.privacy}</a>
-    </nav>
   </section>
+  <ArticleToc target="guide-article" />
 </section>
+<Sponsors placement="content-bottom" pageType={pageType} />
 <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>

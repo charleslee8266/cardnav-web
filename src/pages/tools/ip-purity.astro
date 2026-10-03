@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 IP 纯净度工具页，提供 IP 输入、自动识别、纯净度评分和多源风险信号
 */
+import '../../components/tools.css';
 import { telemetryBlocks } from '../../telemetry-blocks.js';
 import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
@@ -25,10 +26,9 @@ const seo = buildSeoContext({
 <PublicPage activeNav="tools" pageType="tool-detail" {...seo}>
   <PageHero
     title={t.ipPurity.title}
-    description={t.ipPurity.description}
+    description={t.ipPurity.heroDescription}
     backHref="/tools"
     backLabel={t.tools.backToList}
-    compact
   >
     <div slot="actions" class="mt-4">
       <a href={linkTo('/guide/tool-ip-check')} data-umami-event="internal-link-click" data-umami-event-link-type="guide" data-umami-event-source-page={linkTo('/tools/ip-purity')} data-umami-event-target-page={linkTo('/guide/tool-ip-check')} data-umami-event-url={linkTo('/guide/tool-ip-check')} class="link link-primary text-sm font-semibold">{t.ipPurity.guideLink}</a>

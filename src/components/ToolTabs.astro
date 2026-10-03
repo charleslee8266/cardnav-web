@@ -2,6 +2,7 @@
 /*
 文件说明: 为公开工具页提供统一的顶层工具 Tab，方便在多个工具之间快速切换。
 */
+import './tools.css';
 type ToolTabKey = 'session-converter' | 'ip-purity';
 
 type ToolTab = {
@@ -37,12 +38,11 @@ const tabs: ToolTab[] = [
 <section class="card bg-base-100 border border-base-300 shadow-sm">
   <div class="card-body p-4">
     <div class="tool-tablist-wrap">
-      <div role="tablist" class="tabs tabs-box" aria-label={t.nav.tools}>
+      <nav class="tabs tabs-box" aria-label={t.nav.tools}>
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
           return (
             <a
-              role="tab"
               href={linkTo(tab.href)}
               aria-current={isActive ? 'page' : undefined}
               class:list={[
@@ -55,7 +55,7 @@ const tabs: ToolTab[] = [
             </a>
           );
         })}
-      </div>
+      </nav>
     </div>
   </div>
 </section>

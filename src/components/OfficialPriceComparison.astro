@@ -1,0 +1,8 @@
+---
+type Props = { percent: number | null; baseline?: boolean };
+const { percent, baseline = false } = Astro.props;
+const t = Astro.locals.messages.officialPrice;
+const equal = percent !== null && Math.abs(percent) < 0.05;
+const text = percent === null ? '—' : baseline ? t.baseline : equal ? t.samePrice : `${percent < 0 ? '−' : '+'}${Math.abs(percent).toLocaleString(Astro.locals.locale, { maximumFractionDigits: 1 })}%`;
+---
+<span class:list={['official-price-difference', percent !== null && !equal && (percent < 0 ? 'is-lower' : 'is-higher')]} title={percent === null ? t.baselineUnavailable : undefined}>{text}</span>

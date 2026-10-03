@@ -23,6 +23,7 @@ function initSubmitDialogUrl(dialog, openButton, queryKey = 'submit-dialog') {
   const updateQuery = (open, replace = false) => {
     const url = new URL(window.location.href);
     url.searchParams.delete(queryKey);
+    if (!open && queryKey === 'support-dialog') url.searchParams.delete('support-kind');
     if (open) url.searchParams.delete(queryKey === 'submit-dialog' ? 'support-dialog' : 'submit-dialog');
     const query = url.searchParams.toString();
     url.search = open ? `${query ? `?${query}&` : '?'}${queryKey}` : query;
@@ -77,15 +78,14 @@ function initHomeSearch() {
 }
 
 function initGuideBrowser() {
-  const currentLink = document.querySelector('[data-guide-current="true"]');
-  const disclosure = document.querySelector('.guide-sidebar-disclosure');
-  if (!currentLink) return;
-  currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  disclosure?.addEventListener('toggle', () => {
-    if (!disclosure.open) return;
-    requestAnimationFrame(() => {
-      currentLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    });
+  const disclosure = document.querySelector('.reading-tree-disclosure');
+  if (!disclosure) return;
+  const desktop = window.matchMedia('(min-width: 1025px)');
+  const sync = () => { disclosure.open = desktop.matches; };
+  sync();
+  desktop.addEventListener('change', sync);
+  disclosure.addEventListener('toggle', () => {
+    if (desktop.matches && !disclosure.open) disclosure.open = true;
   });
 }
 
@@ -286,7 +286,7 @@ function initModelLeaderboard() {
     return cell;
   }
 
-  function rowElement(item) {
+  function rowElement(item, maximumScore) {
     const row = document.createElement('tr');
     row.className = 'hover';
     const rank = Number(item.rank);
@@ -296,11 +296,23 @@ function initModelLeaderboard() {
     row.dataset.sortScore = String(score);
     const sequenceCell = textCell('data-table-sequence-cell', Number.isFinite(rank) ? rank : '');
     sequenceCell.setAttribute('data-table-sequence-cell', '');
-    row.append(
-      sequenceCell,
-      textCell('font-semibold text-base-content break-all', item.modelName ?? ''),
-      textCell('font-mono font-bold text-primary', Number.isFinite(score) ? score.toFixed(2) : '-'),
-    );
+    const scoreCell = textCell('data-table-cell-align-right', '');
+    const scoreDisplay = document.createElement('span');
+    scoreDisplay.className = 'data-score';
+    scoreDisplay.title = String(score);
+    scoreDisplay.textContent = Number.isFinite(score) ? score.toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—';
+    const meter = document.createElement('span');
+    meter.className = 'data-score-meter';
+    meter.setAttribute('aria-hidden', 'true');
+    const fill = document.createElement('i');
+    fill.style.setProperty('--score-fill', `${Math.max(0, Math.min(100, score / Math.max(1, maximumScore) * 100))}%`);
+    meter.append(fill); scoreDisplay.append(meter); scoreCell.append(scoreDisplay);
+    const modelCell = textCell('', '');
+    const modelName = document.createElement('strong');
+    modelName.className = 'leaderboard-model-name';
+    modelName.textContent = item.modelName ?? '';
+    modelCell.append(modelName);
+    row.append(sequenceCell, modelCell, scoreCell);
     return row;
   }
 
@@ -317,6 +329,7 @@ function initModelLeaderboard() {
     const body = leaderboard.querySelector('[data-model-leaderboard-body]');
     const summary = leaderboard.querySelector('[data-model-leaderboard-load-summary]');
     const apiUrl = leaderboard.getAttribute('data-model-leaderboard-api');
+    const maximumScore = Number(leaderboard.dataset.scoreMax) || 100;
     if (!button || !body || !apiUrl) return;
 
     if (typeof window.createDeferredTableController === 'function') {
@@ -332,7 +345,7 @@ function initModelLeaderboard() {
         entryFromRow: (row, index) => ({ index, row, item: null, sort: { sequence: Number(row.dataset.sortSequence) || index + 1, model: row.dataset.sortModel, score: Number(row.dataset.sortScore) } }),
         entryFromItem: (item, index) => ({ index, row: null, item, sort: { sequence: Number(item.rank) || index + 1, model: item.modelName, score: Number(item.score) } }),
         ensureRow: entry => {
-          if (!entry.row) entry.row = rowElement(entry.item);
+          if (!entry.row) entry.row = rowElement(entry.item, maximumScore);
           entry.row.classList.remove('hidden');
           return entry.row;
         },
@@ -373,7 +386,7 @@ function initModelLeaderboard() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
         const rows = Array.isArray(payload.rows) ? payload.rows : [];
-        if (rows.length) body.append(...rows.map(rowElement));
+        if (rows.length) body.append(...rows.map(item => rowElement(item, maximumScore)));
         const loadedRows = body.querySelectorAll('tr.hover').length;
         const totalCount = Number(payload.totalCount) || loadedRows;
         updateSummary(summary, loadedRows, totalCount);

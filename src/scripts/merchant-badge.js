@@ -16,38 +16,86 @@ window.CardNavMerchantBadge = {
     badge.appendChild(labelElement);
     group.appendChild(badge);
     if (description) {
-      const info = document.createElement('span');
+      const info = document.createElement('button');
+      info.type = 'button';
       info.className = 'merchant-badge-info';
-      info.tabIndex = 0;
-      info.setAttribute('role', 'img');
+      info.setAttribute('aria-haspopup', 'dialog');
       info.setAttribute('aria-label', description);
       info.textContent = 'i';
       const tooltip = document.createElement('span');
       tooltip.className = 'merchant-badge-tooltip public-floating-layer';
-      tooltip.setAttribute('role', 'tooltip');
+      tooltip.id = `merchant-disclosure-${crypto.randomUUID()}`;
+      tooltip.setAttribute('popover', 'auto');
+      tooltip.setAttribute('role', 'dialog');
+      tooltip.setAttribute('aria-label', label);
+      info.setAttribute('popovertarget', tooltip.id);
       tooltip.append(document.createTextNode(`${description} `));
       const link = document.createElement('a');
       link.className = 'merchant-badge-link';
       link.href = href;
       link.textContent = linkLabel;
+      link.dataset.umamiEvent = 'internal-link-click';
+      link.dataset.umamiEventLinkType = kind === 'support' ? 'support-list' : 'sponsor-lead';
+      link.dataset.umamiEventUrl = href;
       if (href) tooltip.appendChild(link);
-      info.appendChild(tooltip);
-      badge.appendChild(info);
+      badge.append(info, tooltip);
     }
     return group;
   },
 };
 
-// 同时处理服务端和动态生成的 badge，将说明框保持在视口内。
-function positionTooltip(event) {
-  const info = event.target.closest?.('.merchant-badge-info');
-  const tooltip = info?.querySelector('.merchant-badge-tooltip');
-  if (!tooltip) return;
-  tooltip.style.marginLeft = '';
-  const bounds = tooltip.getBoundingClientRect();
+// Native popovers stay outside scroll containers and occupy no space while closed.
+function positionDisclosure(tooltip) {
+  const trigger = document.querySelector(`[popovertarget="${tooltip.id}"]`);
+  if (!trigger || !tooltip.matches(':popover-open')) return;
   const edge = 16;
-  const offset = Math.max(edge - bounds.left, Math.min(0, document.documentElement.clientWidth - edge - bounds.right));
-  tooltip.style.marginLeft = `${offset}px`;
+  const anchor = trigger.getBoundingClientRect();
+  const bounds = tooltip.getBoundingClientRect();
+  const viewportWidth = document.documentElement.clientWidth;
+  const viewportHeight = window.innerHeight;
+  tooltip.style.left = `${Math.max(edge, Math.min(anchor.left, viewportWidth - bounds.width - edge))}px`;
+  const below = anchor.bottom + 8;
+  tooltip.style.top = `${Math.max(edge, Math.min(below, viewportHeight - bounds.height - edge))}px`;
 }
-document.addEventListener('pointerover', positionTooltip);
-document.addEventListener('focusin', positionTooltip);
+document.addEventListener('toggle', event => {
+  if (event.target.matches?.('.merchant-badge-tooltip') && event.newState === 'open') positionDisclosure(event.target);
+}, true);
+function repositionOpenDisclosures() {
+  document.querySelectorAll('.merchant-badge-tooltip:popover-open').forEach(positionDisclosure);
+}
+window.addEventListener('resize', repositionOpenDisclosures);
+window.addEventListener('scroll', repositionOpenDisclosures, true);
+
+let disclosureHideTimer;
+function disclosureForTrigger(trigger) {
+  return trigger ? document.getElementById(trigger.getAttribute('popovertarget')) : null;
+}
+function showDisclosure(trigger) {
+  const tooltip = disclosureForTrigger(trigger);
+  if (!tooltip) return;
+  clearTimeout(disclosureHideTimer);
+  if (!tooltip.matches(':popover-open')) tooltip.showPopover();
+  positionDisclosure(tooltip);
+}
+document.addEventListener('pointerover', event => {
+  if (event.pointerType !== 'mouse') return;
+  const trigger = event.target.closest?.('.merchant-badge-info[popovertarget]');
+  if (trigger) showDisclosure(trigger);
+  if (event.target.closest?.('.merchant-badge-tooltip')) clearTimeout(disclosureHideTimer);
+});
+document.addEventListener('pointerout', event => {
+  if (event.pointerType !== 'mouse' || !event.target.closest?.('.merchant-badge-info, .merchant-badge-tooltip')) return;
+  if (event.relatedTarget?.closest?.('.merchant-badge-info, .merchant-badge-tooltip')) return;
+  disclosureHideTimer = setTimeout(() => {
+    document.querySelectorAll('.merchant-badge-tooltip:popover-open').forEach(tooltip => {
+      const trigger = document.querySelector(`[popovertarget="${tooltip.id}"]`);
+      if (!tooltip.contains(document.activeElement) && document.activeElement !== trigger) tooltip.hidePopover();
+    });
+  }, 180);
+});
+document.addEventListener('click', event => {
+  const trigger = event.target.closest?.('.merchant-badge-info[popovertarget]');
+  if (!trigger) return;
+  event.stopPropagation();
+  if (disclosureForTrigger(trigger)?.matches(':popover-open')) event.preventDefault();
+}, true);

@@ -8,7 +8,8 @@ import PartnershipPage from '../components/PartnershipPage.astro';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { applyStaticLocaleLocals } from '../static-locale.js';
-import { frontmatter as partnershipFrontmatter } from '../../content/pages/zh/partnership.mdx';
+import { partnershipContent } from '../partnership-content.js';
+const partnershipFrontmatter = partnershipContent.zh;
 
 export const prerender = true;
 

@@ -3,6 +3,7 @@
 文件说明: 渲染 CardNav 公开工具集合页，作为多个小工具的统一入口。
 */
 import { telemetryBlocks } from '../../telemetry-blocks.js';
+import '../../components/tools.css';
 import PageHero from '../../components/PageHero.astro';
 import Sponsors from '../../components/Sponsors.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
@@ -11,6 +12,11 @@ import { publicSiteUrl } from '../../site.js';
 
 const linkTo = Astro.locals.localizePath;
 const t = Astro.locals.messages;
+const tools = [
+  { title: t.tools.sessionConverter.title, description: t.tools.sessionConverter.description, href: '/tools/session-converter', badge: t.labels.localConvert, icon: 'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4', external: false },
+  { title: t.tools.ipPurity.title, description: t.tools.ipPurity.description, href: '/tools/ip-purity', badge: t.labels.onlineCheck, icon: 'M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z M8 12l3 3 5-6', external: false },
+  { title: t.tools.outlookMail.title, description: t.tools.outlookMail.description, href: 'https://mail.chatai.codes/', badge: t.labels.externalSite, icon: 'M3 5h18v14H3V5Zm0 1 9 7 9-7', external: true },
+];
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: '/tools',
@@ -23,42 +29,24 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="tools" pageType="tools" {...seo}>
-  <PageHero title={t.tools.title} description={t.tools.description} />
+  <PageHero title={t.tools.title} description={t.tools.heroDescription} />
   <Sponsors placement="after-hero" pageType="tools" />
 
-  <section data-telemetry-block={telemetryBlocks.tools.list} class="grid gap-4 md:grid-cols-2">
-    <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href={linkTo('/tools/session-converter')} data-umami-event="internal-link-click" data-umami-event-link-type="tool-entry" data-umami-event-name={t.tools.sessionConverter.title} data-umami-event-target-page={linkTo('/tools/session-converter')} data-umami-event-url={linkTo('/tools/session-converter')} class="block">
-        <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-lg font-bold text-base-content">{t.tools.sessionConverter.title}</h3>
-          <span class="badge badge-ghost badge-sm font-medium">{t.labels.localConvert}</span>
-        </div>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.tools.sessionConverter.description}</p>
-        <div class="mt-4 link link-primary font-semibold text-sm">{t.actions.openTool} ➜</div>
-      </a>
-    </article>
-
-    <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href={linkTo('/tools/ip-purity')} data-umami-event="internal-link-click" data-umami-event-link-type="tool-entry" data-umami-event-name={t.tools.ipPurity.title} data-umami-event-target-page={linkTo('/tools/ip-purity')} data-umami-event-url={linkTo('/tools/ip-purity')} class="block">
-        <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-lg font-bold text-base-content">{t.tools.ipPurity.title}</h3>
-          <span class="badge badge-ghost badge-sm font-medium">{t.labels.onlineCheck}</span>
-        </div>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.tools.ipPurity.description}</p>
-        <div class="mt-4 link link-primary font-semibold text-sm">{t.actions.openTool} ➜</div>
-      </a>
-    </article>
-
-    <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href="https://mail.chatai.codes/" target="_blank" rel="noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="tool-entry" data-umami-event-name={t.tools.outlookMail.title} data-umami-event-url="https://mail.chatai.codes/" class="block">
-        <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-lg font-bold text-base-content">{t.tools.outlookMail.title}</h3>
-          <span class="badge badge-ghost badge-sm font-medium">{t.labels.externalSite}</span>
-        </div>
-        <p class="mt-2 text-sm leading-6 text-base-content/75">{t.tools.outlookMail.description}</p>
-        <p class="mt-2 text-xs leading-5 text-error font-medium">{t.tools.externalRisk}</p>
-        <div class="mt-4 link link-primary font-semibold text-sm">{t.actions.openExternalTool} ➜</div>
-      </a>
-    </article>
+  <section data-telemetry-block={telemetryBlocks.tools.list} class="tools-catalog">
+    {tools.map(tool => <article class="tool-entry card">
+      <div class="tool-entry-top">
+        <span class="tool-entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d={tool.icon} /></svg></span>
+        <span class:list={['badge badge-sm', tool.external ? 'badge-warning badge-soft' : 'badge-ghost']}>{tool.badge}</span>
+      </div>
+      <h2>{tool.title}</h2>
+      <p>{tool.description}</p>
+      {tool.external && <p class="tool-entry-risk">{t.tools.externalRisk}</p>}
+      <div class="tool-entry-actions">
+        <a href={tool.external ? tool.href : linkTo(tool.href)} target={tool.external ? '_blank' : undefined} rel={tool.external ? 'noopener noreferrer' : undefined} data-umami-event={tool.external ? 'external-link-click' : 'internal-link-click'} data-umami-event-link-type="tool-entry" data-umami-event-name={tool.title} data-umami-event-target-page={tool.external ? undefined : linkTo(tool.href)} data-umami-event-url={tool.external ? tool.href : linkTo(tool.href)} class:list={['btn btn-sm', !tool.external && 'btn-primary']}>
+          {tool.external ? t.actions.openExternalTool : t.actions.openTool}<span aria-hidden="true">{tool.external ? '↗' : '→'}</span>
+        </a>
+        {tool.external && <span class="tool-entry-host">{new URL(tool.href).hostname}</span>}
+      </div>
+    </article>)}
   </section>
 </PublicPage>

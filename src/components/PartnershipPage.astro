@@ -1,15 +1,78 @@
 ---
-/* 商务合作页的 MDX 容器，页面文案和结构由各语言 MDX 真源定义。 */
+// Structured partnership layout with clearly marked illustrative examples.
+import './partnership.css';
+import './data-table.css';
+import PageHero from './PageHero.astro';
+import Icon from './Icon.astro';
+import SponsorGrid from './SponsorGrid.astro';
+import type { Sponsor } from '../sponsor-provider.js';
+import MerchantBadge from './MerchantBadge.astro';
+import { partnershipContent } from '../partnership-content.js';
+import { telegramGroupUrl } from '../site.js';
 import { telemetryBlocks } from '../telemetry-blocks.js';
-import DefaultPartnershipContent from '../../content/pages/zh/partnership.mdx';
-
-type Props = {
-  content?: typeof DefaultPartnershipContent;
-};
-
-const { content: PartnershipContent = DefaultPartnershipContent } = Astro.props;
+const locale = Astro.locals.locale;
+const c = locale === 'en' ? partnershipContent.en : locale === 'ru' ? partnershipContent.ru : partnershipContent.zh;
+const link = Astro.locals.localizePath;
+const ruleParts = (text: string) => text.split(/(\{gateway\}|\{shops\}|\{supporters\})/g).map(text => ({ text: text === '{gateway}' ? c.pageLinks[0] : text === '{shops}' ? c.pageLinks[1] : text === '{supporters}' ? c.actions[3] : text, href: text === '{gateway}' ? link('/llm-gateway') : text === '{shops}' ? link('/shops') : text === '{supporters}' ? link('/supporters') : null }));
+const exampleSponsors: Sponsor[] = [1,2].map(number => ({
+  id: `example-partner-${number}`, template: 'default', title: `${c.demoName}${number}`,
+  description: c.demoIntro, url: '', links: [],
+  image: { src: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200"><rect width="600" height="200" fill="#fffbeb"/><text x="300" y="108" text-anchor="middle" font-family="sans-serif" font-size="32" fill="#94631c">${c.demoName}${number}</text></svg>`)}`, alt: `${c.demoName}${number}`, scaleMode: 'contain' }
+}));
+const payments = [{ amount: 200, days: 1 }, { amount: 100, days: 30 }, { amount: 300, days: 90 }];
+const totalPoints = payments.reduce((sum, payment) => sum + payment.amount * Math.pow(.5, payment.days / 30), 0);
+const days = [0,1,30,90,null];
+const format = (value: number) => value.toLocaleString(locale, {maximumFractionDigits:2});
+const contactAttrs = {'target':'_blank','rel':'noopener noreferrer','data-umami-event':'external-link-click','data-umami-event-link-type':'sponsor-lead','data-umami-event-url':telegramGroupUrl};
 ---
-
-<article data-telemetry-block={telemetryBlocks.content.partnership} class="content-page content-page--partnership site-main-width rounded border bg-base-100 px-4 py-5 text-base-content/90 md:px-8 md:py-7">
-  <PartnershipContent />
-</article>
+<div class="partnership-page" data-telemetry-block={telemetryBlocks.content.partnership}>
+  <PageHero title={c.title} />
+  <section class="partnership-module" aria-labelledby="partnership-options-heading">
+    <h2 id="partnership-options-heading">{c.optionsTitle}</h2>
+    <div class="partnership-options">
+    {c.options.map((option,index) => <article class:list={['cooperation-card',`cooperation-card--${['affiliate','support','partner'][index]}`]}>
+      <header class="cooperation-card-heading">
+        <span class="cooperation-icon"><Icon name={(['tag','heart','store'] as const)[index]} /></span>
+        <div><h3><span class="cooperation-number">{c.optionNumbers[index]}</span> · {option.title}</h3><p>{option.description}</p></div>
+      </header>
+      <ol>
+        {option.items.map(item => <li>{ruleParts(item).map(part => part.href ? <a class="support-list-link" href={part.href}>{part.text}</a> : part.text)}</li>)}
+      </ol>
+      <div class="partnership-actions">{index === 1 ? <><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=gateway')}>{c.supportActions[0]}</a><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=shop')}>{c.supportActions[1]}</a></> : <a class:list={['btn',index === 0 ? 'affiliate-action' : 'partnership-action']} href={telegramGroupUrl} {...contactAttrs}>{c.actions[index]}</a>}</div>
+    </article>)}
+    </div>
+  </section>
+  <section class="partnership-module" id="placements">
+    <h2>{c.placementTitle}</h2>
+    <div class="partnership-placement-grid">
+      {c.rules.slice(0,2).map((rule,index) => <section id={index === 0 ? 'support-display' : 'rules'} class="partnership-section"><h3>{c.placementLabels[index]}</h3><div class="partnership-panel partnership-rule-body"><ol>{rule.items.map(item => <li>{ruleParts(item).map(part => part.href ? <a href={part.href}>{part.text}</a> : part.text)}</li>)}</ol></div></section>)}
+    </div>
+  </section>
+  <section class="partnership-module" id="points">
+    <h2>{c.pointsTitle}</h2>
+    <div class="partnership-panel points-grid">
+      <div class="points-explanation"><p class="partnership-secondary">{c.pointsIntro}</p>
+        <p class="points-formula">{c.formula[0]} <span>=</span> {c.formula[1]} <span>×</span> <span class="points-power">0.5<sup>{c.formula[2]}</sup></span></p>
+        <p>{c.pointsNote}</p>
+        <div class="points-sum"><h4>{c.sumTitle}</h4><p>{c.sumNote}</p><div class="points-equation">{payments.map((payment, index) => <><span class="points-term">{index > 0 && <span class="points-operator">+ </span>}{payment.amount} × 0.5<sup>{payment.days}/30</sup></span></>)}<strong>≈ {format(totalPoints)} {c.pointsUnit}</strong></div></div>
+      </div>
+      <div class="points-example"><h4>{c.exampleTitle}</h4><p class="partnership-secondary">{c.exampleNote}</p>
+        <div class="points-table-wrap"><table class="points-table"><thead><tr>{c.columns.map(label=><th>{label}</th>)}<th aria-label={c.formula[0]}></th></tr></thead><tbody>
+          {days.map((day,index)=>{const factor=day === null ? 0 : Math.pow(.5,day/30);return <tr class:list={{'points-expired':day === null}}><td>{c.days[index]}</td><td>{day === null ? '—' : factor.toLocaleString(locale,{maximumFractionDigits:4})}</td><td><strong>{day === null ? c.excludedLabel : format(100*factor)}</strong></td><td><span class="points-track"><span style={`width:${factor*100}%`}></span></span></td></tr>})}
+        </tbody></table></div>
+      </div>
+    </div>
+  </section>
+  <section class="partnership-module" id="sponsor-example"><h2>{c.sponsorTitle}</h2>
+    <section class="partnership-section"><h3>{c.sponsorCardRulesTitle}</h3>
+      <div class="sponsor-section"><SponsorGrid sponsors={exampleSponsors} example /></div>
+    </section>
+  <div class="partnership-table-example"><h3>{c.demoTableTitle}</h3>
+    <div class="partnership-panel partnership-demo-table"><table class="data-table"><thead><tr>{c.demoColumns.map(column => <th scope="col">{column}</th>)}</tr></thead><tbody>
+      {c.demoMerchants.map((name,index) => <tr data-pin-kind={index < 3 ? 'partner' : (index === 3 || index === 4) ? 'support' : undefined}><td><span class="partnership-demo-merchant"><strong>{name}</strong>{index < 3 && <MerchantBadge kind="sponsor" label={Astro.locals.messages.sponsors.sponsorLabel} description={Astro.locals.messages.sponsors.sponsorDescription} href="#rules" linkLabel={c.rules[1].title} />}{(index === 0 || index === 3 || index === 4) && <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={link('/supporters')} linkLabel={c.actions[3]} />}</span>{(index === 0 || index === 3 || index === 4) && <div class="data-support-inline">{Astro.locals.messages.support.amountColumn} <strong>{format(index === 0 ? totalPoints : index === 3 ? 50 : 25)}</strong></div>}</td><td class="partnership-demo-description">{c.demoDescriptions[index]}</td><td>{c.demoPlacements[index]}</td></tr>)}
+    </tbody></table></div>
+  </div>
+  </section>
+  {c.rules.slice(2).map(rule => <section class="partnership-module partnership-standalone-rules"><h2>{rule.title}</h2><div class="partnership-panel partnership-rule-body"><ol>{rule.items.map(item => <li>{item}</li>)}</ol></div></section>)}
+  <section class="partnership-section partnership-panel partnership-contact" id="contact"><span class="cooperation-icon"><Icon name="send" /></span><div><h2>{c.contact}</h2><p>{c.contactNote}</p></div><a class="btn partnership-action" href={telegramGroupUrl} {...contactAttrs}>{c.actions[6]}</a></section>
+</div>

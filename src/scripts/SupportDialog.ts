@@ -41,6 +41,7 @@ class SupportDialog {
   private statusTimer?: ReturnType<typeof setTimeout>;
   private statusRequest?: AbortController;
   private busy = false;
+  private step = 1;
   private statusToken: string | null;
   private reportedPaymentStatuses = new Set<string>();
 
@@ -101,9 +102,20 @@ class SupportDialog {
       this.track('support-payment-method-change', { 'payment-type': String((radio as HTMLInputElement).value) });
     }));
     this.amount.addEventListener('blur', () => this.normalizeAmount());
+    dialog.querySelector('[data-support-next]')?.addEventListener('click', () => this.nextStep());
+    dialog.querySelector('[data-support-back]')?.addEventListener('click', () => this.showStep(1));
+    dialog.querySelectorAll<HTMLButtonElement>('[data-support-amount]').forEach(button => {
+      button.addEventListener('click', () => {
+        if (this.busy) return;
+        this.amount.value = button.dataset.supportAmount!;
+        this.syncAmountPresets();
+      });
+    });
+    this.amount.addEventListener('input', () => this.syncAmountPresets());
     this.form.addEventListener('submit', event => {
       event.preventDefault();
-      void this.pay(String(new FormData(this.form).get('paymentType')));
+      if (this.step === 1) this.nextStep();
+      else void this.pay(String(new FormData(this.form).get('paymentType')));
     });
     this.openPaymentButton.addEventListener('click', () => {
       this.track('support-payment-window-open', {});
@@ -136,7 +148,18 @@ class SupportDialog {
   }
 
   private open() {
-    if (!this.statusToken && this.dialogDescription) this.dialogDescription.hidden = false;
+    if (!this.statusToken) {
+      if (this.dialogDescription) this.dialogDescription.hidden = false;
+      const requestedKind = new URL(window.location.href).searchParams.get('support-kind');
+      if (requestedKind === 'gateway' || requestedKind === 'shop') {
+        const input = this.form.querySelector<HTMLInputElement>(`[name="kind"][value="${requestedKind}"]`);
+        if (input && !input.checked) {
+          input.checked = true;
+          this.changeIdentity();
+        }
+      }
+      this.showStep(1);
+    }
     if (this.kind !== 'person') void this.loadSites();
     void this.checkPayment();
   }
@@ -171,9 +194,46 @@ class SupportDialog {
     if (!isPerson) void this.loadSites();
   }
 
+  private showStep(step: number) {
+    if (this.busy) return;
+    this.step = step;
+    this.dialog.querySelectorAll<HTMLElement>('[data-support-step]').forEach(panel => {
+      panel.hidden = Number(panel.dataset.supportStep) !== step;
+    });
+    this.dialog.querySelectorAll<HTMLElement>('[data-step-indicator]').forEach(indicator => {
+      if (Number(indicator.dataset.stepIndicator) === step) indicator.setAttribute('aria-current', 'step');
+      else indicator.removeAttribute('aria-current');
+    });
+    if (step === 2) {
+      const nickname = this.form.querySelector<HTMLInputElement>('[name="nickname"]')?.value.trim();
+      this.dialog.querySelector('[data-review-identity]')!.textContent = this.kind === 'person' ? nickname || this.messages.anonymous : this.search.value;
+    }
+    this.dialog.querySelector<HTMLElement>(`[data-support-step="${step}"] input:not([type="hidden"]):not(:disabled)`)?.focus();
+  }
+
+  private nextStep() {
+    if (this.kind !== 'person' && !this.selectedSite.value) {
+      this.search.setCustomValidity(this.messages.select);
+      this.search.reportValidity();
+      return;
+    }
+    const controls = this.dialog.querySelectorAll<HTMLInputElement>('[data-support-step="1"] input');
+    for (const control of controls) {
+      if (!control.disabled && !control.reportValidity()) return;
+    }
+    this.showStep(2);
+  }
+
+  private syncAmountPresets() {
+    this.dialog.querySelectorAll<HTMLElement>('[data-support-amount]').forEach(button => {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.supportAmount) === Number(this.amount.value)));
+    });
+  }
+
   private normalizeAmount() {
     const value = Number(this.amount.value);
     this.amount.value = Number.isFinite(value) ? Math.min(5000, Math.max(5, Math.round(value * 100) / 100)).toFixed(2) : '5.00';
+    this.syncAmountPresets();
   }
 
   private async loadSites() {
@@ -427,6 +487,8 @@ class SupportDialog {
   private setBusy(busy: boolean) {
     this.busy = busy;
     this.payButton.disabled = busy;
+    this.dialog.querySelectorAll<HTMLButtonElement>('[data-support-back], [data-support-next], [data-support-amount]').forEach(button => { button.disabled = busy; });
+    this.amount.readOnly = busy;
   }
 
   private async cancelPayment() {
@@ -452,6 +514,12 @@ class SupportDialog {
   private async pay(paymentType: string) {
     if (this.busy) return;
     this.normalizeAmount();
+    const invalidIdentityField = Array.from(this.dialog.querySelectorAll<HTMLInputElement>('[data-support-step="1"] input')).find(control => !control.disabled && !control.checkValidity());
+    if (invalidIdentityField) {
+      this.showStep(1);
+      invalidIdentityField.reportValidity();
+      return;
+    }
     if (!this.form.reportValidity()) return;
     this.track('form-submit', { form: 'support', kind: this.kind, 'payment-type': paymentType });
     this.setBusy(true);

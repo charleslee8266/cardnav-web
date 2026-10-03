@@ -1,0 +1,26 @@
+---
+/* 文档层级递归渲染；当前文章所在的分组保持展开。 */
+import type { GuideNavItem } from '../guide.js';
+type Props = { items: GuideNavItem[]; currentSlug: string; sourcePage: string };
+const { items, currentSlug, sourcePage } = Astro.props;
+const linkTo = Astro.locals.localizePath;
+const depth = items[0]?.depth ?? 0;
+const groups = items.flatMap((item, index) => {
+  if (item.depth !== depth) return [];
+  let end = index + 1;
+  while (end < items.length && items[end].depth > depth) end++;
+  return [{ article: item.article, children: items.slice(index + 1, end) }];
+});
+const attrs = (slug: string) => {
+  const url = linkTo(`/guide/${slug}`);
+  return { href: url, 'aria-current': slug === currentSlug ? 'page' as const : undefined, 'data-guide-current': slug === currentSlug ? 'true' : undefined, 'data-umami-event': 'internal-link-click', 'data-umami-event-link-type': 'guide', 'data-umami-event-source-page': linkTo(sourcePage), 'data-umami-event-target-page': url, 'data-umami-event-url': url };
+};
+---
+<ul class="reading-tree-list">
+  {groups.map(({ article, children }) => <li>
+    {children.length ? <details class="reading-tree-group" open={article.slug === currentSlug || children.some(item => item.article.slug === currentSlug)}>
+      <summary><span class="reading-tree-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" /></svg></span><a class="reading-tree-link" {...attrs(article.slug)}>{article.title}</a></summary>
+      <Astro.self items={children} currentSlug={currentSlug} sourcePage={sourcePage} />
+    </details> : <a class="reading-tree-link" {...attrs(article.slug)}>{article.title}</a>}
+  </li>)}
+</ul>

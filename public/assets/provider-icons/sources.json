@@ -1,0 +1,118 @@
+{
+  "description": "Official website favicons and official GitHub organization avatars. Brand marks remain the property of their respective owners.",
+  "providers": {
+    "Alibaba": {
+      "homepage": "https://www.alibabacloud.com/",
+      "resolvedHomepage": "https://www.alibabacloud.com/en?_p_lc=1",
+      "iconLink": "https://img.alicdn.com/tfs/TB1ugg7M9zqK1RjSZPxXXc4tVXa-32-32.png",
+      "resolvedIcon": "https://img.alicdn.com/tfs/TB1ugg7M9zqK1RjSZPxXXc4tVXa-32-32.png",
+      "contentType": "image/png",
+      "file": "alibaba.png"
+    },
+    "Black Forest Labs": {
+      "homepage": "https://bfl.ai/",
+      "resolvedHomepage": "https://bfl.ai/",
+      "iconLink": "https://bfl.ai/icon0.svg?7e050ff634b43f18",
+      "resolvedIcon": "https://bfl.ai/icon0.svg?7e050ff634b43f18",
+      "contentType": "image/svg+xml",
+      "file": "black-forest-labs.svg"
+    },
+    "DeepSeek": {
+      "homepage": "https://www.deepseek.com/",
+      "resolvedHomepage": "https://www.deepseek.com/",
+      "iconLink": "https://www.deepseek.com/favicon.ico",
+      "resolvedIcon": "https://www.deepseek.com/favicon.ico",
+      "contentType": "image/vnd.microsoft.icon",
+      "file": "deepseek.ico"
+    },
+    "MiniMax": {
+      "homepage": "https://www.minimax.io/",
+      "resolvedHomepage": "https://www.minimax.io/",
+      "iconLink": "https://www.minimax.io/favicon.ico",
+      "resolvedIcon": "https://www.minimax.io/favicon.ico",
+      "contentType": "image/x-icon",
+      "file": "minimax.ico"
+    },
+    "Moonshot": {
+      "homepage": "https://www.moonshot.ai/",
+      "resolvedHomepage": "https://www.moonshot.ai/",
+      "iconLink": "https://statics.kimi.ai/moonshot-ai/favicon.ico",
+      "resolvedIcon": "https://statics.kimi.ai/moonshot-ai/favicon.ico",
+      "contentType": "image/vnd.microsoft.icon",
+      "file": "moonshot.ico"
+    },
+    "Z.ai": {
+      "homepage": "https://z.ai/",
+      "resolvedHomepage": "https://chat.z.ai/",
+      "iconLink": "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+      "resolvedIcon": "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+      "contentType": "image/svg+xml",
+      "file": "z-ai.svg"
+    },
+    "ByteDance": {
+      "homepage": "https://www.bytedance.com/",
+      "resolvedHomepage": "https://www.bytedance.com/",
+      "iconLink": "link[rel=\"shortcut icon\"] embedded data URI",
+      "contentType": "image/png (verified file signature; declared as image/vnd.microsoft.icon)",
+      "file": "bytedance.png"
+    },
+    "Stability AI": {
+      "homepage": "https://stability.ai/",
+      "resolvedHomepage": "https://stability.ai/",
+      "iconLink": "https://images.squarespace-cdn.com/content/v1/6213c340453c3f502425776e/804f0e8b-0028-4262-a8b0-b9f1c5de72c0/favicon.ico?format=100w",
+      "resolvedIcon": "https://images.squarespace-cdn.com/content/v1/6213c340453c3f502425776e/804f0e8b-0028-4262-a8b0-b9f1c5de72c0/favicon.ico?format=100w",
+      "contentType": "image/webp",
+      "file": "stability-ai.webp"
+    },
+    "Jina": {
+      "homepage": "https://jina.ai",
+      "officialOrganization": "https://github.com/jina-ai",
+      "organizationMetadata": "https://api.github.com/orgs/jina-ai",
+      "iconLink": "https://avatars.githubusercontent.com/u/60539444?v=4",
+      "resolvedIcon": "https://avatars.githubusercontent.com/u/60539444?v=4&s=64",
+      "contentType": "image/png",
+      "file": "jina.png",
+      "sourceType": "Official organization avatar"
+    },
+    "Meta": {
+      "homepage": "https://llama.meta.com/",
+      "officialOrganization": "https://github.com/meta-llama",
+      "organizationMetadata": "https://api.github.com/orgs/meta-llama",
+      "iconLink": "https://avatars.githubusercontent.com/u/153379578?v=4",
+      "resolvedIcon": "https://avatars.githubusercontent.com/u/153379578?v=4&s=64",
+      "contentType": "image/png",
+      "file": "meta.png",
+      "sourceType": "Official organization avatar"
+    },
+    "Mistral": {
+      "homepage": "mistral.ai",
+      "officialOrganization": "https://github.com/mistralai",
+      "organizationMetadata": "https://api.github.com/orgs/mistralai",
+      "iconLink": "https://avatars.githubusercontent.com/u/132372032?v=4",
+      "resolvedIcon": "https://avatars.githubusercontent.com/u/132372032?v=4&s=64",
+      "contentType": "image/png",
+      "file": "mistral.png",
+      "sourceType": "Official organization avatar"
+    },
+    "Suno": {
+      "homepage": "https://www.suno.com",
+      "officialOrganization": "https://github.com/suno-ai",
+      "organizationMetadata": "https://api.github.com/orgs/suno-ai",
+      "iconLink": "https://avatars.githubusercontent.com/u/99442120?v=4",
+      "resolvedIcon": "https://avatars.githubusercontent.com/u/99442120?v=4&s=64",
+      "contentType": "image/jpeg",
+      "file": "suno.jpg",
+      "sourceType": "Official organization avatar"
+    },
+    "Midjourney": {
+      "homepage": "midjourney.com",
+      "officialOrganization": "https://github.com/midjourney",
+      "organizationMetadata": "https://api.github.com/orgs/midjourney",
+      "iconLink": "https://avatars.githubusercontent.com/u/61396273?v=4",
+      "resolvedIcon": "https://avatars.githubusercontent.com/u/61396273?v=4&s=64",
+      "contentType": "image/png",
+      "file": "midjourney.png",
+      "sourceType": "Official organization avatar"
+    }
+  }
+}

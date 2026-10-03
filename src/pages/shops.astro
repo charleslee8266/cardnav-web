@@ -1,4 +1,5 @@
 ---
+import Icon from '../components/Icon.astro';
 /*
 文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
 */
@@ -7,7 +8,10 @@ import ShopPlanGroups from '../components/ShopPlanGroups.astro';
 import ShopSubmitDialog from '../components/ShopSubmitDialog.astro';
 import OpenShopLink from '../components/OpenShopLink.astro';
 import SupportDialog from '../components/SupportDialog.astro';
+import FilterPopover from '../components/FilterPopover.astro';
 import PageHero from '../components/PageHero.astro';
+import RefreshTime from '../components/RefreshTime.astro';
+import HeroMetric from '../components/HeroMetric.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import DataTable from '../components/DataTable.astro';
 import DataTableHeaderControl from '../components/DataTableHeaderControl.astro';
@@ -19,7 +23,6 @@ import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
-import merchantBadgeScriptUrl from '../scripts/merchant-badge.js?url';
 import Sponsors from '../components/Sponsors.astro';
 import type { PageType } from '../page-types.js';
 import { packShopProductsData } from '../shop-products-data.js';
@@ -47,7 +50,7 @@ const seoSearchPageMeta = seoSearchTerm
 const pageTitle = seoSearchPageMeta?.pageTitle ?? t.shops.seoTitle;
 const pageDescription = seoSearchPageMeta?.pageDescription ?? t.shops.seoDescription;
 const heroTitle = seoSearchPageMeta?.heroTitle ?? t.shops.title;
-const heroDescription = seoSearchPageMeta?.heroDescription ?? t.shops.description;
+const heroDescription = seoSearchTerm ? t.shops.searchResultsHeroDescription.replace('{term}', quickPlanHeroName(seoSearchTerm)) : t.shops.heroDescription;
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
 const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
 const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true });
@@ -118,7 +121,10 @@ const normalSeo = buildSeoContext({
 });
 
 const shopsScriptMessages = {
+  selfHosted: t.shops.selfHosted,
   loading: t.labels.loading,
+  clearFilters: t.shops.clearFilters,
+  autoCategoryTip: t.shops.autoCategoryTip,
   displaySummary: t.shops.script.displaySummary,
   merchantDisplaySummary: t.shops.script.merchantDisplaySummary,
   stockPrefix: t.shops.script.stockPrefix,
@@ -129,6 +135,7 @@ const shopsScriptMessages = {
   hotProductsTitle: t.shops.hotProductsTitle,
   searchResultsTitle: t.shops.searchResultsTitle,
   searchResultsDescription: t.shops.searchResultsDescription,
+  searchResultsHeroDescription: t.shops.searchResultsHeroDescription,
   titleSuffix: t.seo.titleSuffix,
   ascending: t.shops.script.ascending,
   descending: t.shops.script.descending,
@@ -152,7 +159,7 @@ const shopsScriptMessages = {
   soldOut: t.labels.soldOut,
   defaultPageTitle: normalSeo.pageTitle,
   defaultHeroTitle: t.shops.title,
-  defaultHeroDescription: t.shops.description,
+  defaultHeroDescription: t.shops.heroDescription,
   shopsPath: linkTo('/shops'),
   seoSearchQuery: seoSearchTerm?.query ?? '',
   seoSearchPath: seoSearchTerm ? linkTo(quickPlanSearchSeoPath(seoSearchTerm)) : '',
@@ -160,6 +167,7 @@ const shopsScriptMessages = {
   tableLabels: {
     sequence: t.labels.sequence,
     product: t.labels.product,
+    platform: t.shops.platform,
     price: t.labels.price,
     stock: t.labels.stock,
     category: t.labels.category,
@@ -180,28 +188,25 @@ type SortColumn = {
   helpHref?: string;
   helpLinkLabel?: string;
 };
-const flatSortColumns = [
+const flatSortColumns: SortColumn[] = [
   { key: 'productName', type: 'text', label: t.labels.product },
   { key: 'priceValue', type: 'number', label: t.labels.price },
   { key: 'stockValue', type: 'number', label: t.labels.stock },
-  { key: 'categoryName', type: 'text', label: t.labels.category },
-  { key: 'autoCategoryName', type: 'text', label: t.labels.autoCategory, tip: t.shops.autoCategoryTip, tipLabel: t.shops.autoCategoryHelpLabel },
   { key: 'score', type: 'number', label: t.labels.productScore, tip: t.shops.productScoreTip, tipLabel: t.shops.productScoreHelpLabel },
+  { key: 'platformName', type: 'text', label: t.shops.platform, tip: t.shops.platformHint, helpHref: linkTo('/guide/choose-reliable-merchant'), helpLinkLabel: t.shops.guideTitle },
   { key: 'siteName', type: 'text', label: t.labels.merchant },
-  { key: 'supportPoints', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
   { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
 ] satisfies SortColumn[];
-const rightAlignedProductColumns = new Set(['priceValue', 'stockValue', 'score', 'supportPoints']);
+const rightAlignedProductColumns = new Set(['priceValue', 'stockValue']);
 const merchantTabLabel = t.labels.merchant;
-const merchantSortColumns = [
+const merchantSortColumns: SortColumn[] = [
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productCount', type: 'number', label: t.labels.productCount },
   { key: 'hotProducts', type: 'number', label: t.shops.hotProductsTitle },
   { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
-  { key: 'supportPoints', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
   { key: 'lastProductRefreshSuccessAt', type: 'number', label: t.labels.latestRefresh },
 ] satisfies SortColumn[];
-const rightAlignedMerchantColumns = new Set(['productCount', 'siteScore', 'supportPoints']);
+const rightAlignedMerchantColumns = new Set(['productCount']);
 const shopProductsJsonValue = JSON.stringify(packShopProductsData({
   ...data,
   initialProductLimit: initialProductLimitValue,
@@ -221,50 +226,32 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
     titleId="shopPageHeroTitle"
     descriptionId="shopPageHeroDescription"
   >
-    <p slot="note" class="page-hero-note">{t.shops.note}</p>
-    <div slot="aside" class="page-hero-submit-summary">
-      <div class="grid grid-cols-3 gap-2">
-        <button
-          id="openShopSubmitModal"
-          type="button"
-          class="btn btn-primary btn-md h-auto min-w-0 whitespace-normal px-2 py-2"
-          data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops"
-          data-umami-event-name={t.shops.submitMerchant}
-        >
-          {t.shops.submitMerchant}
-        </button>
-        <a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-md h-auto min-w-0 whitespace-normal px-2 py-2"><span aria-hidden="true">♥</span> {t.support.button}</a>
-        <OpenShopLink class="btn open-shop-button btn-md h-auto min-w-0 whitespace-normal px-2 py-2" />
-      </div>
-      <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
-        <div class="stat px-4 py-3">
-          <div class="stat-title text-xs">{t.shops.listedMerchants}</div>
-          <div class="stat-value text-2xl text-primary">{data.totalSiteCount}</div>
-        </div>
-        <div class="stat px-4 py-3">
-          <div class="stat-title text-xs">{t.shops.listedProducts}</div>
-          <div class="stat-value text-2xl text-secondary">{data.totalProductCount}</div>
-        </div>
-      </div>
+    <div slot="meta" class="hero-metrics">
+      <HeroMetric label={t.shops.listedMerchants} value={data.totalSiteCount.toLocaleString(Astro.locals.locale)} />
+      <HeroMetric label={t.shops.listedProducts} value={data.totalProductCount.toLocaleString(Astro.locals.locale)} />
+      <HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={data.latestRefreshedAt} fallback={t.labels.notRecorded} /></HeroMetric>
+    </div>
+    <div slot="aside" class="data-page-actions">
+      <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-sm"
+        data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops" data-umami-event-name={t.shops.submitMerchant}>
+        {t.shops.submitMerchant}
+      </button>
+      <a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-sm"><span aria-hidden="true">♥</span> {t.support.button}</a>
+      <OpenShopLink class="btn open-shop-button btn-sm" />
     </div>
   </PageHero>
 
   <Sponsors placement="after-hero" pageType={pageType} />
 
-  <section data-telemetry-block={telemetryBlocks.shops.guide}>
-    <a href={linkTo('/guide/choose-reliable-merchant')} data-umami-event="internal-link-click" data-umami-event-link-type="guide" data-umami-event-source-page={linkTo('/shops')} data-umami-event-target-page={linkTo('/guide/choose-reliable-merchant')} data-umami-event-url={linkTo('/guide/choose-reliable-merchant')} class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
-      <div>
-        <span class="font-bold text-base block text-base-content">{t.shops.guideTitle}</span>
-        <span class="text-sm text-base-content/85 block mt-1">{t.shops.guideDescription}</span>
-      </div>
-      <div class="btn btn-sm btn-ghost text-primary hover:bg-transparent shrink-0">{t.actions.read} ➜</div>
-    </a>
-  </section>
+  <aside class="data-workspace-guide" data-telemetry-block={telemetryBlocks.shops.guide}>
+    <a class="purchase-guide-link" href={linkTo('/guide/choose-reliable-merchant')}><Icon name="circle-alert" class="purchase-guide-icon" /><strong>{t.shops.guideTitle}</strong><span aria-hidden="true">→</span></a>
+    <span class="purchase-guide-description">{t.shops.guideDescription}</span>
+  </aside>
 
-  <section id="shopsExplorer" class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-shop-tabs>
-    <div class="border-b border-base-300 bg-base-100 px-4 py-3">
-      <div class="tool-tablist-wrap">
-        <div class="tabs tabs-box gateway-home-tablist" role="tablist" aria-label={t.shops.title}>
+  <section id="shopsExplorer" class="card bg-base-100 border border-base-300 shadow-sm data-workspace" data-shop-tabs>
+      <form id="filters" class="data-workspace-controls" method="get" action={linkTo('/shops')}>
+        <div class="data-workspace-toolbar">
+        <div class="data-segmented" role="tablist" aria-label={t.shops.title}>
           <button type="button" class="tab tab-active" role="tab" aria-selected="true" aria-controls="flatProductView" id="shopProductsTab" data-shop-tab="products">
             {t.labels.products}
             <span class="tool-tab-badge">{data.totalProductCount}</span>
@@ -274,59 +261,46 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             <span class="tool-tab-badge">{data.totalSiteCount}</span>
           </button>
         </div>
-      </div>
-    </div>
-
-    <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products" data-telemetry-block={telemetryBlocks.shops.products}>
-      <form id="filters" class="card-body p-4 flex flex-col gap-3 border-b border-base-300" method="get" action={linkTo('/shops')}>
-        <div class="flex items-center gap-2">
-          <div class="relative min-w-0 flex-1 max-w-3xl">
-            <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
+          <div class="relative data-workspace-search" data-shop-control="products">
+            <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} aria-label={t.shops.searchPlaceholder} autocomplete="off" />
             <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip-wide data-tip={t.shops.advancedSearchTip}>i</button>
           </div>
-          <button id="toggleSearchOptions" type="button" class="btn btn-outline btn-sm shrink-0" aria-expanded="false" aria-controls="searchOptions">{t.shops.filterOptions}</button>
+          <div class="data-workspace-search" data-shop-control="merchants" hidden><input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full" placeholder={t.shops.merchantSearchPlaceholder} aria-label={t.shops.merchantSearchPlaceholder} autocomplete="off" /></div>
+          <div data-shop-control="products"><FilterPopover id="searchOptions" label={t.shops.filterOptions} doneLabel={t.shops.done}>
+            <fieldset class="data-filter-group">
+              <legend>{t.labels.price} <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button></legend>
+              <div class="data-filter-price">
+                <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm" placeholder={t.shops.minPrice} aria-label={`${t.labels.price} · ${t.shops.minPrice}`} autocomplete="off" />
+                <span>–</span>
+                <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm" placeholder={t.shops.maxPrice} aria-label={`${t.labels.price} · ${t.shops.maxPrice}`} autocomplete="off" />
+              </div>
+            </fieldset>
+            <fieldset class="data-filter-group">
+              <legend>{t.shops.searchScope}</legend>
+              <label><input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.matchCategory}</span></label>
+              <label><input id="fuzzySearchFilter" name="fuzzy" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" checked={initialFuzzySearch} /><span>{t.shops.fuzzySearch}</span></label>
+            </fieldset>
+            <fieldset class="data-filter-group">
+              <legend>{t.shops.displayOptions}</legend>
+              <label><input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.showSoldOut}</span></label>
+              <label><input id="onlyPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
+              <label><input id="onlyFavoritesFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label>
+            </fieldset>
+            <button slot="footer" id="resetShopFilters" type="button" class="btn btn-sm btn-ghost">{t.shops.clearFilters}</button>
+          </FilterPopover></div>
+          <div data-shop-control="merchants" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done}><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
+              <label class="data-filter-switch"><input id="merchantFavoritesFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label></FilterPopover></div>
+          <select id="shopSortSelect" data-shop-control="products" class="select select-bordered data-workspace-sort" aria-label={t.shops.sort}>
+            <option value="">{t.shops.defaultSort}</option>
+            <option value="priceValue:asc">{t.shops.priceAsc}</option>
+            <option value="stockValue:desc">{t.shops.stockDesc}</option>
+            <option value="productRefreshedAt:desc">{t.shops.refreshDesc}</option>
+            <option value="custom" hidden>{t.shops.headerSort}</option>
+          </select>
         </div>
-        <div id="searchOptions" class="hidden flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-            <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
-              <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
-              <span>{t.shops.showSoldOut}</span>
-            </label>
-            <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
-              <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
-              <span>{t.shops.matchCategory}</span>
-            </label>
-            <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
-              <input id="fuzzySearchFilter" name="fuzzy" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" checked={initialFuzzySearch} />
-              <span>{t.shops.fuzzySearch}</span>
-            </label>
-            <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
-              <span class="text-sm text-base-content/80">{t.labels.price}</span>
-              <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button>
-              <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.minPrice} autocomplete="off" />
-              <span class="text-xs text-base-content/40">~</span>
-              <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
-            </div>
-        </div>
-        <script is:inline>
-          (() => {
-            const button = document.getElementById('toggleSearchOptions');
-            const panel = document.getElementById('searchOptions');
-            const key = 'cardnav:shops:filter-options-expanded';
-            const setExpanded = expanded => {
-              panel.classList.toggle('hidden', !expanded);
-              button.setAttribute('aria-expanded', String(expanded));
-            };
-            try { setExpanded(localStorage.getItem(key) === 'true'); } catch {}
-            button.addEventListener('click', () => {
-              const expanded = button.getAttribute('aria-expanded') !== 'true';
-              setExpanded(expanded);
-              try { localStorage.setItem(key, String(expanded)); } catch {}
-              window.CardNavTelemetry?.track('button-click', { scope: 'shops', action: expanded ? 'expand-filters' : 'collapse-filters' }, button);
-            });
-          })();
-        </script>
-        <ShopPlanGroups initialSearchQuery={initialSearchQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} />
-        <div id="quickPlanTips" class:list={['flex flex-wrap items-center gap-2', !hasInitialQuickPlanTip && 'hidden']}>
+        <div data-shop-control="products" id="shopActiveFilters" class="data-active-filters" aria-live="polite" hidden></div>
+        <div data-shop-control="products"><ShopPlanGroups initialSearchQuery={initialSearchQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} /></div>
+        <div data-shop-control="products" id="quickPlanTips" class:list={['flex flex-wrap items-center gap-2', !hasInitialQuickPlanTip && 'hidden']}>
           <a
             id="gatewayTip"
             href={initialGatewayTipPath || '#'}
@@ -334,7 +308,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             rel="noopener noreferrer"
             class:list={[
               initialGatewayTipPath ? 'inline-flex' : 'hidden',
-              'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+              'data-crosslink',
             ]}
             data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-gateway-tip"
             data-umami-event-url={initialGatewayTipPath || undefined}
@@ -353,7 +327,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             rel="noopener noreferrer"
             class:list={[
               initialOfficialPricePath ? 'inline-flex' : 'hidden',
-              'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+              'data-crosslink',
             ]}
             data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-official-price-tip"
             data-umami-event-url={initialOfficialPricePath || undefined}
@@ -366,7 +340,10 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             </svg>
           </a>
         </div>
+        <div id="merchantActiveFilters" data-shop-control="merchants" class="data-active-filters" hidden></div>
       </form>
+    <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products" data-telemetry-block={telemetryBlocks.shops.products}>
+
       <DataTable
         variant="shopProducts"
         tbodyId="flatProductRows"
@@ -401,9 +378,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
     </div>
 
     <div id="merchantGroupedView" role="tabpanel" aria-labelledby="shopMerchantsTab" data-shop-panel="merchants" data-telemetry-block={telemetryBlocks.shops.merchants} hidden>
-      <form id="merchantFilters" class="card-body p-4 border-b border-base-300" method="get" action={linkTo('/shops')}>
-        <input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full max-w-3xl" placeholder={t.shops.merchantSearchPlaceholder} autocomplete="off" />
-      </form>
+
       <div class="product-table-scroll merchant-table-scroll">
         <div class="merchant-table">
           <div class="merchant-table-head">
@@ -446,7 +421,6 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
 
   <script is:inline type="application/json" id="shop-products-data" set:html={shopProductsJsonValue}></script>
   <script is:inline type="application/json" id="shops-messages" set:html={JSON.stringify(shopsScriptMessages)}></script>
-  <script is:inline slot="scripts" src={merchantBadgeScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
   <script>
     import '../scripts/index.js';

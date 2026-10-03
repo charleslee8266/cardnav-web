@@ -66,12 +66,6 @@ function productStockLabel(item, shopsMessages, accessors) {
   return accessors.shopProductInStock(item) ? (shopsMessages.inStock || 'In stock') : (shopsMessages.soldOut || 'Sold out');
 }
 
-function formatScore(value) {
-  const score = Number(value);
-  if (!Number.isFinite(score)) return '-';
-  return Number.isInteger(score) ? String(score) : score.toFixed(2);
-}
-
 function priceValueForSort(priceNumber, priceUnit) {
   if (typeof priceNumber !== 'number' || !Number.isFinite(priceNumber)) return Number.MAX_SAFE_INTEGER;
   if (priceUnit === '$' || priceUnit === 'USD') return priceNumber * 7;
@@ -79,12 +73,14 @@ function priceValueForSort(priceNumber, priceUnit) {
 }
 
 function createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, options = {}) {
-  return createTrackedLink(siteUrl, 'merchant-link merchant-text', siteName, siteName, {
+  const link = createTrackedLink(siteUrl, 'merchant-link merchant-text', siteName, siteName, {
     umamiEvent: 'external-link-click',
     umamiEventLinkType: 'merchant',
     productClick: false,
     sponsor: options.sponsor === true,
   });
+  link.dataset.rowPrimary = '';
+  return link;
 }
 
 function createProductChip(item, shopProductsData, shopsMessages, createTrackedLink, accessors) {
@@ -98,8 +94,6 @@ function createProductChip(item, shopProductsData, shopsMessages, createTrackedL
   const inStock = accessors.shopProductInStock(item);
   const price = formatDisplayPrice(priceNumber, priceUnit);
   const productTitle = `${categoryName}-${productName}`;
-  const shortCategory = categoryName.length > 10 ? `${categoryName.slice(0, 10)}...` : categoryName;
-  const shortName = productName.length > 14 ? `${productName.slice(0, 14)}...` : productName;
   const chip = productUrl ? document.createElement('a') : document.createElement('div');
 
   chip.title = productTitle;
@@ -131,23 +125,19 @@ function createProductChip(item, shopProductsData, shopsMessages, createTrackedL
     chip.dataset.productClickSource = 'merchant';
   }
 
-  appendTextElement(chip, 'span', 'product-category', shortCategory);
-  appendTextElement(chip, 'span', 'product-name', shortName);
-  appendTextElement(chip, 'span', 'product-price', price);
-  appendTextElement(
-    chip,
-    'span',
-    inStock ? 'product-status-in-stock' : 'product-status-sold-out',
-    productStockLabel(item, shopsMessages, accessors),
-  );
+  appendTextElement(chip, 'span', 'product-name', productName);
+  appendTextElement(chip, 'span', 'product-chip-price', ` · ${price}`);
 
   return chip;
 }
 
 export function renderMerchantRows({
   shopProductsData,
+  matchingProducts,
   shopDataAccessors,
   shopsMessages,
+  createScoreDisplay,
+  createRelativeTime,
   createFavoriteButton,
   createTrackedLink,
   initializeFavorites,
@@ -159,7 +149,7 @@ export function renderMerchantRows({
 
   const accessors = shopDataAccessors;
   const sites = accessors.shopSites(shopProductsData);
-  const products = accessors.shopProducts(shopProductsData);
+  const products = matchingProducts ?? accessors.shopProducts(shopProductsData);
   const productsBySiteId = new Map();
   products.forEach(item => {
     const siteId = text(accessors.shopSiteId(accessors.shopProductSite(shopProductsData, item)));
@@ -181,7 +171,7 @@ export function renderMerchantRows({
         if (scoreDiff !== 0) return scoreDiff;
         return text(accessors.shopProductName(left)).localeCompare(text(accessors.shopProductName(right)), 'zh-Hans-CN', { numeric: true });
       })
-      .slice(0, 10);
+      .slice(0, 2);
     const siteName = text(accessors.shopSiteName(site));
     const siteUrl = text(accessors.shopSiteUrl(site)).trim();
     const siteSponsor = accessors.shopSiteSponsor(site);
@@ -223,7 +213,7 @@ export function renderMerchantRows({
     merchantTags.className = 'merchant-tag-row';
     if (siteSponsor) merchantTags.appendChild(window.CardNavMerchantBadge.create(shopsMessages.sponsorLabel || 'Partner', shopsMessages.sponsorDescription || '', shopsMessages.partnershipUrl || localizedFallbackPath('/partnership'), shopsMessages.partnershipLinkLabel || 'How to partner'));
     if (accessors.shopSiteSupportPoints(site) > 0) merchantTags.appendChild(window.CardNavMerchantBadge.create(shopsMessages.supportLabel, shopsMessages.supportDescription, shopsMessages.supportersUrl, shopsMessages.supportLinkLabel, 'support'));
-    if (merchantTags.childElementCount > 0) merchantContent.appendChild(merchantTags);
+    if (merchantTags.childElementCount > 0) merchantTitle.append(...merchantTags.childNodes);
     merchantHeader.appendChild(merchantContent);
 
     merchantCell.appendChild(merchantHeader);
@@ -261,19 +251,18 @@ export function renderMerchantRows({
     const scoreCell = document.createElement('div');
     scoreCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';
     appendTextElement(scoreCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.merchantScore || 'Merchant score');
-    appendTextElement(scoreCell, 'span', 'merchant-table-value', formatScore(accessors.shopSiteScore(site)));
+    scoreCell.appendChild(createScoreDisplay(accessors.shopSiteScore(site)));
     row.appendChild(scoreCell);
 
-    const supportCell = document.createElement('div');
-    supportCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';
-    appendTextElement(supportCell, 'span', 'merchant-table-mobile-label', shopsMessages.supportTotalLabel);
-    appendTextElement(supportCell, 'span', 'merchant-table-value', accessors.shopSiteSupportPoints(site).toLocaleString(undefined, { maximumFractionDigits: 2 }));
-    row.appendChild(supportCell);
+    if (accessors.shopSiteSupportPoints(site) > 0) {
+      const support = appendTextElement(merchantContent, 'div', 'data-support-inline', `${shopsMessages.supportTotalLabel} `);
+      appendTextElement(support, 'strong', '', accessors.shopSiteSupportPoints(site).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+    }
 
     const refreshCell = document.createElement('div');
     refreshCell.className = 'merchant-table-cell merchant-table-cell-value';
     appendTextElement(refreshCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.latestRefresh || 'Latest refresh');
-    appendTextElement(refreshCell, 'span', 'merchant-table-value', accessors.shopSiteLastRefreshTime(site) || '-');
+    refreshCell.appendChild(createRelativeTime(accessors.shopSiteLastRefreshMs(site)));
     row.appendChild(refreshCell);
 
     fragment.appendChild(row);

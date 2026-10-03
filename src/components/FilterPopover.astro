@@ -1,0 +1,57 @@
+---
+import './data-workspace.css';
+type Props = { id: string; label: string; doneLabel: string };
+const { id, label, doneLabel } = Astro.props;
+---
+<div class="data-filter" data-filter-popover>
+  <button type="button" class="btn btn-sm data-filter-trigger" aria-controls={id} aria-expanded="false" data-filter-trigger>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4" /></svg>
+    {label}<span class="data-filter-count" data-filter-count hidden></span>
+  </button>
+  <div id={id} class="data-filter-panel" popover="auto" aria-label={label}>
+    <div class="data-filter-heading">{label}</div>
+    <div class="data-filter-fields"><slot /></div>
+    <div class="data-filter-footer"><slot name="footer" /><button type="button" class="btn btn-sm btn-primary" data-filter-close>{doneLabel}</button></div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-filter-popover]').forEach(root => {
+    const trigger = root.querySelector<HTMLButtonElement>('[data-filter-trigger]')!;
+    const panel = root.querySelector<HTMLElement>('[popover]')!;
+    const position = () => {
+      const rect = trigger.getBoundingClientRect();
+      panel.style.setProperty('--filter-top', `${Math.max(12, Math.min(rect.bottom + 8, window.innerHeight - panel.offsetHeight - 12))}px`);
+      panel.style.setProperty('--filter-right', `${Math.max(12, window.innerWidth - rect.right)}px`);
+    };
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+    let pinned = false;
+    const cancelClose = () => { clearTimeout(closeTimer); };
+    const open = () => { cancelClose(); if (!panel.matches(':popover-open')) panel.showPopover(); position(); };
+    const hoverEnter = (event: PointerEvent) => { if (event.pointerType === 'mouse') open(); };
+    const hoverLeave = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse' || pinned) return;
+      cancelClose();
+      closeTimer = setTimeout(() => { if (!pinned && !panel.matches(':hover') && !trigger.matches(':hover')) panel.hidePopover(); }, 180);
+    };
+    trigger.addEventListener('pointerenter', hoverEnter);
+    panel.addEventListener('pointerenter', cancelClose);
+    trigger.addEventListener('pointerleave', hoverLeave);
+    panel.addEventListener('pointerleave', hoverLeave);
+    panel.addEventListener('pointerdown', () => { pinned = true; cancelClose(); });
+    trigger.addEventListener('click', () => {
+      cancelClose();
+      if (pinned && panel.matches(':popover-open')) panel.hidePopover();
+      else { pinned = true; open(); }
+    });
+    panel.addEventListener('keydown', event => { if (event.key === 'Escape') { panel.hidePopover(); trigger.focus(); } });
+    panel.addEventListener('toggle', () => {
+      const open = panel.matches(':popover-open');
+      trigger.setAttribute('aria-expanded', String(open));
+      if (open) position();
+      else { pinned = false; cancelClose(); }
+    });
+    panel.querySelector('[data-filter-close]')?.addEventListener('click', () => { panel.hidePopover(); trigger.focus(); });
+    window.addEventListener('resize', () => { if (panel.matches(':popover-open')) position(); });
+    window.addEventListener('scroll', () => { if (panel.matches(':popover-open') && window.innerWidth > 640) panel.hidePopover(); }, { passive: true });
+  });
+</script>

@@ -1,0 +1,7 @@
+---
+import { scorePresentation } from '../data-display.js';
+type Props = { value: number | null | undefined; maximum?: number };
+const { value, maximum = 100 } = Astro.props;
+const score = scorePresentation(value, maximum);
+---
+<span class="data-score" title={value == null ? undefined : String(value)}>{score.text}<span class="data-score-meter" aria-hidden="true"><i style={`--score-fill:${score.fill}%`}></i></span></span>

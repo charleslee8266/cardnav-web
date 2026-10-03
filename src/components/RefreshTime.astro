@@ -1,0 +1,10 @@
+---
+import { refreshTimestamp, relativeUpdateTime, exactRefreshTime } from '../refresh-time.js';
+type Props = { timestamp: string | number | null | undefined; fallback?: string; class?: string };
+const { timestamp: value, fallback = '—', class: className = '' } = Astro.props;
+const timestamp = refreshTimestamp(value);
+---
+<time class={className} data-refresh-time={timestamp || undefined} datetime={timestamp ? new Date(timestamp).toISOString() : undefined} title={exactRefreshTime(timestamp) || undefined}>{timestamp ? relativeUpdateTime(timestamp, Astro.locals.locale) : fallback}</time>
+<script>
+  import '../scripts/refresh-times.js';
+</script>

@@ -1,0 +1,87 @@
+---
+import RefreshTime from './RefreshTime.astro';
+import HeroMetric from './HeroMetric.astro';
+import PageHero from './PageHero.astro';
+import { officialPriceBaseline, officialPriceDifference } from '../official-price.js';
+import OfficialPriceComparison from './OfficialPriceComparison.astro';
+import './official-price.css';
+import Sponsors from './Sponsors.astro';
+import DataTable from './DataTable.astro';
+import DataTableCell from './DataTableCell.astro';
+import DataTableHeader from './DataTableHeader.astro';
+import { productForOfficialPrice, productIconPath } from '../shop-plan-search.js';
+import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
+import { telemetryBlocks } from '../telemetry-blocks.js';
+import './data-workspace.css';
+type Props = { stats: import('../store.js').PublicOfficialPriceStats; groups: LocalizedOfficialPriceGroup[]; updatedAt: string | null };
+const { groups, updatedAt, stats } = Astro.props;
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
+const brands = Array.from(new Map(groups.map(group => [group.appSlug, { name: group.appName, product: productForOfficialPrice(group.appSlug, group.urlSlug) }])).entries());
+const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 65)).join('') : '';
+---
+<PageHero title={t.officialPrice.title} description={t.officialPrice.heroDescription}>
+  <div slot="meta" class="hero-metrics"><HeroMetric label={t.officialPrice.listedProducts} value={stats.productCount.toLocaleString(Astro.locals.locale)} /><HeroMetric label={t.officialPrice.listedRegions} value={stats.regionCount.toLocaleString(Astro.locals.locale)} /><HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={updatedAt} fallback={t.labels.notRecorded} /></HeroMetric></div>
+</PageHero>
+<Sponsors placement="after-hero" pageType="official-price" />
+<section class="official-overview card data-workspace" data-telemetry-block={telemetryBlocks.officialPrices.table}>
+  <nav class="official-overview-brands" aria-label={t.officialPrice.navLabel}>
+    <button class="plan-option plan-product" type="button" data-official-brand="" aria-pressed="true">{t.shops.allPlans}</button>
+    {brands.map(([id, brand]) => <button class="plan-option plan-product" type="button" data-official-brand={id} aria-pressed="false">
+      {brand.product?.icon && <img src={productIconPath(brand.product.icon)} width="18" height="18" alt="" class:list={['plan-brand-icon', brand.product.monochrome && 'plan-icon-mono']} />}
+      {brand.product?.label || brand.name}
+    </button>)}
+  </nav>
+  {groups.length > 0 && <div class="official-overview-table">
+    <DataTable variant="compact" >
+      <Fragment slot="head">
+        <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
+        <DataTableHeader label={t.labels.product} sortKey="name" />
+        <DataTableHeader label={t.officialPrice.baselinePrice} helpTip={t.officialPrice.usBaseline} sortKey="baseline" sortType="number" align="right" />
+        <DataTableHeader label={t.officialPrice.lowestRegion} sortKey="country" />
+        <DataTableHeader label={t.officialPrice.lowestPrice} helpTip={`${t.officialPrice.note} ${t.officialPrice.description}`} sortKey="equivalentPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.officialPrice.comparedToBaseline} sortKey="difference" sortType="number" align="right" />
+      </Fragment>
+      {groups.map((group, index) => {
+        const price = group.prices[0];
+        const product = productForOfficialPrice(group.appSlug, group.urlSlug);
+        const baseline = officialPriceBaseline(group.prices);
+        const difference = price ? officialPriceDifference(price, baseline) : null;
+        return price && <tr data-sort-baseline={baseline?.equivalentPrice ?? ""} data-sort-difference={difference ?? ""} data-sort-name={group.displayName} data-sort-country={price.localizedCountryLabel} data-sort-price={price.priceValue} data-sort-equivalent-price={price.equivalentPrice} data-official-summary-brand={group.appSlug}>
+          <DataTableCell label={t.labels.sequence} sequence align="center">{index + 1}</DataTableCell>
+          <DataTableCell label={t.labels.product}><a data-row-primary href={linkTo(group.pathname)} class="official-plan-name merchant-link">{product?.icon ? <img src={productIconPath(product.icon)} width="22" height="22" alt="" class:list={['plan-brand-icon', product.monochrome && 'plan-icon-mono']} /> : product?.symbol && <span class="official-brand-symbol" aria-hidden="true">{product.symbol}</span>}{group.displayName}</a></DataTableCell>
+          <DataTableCell label={t.officialPrice.baselinePrice} align="right">{baseline ? <><span class="official-price-value">{baseline.equivalentPriceText}</span><small class="official-price-secondary">{baseline.priceText} {baseline.currencyCode}</small></> : <span title={t.officialPrice.baselineUnavailable}>—</span>}</DataTableCell>
+          <DataTableCell label={t.officialPrice.lowestRegion}><span class="official-region"><span aria-hidden="true">{flag(price.countryCode)}</span><span><strong class="official-region-name">{price.localizedCountryLabel}</strong><small class="official-price-secondary">{price.countryCode}</small></span></span></DataTableCell>
+          <DataTableCell label={t.officialPrice.lowestPrice} align="right"><span class="official-price-value">{price.equivalentPriceText}</span><small class="official-price-secondary">{price.priceText} {price.currencyCode}</small></DataTableCell>
+          <DataTableCell label={t.officialPrice.comparedToBaseline} align="right"><OfficialPriceComparison percent={difference} /></DataTableCell>
+        </tr>;
+      })}
+    </DataTable>
+  </div>}
+  {!groups.length && <p class="data-table-empty-state">{t.officialPrice.empty}</p>}
+</section>
+<script>
+  const table = document.querySelector<HTMLElement>('.official-overview-table [data-table]');
+  const body = table?.querySelector('tbody');
+  const rows = Array.from(body?.querySelectorAll<HTMLTableRowElement>('tr') || []);
+  rows.forEach((row, index) => { row.dataset.originalOrder = String(index); });
+  document.querySelectorAll<HTMLButtonElement>('[data-official-brand]').forEach(button => {
+    button.addEventListener('click', () => {
+      const brand = button.dataset.officialBrand;
+      document.querySelectorAll('[data-official-brand]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      body?.replaceChildren(...rows.filter(row => !brand || row.dataset.officialSummaryBrand === brand));
+      const api = window as Window & { applyDataTableSort?: (table: HTMLElement) => void };
+      if (table) api.applyDataTableSort?.(table);
+    });
+  });
+</script>
+<style>
+  .official-overview { min-width: 0; border: 1px solid var(--color-base-300); background: var(--color-base-100); overflow: hidden; }
+  .official-overview-brands { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 14px 16px 12px; border-bottom: 1px solid var(--color-base-300); }
+  .official-overview-table { min-width: 0; }
+  .official-plan-name { display: inline-flex; align-items: center; gap: 10px; }
+  .official-brand-symbol { display: inline-grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; font-size: 22px; line-height: 1; }
+  .official-plan-name img { width: 22px; height: 22px; }
+  .official-overview-table :global(.data-table) { min-width: 760px; }
+  .official-overview-table :global(.data-table th[data-column-key="name"]) { width: 32%; }
+</style>

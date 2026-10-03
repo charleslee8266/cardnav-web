@@ -15,11 +15,12 @@ test('visible sponsor sections refresh, clear failed content and resume after hi
     innerHTML: '',
     hidden: true,
     querySelector() { return this.innerHTML.includes('<section>') ? {} : null; },
+    querySelectorAll() { return []; },
     replaceChildren() { this.innerHTML = ''; },
   };
   const document = {
     hidden: false,
-    querySelectorAll: () => [container],
+    querySelectorAll: (selector: string) => selector === '[data-sponsor-fragment]' ? [container] : [],
     addEventListener: (name: string, handler: () => void) => listeners.set(name, handler),
   };
   vm.runInNewContext(await readFile(new URL('../src/scripts/sponsor-fragments.js', import.meta.url), 'utf8'), {

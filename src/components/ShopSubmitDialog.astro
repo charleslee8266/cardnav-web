@@ -18,7 +18,6 @@ const linkTo = Astro.locals.localizePath;
   closeLabel={t.shops.closeSubmitDialog}
   backdropLabel={t.shops.closeSubmitBackdrop}
   data-telemetry-block={telemetryBlocks.shops.submit}
-  size="wide"
 >
   <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} {t.shops.openShopPrompt} <OpenShopLink class="link link-primary font-medium" label={t.shops.openShopLink} />{t.shops.submitTypeSentenceEnd}</p>
   <p class="text-sm leading-6 text-base-content/80">{t.shops.submitGatewayPrompt} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
@@ -30,11 +29,11 @@ const linkTo = Astro.locals.localizePath;
 
   <form id="submitForm" class="submission-form" method="post" action="/api/submit">
     <FormField label={t.shops.urlLabel} for="urlInput" required hint={t.shops.urlAliasHint} hintId="shopUrlHint">
-      <input id="urlInput" name="url" type="url" required value="" class="input input-bordered form-input" placeholder="https://example.com" autocomplete="url" aria-describedby="shopUrlHint clientError" />
-      <p slot="error" id="clientError" class="hidden form-field-error">{t.submit.invalidUrl}</p>
+      <input id="urlInput" name="url" type="url" required value="" class="form-input" placeholder="https://example.com" autocomplete="url" aria-describedby="shopUrlHint clientError" />
+      <p slot="error" id="clientError" role="alert" class="hidden form-field-error">{t.submit.invalidUrl}</p>
     </FormField>
-    <p id="submitError" class="hidden form-field-error"></p>
-    <p id="submitSuccess" class="hidden text-sm text-primary font-medium"></p>
+    <p id="submitError" role="alert" class="hidden form-field-error"></p>
+    <p id="submitSuccess" role="status" class="hidden text-sm text-primary font-medium"></p>
     <div class="card-actions justify-start mt-2">
       <button type="submit" class="btn btn-primary">
         {t.actions.submit}

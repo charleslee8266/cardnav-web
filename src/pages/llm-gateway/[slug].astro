@@ -1,16 +1,20 @@
 ---
+import RefreshTime from '../../components/RefreshTime.astro';
+import ScoreDisplay from '../../components/ScoreDisplay.astro';
+import ProviderLabel from '../../components/ProviderLabel.astro';
 /*
 文件说明: 渲染单个 AI 大模型 API 中转站详情页，展示模型覆盖和价格记录。
 */
 import { telemetryBlocks } from '../../telemetry-blocks.js';
+import '../../components/data-workspace.css';
 import PageHero from '../../components/PageHero.astro';
 import DataTable from '../../components/DataTable.astro';
 import DataTableCell from '../../components/DataTableCell.astro';
 import {
   displayPriceUnit,
+  paymentIcon,
   formatAvailabilityPercent,
   formatLatencySeconds,
-  formatPositiveScore,
   formatPrice,
   shortList,
 } from '../../gateway-display.js';
@@ -19,7 +23,6 @@ import DataTableHeader from '../../components/DataTableHeader.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 import { loadGatewayDetail } from '../../store.js';
-import merchantBadgeScriptUrl from '../../scripts/merchant-badge.js?url';
 import MerchantBadge from '../../components/MerchantBadge.astro';
 import Sponsors from '../../components/Sponsors.astro';
 
@@ -39,6 +42,8 @@ const priceTableConfig = {
   totalCount: priceTotalCount,
   apiUrl: `/api/llm-gateway/site-prices/${encodeURIComponent(site.slug)}.json?offset=${prices.length}&locale=${encodeURIComponent(Astro.locals.locale)}`,
   displaySummary: t.labels.displaySummary,
+  filterEmpty: t.llmGateway.priceFilterEmpty,
+  noPriceData: t.llmGateway.noPriceData,
   partnershipUrl: linkTo('/partnership'),
   modelLinkPrefix: linkTo('/llm-gateway/models'),
   labels: {
@@ -103,7 +108,6 @@ function gatewayModelClickAttrs(modelId: string) {
 <PublicPage activeNav="llm-gateway" pageType="gateway-detail" {...seo}>
   <PageHero
     title={site.name}
-    description={site.summary || t.llmGateway.noProfile}
     backHref="/llm-gateway"
     backLabel={t.llmGateway.backToList}
     copyClass="max-w-4xl"
@@ -112,58 +116,44 @@ function gatewayModelClickAttrs(modelId: string) {
       <h1 class="page-hero-title mt-0">{site.name}</h1>
       {site.sponsor ? <MerchantBadge label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
       {(site.supportPoints || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.amountLinkLabel} /> : null}
-      {site.displayFamily ? <span class="badge badge-ghost">{site.displayFamily}</span> : null}
-    </div>
-    <div slot="meta" class="page-hero-meta">
-      <span class="break-all">{site.url}</span>
-      <span>{t.llmGateway.createdAt}: {site.createdTime || t.labels.notRecorded}</span>
-      <span>{t.labels.latestRefresh}: {site.latestGatewayRefreshTime || t.labels.notRecorded}</span>
-    </div>
-    <div slot="aside" class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:min-w-[420px]">
-      <div class="rounded border border-base-300 px-3 py-2">
-        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.modelCount}</div>
-        <div class="font-mono text-xl font-bold text-primary">{site.modelCount}</div>
-      </div>
-      <div class="rounded border border-base-300 px-3 py-2">
-        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.priceCount}</div>
-        <div class="font-mono text-xl font-bold">{site.priceCount}</div>
-      </div>
-      <div class="rounded border border-base-300 px-3 py-2">
-        <div class="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-base-content/45">
-          <span>{t.labels.score}</span>
-          <button type="button" class="inline-help-button" aria-label={t.llmGateway.gatewayScoreHelpLabel} data-inline-help data-tip={t.llmGateway.gatewayScoreTip}>i</button>
-        </div>
-        <div class="font-mono text-xl font-bold">{formatPositiveScore(site.siteScore)}</div>
-      </div>
-      <div class="rounded border border-base-300 px-3 py-2">
-        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.availability}</div>
-        <div class="font-mono text-xl font-bold text-secondary">{formatAvailabilityPercent(site.availabilityPercent)}</div>
-      </div>
-      <div class="rounded border border-base-300 px-3 py-2">
-        <div class="text-[11px] font-semibold uppercase text-base-content/45">{t.llmGateway.averageLatency}</div>
-        <div class="font-mono text-xl font-bold">{formatLatencySeconds(site.avgSuccessLatencyMs)}</div>
-      </div>
-    </div>
-    <div slot="footer">
-      <div class="mt-4 flex flex-wrap gap-2">
-        {shortList(site.displayModelProviders, 12).map(family => <span class="badge badge-primary badge-outline">{family}</span>)}
-      </div>
-      <div class="mt-4">
-        <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" {...gatewaySiteOpenAttrs()}>{t.actions.open}</a>
-      </div>
     </div>
   </PageHero>
-
   <Sponsors placement="after-hero" pageType="gateway-detail" />
 
-  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="prices" data-telemetry-block={telemetryBlocks.gateways.prices}>
+  <div class="gateway-detail-grid">
+  <aside class="gateway-detail-sidebar card border border-base-300 bg-base-100">
+    <section>
+      <h2>{t.llmGateway.profileLabel}</h2>
+      {site.summary && <p class="gateway-detail-description">{site.summary}</p>}
+      <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer sponsored" class="btn btn-primary btn-sm mt-3" {...gatewaySiteOpenAttrs()}>{t.actions.open} ↗</a>
+    </section>
+    <section><h2>{t.llmGateway.basicInfo}</h2><dl>
+      <div><dt>{t.llmGateway.submitUrl}</dt><dd>{site.url}</dd></div>
+      <div><dt>{t.llmGateway.siteType}</dt><dd>{site.displayFamily || '—'}</dd></div>
+      <div><dt>{t.llmGateway.modelCount}</dt><dd>{site.modelCount}</dd></div>
+      <div><dt>{t.llmGateway.priceCount}</dt><dd>{site.priceCount}</dd></div>
+      <div><dt>{t.labels.score} <button type="button" class="inline-help-button" aria-label={t.llmGateway.gatewayScoreHelpLabel} data-inline-help data-tip={t.llmGateway.gatewayScoreTip}>i</button></dt><dd><ScoreDisplay value={site.siteScore} /></dd></div>
+      <div><dt>{t.llmGateway.availability}</dt><dd>{formatAvailabilityPercent(site.availabilityPercent)}</dd></div>
+      <div><dt>{t.llmGateway.averageLatency}</dt><dd>{formatLatencySeconds(site.avgSuccessLatencyMs)}</dd></div>
+      <div><dt>{t.llmGateway.createdAt}</dt><dd>{site.createdTime || t.labels.notRecorded}</dd></div>
+      <div><dt>{t.labels.latestRefresh}</dt><dd><RefreshTime timestamp={site.latestGatewayRefreshAt} fallback={t.labels.notRecorded} /></dd></div>
+    </dl></section>
+    <section><h2>{t.llmGateway.paymentMethods}</h2><div class="gateway-payment-list">{site.paymentMethods.length ? site.paymentMethods.map(method => { const icon = paymentIcon(method); const label = t.llmGateway.paymentMethodLabels[method as keyof typeof t.llmGateway.paymentMethodLabels] || method; return <span class="gateway-payment-label"><span class="payment-icon" aria-hidden="true">{icon.src ? <img src={icon.src} alt="" width="19" height="14" /> : icon.fallback}</span>{label}</span>; }) : '—'}</div></section>
+    <section><h2>{t.llmGateway.supportedFamilies}</h2><div class="flex flex-wrap gap-2">{shortList(site.displayModelProviders, 12).map(family => <ProviderLabel name={family} />)}</div></section>
+    <section><a href={linkTo('/llm-gateway')} class="text-primary text-sm">← {t.llmGateway.backToList}</a></section>
+  </aside>
+
+
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden data-workspace" data-gateway-deferred-table="prices" data-telemetry-block={telemetryBlocks.gateways.prices}>
     <div class="border-b border-base-300 p-5">
       <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 class="text-lg font-semibold">{t.llmGateway.priceSummaryTitle}</h2>
           <p class="text-sm leading-6 text-base-content/65">{t.llmGateway.priceSummaryDescription}</p>
         </div>
+        <input type="search" data-gateway-detail-search class="input input-bordered w-full sm:max-w-xs" placeholder={t.llmGateway.modelSearchPlaceholder} aria-label={t.llmGateway.modelSearchPlaceholder} />
       </div>
+      <p data-gateway-detail-error class="text-sm text-error mt-2" role="status" hidden>{t.llmGateway.loadFailed}</p>
     </div>
     <DataTable
       variant="gatewayPrices"
@@ -179,7 +169,7 @@ function gatewayModelClickAttrs(modelId: string) {
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
         <DataTableHeader label={t.labels.model} sortKey="model" />
-        <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
+        <DataTableHeader label={t.llmGateway.unit} helpTip={t.llmGateway.tableHint} sortKey="unit" />
         <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" align="right" />
@@ -197,9 +187,9 @@ function gatewayModelClickAttrs(modelId: string) {
         >
           <DataTableCell label={t.labels.sequence} align="center" sequence>{index + 1}</DataTableCell>
           <DataTableCell label={t.labels.model} class="min-w-48">
-            <a href={modelHref(price.modelId)} class="link link-hover break-words font-mono text-xs font-semibold text-primary" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
+            <a data-row-primary href={modelHref(price.modelId)} class="data-row-model-name break-words font-mono text-xs font-semibold" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
           </DataTableCell>
-          <DataTableCell label={t.llmGateway.unit}>{displayPriceUnit(price.unit, price.currency)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.unit} class="data-price-unit">{displayPriceUnit(price.unit, price.currency)}</DataTableCell>
           <DataTableCell label={t.llmGateway.inputPrice} align="right" class="font-mono">{formatPrice(price.inputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.outputPrice} align="right" class="font-mono">{formatPrice(price.outputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.cacheInputPrice} align="right" class="font-mono">{formatPrice(price.cacheInputPrice)}</DataTableCell>
@@ -209,10 +199,28 @@ function gatewayModelClickAttrs(modelId: string) {
     </DataTable>
   </section>
   <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(priceTableConfig)}></script>
-  <script is:inline slot="scripts" src={merchantBadgeScriptUrl}></script>
+
+  </div>
   <script>
     import '../../scripts/data-table.js';
     import '../../scripts/deferred-table-core.js';
     import '../../scripts/gateway-detail-tables.js';
   </script>
 </PublicPage>
+
+<style>
+  .gateway-detail-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; align-items: start; }
+  .gateway-detail-grid > section { min-width: 0; }
+  .gateway-detail-sidebar { min-width: 0; overflow: hidden; }
+  .gateway-detail-sidebar section { padding: 16px; border-bottom: 1px solid var(--color-base-300); }
+  .gateway-detail-sidebar section:last-child { border: 0; }
+  .gateway-detail-sidebar h2 { font-size: 13px; font-weight: 650; margin-bottom: 12px; }
+  .gateway-detail-sidebar dl { display: grid; gap: 12px; font-size: 12px; }
+  .gateway-detail-sidebar dl > div { display: flex; justify-content: space-between; gap: 14px; }
+  .gateway-detail-sidebar dt { display: inline-flex; align-items: center; gap: 4px; color: var(--color-muted); flex-shrink: 0; }
+  .gateway-detail-sidebar dd { min-width: 0; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .gateway-detail-description { color: var(--color-ink-secondary); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; white-space: pre-line; }
+  .gateway-payment-list { display: flex; flex-wrap: wrap; gap: 10px 12px; }
+  .gateway-payment-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-ink-secondary); }
+  @media (max-width: 1100px) { .gateway-detail-grid { grid-template-columns: 1fr; } }
+</style>

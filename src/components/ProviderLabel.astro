@@ -1,0 +1,6 @@
+---
+import { providerPresentation } from '../data-display.js';
+type Props = { name: string };
+const provider = providerPresentation(Astro.props.name);
+---
+<span class="data-provider">{provider.icon && <img src={provider.icon} alt="" width="14" height="14" class:list={{ 'data-provider-mono': provider.monochrome }} />}{provider.name}</span>

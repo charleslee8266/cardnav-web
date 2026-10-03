@@ -1,25 +1,17 @@
-.plan-picker { display: flex; flex-direction: column; align-items: stretch; gap: 6px; min-width: 0; }
-  .plan-picker-label { flex-shrink: 0; padding-top: 0; white-space: nowrap; }
-  .plan-tabs { display: grid; gap: 8px; min-width: 0; --panel-bg: color-mix(in srgb, var(--color-primary) 5%, var(--color-base-100)); --panel-border: color-mix(in srgb, var(--color-primary) 30%, var(--color-base-300)); }
-  .plan-groups { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  .plan-brand-icon { object-fit: contain; flex-shrink: 0; }
-  .plan-letter { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; font-weight: 650; }
-  .plan-group-options { display: flex; width: fit-content; max-width: 100%; align-items: center; gap: 10px; min-width: 0; padding: 4px 8px; border: 1px solid var(--panel-border); border-radius: 7px; background: transparent; }
-  .plan-group-options[hidden] { display: none; }
-  .plan-panel-label { flex-shrink: 0; font-size: .8125rem; font-weight: 600; }
-  .plan-package-scroll { display: flex; gap: 5px; min-width: 0; overflow-x: auto; scrollbar-width: thin; overscroll-behavior-x: contain; }
-  .plan-option { text-decoration: none; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 6px; min-height: 26px; padding: 2px 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--color-base-content); font-size: .8125rem; line-height: 1.3; white-space: nowrap; cursor: pointer; }
-  .plan-option:hover { background: color-mix(in srgb, var(--color-primary) 10%, var(--color-base-100)); }
-  .plan-option[aria-pressed="true"] { background: color-mix(in srgb, var(--color-primary) 14%, var(--color-base-100)); }
-  .plan-option:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
-  .plan-product { min-height: 28px; padding: 2px 8px; border-radius: 7px; background: var(--color-base-100); border-color: var(--color-base-300); }
-  .plan-product[aria-pressed="true"] { background: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100)); border-color: var(--panel-border); }
-  [data-theme="dark"] .plan-icon-mono { filter: invert(1); }
-  @media (max-width: 540px) {
-    .plan-picker { flex-direction: column; gap: 6px; }
-    .plan-picker-label { padding-top: 0; }
-    .plan-tabs { width: 100%; }
-    .plan-option { min-height: 30px; }
-    .plan-product { min-height: 30px; }
-    .plan-group-options { gap: 8px; padding: 4px 6px; }
-  }
+.plan-picker, .plan-tabs { display: flex; flex-direction: column; min-width: 0; gap: 10px; }
+.plan-picker-label { display: none; }
+.plan-groups { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: thin; padding-bottom: 1px; }
+.plan-option { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; gap: 5px; min-height: 30px; border: 1px solid transparent; border-radius: 999px; padding: 0 12px; background: transparent; color: var(--color-ink-secondary); font-size: 13px; line-height: 1.4; white-space: nowrap; text-decoration: none; cursor: pointer; }
+.plan-product { border-color: var(--color-base-300); background: var(--color-base-100); }
+.plan-option[aria-pressed="true"], .plan-option[aria-current] { border-color: var(--color-brand-line); background: var(--color-brand-soft); color: var(--color-primary); }
+.plan-product:hover { border-color: var(--category-hover-border); color: var(--color-primary); }
+.plan-brand-icon { width: 14px; height: 14px; object-fit: contain; flex-shrink: 0; }
+.plan-letter { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; font-weight: 650; }
+.plan-group-options { display: flex; align-items: center; width: fit-content; max-width: 100%; min-width: 0; gap: 10px; padding: 0; border: 1px solid var(--color-brand-line); border-radius: 7px; overflow: hidden; }
+.plan-group-options .plan-option { border: 0; border-radius: 6px; min-height: 32px; }
+.plan-group-options .plan-option:hover:not([aria-pressed="true"]):not([aria-current]) { background: color-mix(in srgb, var(--color-brand-soft) 50%, var(--color-base-100)); }
+.plan-panel-label { margin-left: 12px; flex-shrink: 0; color: var(--color-ink-secondary); font-size: 12px; font-weight: 600; }
+.plan-package-scroll { display: flex; min-width: 0; gap: 2px; overflow-x: auto; scrollbar-width: thin; }
+.plan-option:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.plan-group-options[hidden] { display: none !important; }
+[data-theme="dark"] .plan-icon-mono { filter: invert(1); }

@@ -187,7 +187,8 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     row.append(sequenceCell);
 
     const modelCell = tableCell(labels.model || '', 'left', 'min-w-48');
-    const modelLink = el('a', 'link link-hover break-words font-mono text-xs font-semibold text-primary', price.modelId || '');
+    const modelLink = el('a', 'data-row-model-name break-words font-mono text-xs font-semibold', price.modelId || '');
+    modelLink.dataset.rowPrimary = '';
     modelLink.href = `${modelLinkPrefix}/${encodeURIComponent(price.modelId || '')}`;
     modelLink.dataset.umamiEvent = 'internal-link-click';
     modelLink.dataset.umamiEventLinkType = 'gateway-model';
@@ -196,7 +197,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     modelLink.dataset.umamiEventUrl = modelLink.href;
     modelCell.append(modelLink);
     row.append(modelCell);
-    row.append(tableCell(labels.unit || '', 'left', '', {}).appendChild(document.createTextNode(displayPriceUnit(price.unit || '', price.currency))).parentElement);
+    row.append(tableCell(labels.unit || '', 'left', 'data-price-unit', {}).appendChild(document.createTextNode(displayPriceUnit(price.unit || '', price.currency))).parentElement);
     row.append(tableCell(labels.inputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.inputPrice))).parentElement);
     row.append(tableCell(labels.outputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.outputPrice))).parentElement);
     row.append(tableCell(labels.cacheInputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.cacheInputPrice))).parentElement);
@@ -205,7 +206,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   }
 
   function priceStackCell(label, values, mapValue) {
-    const cell = tableCell(label, label === (config.labels?.unit || '') ? 'left' : 'right', label === (config.labels?.unit || '') ? '' : 'font-mono');
+    const cell = tableCell(label, label === (config.labels?.unit || '') ? 'left' : 'right', label === (config.labels?.unit || '') ? 'data-price-unit' : 'font-mono');
     const wrap = el('div', 'space-y-1');
     if (values.length) values.forEach(value => wrap.append(el('div', '', mapValue(value))));
     else wrap.append(el('span', 'text-base-content/35', '-'));
@@ -237,36 +238,46 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     row.append(sequenceCell);
 
     const infoCell = tableCell(labels.basicInfo || '');
-    const infoWrap = el('div', 'flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between');
-    const textWrap = el('div', 'min-w-0 space-y-2');
+    const infoWrap = el('div', 'data-entity-cell');
+    const textWrap = el('div', 'data-entity-copy');
     const titleWrap = el('div', 'flex flex-wrap items-center gap-2');
-    const siteLink = el('a', 'link link-hover break-words text-base font-semibold text-primary', site.name || '');
+    const siteLink = el('a', 'merchant-link', site.name || '');
+    siteLink.dataset.rowPrimary = '';
     siteLink.href = detailHref;
     siteLink.dataset.umamiEvent = 'internal-link-click';
     siteLink.dataset.umamiEventLinkType = 'gateway-site';
     siteLink.dataset.umamiEventName = site.name || '';
     siteLink.dataset.umamiEventTargetPage = detailHref;
     siteLink.dataset.umamiEventUrl = detailHref;
-    titleWrap.append(favorites.create(site.slug, site.name), siteLink);
+    textWrap.append(favorites.create(site.slug, site.name));
+    titleWrap.append(siteLink);
     if (site.sponsor) titleWrap.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
     if (Number(site.supportPoints) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
 
     textWrap.append(titleWrap);
-    if (site.summary) textWrap.append(el('p', 'max-w-3xl text-sm leading-6 text-base-content/72', site.summary));
+    if (site.summary) textWrap.append(el('p', 'data-entity-description', site.summary));
     const urlWrap = el('div', 'text-xs text-base-content/55');
     urlWrap.append(el('span', 'break-all', site.url || ''));
     textWrap.append(urlWrap);
-    const actionWrap = el('div', 'inline-flex shrink-0 items-center gap-2 self-start sm:self-center');
-    const detailLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.detailLabel || '');
+    const actionWrap = el('div', 'data-entity-actions');
+    const detailLink = el('a', 'data-entity-action', config.detailLabel || '');
     detailLink.href = detailHref;
     detailLink.dataset.umamiEvent = 'internal-link-click';
     detailLink.dataset.umamiEventLinkType = 'gateway-site';
     detailLink.dataset.umamiEventName = site.name || '';
     detailLink.dataset.umamiEventTargetPage = detailHref;
     detailLink.dataset.umamiEventUrl = detailHref;
-    const openLink = el('a', 'btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel || '');
+    const openLink = el('a', 'data-entity-action', config.openLabel || '');
     openLink.href = site.outboundUrl || site.url || '';
     openLink.target = '_blank';
+    const externalIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    externalIcon.setAttribute('class', 'gateway-external-icon');
+    externalIcon.setAttribute('viewBox', '0 0 24 24');
+    externalIcon.setAttribute('fill', 'none'); externalIcon.setAttribute('stroke', 'currentColor');
+    externalIcon.setAttribute('stroke-width', '1.8'); externalIcon.setAttribute('aria-hidden', 'true');
+    const externalPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    externalPath.setAttribute('d', 'M14 3h7v7M21 3l-10 10M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5');
+    externalIcon.append(externalPath); openLink.append(externalIcon);
     openLink.rel = site.sponsor || Number(site.supportPoints) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
     openLink.dataset.umamiEvent = 'external-link-click';
     openLink.dataset.umamiEventLinkType = 'gateway-site-open';
@@ -276,9 +287,11 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     infoWrap.append(textWrap, actionWrap);
     infoCell.append(infoWrap);
     row.append(infoCell);
-    const supportCell = tableCell(config.supportTotalLabel, 'right', 'font-mono whitespace-nowrap');
-    supportCell.textContent = (Number(site.supportPoints) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
-    row.append(supportCell);
+    if (Number(site.supportPoints) > 0) {
+      const support = el('div', 'data-support-inline', `${config.supportTotalLabel} `);
+      support.append(el('strong', '', Number(site.supportPoints).toLocaleString(undefined, { maximumFractionDigits: 2 })));
+      textWrap.append(support);
+    }
     row.append(priceStackCell(labels.unit || '', prices, price => displayPriceUnit(price.unit || '', price.currency)));
     row.append(priceStackCell(labels.inputPrice || '', prices, price => formatPrice(price.inputPrice)));
     row.append(priceStackCell(labels.outputPrice || '', prices, price => formatPrice(price.outputPrice)));
@@ -298,7 +311,11 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     return entry.row;
   }
 
+  const searchInput = root.querySelector('[data-gateway-detail-search]');
+  const searchQuery = () => (searchInput?.value || '').trim().toLowerCase();
   const controller = window.createDeferredTableController({
+    filterEntry: entry => !searchQuery() || String(entry.sort.model || '').toLowerCase().includes(searchQuery()),
+    isFilterActive: () => Boolean(searchQuery()),
     table,
     tbody,
     button,
@@ -314,6 +331,25 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       tableType === 'modelSites' ? modelSiteEntryFromItem(item, index) : priceEntryFromItem(item, index)
     ),
     ensureRow,
+    onRender: () => {
+      const empty = root.querySelector('.data-table-empty-state');
+      empty?.classList.toggle('hidden', tbody.children.length > 0);
+      if (empty && tableType === 'prices') empty.textContent = searchQuery() ? config.filterEmpty : config.noPriceData;
+    },
+  });
+
+  let searchTimer;
+  searchInput?.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(async () => {
+      const error = root.querySelector('[data-gateway-detail-error]');
+      if (error) error.hidden = true;
+      try {
+        await controller.ensureLoaded();
+        controller.state.visibleLimit = controller.state.pageSize;
+        controller.renderRows();
+      } catch { if (error) error.hidden = false; }
+    }, 180);
   });
 
   async function handleSort(event) {

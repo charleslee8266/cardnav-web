@@ -1,0 +1,5 @@
+---
+type Props = { label: string; value?: string | number };
+const { label, value } = Astro.props;
+---
+<div class="hero-metric"><span class="hero-metric-label">{label}</span><strong class="hero-metric-value"><slot>{value}</slot></strong></div>

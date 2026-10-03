@@ -1,4 +1,7 @@
 ---
+import RefreshTime from '../../../components/RefreshTime.astro';
+import { pinSiteRows } from '../../../site-list-pinning.js';
+import ProviderLabel from '../../../components/ProviderLabel.astro';
 /*
 文件说明: 渲染单个 AI 模型的中转站支持详情页，按中转站排序分数展示可用站点。
 */
@@ -15,7 +18,6 @@ import { buildSeoContext } from '../../../seo.js';
 import { isIndexableGatewayModel } from '../../../seo-routes.js';
 import { publicSiteUrl } from '../../../site.js';
 import { loadGatewayModelDetail } from '../../../store.js';
-import merchantBadgeScriptUrl from '../../../scripts/merchant-badge.js?url';
 import Sponsors from '../../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
@@ -27,6 +29,8 @@ const detail = await loadGatewayModelDetail(rawModelIdParam, { siteLimit: MODEL_
 if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 302);
 
 const { model, sites } = detail;
+const initialPins = new Map<string, string>();
+pinSiteRows(sites.map(site => ({ site, sponsor: Boolean(site.sponsor), supportPoints: site.supportPoints || 0, supportTotalCents: 0, favorite: false })), (row, kind) => initialPins.set(row.site.slug, kind));
 const canonicalModelPath = encodeURIComponent(model.modelId);
 if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(`/llm-gateway/models/${canonicalModelPath}`), 301);
 const modelSiteTableConfig = {
@@ -110,7 +114,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
 <PublicPage activeNav="llm-gateway" pageType="gateway-model-detail" {...seo}>
   <PageHero
     title={t.llmGateway.modelDetailTitle.replace('{model}', model.modelId)}
-    description={t.llmGateway.modelDetailDescription}
+    description={t.llmGateway.modelHeroDescription}
     backHref="/llm-gateway"
     backLabel={t.llmGateway.backToList}
     titleClass="break-words font-mono"
@@ -123,8 +127,8 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
       </div>
     </div>
     <div slot="footer" class="mt-4 flex flex-wrap gap-2">
-      <span class="badge badge-primary badge-outline">{model.modelProvider}</span>
-      {model.latestGatewayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestGatewayRefreshTime}</span> : null}
+      <ProviderLabel name={model.modelProvider} />
+      {model.latestGatewayRefreshAt ? <span>{t.labels.latestRefresh}: <RefreshTime timestamp={model.latestGatewayRefreshAt} /></span> : null}
     </div>
   </PageHero>
 
@@ -146,8 +150,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
         <DataTableHeader label={t.llmGateway.basicInfo} sortKey="name" />
-              <DataTableHeader label={t.support.amountColumn} sortKey="support" sortType="number" align="right" helpTip={t.support.amountTip} helpLabel={t.support.amountHelpLabel} helpHref="?support-dialog" helpLinkLabel={t.support.amountLinkLabel} />
-        <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
+        <DataTableHeader label={t.llmGateway.unit} helpTip={t.llmGateway.tableHint} sortKey="unit" />
         <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" align="right" />
@@ -178,6 +181,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
             sticky={isStickyGatewaySite(site)}
             showScore={false}
             rowAttrs={{
+              'data-pin-kind': initialPins.get(site.slug),
               'data-sort-name': site.name,
               'data-sort-unit': unitSortValue,
               'data-sort-input-price': String(inputSortValue),
@@ -217,7 +221,6 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
     </DataTable>
   </section>
   <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(modelSiteTableConfig)}></script>
-  <script is:inline slot="scripts" src={merchantBadgeScriptUrl}></script>
   <SupportDialog returnPage="gateways" />
   <script>
     import '../../../scripts/data-table.js';

@@ -1,8 +1,12 @@
 ---
+import RefreshTime from './RefreshTime.astro';
+import HeroMetric from './HeroMetric.astro';
 /*
 文件说明: 渲染模型排行榜页的服务端 HTML 内容，包括任务导航和当前任务榜单。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
+import './data-workspace.css';
+import ScoreDisplay from './ScoreDisplay.astro';
 import PageHero from './PageHero.astro';
 import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
@@ -12,18 +16,20 @@ import Sponsors from './Sponsors.astro';
 import type { PageType } from '../page-types.js';
 
 type Props = {
+  stats: import('../store.js').PublicModelLeaderboardStats;
   pageType: Extract<PageType, 'model-leaderboard' | 'model-leaderboard-detail'>;
   groups: LocalizedModelLeaderboardGroup[];
   currentGroup: LocalizedModelLeaderboardGroup | null;
   currentGroupTotalCount?: number;
-  updateTime: string;
+  updatedAt: string | null;
 };
 
-const { pageType, groups, currentGroup, currentGroupTotalCount = currentGroup?.rows.length ?? 0, updateTime } = Astro.props;
+const { stats, pageType, groups, currentGroup, currentGroupTotalCount = currentGroup?.rows.length ?? 0, updatedAt } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const initialRowCount = 30;
 const visibleRows = currentGroup?.rows.slice(0, initialRowCount) ?? [];
+const maximumScore = Math.max(1, ...visibleRows.map(row => row.score));
 const hasMoreRows = currentGroupTotalCount > visibleRows.length;
 const leaderboardApiUrl = currentGroup
   ? `/api/model-leaderboard/${encodeURIComponent(currentGroup.taskSlug)}.json?offset=${initialRowCount}&locale=${encodeURIComponent(Astro.locals.locale)}`
@@ -32,11 +38,9 @@ const leaderboardApiUrl = currentGroup
 
 <PageHero
   title={currentGroup ? `${currentGroup.displayName}${t.leaderboard.titleSuffix}` : t.leaderboard.title}
-  description={t.leaderboard.description}
+  description={t.leaderboard.heroDescription}
 >
-  <p slot="meta" class="page-hero-meta">
-    <span>{t.labels.latestRefreshBeijing}：{updateTime}</span>
-  </p>
+  <div slot="meta" class="hero-metrics"><HeroMetric label={t.leaderboard.listedScenarios} value={stats.scenarioCount.toLocaleString(Astro.locals.locale)} /><HeroMetric label={t.leaderboard.listedModels} value={stats.modelCount.toLocaleString(Astro.locals.locale)} /><HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={updatedAt} fallback={t.labels.notRecorded} /></HeroMetric></div>
 </PageHero>
 
 <Sponsors placement="after-hero" pageType={pageType} />
@@ -44,15 +48,16 @@ const leaderboardApiUrl = currentGroup
 {(groups.length > 0 || currentGroup) && (
   <section
     data-telemetry-block={telemetryBlocks.modelLeaderboard.table}
-    class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden"
+    class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden data-workspace leaderboard-workspace"
     data-model-leaderboard={currentGroup ? '' : undefined}
     data-model-leaderboard-api={currentGroup ? leaderboardApiUrl : undefined}
     data-model-leaderboard-total={currentGroupTotalCount}
+    data-score-max={maximumScore}
   >
     {groups.length > 0 && (
-      <div class="border-b border-base-300 bg-base-100 px-4 py-3">
+      <div class="data-workspace-controls">
         <nav class="tool-tablist-wrap" aria-label={t.leaderboard.taskNavLabel}>
-          <div class="tabs tabs-box content-tablist" role="tablist">
+          <div class="data-segmented" role="tablist">
             {groups.map(group => {
               const isCurrent = currentGroup?.taskSlug === group.taskSlug;
               return (
@@ -94,8 +99,8 @@ const leaderboardApiUrl = currentGroup
           {visibleRows.map(item => (
             <tr data-sort-sequence={String(item.rank)} data-sort-model={item.modelName} data-sort-score={item.score}>
               <DataTableCell label={t.labels.sequence} align="center" sequence>{item.rank}</DataTableCell>
-              <DataTableCell label={t.labels.model} class="font-semibold text-base-content break-all">{item.modelName}</DataTableCell>
-              <DataTableCell label={t.labels.score} class="font-mono font-bold text-primary">{item.score.toFixed(2)}</DataTableCell>
+              <DataTableCell label={t.labels.model} ><strong class="leaderboard-model-name">{item.modelName}</strong></DataTableCell>
+              <DataTableCell label={t.labels.score} align="right"><ScoreDisplay value={item.score} maximum={maximumScore} /></DataTableCell>
             </tr>
           ))}
         </DataTable>
@@ -109,3 +114,11 @@ const leaderboardApiUrl = currentGroup
     <span>{t.leaderboard.empty}</span>
   </section>
 )}
+
+<style>
+  .leaderboard-workspace :global(th[data-column-key="score"]) { width: 140px; }
+  .leaderboard-workspace :global(.data-segmented a) { min-width: 90px; }
+  .leaderboard-workspace :global(.data-table td[data-label]) { vertical-align: middle; }
+  .leaderboard-workspace :global(.leaderboard-model-name) { font-weight: 600; overflow-wrap: anywhere; }
+  .leaderboard-workspace :global(.data-table tr:nth-child(-n+3) .data-table-sequence-cell) { font-weight: 650; color: var(--color-primary); }
+</style>

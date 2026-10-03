@@ -2,6 +2,7 @@
 /*
 文件说明: 公开页面共用的赞赏弹窗，提供个人、卡网和中转站身份及支付入口。
 */
+import './support-flow.css';
 import FormField from './FormField.astro';
 import Dialog from './Dialog.astro';
 import { telemetryBlocks } from '../telemetry-blocks.js';
@@ -11,6 +12,8 @@ const t = Astro.locals.messages.support;
 ---
 <Dialog
   id="supportDialog"
+  class="support-dialog"
+  size="wide"
   titleId="supportTitle"
   title={t.title}
   description={t.description}
@@ -36,11 +39,16 @@ const t = Astro.locals.messages.support;
       </dl>
     </div>
     <div class="mt-3 flex flex-wrap gap-3">
-      <button data-open-payment type="button" class="btn btn-primary btn-sm" hidden>{t.openPayment}</button>
+      <button data-open-payment type="button" class="btn support-button btn-sm" hidden>{t.openPayment}</button>
       <button data-cancel-payment type="button" class="btn btn-outline btn-sm">{t.cancelPayment}</button>
     </div>
   </div>
   <form data-support-form class="submission-form" novalidate>
+    <ol class="support-flow-steps" aria-label={t.title}>
+      <li data-step-indicator="1" aria-current="step"><span>1</span>{t.identity}</li>
+      <li data-step-indicator="2"><span>2</span>{t.paymentMethod}</li>
+    </ol>
+    <div data-support-step="1" class="submission-form">
     <FormField group label={t.identity} required>
       <div class="support-identities">
         <label><input type="radio" name="kind" value="person" class="radio radio-sm" checked /><span>{t.personChoice}</span></label>
@@ -50,17 +58,17 @@ const t = Astro.locals.messages.support;
       <div slot="hint" data-identity-benefit role="status">
         {(['person', 'gateway', 'shop'] as const).map((kind) => {
           const [before, after] = t[`${kind}Benefit`].split('{list}');
-          return <p data-benefit-kind={kind} hidden={kind !== 'person'}>{before}{t.benefitListLabel}{after}{' '}<a href={Astro.locals.localizePath('/partnership')} target="_blank" rel="noopener noreferrer" class="link link-primary whitespace-nowrap">{t.viewRules}</a></p>;
+          return <p data-benefit-kind={kind} hidden={kind !== 'person'}>{before}{t.benefitListLabel}{after}{' '}<a href={Astro.locals.localizePath('/partnership')} target="_blank" rel="noopener noreferrer" class="link support-rule-link whitespace-nowrap">{t.viewRules}</a></p>;
         })}
       </div>
     </FormField>
     <fieldset data-person-fields class="submission-form">
-      <FormField label={t.nickname} for="supportNickname" hint={t.nicknameHint} hintId="supportNicknameHint"><input id="supportNickname" name="nickname" aria-describedby="supportNicknameHint" maxlength="40" autocomplete="nickname" class="input input-bordered form-input" /></FormField>
+      <FormField label={t.nickname} for="supportNickname" hint={t.nicknameHint} hintId="supportNicknameHint"><input id="supportNickname" name="nickname" aria-describedby="supportNicknameHint" maxlength="40" autocomplete="nickname" class="form-input" /></FormField>
     </fieldset>
     <FormField group label={t.gateway} required data-site-fields hidden disabled hintId="supportSiteHint">
       <span slot="label" data-site-label>{t.gateway}</span>
       <div data-site-combobox class="support-site-combobox">
-        <input data-site-search type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="supportSiteOptions" aria-describedby="supportSiteHint supportSiteStatus" class="input input-bordered form-input" placeholder={t.search} aria-label={t.gateway} autocomplete="off" />
+        <input data-site-search type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="supportSiteOptions" aria-describedby="supportSiteHint supportSiteStatus" class="form-input" placeholder={t.search} aria-label={t.gateway} autocomplete="off" />
         <span class="support-site-chevron" aria-hidden="true">▾</span>
         <input data-site-value type="hidden" name="siteId" />
         <div id="supportSiteOptions" data-site-options role="listbox" aria-label={t.select} class="support-site-options" hidden></div>
@@ -68,9 +76,14 @@ const t = Astro.locals.messages.support;
       <p slot="hint"><span data-site-submit-hint>{t.submitGatewayHint}</span> <a data-site-submit data-shop-submit={Astro.locals.localizePath('/shops?submit-dialog')} data-gateway-submit={Astro.locals.localizePath('/llm-gateway?submit-dialog')} href={Astro.locals.localizePath('/llm-gateway?submit-dialog')} data-umami-event="internal-link-click" data-umami-event-link-type="support-submit-site" data-umami-event-url={Astro.locals.localizePath('/llm-gateway?submit-dialog')} class="link link-primary">{t.submitSite}</a></p>
       <p slot="error" id="supportSiteStatus" data-site-status role="status" class="form-field-hint"></p>
     </FormField>
-    <FormField label={t.email} for="supportEmail" required hint={t.emailHint} hintId="supportEmailHint"><input id="supportEmail" name="email" type="email" required aria-describedby="supportEmailHint" maxlength="254" autocomplete="email" placeholder={t.emailPlaceholder} class="input input-bordered form-input" /></FormField>
-    <FormField label={t.message} for="supportMessage" hint={t.messageHint} hintId="supportMessageHint"><input id="supportMessage" name="message" maxlength="120" aria-describedby="supportMessageHint" placeholder={t.messagePlaceholder} class="input input-bordered form-input" /></FormField>
-    <FormField label={t.amount} for="supportAmount" required hint={t.limit} hintId="supportAmountHint"><input id="supportAmount" name="amount" type="number" aria-describedby="supportAmountHint" min="5" max="5000" step="0.01" value="8.88" required inputmode="decimal" class="input input-bordered form-input" /></FormField>
+    <FormField label={t.email} for="supportEmail" required hint={t.emailHint} hintId="supportEmailHint"><input id="supportEmail" name="email" type="email" required aria-describedby="supportEmailHint" maxlength="254" autocomplete="email" placeholder={t.emailPlaceholder} class="form-input" /></FormField>
+    <FormField label={t.message} for="supportMessage" hint={t.messageHint} hintId="supportMessageHint"><input id="supportMessage" name="message" maxlength="120" aria-describedby="supportMessageHint" placeholder={t.messagePlaceholder} class="form-input" /></FormField>
+    <button data-support-next type="button" class="btn support-button w-full">{t.continue} <span aria-hidden="true">→</span></button>
+    </div>
+    <div data-support-step="2" class="submission-form" hidden>
+    <div class="support-review"><span data-review-identity></span><button data-support-back type="button" class="btn btn-ghost btn-xs">{t.back}</button></div>
+    <div class="support-amount-presets">{[8.88, 18.88, 50, 100].map(amount => <button type="button" class="btn btn-sm" data-support-amount={amount} aria-pressed={amount === 8.88 ? 'true' : 'false'}>¥{amount}</button>)}</div>
+    <FormField label={t.amount} for="supportAmount" required hint={t.limit} hintId="supportAmountHint"><input id="supportAmount" name="amount" type="number" aria-describedby="supportAmountHint" min="5" max="5000" step="0.01" value="8.88" required inputmode="decimal" class="form-input" /></FormField>
     <FormField group label={t.paymentMethod} required>
       <div class="support-payment-options">
         <label><input type="radio" name="paymentType" value="wxpay" class="radio radio-sm" checked /><img src="/assets/payment-icons/wechat.svg" width="24" height="24" alt="" /><span>{t.wxpay}</span></label>
@@ -78,8 +91,9 @@ const t = Astro.locals.messages.support;
       </div>
     </FormField>
     <p data-payment-status role="status" class="form-field-hint"></p>
-    <button data-pay-button type="submit" class="btn btn-primary w-full">{t.pay}</button>
+    <button data-pay-button type="submit" class="btn support-button w-full">{t.pay}</button>
     <p class="form-field-hint">{t.returned}</p>
+    </div>
   </form>
 </Dialog>
 <script>

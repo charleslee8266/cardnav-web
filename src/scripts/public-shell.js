@@ -2,24 +2,31 @@
 文件说明: 承载公开站点全局前端增强，包括语言菜单、主题切换、公告独立关闭与重显、页头广告加载和通用行内说明浮层。
 */
 
-function initInlineHelp() {
-  const buttons = Array.from(document.querySelectorAll('[data-inline-help]'));
+let inlineHelpId = 0;
+function initInlineHelp(root = document) {
+  const buttons = root instanceof Element && root.matches('[data-inline-help]') ? [root] : Array.from(root.querySelectorAll('[data-inline-help]'));
 
-  buttons.forEach((button, index) => {
+  buttons.forEach(button => {
+    if (button.dataset.helpInitialized) return;
+    button.dataset.helpInitialized = 'true';
     const tipText = button.dataset.tip || '';
     if (!tipText) return;
-    const tipId = `inline-help-tip-${index}`;
+    const tipId = `inline-help-tip-${inlineHelpId++}`;
     button.setAttribute('aria-describedby', tipId);
     button.setAttribute('aria-expanded', 'false');
     const tip = document.createElement('div');
     tip.id = tipId;
     tip.className = 'inline-help-tooltip public-floating-layer hidden';
     tip.classList.toggle('inline-help-tooltip-wide', button.hasAttribute('data-tip-wide'));
-    tipText.split(/(`[^`]+`)/g).forEach(part => {
+    tipText.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).forEach(part => {
       if (part.startsWith('`') && part.endsWith('`')) {
         const code = document.createElement('code');
         code.textContent = part.slice(1, -1);
         tip.appendChild(code);
+      } else if (part.startsWith('**') && part.endsWith('**')) {
+        const strong = document.createElement('strong');
+        strong.textContent = part.slice(2, -2);
+        tip.appendChild(strong);
       } else tip.appendChild(document.createTextNode(part));
     });
     const linkHref = button.dataset.tipHref;
@@ -32,7 +39,7 @@ function initInlineHelp() {
       button.setAttribute('aria-haspopup', 'dialog');
       link = document.createElement('a');
       link.href = linkHref;
-      link.className = 'link link-primary';
+      link.className = 'inline-help-link';
       link.textContent = linkLabel;
       tip.append(document.createTextNode(' '), link);
     } else tip.setAttribute('role', 'tooltip');
@@ -74,8 +81,8 @@ function initInlineHelp() {
       }, 180);
     };
 
+    button.addEventListener('click', showTip);
     if (link) {
-      button.addEventListener('click', showTip);
       button.addEventListener('keydown', event => {
         if (event.key === 'Tab' && !event.shiftKey) {
           event.preventDefault();
@@ -161,7 +168,7 @@ function initAnnouncement() {
 }
 
 function initPublicShell() {
-  const languageMenus = Array.from(document.querySelectorAll('[data-language-menu]'));
+  const languageMenus = Array.from(document.querySelectorAll('.shell-menu'));
 
   document.addEventListener('click', event => {
     languageMenus.forEach(menu => {
@@ -210,7 +217,7 @@ function initPublicShell() {
       const nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', nextTheme);
       document.documentElement.style.colorScheme = nextTheme;
-      localStorage.setItem('theme', nextTheme);
+      try { localStorage.setItem('theme', nextTheme); } catch { /* The active theme still applies when storage is unavailable. */ }
       updateIcons(nextTheme);
       window.CardNavTelemetry?.track('button-click', { scope: 'site', action: 'toggle-theme', theme: nextTheme }, toggleBtn);
     });
@@ -232,4 +239,53 @@ function initHeaderAd() {
 initPublicShell();
 initHeaderAd();
 initInlineHelp();
+// Deferred tables create category help after the initial page render.
+for (const eventName of ['mouseenter', 'focus', 'click']) {
+  document.addEventListener(eventName, event => {
+    const target = event.target instanceof Element ? event.target.closest('[data-inline-help]') : null;
+    if (target) initInlineHelp(target);
+  }, true);
+}
 initAnnouncement();
+
+// Reading anchors follow the visible shell, including announcements before the sticky header.
+const readingHeader = document.querySelector('.site-header');
+if (readingHeader) {
+  let readingOffsetQueued = false;
+  const updateReadingOffset = () => {
+    readingOffsetQueued = false;
+    const bottom = readingHeader.getBoundingClientRect().bottom;
+    document.documentElement.style.setProperty('--reading-top-offset', `${Math.max(0, bottom) + 16}px`);
+  };
+  const queueReadingOffset = () => {
+    if (!readingOffsetQueued) {
+      readingOffsetQueued = true;
+      requestAnimationFrame(updateReadingOffset);
+    }
+  };
+  const shellSizeObserver = new ResizeObserver(updateReadingOffset);
+  shellSizeObserver.observe(readingHeader);
+  document.querySelectorAll('.public-announcement').forEach(element => shellSizeObserver.observe(element));
+  window.addEventListener('scroll', queueReadingOffset, { passive: true });
+  window.addEventListener('resize', queueReadingOffset);
+  updateReadingOffset();
+}
+
+const navigationDialog = document.getElementById('site-navigation-dialog');
+const navigationTrigger = document.querySelector('[data-open-navigation]');
+if (navigationDialog instanceof HTMLDialogElement && navigationTrigger) {
+  navigationTrigger.addEventListener('click', () => {
+    navigationDialog.showModal();
+    navigationTrigger.setAttribute('aria-expanded', 'true');
+  });
+  navigationDialog.querySelector('[data-close-navigation]')?.addEventListener('click', () => navigationDialog.close());
+  navigationDialog.addEventListener('click', event => {
+    if (event.target !== navigationDialog) return;
+    const bounds = navigationDialog.getBoundingClientRect();
+    if (event.clientX > bounds.right || event.clientY > bounds.bottom) navigationDialog.close();
+  });
+  navigationDialog.addEventListener('close', () => navigationTrigger.setAttribute('aria-expanded', 'false'));
+}
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') document.querySelectorAll('.shell-menu[open]').forEach(menu => { menu.open = false; });
+});

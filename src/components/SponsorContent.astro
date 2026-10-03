@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 CardNav 公开站点赞助商展示区，供首页和内容页复用。
 */
+import SponsorGrid from './SponsorGrid.astro';
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import { getSponsors } from '../sponsor-provider.js';
 import type { PageType } from '../page-types.js';
@@ -20,47 +21,10 @@ const partnershipUrl = Astro.locals.localizePath('/partnership');
 const sectionId = pageType ? `sponsors-${placement}-${pageType}` : `sponsors-${placement}`;
 ---
 
-{sponsors.length > 0 && <section class="sponsor-section" data-telemetry-block={telemetryBlocks.sponsors[placement]} aria-labelledby={sectionId}>
+{sponsors.length > 0 && <section class="sponsor-section" data-placement={placement} data-telemetry-block={telemetryBlocks.sponsors[placement]} aria-labelledby={sectionId}>
   <div class="sponsor-header">
     <h2 id={sectionId} class="sponsor-title">{t.sponsors.title}</h2>
     <a href={partnershipUrl} data-umami-event="internal-link-click" data-umami-event-link-type="sponsor-lead" data-umami-event-url={partnershipUrl} data-umami-event-name={t.sponsors.becomeSponsor} class="sponsor-join-link">{t.sponsors.becomeSponsor}</a>
   </div>
-  <ul class="sponsor-grid">
-    {sponsors.map(sponsor => (
-      <li class="sponsor-grid-item">
-        <article class="sponsor-card">
-          <a href={sponsor.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="sponsor" data-umami-event-name={sponsor.id} data-umami-event-link-id={sponsor.id} data-umami-event-url={sponsor.url} class:list={[sponsor.template === 'grid' ? 'sponsor-plan-main-link' : 'sponsor-main-link', 'group']}>
-            {sponsor.image.src && <span
-              class="sponsor-logo-frame"
-              style={sponsor.image.padding || sponsor.image.backgroundColor
-                ? `--sponsor-padding: ${sponsor.image.padding ?? '0'}; --sponsor-background-color: ${sponsor.image.backgroundColor ?? 'white'};`
-                : undefined}
-            >
-              {sponsor.image.src && <img src={sponsor.image.src} alt={sponsor.image.alt} loading="lazy" class="sponsor-logo" data-scale-mode={sponsor.image.scaleMode} />}
-            </span>}
-            {sponsor.template === 'grid'
-              ? (
-                <span class="sponsor-plan-title">
-                  <span class="sponsor-plan-name">{sponsor.title}</span>
-                  <span class="sponsor-plan-price">{sponsor.description}</span>
-                </span>
-              )
-              : (
-                <>
-                  <span class="sponsor-name">{sponsor.title}</span>
-                  <span class="sponsor-copy">{sponsor.description}</span>
-                </>
-              )}
-          </a>
-          {sponsor.template === 'grid' && sponsor.links.length > 0 && (
-            <div class="sponsor-plan-grid">
-              {sponsor.links.map(link => (
-                <a href={link.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="sponsor" data-umami-event-name={sponsor.id} data-umami-event-link-id={sponsor.id} data-umami-event-url={link.url} class="sponsor-plan-link" style={link.color ? `--sponsor-link-color: ${link.color};` : undefined}>{link.text}</a>
-              ))}
-            </div>
-          )}
-        </article>
-      </li>
-    ))}
-  </ul>
+  <SponsorGrid sponsors={sponsors} placement={placement} />
 </section>}

@@ -1,4 +1,5 @@
 ---
+import ProviderLabel from '../components/ProviderLabel.astro';
 import { gatewayProviderSlug } from '../shop-plan-search.js';
 /*
 文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示排行并支持本地加载更多。
@@ -6,7 +7,11 @@ import { gatewayProviderSlug } from '../shop-plan-search.js';
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import GatewaySubmitDialog from '../components/GatewaySubmitDialog.astro';
 import SupportDialog from '../components/SupportDialog.astro';
+import { pinSiteRows } from '../site-list-pinning.js';
+import FilterPopover from '../components/FilterPopover.astro';
 import PageHero from '../components/PageHero.astro';
+import RefreshTime from '../components/RefreshTime.astro';
+import HeroMetric from '../components/HeroMetric.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import GatewaySiteTableRow from '../components/GatewaySiteTableRow.astro';
 import DataTable from '../components/DataTable.astro';
@@ -22,7 +27,6 @@ import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
-import merchantBadgeScriptUrl from '../scripts/merchant-badge.js?url';
 import Sponsors from '../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
@@ -32,6 +36,8 @@ const GATEWAY_MODEL_PAGE_SIZE = 100;
 const gatewayData = await loadGatewaySites({ limit: GATEWAY_SITE_PAGE_SIZE });
 const gatewayModelData = await loadGatewayModels({ limit: GATEWAY_MODEL_PAGE_SIZE });
 const topSites = gatewayData.sites;
+const initialPins = new Map<string, string>();
+pinSiteRows(topSites.map(site => ({ site, sponsor: Boolean(site.sponsor), supportPoints: site.supportPoints || 0, supportTotalCents: 0, favorite: false })), (row, kind) => initialPins.set(row.site.slug, kind));
 const topModels = gatewayModelData.models;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -98,6 +104,8 @@ const gatewayHomeConfig = {
   siteTotalCount: gatewayData.totalSiteCount,
   modelTotalCount: gatewayModelData.totalModelCount,
   displaySummary: t.labels.displaySummary,
+  clearFilters: t.shops.clearFilters,
+  dataStatusLabels: t.llmGateway.dataStatusLabels,
   sitesApi: `/api/llm-gateway/sites.json?offset=${GATEWAY_SITE_PAGE_SIZE}&locale=${encodeURIComponent(Astro.locals.locale)}`,
   modelsApi: `/api/llm-gateway/models.json?offset=${GATEWAY_MODEL_PAGE_SIZE}&locale=${encodeURIComponent(Astro.locals.locale)}`,
   detailLabel: t.llmGateway.viewDetail,
@@ -127,33 +135,17 @@ const gatewayHomeConfig = {
 ---
 
 <PublicPage activeNav="llm-gateway" pageType="gateway" {...seo}>
-  <PageHero title={t.llmGateway.title} description={t.llmGateway.description}>
-    <p slot="note" class="page-hero-note">
-      {t.llmGateway.notePrefix}
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="font-medium text-primary no-underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30" data-umami-event="external-link-click" data-umami-event-link-type="gateway-report" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
-      {t.llmGateway.noteSuffix}
-    </p>
-    <div slot="aside" class="page-hero-submit-summary">
-      <div class="grid grid-cols-2 gap-2">
-<button id="openGatewaySubmitModal" type="button" class="btn btn-primary btn-md w-full" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
+  <PageHero title={t.llmGateway.title} description={t.llmGateway.heroDescription}>
+    <div slot="meta" class="hero-metrics">
+      <HeroMetric label={t.llmGateway.listedSites} value={gatewayData.totalSiteCount.toLocaleString(Astro.locals.locale)} />
+      <HeroMetric label={t.llmGateway.modelRecords} value={gatewayModelData.totalModelCount.toLocaleString(Astro.locals.locale)} />
+      <HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={gatewayData.latestRefreshedAt} fallback={t.labels.notRecorded} /></HeroMetric>
+    </div>
+    <div slot="aside" class="data-page-actions">
+      <button id="openGatewaySubmitModal" type="button" class="btn btn-primary btn-sm" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
         {t.llmGateway.submitGateway}
       </button>
-<a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-md w-full"><span aria-hidden="true">♥</span> {t.support.button}</a>
-</div>
-      <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
-        <div class="stat px-4 py-3">
-          <div class="stat-title text-xs">{t.llmGateway.listedSites}</div>
-          <div class="stat-value text-2xl text-primary">{gatewayData.totalSiteCount}</div>
-        </div>
-        <div class="stat px-4 py-3">
-          <div class="stat-title text-xs">{t.llmGateway.sitesWithPrices}</div>
-          <div class="stat-value text-2xl text-secondary">{gatewayData.sitesWithPricesCount}</div>
-        </div>
-        <div class="stat px-4 py-3">
-          <div class="stat-title text-xs">{t.llmGateway.modelRecords}</div>
-          <div class="stat-value text-2xl">{gatewayModelData.totalModelCount}</div>
-        </div>
-      </div>
+      <a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-sm"><span aria-hidden="true">♥</span> {t.support.button}</a>
     </div>
   </PageHero>
 
@@ -164,10 +156,9 @@ const gatewayHomeConfig = {
       <span>{t.llmGateway.empty}</span>
     </section>
   ) : (
-    <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-home>
-      <div class="border-b border-base-300 bg-base-100 px-4 py-3">
-        <div class="tool-tablist-wrap">
-          <div class="tabs tabs-box gateway-home-tablist" role="tablist" aria-label={t.llmGateway.title}>
+    <section class="card bg-base-100 border border-base-300 shadow-sm data-workspace" data-gateway-home>
+<div class="data-workspace-controls">          <div class="data-workspace-toolbar">
+          <div class="data-segmented" role="tablist" aria-label={t.llmGateway.title}>
             <button type="button" class="tab tab-active" role="tab" aria-selected="true" aria-controls="gatewaySitesPanel" id="gatewaySitesTab" data-gateway-tab="sites">
               {t.llmGateway.gatewayListTitle}
               <span class="tool-tab-badge">{gatewayData.totalSiteCount}</span>
@@ -177,14 +168,11 @@ const gatewayHomeConfig = {
               <span class="tool-tab-badge">{gatewayModelData.totalModelCount}</span>
             </button>
           </div>
-        </div>
-      </div>
-
-      <div id="gatewaySitesPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites" data-telemetry-block={telemetryBlocks.gateways.sites}>
-          <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
-            <label class="input input-bordered flex h-11 items-center gap-2">
-              <input data-home-site-search type="search" class="grow text-sm" placeholder={t.llmGateway.searchPlaceholder} />
+            <label data-gateway-control="sites" class="input input-bordered flex h-11 items-center gap-2 data-workspace-search">
+              <input data-home-site-search type="search" class="grow text-sm" placeholder={t.llmGateway.searchPlaceholder} aria-label={t.llmGateway.searchPlaceholder} />
             </label>
+            <label data-gateway-control="models" class="data-workspace-search" hidden><input data-home-model-search type="search" class="input input-bordered w-full" placeholder={t.llmGateway.modelSearchPlaceholder} aria-label={t.llmGateway.modelSearchPlaceholder} /></label>
+            <div data-gateway-control="sites"><FilterPopover id="gatewaySiteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done}>
             <select data-home-site-family class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.familyFilter}>
               <option value="">{t.llmGateway.allFamilies}</option>
               {modelFilterOptions.map(model => <option value={gatewayProviderSlug(model)}>{model}</option>)}
@@ -193,7 +181,25 @@ const gatewayHomeConfig = {
               <option value="">{t.llmGateway.allPaymentMethods}</option>
               {paymentFilterOptions.map(method => <option value={method}>{paymentLabelFor(method)}</option>)}
             </select>
+            <select data-home-site-status class="select select-bordered" aria-label={t.llmGateway.statusFilter}>
+              <option value="">{t.llmGateway.allStatuses}</option>
+              <option value="hasPrice">{t.llmGateway.dataStatusLabels.hasPrice}</option>
+              <option value="noPrice">{t.llmGateway.dataStatusLabels.noPrice}</option>
+              <option value="noData">{t.llmGateway.dataStatusLabels.noData}</option>
+            </select>
+            <label class="label flex gap-2 text-sm"><input data-home-site-favorites type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label>
+            <button slot="footer" data-home-site-reset type="button" class="btn btn-sm btn-ghost">{t.shops.clearFilters}</button>
+            </FilterPopover></div>
+            <select data-gateway-control="sites" data-home-site-sort class="select select-bordered data-workspace-sort" aria-label={t.shops.sort}>
+              <option value="">{t.shops.defaultSort}</option>
+              <option value="modelCount">{t.llmGateway.modelCount} ↓</option>
+              <option value="score">{t.labels.score} ↓</option>
+              <option value="custom" hidden>{t.shops.headerSort}</option>
+            </select>
+            <div data-gateway-control="sites" data-home-site-active-filters class="data-active-filters w-full" hidden></div>
           </div>
+</div>
+      <div id="gatewaySitesPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites" data-telemetry-block={telemetryBlocks.gateways.sites}>
           <DataTable
             variant="gatewaySites"
             tbodyDataAttrs={{ 'data-gateway-home-sites-list': '' }}
@@ -213,10 +219,9 @@ const gatewayHomeConfig = {
             <Fragment slot="head">
               <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
               <DataTableHeader label={t.llmGateway.basicInfo} sortKey="name" />
-              <DataTableHeader label={t.support.amountColumn} sortKey="support" sortType="number" align="right" helpTip={t.support.amountTip} helpLabel={t.support.amountHelpLabel} helpHref="?support-dialog" helpLinkLabel={t.support.amountLinkLabel} />
               <DataTableHeader label={t.labels.score} sortKey="score" sortType="number" align="right" helpTip={t.llmGateway.gatewayScoreTip} helpLabel={t.llmGateway.gatewayScoreHelpLabel} />
               <DataTableHeader label={t.llmGateway.supportedModels} sortKey="families" />
-              <DataTableHeader label={t.llmGateway.modelCount} sortKey="modelCount" sortType="number" align="right" />
+              <DataTableHeader label={t.llmGateway.modelCount} helpTip={`${t.llmGateway.notePrefix}${t.llmGateway.reportIssue}${t.llmGateway.noteSuffix}`} helpHref={telegramGroupUrl} helpLinkLabel={t.llmGateway.reportIssue} sortKey="modelCount" sortType="number" align="right" />
               <DataTableHeader label={t.llmGateway.paymentMethods} sortKey="payments" />
             </Fragment>
             {topSites.map((site, index) => {
@@ -242,9 +247,11 @@ const gatewayHomeConfig = {
                   scoreLabel={t.labels.score}
                   rowAttrs={{
                     'data-home-site-card': '',
+                    'data-pin-kind': initialPins.get(site.slug),
                     'data-search': `${site.name} ${site.url} ${site.host} ${site.displayModelProviders.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase(),
                     'data-families': families.map(gatewayProviderSlug).join(','),
                     'data-payments': paymentMethods.join(','),
+                    'data-price-count': String(site.priceCount),
                     'data-original-order': String(index),
                     'data-sort-sequence': String(rank),
                     'data-sort-name': site.name,
@@ -257,7 +264,7 @@ const gatewayHomeConfig = {
                   <DataTableCell label={t.llmGateway.supportedModels}>
                     {families.length > 0 ? (
                       <div class="flex flex-wrap gap-1.5">
-                        {families.map(family => <span class="badge badge-primary badge-outline badge-sm">{family}</span>)}
+                        {families.map(family => <ProviderLabel name={family} />)}
                       </div>
                     ) : (
                       <span class="text-base-content/35">-</span>
@@ -280,11 +287,6 @@ const gatewayHomeConfig = {
       </div>
 
       <div id="gatewayModelsPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewayModelsTab" data-gateway-panel="models" data-telemetry-block={telemetryBlocks.gateways.models} hidden>
-          <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4">
-            <label class="input input-bordered flex h-11 items-center gap-2">
-              <input data-home-model-search type="search" class="grow text-sm" placeholder={t.llmGateway.modelSearchPlaceholder} />
-            </label>
-          </div>
           <DataTable
             variant="gatewayModels"
             tbodyDataAttrs={{ 'data-gateway-home-models-list': '' }}
@@ -302,7 +304,7 @@ const gatewayHomeConfig = {
           >
             <Fragment slot="head">
               <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
-              <DataTableHeader label={t.labels.model} sortKey="model" />
+              <DataTableHeader label={t.labels.model} helpTip={`${t.llmGateway.notePrefix}${t.llmGateway.reportIssue}${t.llmGateway.noteSuffix}`} helpHref={telegramGroupUrl} helpLinkLabel={t.llmGateway.reportIssue} sortKey="model" />
               <DataTableHeader label={t.llmGateway.modelProvider} sortKey="family" />
               <DataTableHeader label={t.llmGateway.supportedGatewayCount} sortKey="supportCount" sortType="number" align="right" />
             </Fragment>
@@ -310,9 +312,9 @@ const gatewayHomeConfig = {
               <tr data-home-model-card data-search={`${model.modelId} ${model.modelProvider}`.toLowerCase()} data-original-order={String(index)} data-sort-sequence={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelProvider} data-sort-support-count={String(model.supportSiteCount || 0)}>
                 <DataTableCell label={t.labels.sequence} align="center" sequence>{index + 1}</DataTableCell>
                 <DataTableCell label={t.labels.model}>
-                  <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-primary" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
+                  <a data-row-primary href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-primary" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
                 </DataTableCell>
-                <DataTableCell label={t.llmGateway.modelProvider}>{model.modelProvider}</DataTableCell>
+                <DataTableCell label={t.llmGateway.modelProvider}><ProviderLabel name={model.modelProvider} /></DataTableCell>
                 <DataTableCell label={t.llmGateway.supportedGatewayCount} align="right" class="font-mono">{model.supportSiteCount}</DataTableCell>
               </tr>
             ))}
@@ -323,7 +325,6 @@ const gatewayHomeConfig = {
   <SupportDialog returnPage="gateways" />
   <GatewaySubmitDialog />
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
-  <script is:inline slot="scripts" src={merchantBadgeScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
   <script>
     import '../scripts/data-table.js';

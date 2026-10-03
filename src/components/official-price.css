@@ -1,0 +1,19 @@
+/* Country names are primary; region codes and original currencies are supporting details. */
+.official-region { display: inline-flex; align-items: center; gap: 9px; }
+.official-region-flag { font-size: 20px; line-height: 1; }
+.official-region-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 13px; font-weight: 600; }
+.official-price-secondary { display: block; margin-top: 2px; color: var(--color-faint); font-size: 11.5px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.official-baseline-badge { border: 1px solid var(--color-base-300); border-radius: 5px; padding: 1px 5px; font-size: 10px; font-weight: 500; color: var(--color-muted); }
+.official-price-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.official-price-difference { color: var(--color-muted); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.official-price-difference.is-lower { color: var(--color-success); }
+.official-price-difference.is-higher { color: var(--color-warning); }
+.data-table tbody tr.official-price-baseline { --row-background: var(--color-brand-soft); }
+.official-baseline-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--color-base-300); font-size: 12px; color: var(--color-muted); }
+.official-baseline-summary strong { font-size: 14px; font-weight: 600; color: var(--color-base-content); }
+.official-price-meter { position: relative; display: inline-block; width: 100px; height: 6px; margin-left: 10px; border-radius: 99px; background: var(--color-surface-raised); vertical-align: middle; }
+.official-price-meter i { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); }
+.official-price-meter.is-lower i { background: var(--color-success); }
+.official-price-meter.is-higher i { background: var(--color-warning); }
+.official-price-meter b { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--color-ink-secondary); opacity: .45; }
+@media (max-width: 720px) { .official-price-meter { width: 56px; } }

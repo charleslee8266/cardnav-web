@@ -26,20 +26,20 @@ const linkTo = Astro.locals.localizePath;
   </div>
   <form id="gatewaySubmitForm" class="submission-form" method="post" action="/api/gateway-submit">
     <FormField label={t.llmGateway.submitName} for="gatewayNameInput" required hint={t.llmGateway.submitNameDescription} hintId="gatewayNameInputHint">
-      <input id="gatewayNameInput" aria-describedby="gatewayNameInputHint" name="name" required maxlength="20" class="input input-bordered form-input" placeholder="Example API" />
+      <input id="gatewayNameInput" aria-describedby="gatewayNameInputHint" name="name" required maxlength="20" class="form-input" placeholder="Example API" />
     </FormField>
     <FormField label={t.llmGateway.submitSummary} for="gatewaySummaryInput" hint={t.llmGateway.submitSummaryDescription} hintId="gatewaySummaryInputHint">
-      <textarea id="gatewaySummaryInput" aria-describedby="gatewaySummaryInputHint" name="summary" maxlength="150" rows="3" class="textarea textarea-bordered form-input" placeholder={t.llmGateway.submitSummaryPlaceholder}></textarea>
+      <textarea id="gatewaySummaryInput" aria-describedby="gatewaySummaryInputHint" name="summary" maxlength="150" rows="3" class="form-input" placeholder={t.llmGateway.submitSummaryPlaceholder}></textarea>
     </FormField>
     <FormField label={t.llmGateway.submitUrl} for="gatewayUrlInput" required hint={t.llmGateway.submitUrlDescription} hintId="gatewayUrlInputHint">
-      <input id="gatewayUrlInput" aria-describedby="gatewayUrlInputHint" name="url" type="url" required class="input input-bordered form-input" placeholder="https://www.example.com" autocomplete="url" />
+      <input id="gatewayUrlInput" aria-describedby="gatewayUrlInputHint" name="url" type="url" required class="form-input" placeholder="https://www.example.com" autocomplete="url" />
     </FormField>
     <FormField label={t.llmGateway.submitApiEndpoint} for="gatewayApiEndpointInput" hint={t.llmGateway.submitApiEndpointDescription} hintId="gatewayApiEndpointInputHint">
-      <input id="gatewayApiEndpointInput" aria-describedby="gatewayApiEndpointInputHint" name="apiEndpoint" type="url" class="input input-bordered form-input" placeholder="https://api.example.com" autocomplete="url" />
+      <input id="gatewayApiEndpointInput" aria-describedby="gatewayApiEndpointInputHint" name="apiEndpoint" type="url" class="form-input" placeholder="https://api.example.com" autocomplete="url" />
     </FormField>
     <FormField label={t.llmGateway.paymentMethods} group hint={t.llmGateway.submitPaymentDescription} hintId="gatewayPaymentHint">
       <details id="gatewayPaymentSelect" class="dropdown dropdown-top w-full">
-        <summary aria-describedby="gatewayPaymentHint" class="form-input select select-bordered flex h-auto min-h-12 w-full cursor-pointer list-none items-center gap-2 px-3 py-2">
+        <summary aria-describedby="gatewayPaymentHint" class="form-input">
           <span data-payment-selection-label class="text-base-content">{t.llmGateway.selectPaymentMethods}</span>
         </summary>
         <div class="dropdown-content z-50 mb-2 max-h-64 w-full overflow-y-auto rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
@@ -54,8 +54,8 @@ const linkTo = Astro.locals.localizePath;
         </div>
       </details>
     </FormField>
-    <p id="gatewaySubmitError" class="hidden form-field-error"></p>
-    <p id="gatewaySubmitSuccess" class="hidden text-sm text-primary font-medium"></p>
+    <p id="gatewaySubmitError" role="alert" class="hidden form-field-error"></p>
+    <p id="gatewaySubmitSuccess" role="status" class="hidden text-sm text-primary font-medium"></p>
     <div class="card-actions justify-start mt-2"><button type="submit" class="btn btn-primary">{t.actions.submit}</button></div>
   </form>
 </Dialog>

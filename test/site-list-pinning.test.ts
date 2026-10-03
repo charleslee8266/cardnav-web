@@ -19,9 +19,14 @@ test('合作和赞赏组按积分排序，普通组保留原评分顺序', () =>
 
 test('合作与赞赏各最多10个，超额记录回收藏或普通组且不丢失', () => {
   const rows = Array.from({ length: 24 }, (_, id) => ({ id, sponsor: id % 2 === 0, supportTotalCents: 100, supportPoints: 1, favorite: id === 23 }));
-  const sorted = pinSiteRows(rows);
+  const kinds = new Map<number, string>();
+  const sorted = pinSiteRows(rows, (item, kind) => kinds.set(item.id, kind));
   assert.deepEqual(sorted.map(row => row.id), [0,2,4,6,8,10,12,14,16,18,1,3,5,7,9,11,13,15,17,19,23,20,21,22]);
   assert.equal(new Set(sorted).size, rows.length);
+  assert.equal(kinds.get(18), 'partner');
+  assert.equal(kinds.get(19), 'support');
+  assert.equal(kinds.get(23), 'favorite');
+  for (const id of [20, 21, 22]) assert.equal(kinds.get(id), '');
 });
 
 test('高积分商家即使在原评分顺序末尾也能置顶，超额商家回到原位置', () => {

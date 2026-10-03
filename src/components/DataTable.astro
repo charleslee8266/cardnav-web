@@ -63,39 +63,39 @@ const {
 
 const variantClasses = {
   default: {
-    table: 'table table-zebra w-full align-top border-collapse',
+    table: '',
     scroll: 'product-table-scroll',
-    head: 'bg-base-200 text-base-content text-sm',
+    head: '',
   },
   compact: {
-    table: 'table table-zebra table-md w-full border-collapse',
+    table: 'data-table-compact',
     scroll: 'product-table-scroll',
-    head: 'bg-base-200 text-base-content text-sm',
+    head: '',
   },
   shopProducts: {
-    table: 'table table-zebra w-full data-table-shop-products border-collapse',
+    table: 'data-table-shop-products',
     scroll: 'product-table-scroll',
-    head: 'bg-base-200 text-base-content text-sm',
+    head: '',
   },
   gatewaySites: {
-    table: 'table table-zebra gateway-home-table gateway-site-table table-fixed',
+    table: 'gateway-home-table gateway-site-table',
     scroll: 'gateway-table-scroll',
-    head: 'bg-base-200 text-sm font-semibold text-base-content',
+    head: '',
   },
   gatewayModels: {
-    table: 'table table-zebra gateway-home-table gateway-model-table table-fixed',
+    table: 'gateway-home-table gateway-model-table',
     scroll: 'gateway-table-scroll',
-    head: 'bg-base-200 text-sm font-semibold text-base-content',
+    head: '',
   },
   gatewayPrices: {
-    table: 'table table-zebra data-table-gateway-prices',
+    table: 'data-table-gateway-prices',
     scroll: 'product-table-scroll',
-    head: 'bg-base-200 text-sm font-semibold text-base-content',
+    head: '',
   },
   gatewayModelSites: {
-    table: 'table table-zebra data-table-gateway-model-sites',
+    table: 'data-table-gateway-model-sites',
     scroll: 'product-table-scroll',
-    head: 'bg-base-200 text-sm font-semibold text-base-content',
+    head: '',
   },
 } as const;
 const resolvedVariant = variantClasses[variant] ?? variantClasses.default;
@@ -151,7 +151,7 @@ const initialSummaryText = summaryText
         </p>
       ) : null}
       {hasLoadMore ? (
-        <button id={loadMoreButtonId} type="button" class:list={['btn btn-outline btn-sm', loadMoreButtonHidden && 'hidden']} {...loadMoreDataAttrs}>
+        <button id={loadMoreButtonId} type="button" class:list={['data-table-load-button', loadMoreButtonHidden && 'hidden']} {...loadMoreDataAttrs}>
           <slot name="loadMore">{loadMoreText}</slot>
         </button>
       ) : null}

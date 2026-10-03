@@ -9,8 +9,7 @@ import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 import { defaultLocale, supportedLocales } from '../../i18n/config.js';
 import { applyStaticLocaleLocals } from '../../static-locale.js';
-import EnglishPartnershipContent, { frontmatter as englishFrontmatter } from '../../../content/pages/en/partnership.mdx';
-import RussianPartnershipContent, { frontmatter as russianFrontmatter } from '../../../content/pages/ru/partnership.mdx';
+import { partnershipContent } from '../../partnership-content.js';
 
 export const prerender = true;
 
@@ -26,8 +25,7 @@ export function getStaticPaths() {
 const locale = Astro.props.locale;
 applyStaticLocaleLocals(Astro, locale, `/${locale}/partnership`);
 
-const partnershipContent = locale === 'en' ? EnglishPartnershipContent : RussianPartnershipContent;
-const partnershipFrontmatter = locale === 'en' ? englishFrontmatter : russianFrontmatter;
+const partnershipFrontmatter = locale === 'en' ? partnershipContent.en : partnershipContent.ru;
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: `/${locale}/partnership`,
@@ -40,5 +38,5 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="partnership" pageType="partnership" {...seo}>
-  <PartnershipPage content={partnershipContent} />
+  <PartnershipPage />
 </PublicPage>

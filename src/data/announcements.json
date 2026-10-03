@@ -13,7 +13,7 @@
   {
     "id": "supporters",
     "repeatAfterHours": 168,
-    "href": "/supporters?support-dialog",
+    "href": "/supporters",
     "message": {
       "zh": "为助力优质中小商家推广、支持网站持续发展，卡网大全已上线小额自助赞赏，点击了解详情",
       "en": "To help quality small and medium-sized merchants gain visibility and support the site’s continued development, CardNav now offers a self-service option for small contributions. Click to learn more.",

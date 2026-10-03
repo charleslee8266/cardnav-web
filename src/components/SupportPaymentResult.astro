@@ -1,49 +1,85 @@
 ---
-/*
-文件说明: 展示赞赏支付窗口回跳后的成功、失败或等待确认结果。
-*/
+/* 查询真实订单状态，并提供重新查询、关闭窗口和返回赞赏名单入口。 */
+import '../public.css';
 const query = new URL(Astro.request.url).searchParams;
 const token = query.get('token') || '';
 const failed = query.get('payment') === 'failed';
 const t = Astro.locals.messages.support;
 ---
-<main style="display:grid;place-items:start center;min-height:100vh;padding:48px 20px 20px;box-sizing:border-box;background:#f8fafc;font-family:system-ui,-apple-system,sans-serif;color:#1f2937">
-  <section style="width:min(100%,420px);box-sizing:border-box;padding:28px 24px;border:1px solid #dbe3ef;border-radius:14px;background:#fff;text-align:center;box-shadow:0 8px 24px rgba(15,23,42,.08)" data-payment-result data-token={token} data-failed={String(failed)} data-messages={JSON.stringify({ success: t.paid, failed: t.paymentFailed, pending: t.pending, title: t.paymentResultTitle, close: t.closeResult })}>
-    <div data-result-icon style="margin:0 auto 16px;width:52px;height:52px;display:grid;place-items:center;border-radius:50%;background:#eef2f7;font-size:26px">…</div>
-    <h1 data-result-title style="margin:0;font-size:20px;line-height:1.4;font-weight:700">{t.paymentResultTitle}</h1>
-    <p data-result-message style="margin:10px 0 0;color:#64748b;line-height:1.6">{failed ? t.paymentFailed : t.checking}</p>
-    <button data-close-result type="button" style="margin-top:20px;padding:9px 20px;border:0;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;font-size:14px">{t.closeResult}</button>
+<main class="payment-result-page">
+  <section class="payment-result-card" data-payment-result data-token={token} data-failed={String(failed)} data-locale={Astro.locals.locale} data-messages={JSON.stringify({ success: t.paid, failed: t.paymentFailed, pending: t.pending, cancelled: t.cancelled, noOrder: t.noOrder, checking: t.checking, statusFailed: t.statusFailed, title: t.paymentResultTitle })} aria-live="polite">
+    <a class="payment-result-brand" href={Astro.locals.localizePath('/')}><img src="/favicon.webp" width="28" height="28" alt="" />{Astro.locals.messages.site.name}</a>
+    <div data-result-icon class="payment-result-icon" aria-hidden="true">…</div>
+    <h1 data-result-title>{t.paymentResultTitle}</h1>
+    <p data-result-message>{token ? t.checking : t.noOrder}</p>
+    <div class="payment-result-actions">
+      <button data-retry-result type="button" class="btn support-button" hidden={!token}>{t.retry}</button>
+      <button data-close-result type="button" class="btn btn-outline">{t.closeResult}</button>
+    </div>
+    <a class="payment-result-return" href={Astro.locals.localizePath('/supporters')}>{t.returnToSupporters} →</a>
   </section>
 </main>
 <style>
   :global(body) { margin: 0; }
+  .payment-result-page { min-height: 100dvh; display: grid; place-items: start center; padding: clamp(32px, 10vh, 100px) 16px 24px; background: var(--color-base-200); }
+  .payment-result-card { width: min(100%, 480px); padding: 32px; text-align: center; border: 1px solid var(--color-base-300); border-radius: 16px; background: var(--color-base-100); box-shadow: 0 8px 28px color-mix(in srgb, var(--color-base-content) 5%, transparent); }
+  .payment-result-brand { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 650; }
+  .payment-result-icon { display: grid; place-items: center; width: 64px; height: 64px; margin: 28px auto 20px; border-radius: 50%; background: var(--color-base-200); color: var(--color-support); font-size: 28px; }
+  [data-status="paid"] .payment-result-icon { background: color-mix(in srgb, var(--color-success) 12%, transparent); color: var(--color-success); }
+  [data-status="cancelled"] .payment-result-icon, [data-status="failed"] .payment-result-icon { color: var(--color-warning); background: color-mix(in srgb, var(--color-warning) 12%, transparent); }
+  .payment-result-card h1 { font-size: 22px; font-weight: 700; line-height: 1.5; }
+  .payment-result-card p { margin-top: 12px; min-height: 24px; font-size: 14px; line-height: 1.8; color: color-mix(in srgb, var(--color-base-content) 70%, transparent); }
+  .payment-result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 24px 0 18px; }
+  .payment-result-return { font-size: 13px; color: var(--color-support); }
 </style>
-<script is:inline>
-  const root = document.querySelector('[data-payment-result]');
+<script>
+  const savedTheme = (() => { try { return localStorage.getItem('theme'); } catch { return null; } })();
+  const theme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+  const root = document.querySelector<HTMLElement>('[data-payment-result]');
   if (root) {
     const token = root.dataset.token || '';
-    const failed = root.dataset.failed === 'true';
     const messages = JSON.parse(root.dataset.messages || '{}');
-    const icon = root.querySelector('[data-result-icon]');
-    const title = root.querySelector('[data-result-title]');
-    const message = root.querySelector('[data-result-message]');
-    const close = root.querySelector('[data-close-result]');
-    close?.addEventListener('click', () => { window.close(); window.setTimeout(() => window.history.back(), 100); });
-    const finish = (status) => {
-      if (status === 'paid') { icon.textContent = '✓'; icon.style.background = '#dcfce7'; icon.style.color = '#16a34a'; title.textContent = messages.success; message.textContent = ''; return true; }
-      if (status === 'cancelled') { icon.textContent = '×'; icon.style.background = '#fee2e2'; icon.style.color = '#dc2626'; title.textContent = messages.failed; message.textContent = ''; return true; }
-      return false;
-    };
+    const icon = root.querySelector<HTMLElement>('[data-result-icon]')!;
+    const title = root.querySelector<HTMLElement>('[data-result-title]')!;
+    const message = root.querySelector<HTMLElement>('[data-result-message]')!;
+    const retry = root.querySelector<HTMLButtonElement>('[data-retry-result]')!;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let controller: AbortController | undefined;
+    root.querySelector('[data-close-result]')?.addEventListener('click', () => window.close());
     const poll = async (attempt = 0) => {
-      if (failed) { finish('cancelled'); return; }
+      clearTimeout(timer);
+      controller?.abort();
+      if (!token) { icon.textContent = '?'; message.textContent = messages.noOrder; retry.hidden = true; return; }
+      const request = new AbortController();
+      controller = request;
+      retry.disabled = true;
+      message.textContent = messages.checking;
       try {
-        const response = await fetch(`/api/support/status?token=${encodeURIComponent(token)}`);
+        const response = await fetch(`/api/support/status?token=${encodeURIComponent(token)}`, { signal: request.signal, headers: { 'x-cardnav-locale': root.dataset.locale || 'zh' } });
+        if (response.status === 404) { icon.textContent = '?'; message.textContent = messages.noOrder; retry.hidden = true; return; }
         const data = await response.json();
-        if (data.ok && finish(data.status)) return;
-      } catch { /* 页面保持等待状态，下一轮继续查询。 */ }
-      if (attempt < 19) window.setTimeout(() => poll(attempt + 1), 3000);
-      else message.textContent = messages.pending;
+        if (!response.ok || !data.ok) throw new Error();
+        root.dataset.status = data.status;
+        if (data.status === 'paid' || data.status === 'cancelled') {
+          icon.textContent = data.status === 'paid' ? '✓' : '×';
+          title.textContent = data.status === 'paid' ? messages.success : messages.cancelled;
+          message.textContent = '';
+          retry.hidden = true;
+          return;
+        }
+        icon.textContent = '…';
+        message.textContent = root.dataset.failed === 'true' ? messages.failed : messages.pending;
+        if (attempt < 19) timer = setTimeout(() => void poll(attempt + 1), 3000);
+      } catch {
+        if (!request.signal.aborted) message.textContent = messages.statusFailed;
+      } finally {
+        if (!request.signal.aborted) retry.disabled = false;
+      }
     };
+    retry.addEventListener('click', () => void poll());
+    window.addEventListener('pagehide', () => { clearTimeout(timer); controller?.abort(); });
     void poll();
   }
 </script>

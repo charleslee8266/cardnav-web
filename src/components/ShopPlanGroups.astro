@@ -35,6 +35,7 @@ function buttonProps(term: QuickPlanSearchTerm) {
   <div class="plan-tabs">
   <div id="quickPlanGroups" class="plan-groups">
       <span class="plan-picker-label text-sm font-normal text-base-content/65 uppercase tracking-wider">{Astro.locals.messages.shops.quickPlanSearch}</span>
+    {mode === 'filter' && <button type="button" class="plan-option plan-product" data-clear-plan aria-pressed={!initialSearchQuery}>{Astro.locals.messages.shops.allPlans}</button>}
     {visibleProducts.map(product => {
       const singleton = product.terms.length === 1;
       const ProductTag = mode === 'navigate' ? 'a' : 'button';
@@ -63,6 +64,7 @@ function buttonProps(term: QuickPlanSearchTerm) {
     const brands = Array.from(groups.querySelectorAll<HTMLButtonElement>('[data-product-id]'));
     const panels = Array.from(picker.querySelectorAll<HTMLElement>('[data-product-options]'));
     const showProduct = (id: string) => {
+      picker.querySelector('[data-clear-plan]')?.setAttribute('aria-pressed', String(!id));
       for (const brand of brands) brand.setAttribute('aria-pressed', String(brand.dataset.productId === id));
       for (const panel of panels) panel.hidden = panel.dataset.productOptions !== id;
     };

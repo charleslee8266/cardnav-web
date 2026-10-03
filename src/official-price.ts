@@ -126,3 +126,18 @@ export function buildOfficialPriceGroupsForActiveSlug(
       : [],
   })));
 }
+
+/** A baseline must be the same plan's recorded U.S. App Store price in USD. */
+export function officialPriceBaseline<Row extends PublicOfficialPriceRow>(prices: Row[]): Row | null {
+  return prices.find(price => price.countryCode === 'US' && price.currencyCode === 'USD'
+    && Number.isFinite(price.priceValue) && price.priceValue > 0
+    && Number.isFinite(price.cnyPrice) && price.cnyPrice > 0) ?? null;
+}
+
+/** Compare unrounded equivalent amounts; unavailable or mismatched baselines stay unknown. */
+export function officialPriceDifference(price: PublicOfficialPriceRow, baseline: PublicOfficialPriceRow | null): number | null {
+  if (!baseline || price.appSlug !== baseline.appSlug || price.planSlug !== baseline.planSlug
+    || !Number.isFinite(price.cnyPrice) || price.cnyPrice < 0
+    || !Number.isFinite(baseline.cnyPrice) || baseline.cnyPrice <= 0) return null;
+  return (price.cnyPrice / baseline.cnyPrice - 1) * 100;
+}

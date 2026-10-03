@@ -59,3 +59,14 @@ test('browser scripts localize dynamic public route fallbacks', () => {
 
   assert.deepEqual(failures, []);
 });
+
+// Regression: a working delegated handler is ineffective if the public shell never loads it.
+test('public data row navigation is included in the shared browser entry point', () => {
+  const layout = path.join(sourceRoot, 'layouts/PublicPage.astro');
+  const rowScript = path.join(scriptRoot, 'row-navigation.js');
+  const entry = localScriptUrlImports().find(item => item.astroFilePath === layout && item.scriptPath === rowScript);
+  assert.ok(entry, 'the public layout must import the row navigation browser asset');
+  const markup = fs.readFileSync(layout, 'utf8').split('---').slice(2).join('---');
+  const scripts = [...markup.matchAll(/<script\b[^>]*>/g)].map(match => match[0]);
+  assert.equal(scripts.filter(script => script.includes(`src={${entry.variableName}}`)).length, 1, 'load row navigation exactly once for SSR and dynamically appended rows');
+});

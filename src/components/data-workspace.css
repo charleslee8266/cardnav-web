@@ -1,0 +1,54 @@
+/* V3 explorer controls: 36px inputs on one toolbar; secondary choices below. */
+.data-workspace { min-width: 0; overflow: visible; }
+.data-workspace-controls { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 12px; border-bottom: 1px solid var(--color-base-300); }
+.data-workspace-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.data-workspace-search { flex: 1; min-width: 240px; }
+.data-workspace-search > .input { width: 100%; }
+.data-workspace .input, .data-workspace .select { min-height: 36px; height: 36px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+.data-workspace .input:focus-within { outline: 2px solid color-mix(in srgb, var(--color-primary) 25%, transparent); outline-offset: 1px; }
+.data-workspace-sort { display: none; width: auto; max-width: 155px; }
+.data-segmented { flex-wrap: wrap; max-width: 100%; display: inline-flex; flex: 0 0 auto; gap: 2px; padding: 3px; border-radius: 10px; background: var(--color-surface-raised); }
+.data-segmented > * { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 14px; border: 0; border-radius: 8px; color: color-mix(in srgb, var(--color-base-content) 60%, transparent); font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; text-decoration: none; }
+.data-segmented [aria-selected="true"] { background: var(--color-base-100); color: var(--color-base-content); box-shadow: 0 1px 3px #0000000d; }
+.data-segmented .tool-tab-badge { padding: 0; border: 0; background: none; font-size: 11px; font-weight: 600; color: color-mix(in srgb, var(--color-base-content) 42%, transparent); }
+.data-filter-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; height: 34px; padding: 0 12px; font-size: 13px; font-weight: 500; border: 1px solid var(--color-base-300); border-radius: 7px; background: var(--color-base-100); box-shadow: none; }
+.data-filter-trigger[aria-expanded="true"] { border-color: var(--color-primary); color: var(--color-primary); }
+.data-filter-count { display: inline-grid; place-items: center; min-width: 16px; height: 16px; border-radius: 50%; font-size: 10px; background: var(--color-primary); color: var(--color-primary-content); }
+.data-filter-panel { position: fixed; inset: var(--filter-top, 100px) var(--filter-right, 20px) auto auto; width: 320px; max-width: calc(100vw - 32px); margin: 0; padding: 14px 16px; max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-base-100); color: var(--color-base-content); box-shadow: 0 8px 28px #00000014; }
+.data-filter-heading { display: none; }
+.data-filter-fields { display: flex; flex-direction: column; gap: 14px; }
+.data-filter-group { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.data-filter-group legend, .data-filter-title { display: flex; align-items: center; gap: 4px; padding: 0 0 8px; font-size: 12px; font-weight: 650; color: color-mix(in srgb, var(--color-base-content) 48%, transparent); }
+.data-filter-fields label { display: flex; align-items: center; gap: 8px; padding: 0; min-height: 22px; font-size: 13px; color: var(--color-base-content); white-space: normal; }
+.data-filter-price { display: flex; align-items: center; gap: 6px; }
+.data-filter-price input { flex: 1; width: 0; min-width: 0; }
+.data-filter-fields .select { width: 100%; }
+.data-filter-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; margin-top: 14px; border-top: 1px solid var(--color-base-300); }
+.data-filter-footer .btn { min-height: 28px; height: 28px; padding: 0 10px; font-size: 12px; }
+.data-active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+.data-filter-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 26px; padding: 0 10px; border: 1px solid var(--color-brand-line); border-radius: 999px; background: var(--color-brand-soft); color: var(--color-primary); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.data-filter-clear { padding: 3px 6px; color: color-mix(in srgb, var(--color-base-content) 60%, transparent); cursor: pointer; }
+.data-workspace :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.data-workspace-guide { font-size: 12px; color: color-mix(in srgb, var(--color-base-content) 60%, transparent); }
+.data-page-statline { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 12px; color: color-mix(in srgb, var(--color-base-content) 55%, transparent); }
+.data-page-statline > span { white-space: nowrap; }
+.data-page-statline strong { margin-left: 4px; color: var(--color-base-content); font-weight: 650; font-variant-numeric: tabular-nums; }
+.data-page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; align-self: flex-start; flex-shrink: 0; max-width: 100%; }
+.data-page-actions .btn { min-height: 34px; height: auto; padding: 7px 12px; font-size: 12px; white-space: normal; }
+.data-workspace [hidden], .data-filter [hidden] { display: none !important; }
+@media (max-width: 720px) {
+  .data-workspace-controls { padding: 12px; }
+  .data-workspace-toolbar { gap: 8px; }
+  .data-workspace-search { order: 4; flex-basis: 100%; min-width: 0; }
+  .data-workspace-sort { display: block; margin-left: auto; }
+  .data-filter-panel { inset: auto 0 0; width: auto; max-width: none; max-height: 78dvh; border-radius: 16px 16px 0 0; padding: 16px 16px max(16px, env(safe-area-inset-bottom)); }
+  .data-filter-panel::backdrop { background: #0005; }
+  .data-filter-heading { display: block; font-size: 14px; font-weight: 650; margin-bottom: 16px; }
+  .data-filter-fields label { min-height: 30px; }
+  .data-page-actions { width: 100%; }
+}
+
+.data-filter-price .input { height: 30px; min-height: 30px; }
+
+.data-crosslink { width: fit-content; align-items: center; gap: 6px; min-height: 30px; padding: 4px 10px; border: 1px solid var(--color-brand-line); border-radius: 7px; background: var(--color-brand-soft); color: var(--color-primary); font-size: 12px; font-weight: 550; line-height: 1.5; text-decoration: none; }
+.data-crosslink:hover { background: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100)); border-color: var(--color-primary);  }

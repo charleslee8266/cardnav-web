@@ -28,6 +28,7 @@ export type PackedShopSiteRow = [
   sponsor?: 0 | 1,
   supportTotalCents?: number,
   supportPoints?: number,
+  platformName?: string,
 ];
 
 export type PackedShopProductRow = [
@@ -124,6 +125,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
       site.sponsor ? 1 : 0,
       Number(site.supportTotalCents) || 0,
       Number(site.supportPoints) || 0,
+      site.platformName || '',
     ];
   });
   const categories: string[] = [];
@@ -142,6 +144,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
         product.siteSponsor ? 1 : 0,
         Number(product.siteSupportTotalCents) || 0,
         Number(product.siteSupportPoints) || 0,
+        product.sitePlatformName || '',
       ]);
     }
     return [
@@ -291,3 +294,5 @@ export function shopSiteSupportPoints(site: PackedShopSiteRow | null | undefined
 export function shopProductAutoCategory(product: PackedShopProductRow) {
   return product[11] || 'other';
 }
+
+export function shopSitePlatformName(site: PackedShopSiteRow | null | undefined) { return site?.[8] || ""; }

@@ -10,7 +10,7 @@ export type SitePinRow = {
   favorite: boolean;
 };
 
-export function pinSiteRows<Row extends SitePinRow>(rows: Row[]): Row[] {
+export function pinSiteRows<Row extends SitePinRow>(rows: Row[], onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void): Row[] {
   const bySupportPoints = (left: Row, right: Row) => (right.supportPoints ?? 0) - (left.supportPoints ?? 0);
   const partners = rows.filter(row => row.sponsor).sort(bySupportPoints).slice(0, MAX_PINNED_PARTNER_SITES);
   const supporters = rows.filter(row => !row.sponsor && (row.supportPoints ?? 0) > 0)
@@ -23,5 +23,9 @@ export function pinSiteRows<Row extends SitePinRow>(rows: Row[]): Row[] {
     if (row.favorite) favorites.push(row);
     else regular.push(row);
   }
+  partners.forEach(row => onPin?.(row, 'partner'));
+  supporters.forEach(row => onPin?.(row, 'support'));
+  favorites.forEach(row => onPin?.(row, 'favorite'));
+  regular.forEach(row => onPin?.(row, ''));
   return [...partners, ...supporters, ...favorites, ...regular];
 }

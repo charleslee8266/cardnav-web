@@ -8,7 +8,10 @@ import Sponsors from '../components/Sponsors.astro';
 import { localizeModelLeaderboardGroups, localizeOfficialPriceGroups } from '../localized-display.js';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildOfficialPriceGroups, matchOfficialPriceCatalogEntries } from '../official-price.js';
-import ShopPlanGroups from '../components/ShopPlanGroups.astro';
+import Icon from '../components/Icon.astro';
+import ProviderLabel from '../components/ProviderLabel.astro';
+import RefreshTime from '../components/RefreshTime.astro';
+import { quickPlanProducts, quickProductDefaultPlan, quickPlanSearchSeoPath, productForOfficialPrice, productIconPath } from '../shop-plan-search.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
@@ -33,7 +36,7 @@ const preferredOfficialPlans = [
   { app: 'claude', plan: 'pro' },
   { app: 'claude', plan: '20x' },
 ];
-const shopProductsData = await loadShopProductsData({ productLimit: 6 });
+const shopProductsData = await loadShopProductsData({ productLimit: 5 });
 const officialPriceCatalog = await loadOfficialPriceCatalog();
 const leaderboardTaskSlugs = await loadModelLeaderboardTaskSlugs();
 const gatewayData = await loadGatewaySites();
@@ -61,63 +64,24 @@ const seo = buildSeoContext({
 
 const guideSourcePage = '/';
 
-const primaryCards = [
-  {
-    title: t.home.gatewayPathTitle,
-    description: t.home.gatewayPathShortDescription,
-    href: '/llm-gateway',
-    action: t.home.openGateway,
-    name: t.home.gatewayPathTitle,
-    badge: t.nav.llmGateway,
-  },
-  {
-    title: t.home.shopPathTitle,
-    description: t.home.shopPathShortDescription,
-    href: '/shops',
-    action: t.actions.openShops,
-    name: t.home.shopPathTitle,
-    badge: t.nav.shops,
-  },
-  {
-    title: t.home.officialPathTitle,
-    description: t.home.officialPathShortDescription,
-    href: '/official-price',
-    action: t.actions.openPricePage,
-    name: t.home.officialPathTitle,
-    badge: t.nav.officialPrice,
-  },
-];
-
-const secondaryCards = [
-  {
-    title: t.home.leaderboardPathTitle,
-    description: t.home.leaderboardPathShortDescription,
-    href: '/model-leaderboard',
-    action: t.actions.viewFullLeaderboard,
-    name: t.home.leaderboardPathTitle,
-    badge: t.nav.modelLeaderboard,
-    eventAttrs: homeCtaClickAttrs('/model-leaderboard', t.home.leaderboardPathTitle),
-  },
-  {
-    title: t.home.guidePathTitle,
-    description: t.home.guidePathShortDescription,
-    href: '/guide',
-    action: t.actions.openGuide,
-    name: t.home.guidePathTitle,
-    badge: t.nav.guide,
-    eventAttrs: guideUrlClickAttrs('/guide'),
-  },
-];
+const pathCards = [
+  { title: t.home.gatewayPathTitle, feature: t.nav.llmGateway, description: t.home.gatewayPathShortDescription, href: '/llm-gateway', icon: 'server' },
+  { title: t.home.shopPathTitle, feature: t.nav.shops, description: t.home.shopPathShortDescription, href: '/shops', icon: 'store' },
+  { title: t.home.officialPathTitle, feature: t.nav.officialPrice, description: t.home.officialPathShortDescription, href: '/official-price', icon: 'tag' },
+  { title: t.home.leaderboardPathTitle, feature: t.nav.modelLeaderboard, description: t.home.leaderboardPathShortDescription, href: '/model-leaderboard', icon: 'trophy' },
+  { title: t.home.guidePathTitle, feature: t.nav.guide, description: t.home.guidePathShortDescription, href: '/guide', icon: 'book' },
+] as const;
+const hotTerms = quickPlanProducts.filter(product => !product.hiddenFromQuickFilters).slice(0, 6).map(product => ({ label: product.label, href: quickPlanSearchSeoPath(quickProductDefaultPlan(product)) }));
 
 const toolCards = [
   {
     title: t.tools.ipPurity.title,
-    description: t.home.ipToolDescription,
+    description: t.tools.ipPurity.description,
     href: '/tools/ip-purity',
   },
   {
     title: t.tools.sessionConverter.title,
-    description: t.home.sessionToolDescription,
+    description: t.tools.sessionConverter.description,
     href: '/tools/session-converter',
   },
 ];
@@ -131,10 +95,11 @@ const officialPriceGroups = localizeOfficialPriceGroups(
 const officialPriceGroupByKey = new Map(officialPriceGroups.map(group => [group.key, group]));
 const officialPriceHighlights = matchedOfficialEntries
   .map(entry => officialPriceGroupByKey.get(`${entry.appSlug}:${entry.planSlug}`))
-  .filter((group): group is (typeof officialPriceGroups)[number] => Boolean(group && group.prices.length >= 3))
+  .filter((group): group is (typeof officialPriceGroups)[number] => Boolean(group && group.prices.length > 0))
   .map(group => ({
     title: group.displayName,
     href: group.pathname,
+    product: productForOfficialPrice(group.appSlug, group.urlSlug),
     prices: group.prices.slice(0, 3).map(price => ({
       country: price.localizedCountryLabel,
       localPrice: price.priceText,
@@ -149,27 +114,30 @@ const modelHighlightGroups = localizeModelLeaderboardGroups(
   .map(group => ({
     title: group.displayName,
     href: group.pathname,
-    rows: group.rows.slice(0, 3).map(row => ({
+    rows: group.rows.slice(0, 5).map(row => ({
       rank: row.rank,
       modelName: row.modelName,
+      score: row.score,
     })),
   }));
 
-const gatewayHighlights = gatewayData.sites.slice(0, 4).map(site => ({
+const gatewayHighlights = gatewayData.sites.slice(0, 5).map(site => ({
   title: site.name,
-  meta: site.displayModelProviders.slice(0, 3).join(' / ') || site.host,
+  providers: site.displayModelProviders.slice(0, 3),
+  meta: site.host,
   value: site.modelCount > 0 ? t.home.gatewayModelCountLabel.replace('{count}', String(site.modelCount)) : t.home.noGatewayModelData,
   href: `/llm-gateway/${site.slug}`,
 }));
 
-const gatewayModelHighlights = gatewayModelData.models.slice(0, 4).map(model => ({
+const gatewayModelHighlights = gatewayModelData.models.slice(0, 5).map(model => ({
   title: model.modelId,
-  meta: model.modelProvider,
+  providers: [model.modelProvider],
+  meta: '',
   value: t.home.gatewaySupportCountLabel.replace('{count}', String(model.supportSiteCount)),
   href: `/llm-gateway/models/${encodeURIComponent(model.modelId)}`,
 }));
 
-const productHighlights = shopProductsData.products.slice(0, 6).map(product => ({
+const productHighlights = shopProductsData.products.slice(0, 5).map(product => ({
   title: product.name,
   meta: `${product.siteName} · ${product.categoryName}`,
   value: typeof product.priceNumber === 'number' && product.priceUnit
@@ -203,219 +171,78 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
 ---
 
 <PublicPage activeNav="home" pageType="home" {...seo}>
+  <section class="home-hero" data-telemetry-block={telemetryBlocks.shared.hero}>
+    <h1><span class="home-brand"><img src="/favicon.webp" alt="" width="56" height="56" /><span class="home-brand-name">{t.site.name}</span><span class="home-brand-domain">cardnav.xyz</span></span><span class="home-tagline">{t.site.tagline}</span></h1>
+    <p class="home-lead">{Astro.locals.locale === 'zh' ? t.site.heroDescription.split(/(?=还有)/).map((line: string, index: number) => <>{index > 0 && <br />}{line}</>) : t.site.heroDescription}</p>
+    <form action={linkTo('/shops')} method="get" class="home-search" data-home-search-form data-telemetry-block={telemetryBlocks.home.search}>
+      <Icon name="search" />
+      <input name="q" type="search" placeholder={t.home.searchPlaceholder} aria-label={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
+      <button type="submit" class="btn btn-primary">{t.actions.search}</button>
+    </form>
+    <div class="home-hot-terms">{hotTerms.map(term => <a href={linkTo(term.href)} {...homeCtaClickAttrs(term.href, term.label)}>{term.label}</a>)}</div>
+    <div class="home-stat-line">
+      <span>{t.labels.collectedSites}<b>{shopProductsData.totalSiteCount.toLocaleString(Astro.locals.locale)}</b></span>
+      <span>{t.labels.products}<b>{shopProductsData.totalProductCount.toLocaleString(Astro.locals.locale)}</b></span>
+      <span>{t.nav.mobileLlmGateway}<b>{gatewayData.sites.length.toLocaleString(Astro.locals.locale)}</b></span>
+      {shopProductsData.latestRefreshedAt && <span>{t.labels.latestRefresh}<b><RefreshTime timestamp={shopProductsData.latestRefreshedAt} /></b></span>}
+    </div>
+  </section>
   <Sponsors placement="after-hero" pageType="home" />
-  <section data-telemetry-block={telemetryBlocks.home.quickNavigation} class="site-main-width mt-4">
-    <div>
-      <div class="mb-4">
-        <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.quickNavTitle}</h2>
-      </div>
-      <div class="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-3">
-        {primaryCards.map(card => (
-          <a href={linkTo(card.href)} class="group flex min-w-0 flex-col rounded-lg border border-base-300 bg-base-100 p-4 no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...homeCtaClickAttrs(card.href, card.name)}>
-            <span class="badge badge-ghost badge-sm w-fit font-medium">{card.badge}</span>
-            <h3 class="mt-3 text-xl font-bold text-base-content">{card.title}</h3>
-            <p class="mt-2 flex-1 text-sm leading-6 text-base-content/72">{card.description}</p>
-            <span class="mt-4 text-sm font-semibold text-primary">{card.action}</span>
-          </a>
-        ))}
-      </div>
-
-      <div class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
-        {secondaryCards.map(card => (
-          <a href={linkTo(card.href)} class="group flex min-w-0 flex-col rounded-lg border border-base-300 bg-base-100 p-4 no-underline transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" {...card.eventAttrs}>
-            <span class="badge badge-ghost badge-sm w-fit font-medium">{card.badge}</span>
-            <h3 class="mt-3 text-xl font-bold text-base-content">{card.title}</h3>
-            <p class="mt-2 flex-1 text-sm leading-6 text-base-content/72">{card.description}</p>
-            <span class="mt-4 text-sm font-semibold text-primary">{card.action}</span>
-          </a>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section data-telemetry-block={telemetryBlocks.home.highlights} class="site-main-width mt-4 grid grid-cols-[minmax(0,1fr)] gap-5">
-    <div>
-      <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.highlightsTitle}</h2>
-    </div>
-
-    <article data-telemetry-block={telemetryBlocks.home.shops} class="card bg-base-100 border border-primary/20 shadow-md">
-      <div class="card-body gap-4 p-4 md:p-5">
-        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h3 class="text-lg font-bold text-base-content">{t.home.productHighlightsTitle}</h3>
-            <p class="mt-2 text-sm leading-6 text-base-content/72">{t.shops.description}</p>
-          </div>
-          <a href={linkTo('/shops')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}</a>
-        </div>
-        <form action={linkTo('/shops')} method="get" class="flex flex-col gap-3 rounded-lg border border-base-300 bg-base-100 p-3" data-home-search-form data-telemetry-block={telemetryBlocks.home.search}>
-          <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <input name="q" type="search" class="input input-bordered w-full" placeholder={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
-            <button type="submit" class="btn btn-primary shrink-0">{t.actions.search}</button>
-          </div>
-          <ShopPlanGroups mode="navigate" initialSearchQuery="" officialPriceUrlSlugs={new Set()} />
-          <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
-            <span>{t.labels.collectedSites}: <span class="font-bold text-primary">{shopProductsData.totalSiteCount}</span></span>
-            <span>{t.labels.products}: <span class="font-bold text-primary">{shopProductsData.totalProductCount}</span></span>
-            {shopProductsData.latestRefreshTime && <span>{t.labels.latestRefresh}: {shopProductsData.latestRefreshTime}</span>}
-          </div>
-        </form>
-        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {productHighlights.map(item => (
-            <a href={linkTo(item.href)} class="flex min-w-0 items-center justify-between gap-3 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
-              <span class="block min-w-0 flex-1 max-w-full space-y-1 overflow-hidden">
-                <span class="block max-w-full truncate text-sm font-semibold leading-5 text-base-content">{item.title}</span>
-                <span class="block max-w-full truncate text-xs leading-5 text-base-content/60">{item.meta}</span>
-              </span>
-              <span class="shrink-0 text-right text-sm font-bold text-primary">{item.value}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </article>
-
-    <article data-telemetry-block={telemetryBlocks.home.gateways} class="card bg-base-100 border border-base-300 shadow-sm">
-      <div class="card-body gap-4 p-4">
-        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h3 class="text-lg font-bold text-base-content">
-              <a href={linkTo('/llm-gateway')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/llm-gateway', t.home.openGateway)}>{t.home.gatewayHighlightsTitle}</a>
-            </h3>
-          </div>
-          <a href={linkTo('/llm-gateway')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/llm-gateway', t.home.openGateway)}>{t.home.openGateway}</a>
-        </div>
-        <div class="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
-          <section class="min-w-0 rounded-lg bg-base-200/45 p-3">
-            <h3 class="text-sm font-bold text-base-content">{t.home.popularGatewaySitesTitle}</h3>
-            <div class="mt-3 space-y-2">
-              {gatewayHighlights.map(item => (
-                <a href={linkTo(item.href)} class="flex items-center justify-between gap-3 rounded bg-base-100 px-3 py-2 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
-                  <span class="min-w-0">
-                    <span class="block truncate text-sm font-semibold text-base-content">{item.title}</span>
-                    <span class="block truncate text-xs text-base-content/60">{item.meta}</span>
-                  </span>
-                  <span class="shrink-0 text-right text-xs font-semibold text-primary">{item.value}</span>
-                </a>
-              ))}
-            </div>
-          </section>
-          <section class="min-w-0 rounded-lg bg-base-200/45 p-3">
-            <h3 class="text-sm font-bold text-base-content">{t.home.popularGatewayModelsTitle}</h3>
-            <div class="mt-3 space-y-2">
-              {gatewayModelHighlights.map(item => (
-                <a href={linkTo(item.href)} class="flex items-center justify-between gap-3 rounded bg-base-100 px-3 py-2 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(item.href, item.title)}>
-                  <span class="min-w-0">
-                    <span class="block truncate text-sm font-semibold text-base-content">{item.title}</span>
-                    <span class="block truncate text-xs text-base-content/60">{item.meta}</span>
-                  </span>
-                  <span class="shrink-0 text-right text-xs font-semibold text-primary">{item.value}</span>
-                </a>
-              ))}
-            </div>
-          </section>
-        </div>
-      </div>
-    </article>
-
-    <div class="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
-      <article data-telemetry-block={telemetryBlocks.home.officialPrices} class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
-        <div class="card-body gap-4 p-4">
-          <section class="min-w-0">
-            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <h3 class="text-lg font-bold text-base-content">
-                <a href={linkTo('/official-price')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/official-price', t.actions.openPricePage)}>{t.home.officialHighlightsTitle}</a>
-              </h3>
-              <a href={linkTo('/official-price')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/official-price', t.actions.openPricePage)}>{t.actions.openPricePage}</a>
-            </div>
-            <div class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
-              {officialPriceHighlights.map(group => (
-                <a href={linkTo(group.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(group.href, group.title)}>
-                  <h4 class="line-clamp-2 text-sm font-bold leading-5 text-base-content">{group.title}</h4>
-                  <div class="mt-3 space-y-2">
-                    {group.prices.map(price => (
-                      <div class="flex items-center justify-between gap-3 text-sm">
-                        <span class="min-w-0 truncate text-base-content/70">{price.country}</span>
-                        <span class="shrink-0 font-bold text-primary">{price.equivalentPrice}</span>
-                      </div>
-                    ))}
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-        </div>
+  <nav class="home-paths" aria-label={t.home.quickNavTitle} data-telemetry-block={telemetryBlocks.home.quickNavigation}>
+    {pathCards.map(card => <a href={linkTo(card.href)} class="home-path" {...homeCtaClickAttrs(card.href, card.title)}>
+      <div class="home-path-feature"><span class="home-path-icon"><Icon name={card.icon} /></span><span>{card.feature}</span></div><div class="home-path-copy"><b>{card.title}</b><span>{card.description}</span></div>
+    </a>)}
+  </nav>
+  <section class="home-highlights" aria-labelledby="home-highlights-title" data-telemetry-block={telemetryBlocks.home.highlights}>
+    <h2 id="home-highlights-title">{t.home.highlightsTitle}</h2>
+    <div class="home-highlight-grid">
+      <article class="home-panel" data-telemetry-block={telemetryBlocks.home.shops}>
+        <header class="home-panel-header"><h3>{t.home.productHighlightsTitle}</h3><a class="home-more" href={linkTo('/shops')} {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}<Icon name="right" /></a></header>
+        <ul class="home-highlight-list">{productHighlights.map(item => <li><a href={linkTo(item.href)} {...homeCtaClickAttrs(item.href, item.title)}><span class="home-row-title">{item.title}<small>{item.meta}</small></span><span class="home-row-price">{item.value}</span></a></li>)}</ul>
+        {!productHighlights.length && <p class="home-empty">{t.shops.script.noData}</p>}
       </article>
-
-      <article data-telemetry-block={telemetryBlocks.home.models} class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
-        <div class="card-body gap-4 p-4">
-          <section class="min-w-0">
-            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <h3 class="text-lg font-bold text-base-content">
-                <a href={linkTo('/model-leaderboard')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/model-leaderboard', t.actions.viewFullLeaderboard)}>{t.home.modelHighlightsTitle}</a>
-              </h3>
-              <a href={linkTo('/model-leaderboard')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/model-leaderboard', t.actions.viewFullLeaderboard)}>{t.actions.viewFullLeaderboard}</a>
-            </div>
-            <div class="mt-3 grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
-              {modelHighlightGroups.map(group => (
-                <a href={linkTo(group.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(group.href, group.title)}>
-                  <h4 class="text-sm font-bold text-base-content">{group.title}</h4>
-                  <div class="mt-3 space-y-2">
-                    {group.rows.map(row => (
-                      <div class="text-sm">
-                        <span class="block truncate text-base-content">#{row.rank} {row.modelName}</span>
-                      </div>
-                    ))}
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-        </div>
+      <article class="home-panel" data-telemetry-block={telemetryBlocks.home.officialPrices}>
+        <header class="home-panel-header"><h3>{t.home.officialHighlightsTitle}</h3><a class="home-more" href={linkTo('/official-price')} {...homeCtaClickAttrs('/official-price', t.actions.openPricePage)}>{t.actions.openPricePage}<Icon name="right" /></a></header>
+        <ul class="home-highlight-list">{officialPriceHighlights.map(group => <li><a href={linkTo(group.href)} {...homeCtaClickAttrs(group.href, group.title)}>{group.product?.icon && <img src={productIconPath(group.product.icon)} width="20" height="20" alt="" class:list={['home-product-icon', group.product.monochrome && 'home-product-icon-mono']} />}<span class="home-row-title">{group.title}<small>{group.prices[0].country}</small></span><span class="home-price-pair"><span class="home-row-price">{group.prices[0].equivalentPrice}</span><span class="home-original-price">{group.prices[0].localPrice}</span></span></a></li>)}</ul>
+        {!officialPriceHighlights.length && <p class="home-empty">{t.officialPrice.empty}</p>}
+      </article>
+      <article class="home-panel" data-home-tabs data-telemetry-block={telemetryBlocks.home.gateways}>
+        <header class="home-panel-header"><h3>{t.home.gatewayHighlightsTitle}</h3><div class="home-segment" role="group" aria-label={t.home.gatewayHighlightsTitle}>
+          <button type="button" data-home-tab="gateway-sites" aria-controls="gateway-sites" aria-pressed="true">{t.llmGateway.siteView}</button>
+          <button type="button" data-home-tab="gateway-models" aria-controls="gateway-models" aria-pressed="false">{t.llmGateway.modelView}</button>
+        </div><a class="home-more" href={linkTo('/llm-gateway')} {...homeCtaClickAttrs('/llm-gateway', t.home.openGateway)}>{t.home.openGateway}<Icon name="right" /></a></header>
+        {[{id:'gateway-sites', rows:gatewayHighlights}, {id:'gateway-models', rows:gatewayModelHighlights}].map((group, index) => <div id={group.id} data-home-panel hidden={index !== 0}>
+          <ul class="home-highlight-list">{group.rows.map(item => <li><a href={linkTo(item.href)} {...homeCtaClickAttrs(item.href, item.title)}><span class="home-row-title">{item.title}</span><span class="home-gateway-detail"><span class="home-row-value">{item.value}</span><span class="home-row-providers">{item.providers.map(provider => <ProviderLabel name={provider} />)}</span></span></a></li>)}</ul>
+          {!group.rows.length && <p class="home-empty">{t.llmGateway.empty}</p>}
+        </div>)}
+      </article>
+      <article class="home-panel" data-home-tabs data-telemetry-block={telemetryBlocks.home.models}>
+        <header class="home-panel-header"><h3>{t.home.modelHighlightsTitle}</h3><div class="home-segment" role="group" aria-label={t.home.modelHighlightsTitle}>{modelHighlightGroups.map((group,index) => <button type="button" data-home-tab={`home-ranking-${index}`} aria-controls={`home-ranking-${index}`} aria-pressed={index === 0}>{group.title}</button>)}</div><a class="home-more" href={linkTo('/model-leaderboard')} {...homeCtaClickAttrs('/model-leaderboard', t.actions.viewFullLeaderboard)}>{t.actions.viewFullLeaderboard}<Icon name="right" /></a></header>
+        {modelHighlightGroups.map((group,index) => <div id={`home-ranking-${index}`} data-home-panel hidden={index !== 0}><ul class="home-highlight-list">{group.rows.map(row => <li><a href={linkTo(group.href)} {...homeCtaClickAttrs(group.href, group.title)}><span class="home-rank" data-first={row.rank === 1}>{row.rank}</span><span class="home-row-title">{row.modelName}</span><span class="home-row-value">{row.score.toLocaleString(Astro.locals.locale, { maximumFractionDigits: 1 })}</span></a></li>)}</ul></div>)}
+        {!modelHighlightGroups.length && <p class="home-empty">{t.leaderboard.empty}</p>}
       </article>
     </div>
-
-    <article data-telemetry-block={telemetryBlocks.home.guide} class="card bg-base-100 border border-base-300 shadow-sm">
-      <div class="card-body gap-4 p-4">
-        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h3 class="text-lg font-bold text-base-content">
-              <a href={linkTo('/guide')} class="text-base-content no-underline hover:text-primary" {...guideUrlClickAttrs('/guide')}>{t.home.buyingGuideTitle}</a>
-            </h3>
-          </div>
-          <a href={linkTo('/guide')} class="btn btn-outline btn-sm shrink-0" {...guideUrlClickAttrs('/guide')}>{t.actions.openGuide}</a>
-        </div>
-        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
-          {guideHighlightSteps.map(step => (
-            <a href={linkTo(step.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...guideUrlClickAttrs(step.href)}>
-              <span class="block truncate text-sm font-semibold text-base-content">{step.title}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </article>
-
-    <article data-telemetry-block={telemetryBlocks.home.tools} class="card bg-base-100 border border-base-300 shadow-sm">
-      <div class="card-body gap-4 p-4">
-        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h3 class="text-lg font-bold text-base-content">
-              <a href={linkTo('/tools')} class="text-base-content no-underline hover:text-primary" {...homeCtaClickAttrs('/tools', t.actions.openTools)}>{t.home.toolsTitle}</a>
-            </h3>
-          </div>
-          <a href={linkTo('/tools')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/tools', t.actions.openTools)}>{t.actions.openTools}</a>
-        </div>
-        <div class="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
-          {toolCards.map(tool => (
-            <a href={linkTo(tool.href)} class="min-w-0 rounded-lg bg-base-200/45 px-4 py-3 no-underline transition hover:bg-base-200" {...homeCtaClickAttrs(tool.href, tool.title)}>
-              <span class="block text-sm font-bold text-base-content">{tool.title}</span>
-              <span class="mt-1 block text-sm leading-6 text-base-content/70">{tool.description}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </article>
+    <div class="home-help-strip">
+      <section data-telemetry-block={telemetryBlocks.home.guide}>
+        <header><Icon name="book" /><h3>{t.home.buyingGuideTitle}</h3><a class="home-more" href={linkTo('/guide')} {...guideUrlClickAttrs('/guide')}>{t.actions.openGuide}<Icon name="right" /></a></header>
+        <div class="home-guide-steps">{guideHighlightSteps.map((step,index) => <a href={linkTo(step.href)} {...guideUrlClickAttrs(step.href)}><span>{index+1}</span>{step.title}</a>)}</div>
+      </section>
+      <section data-telemetry-block={telemetryBlocks.home.tools}>
+        <header><Icon name="tool" /><h3>{t.home.toolsTitle}</h3><a class="home-more" href={linkTo('/tools')} {...homeCtaClickAttrs('/tools',t.actions.openTools)}>{t.actions.openTools}<Icon name="right" /></a></header>
+        <div class="home-tools">{toolCards.map(tool => <a href={linkTo(tool.href)} {...homeCtaClickAttrs(tool.href,tool.title)}><b>{tool.title}</b><span>{tool.description}</span></a>)}</div>
+      </section>
+    </div>
   </section>
-
+  <script is:inline slot="scripts" type="application/json" id="home-search-config" set:html={JSON.stringify({ shopsPath: linkTo('/shops') })}></script>
+  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>
-
-<script is:inline slot="scripts" type="application/json" id="home-search-config" set:html={JSON.stringify({ shopsPath: linkTo('/shops') })}></script>
-<script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+<script>
+  document.querySelectorAll('[data-home-tabs]').forEach(group => {
+    group.querySelectorAll<HTMLButtonElement>('[data-home-tab]').forEach(button => {
+      button.addEventListener('click', () => {
+        group.querySelectorAll<HTMLButtonElement>('[data-home-tab]').forEach(tab => tab.setAttribute('aria-pressed', String(tab === button)));
+        group.querySelectorAll<HTMLElement>('[data-home-panel]').forEach(panel => { panel.hidden = panel.id !== button.dataset.homeTab; });
+      });
+    });
+  });
+</script>

@@ -1,0 +1,56 @@
+---
+/* 根据当前文章的标题生成本页导航，共享阅读进度与锚点交互。 */
+import './content.css';
+type Props = { target: string };
+const { target } = Astro.props;
+---
+<nav class="reading-toc" data-article-toc={target} aria-label={Astro.locals.messages.guide.onThisPage} hidden>
+  <p>{Astro.locals.messages.guide.onThisPage}</p>
+  <ol></ol>
+</nav>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-article-toc]').forEach(nav => {
+    const article = document.getElementById(nav.dataset.articleToc || '');
+    const headings = Array.from(article?.querySelectorAll<HTMLElement>('h2, h3.guide-card-title') || []);
+    if (headings.length < 2) return;
+    const list = nav.querySelector('ol')!;
+    const links = headings.map((heading, index) => {
+      if (!heading.id) heading.id = `${nav.dataset.articleToc}-section-${index + 1}`;
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = `#${heading.id}`;
+      link.textContent = heading.textContent;
+      item.append(link);
+      list.append(item);
+      return link;
+    });
+    nav.hidden = false;
+    let queued = false;
+    const update = () => {
+      queued = false;
+      const activeBoundary = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--reading-top-offset')) || 16;
+      let active = 0;
+      let activeTop = -Infinity;
+      headings.forEach((heading, index) => {
+        const top = heading.getBoundingClientRect().top;
+        if (top <= activeBoundary + 8 && (top > activeTop + 2 || (Math.abs(top - activeTop) <= 2 && window.location.hash === `#${heading.id}`))) {
+          active = index;
+          activeTop = top;
+        }
+      });
+      links.forEach((link, index) => {
+        if (index === active) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+    window.addEventListener('scroll', () => {
+      if (!queued) { queued = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+    if (window.location.hash) {
+      let fragment = '';
+      try { fragment = decodeURIComponent(window.location.hash.slice(1)); } catch { /* Ignore invalid URL fragments. */ }
+      requestAnimationFrame(() => headings.find(heading => heading.id === fragment)?.scrollIntoView({ block: 'start' }));
+    }
+  });
+</script>
