@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import test from 'node:test';
 
-test('visible sponsor sections refresh, clear failed content and resume after hiding', async () => {
+test('server-rendered sponsors refresh, retain content on failure and resume after hiding', async () => {
   const listeners = new Map<string, () => void>();
   const timers = new Map<number, () => void>();
   let timerId = 0;
@@ -12,8 +12,9 @@ test('visible sponsor sections refresh, clear failed content and resume after hi
   let requests = 0;
   const container = {
     dataset: { sponsorFragment: '/api/sponsors?placement=page-bottom&pageType=about&locale=en' },
-    innerHTML: '',
-    hidden: true,
+    innerHTML: '<section>Server-rendered sponsor</section>',
+    hidden: false,
+    hasAttribute() { return false; },
     querySelector() { return this.innerHTML.includes('<section>') ? {} : null; },
     querySelectorAll() { return []; },
     replaceChildren() { this.innerHTML = ''; },
@@ -36,18 +37,24 @@ test('visible sponsor sections refresh, clear failed content and resume after hi
   });
   const settle = () => new Promise<void>(resolve => setImmediate(resolve));
   await settle();
+  assert.equal(requests, 0);
+  assert.equal(container.innerHTML, '<section>Server-rendered sponsor</section>');
+  [...timers.values()][0]();
+  await settle();
   assert.equal(container.innerHTML, '<section>Current sponsor</section>');
   assert.equal(container.hidden, false);
+  failing = true;
+  [...timers.values()][0]();
+  await settle();
+  assert.equal(container.innerHTML, '<section>Current sponsor</section>');
+  assert.equal(container.hidden, false);
+  failing = false;
   empty = true;
   [...timers.values()][0]();
   await settle();
   assert.equal(container.innerHTML, '');
   assert.equal(container.hidden, true);
   empty = false;
-  failing = true;
-  [...timers.values()][0]();
-  await settle();
-  assert.equal(container.innerHTML, '');
   document.hidden = true;
   listeners.get('visibilitychange')!();
   assert.equal(timers.size, 0);
