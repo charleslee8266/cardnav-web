@@ -1,7 +1,10 @@
 ---
+import { gatewayFamilyPath } from '../../../models/routes.js';
+import { gatewayModelPath } from '../../../models/routes.js';
 import RefreshTime from '../../../components/RefreshTime.astro';
 import { pinSiteRows } from '../../../site-list-pinning.js';
 import ProviderLabel from '../../../components/ProviderLabel.astro';
+import ModelFamilyLabel from '../../../components/ModelFamilyLabel.astro';
 /*
 文件说明: 渲染单个 AI 模型的中转站支持详情页，按中转站排序分数展示可用站点。
 */
@@ -31,8 +34,8 @@ if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 30
 const { model, sites } = detail;
 const initialPins = new Map<string, string>();
 pinSiteRows(sites.map(site => ({ site, sponsor: Boolean(site.sponsor), supportPoints: site.supportPoints || 0, supportTotalCents: 0, favorite: false })), (row, kind) => initialPins.set(row.site.slug, kind));
-const canonicalModelPath = encodeURIComponent(model.modelId);
-if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(`/llm-gateway/models/${canonicalModelPath}`), 301);
+const canonicalModelPath = gatewayModelPath(model.modelId);
+if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(canonicalModelPath), 301);
 const modelSiteTableConfig = {
   type: 'modelSites',
   pageSize: MODEL_SITE_PAGE_SIZE,
@@ -66,7 +69,7 @@ const modelSiteTableConfig = {
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
-  pathname: `/llm-gateway/models/${canonicalModelPath}`,
+  pathname: canonicalModelPath,
   title: t.llmGateway.modelDetailSeoTitle.replace('{model}', model.modelId),
   description: t.llmGateway.modelDetailSeoDescription.replace('{model}', model.modelId),
   imagePath: '/og-cardnav.webp',
@@ -75,7 +78,7 @@ const seo = buildSeoContext({
   noindex: !isIndexableGatewayModel(model),
   breadcrumbs: [
     { name: t.nav.llmGateway, pathname: '/llm-gateway' },
-    { name: model.modelId, pathname: `/llm-gateway/models/${canonicalModelPath}` },
+    { name: model.modelId, pathname: canonicalModelPath },
   ],
 });
 
@@ -128,6 +131,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
     </div>
     <div slot="footer" class="mt-4 flex flex-wrap gap-2">
       <ProviderLabel name={model.modelProvider} />
+      {model.modelFamily && <ModelFamilyLabel name={model.modelFamily} href={Astro.locals.localizePath(gatewayFamilyPath(model.modelFamily))} />}
       {model.latestGatewayRefreshAt ? <span>{t.labels.latestRefresh}: <RefreshTime timestamp={model.latestGatewayRefreshAt} /></span> : null}
     </div>
   </PageHero>

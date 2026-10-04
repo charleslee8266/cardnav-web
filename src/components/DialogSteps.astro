@@ -1,0 +1,8 @@
+---
+import './dialog-steps.css';
+type Props = { steps: string[]; label: string; tone?: 'support' };
+const { steps, label, tone } = Astro.props;
+---
+<ol class:list={['dialog-steps', tone === 'support' && 'dialog-steps--support']} aria-label={label}>
+  {steps.map((step, index) => <li data-step-indicator={index + 1} aria-current={index === 0 ? 'step' : undefined}><span data-step-number>{index + 1}</span>{step}</li>)}
+</ol>

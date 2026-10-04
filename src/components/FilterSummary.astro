@@ -1,0 +1,14 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import './data-workspace.css';
+type Props = HTMLAttributes<'div'> & {
+  items?: { label: string; href: string; icon?: string; monochrome?: boolean }[];
+  clearHref?: string;
+  clearLabel: string;
+};
+const { items = [], clearHref, clearLabel, class: className, ...attrs } = Astro.props;
+---
+<div {...attrs} class:list={['data-active-filters', className]} data-filter-summary data-clear-label={clearLabel} hidden={items.length === 0}>
+  {items.map(item => <a class="data-filter-chip" href={item.href}>{item.icon && <img src={item.icon} alt="" width="16" height="16" class:list={{ 'data-provider-mono': item.monochrome }} />}{item.label} ×</a>)}
+  {items.length > 0 && clearHref && <a class="data-filter-clear" href={clearHref}>{clearLabel}</a>}
+</div>

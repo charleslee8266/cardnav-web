@@ -5,10 +5,19 @@
 import './support-flow.css';
 import FormField from './FormField.astro';
 import Dialog from './Dialog.astro';
+import DialogSteps from './DialogSteps.astro';
+import OpenShopLink from './OpenShopLink.astro';
 import { telemetryBlocks } from '../telemetry-blocks.js';
 type Props = { returnPage: 'shops' | 'gateways' | 'supporters' };
 const { returnPage } = Astro.props;
+const requestedKind = Astro.url.searchParams.get('support-kind');
+const defaultKind = requestedKind === 'person' || requestedKind === 'shop' || requestedKind === 'gateway'
+  ? requestedKind
+  : returnPage === 'gateways' ? 'gateway' : returnPage === 'shops' ? 'shop' : 'person';
+const submitPath = Astro.locals.localizePath(defaultKind === 'shop' ? '/shops?submit-dialog' : '/llm-gateway?submit-dialog');
 const t = Astro.locals.messages.support;
+const hintSpace = Astro.locals.locale === 'zh' ? '' : ' ';
+const hintSentenceEnd = Astro.locals.messages.shops.submitTypeSentenceEnd;
 ---
 <Dialog
   id="supportDialog"
@@ -23,65 +32,42 @@ const t = Astro.locals.messages.support;
   data-messages={JSON.stringify(t)}
   data-telemetry-block={telemetryBlocks.support.dialog}
 >
-  <div data-return-status-panel hidden class="support-return-status">
-    <h3 data-payment-state-title class="support-payment-state-title"></h3>
-    <div data-payment-window-notice class="support-payment-window-notice">
-      <span data-payment-loading class="loading loading-spinner loading-sm" aria-hidden="true"></span>
-      <p data-payment-window-hint></p>
-    </div>
-    <p data-return-status role="status"></p>
-    <div data-success-details hidden class="support-success-details">
-      <h3>{t.successTitle}</h3>
-      <dl>
-        <div><dt>{t.summaryIdentity}</dt><dd data-success-identity></dd></div>
-        <div><dt>{t.summaryAmount}</dt><dd data-success-amount></dd></div>
-        <div data-success-message-row hidden><dt>{t.message}</dt><dd data-success-message></dd></div>
-      </dl>
-    </div>
-    <div class="mt-3 flex flex-wrap gap-3">
-      <button data-open-payment type="button" class="btn support-button btn-sm" hidden>{t.openPayment}</button>
-      <button data-cancel-payment type="button" class="btn btn-outline btn-sm">{t.cancelPayment}</button>
-    </div>
-  </div>
-  <form data-support-form class="submission-form" novalidate>
-    <ol class="support-flow-steps" aria-label={t.title}>
-      <li data-step-indicator="1" aria-current="step"><span>1</span>{t.identity}</li>
-      <li data-step-indicator="2"><span>2</span>{t.paymentMethod}</li>
-    </ol>
+  <DialogSteps steps={[t.stepIdentity, t.stepDetails, t.stepPayment]} label={t.title} tone="support" />
+  <form id="supportForm" data-support-form class="submission-form" novalidate>
     <div data-support-step="1" class="submission-form">
     <FormField group label={t.identity} required>
       <div class="support-identities">
-        <label><input type="radio" name="kind" value="person" class="radio radio-sm" checked /><span>{t.personChoice}</span></label>
-        <label><input type="radio" name="kind" value="gateway" class="radio radio-sm" /><span>{t.gatewayChoice}</span></label>
-        <label><input type="radio" name="kind" value="shop" class="radio radio-sm" /><span>{t.shopChoice}</span></label>
+        <label><input type="radio" name="kind" value="person" class="radio radio-sm" checked={defaultKind === 'person'} /><span>{t.personChoice}</span></label>
+        <label><input type="radio" name="kind" value="gateway" class="radio radio-sm" checked={defaultKind === 'gateway'} /><span>{t.gatewayChoice}</span></label>
+        <label><input type="radio" name="kind" value="shop" class="radio radio-sm" checked={defaultKind === 'shop'} /><span>{t.shopChoice}</span></label>
       </div>
       <div slot="hint" data-identity-benefit role="status">
-        {(['person', 'gateway', 'shop'] as const).map((kind) => {
-          const [before, after] = t[`${kind}Benefit`].split('{list}');
-          return <p data-benefit-kind={kind} hidden={kind !== 'person'}>{before}{t.benefitListLabel}{after}{' '}<a href={Astro.locals.localizePath('/partnership')} target="_blank" rel="noopener noreferrer" class="link support-rule-link whitespace-nowrap">{t.viewRules}</a></p>;
-        })}
+        {(['person', 'gateway', 'shop'] as const).map(kind => <p data-benefit-kind={kind} hidden={kind !== defaultKind}>
+          {t[`${kind}Benefit`].split(/(\{list\}|\{rules\})/).map((part: string) => part === '{list}'
+            ? <a href={Astro.locals.localizePath('/supporters')} class="link support-rule-link">{t.benefitListLabel}</a>
+            : part === '{rules}' ? <a href={Astro.locals.localizePath('/partnership#sponsor-example')} class="link support-rule-link">{t.benefitRulesLabel}</a> : part)}
+        </p>)}
       </div>
     </FormField>
-    <fieldset data-person-fields class="submission-form">
-      <FormField label={t.nickname} for="supportNickname" hint={t.nicknameHint} hintId="supportNicknameHint"><input id="supportNickname" name="nickname" aria-describedby="supportNicknameHint" maxlength="40" autocomplete="nickname" class="form-input" /></FormField>
+    <fieldset data-person-fields class="submission-form" hidden={defaultKind !== 'person'} disabled={defaultKind !== 'person'}>
+      <FormField label={t.nickname} for="supportNickname" hint={t.nicknameHint} hintId="supportNicknameHint"><input id="supportNickname" name="nickname" placeholder={t.anonymous} aria-describedby="supportNicknameHint" maxlength="40" autocomplete="nickname" class="form-input" /></FormField>
     </fieldset>
-    <FormField group label={t.gateway} required data-site-fields hidden disabled hintId="supportSiteHint">
-      <span slot="label" data-site-label>{t.gateway}</span>
+    <FormField group label={t.gateway} required data-site-fields hidden={defaultKind === 'person'} disabled={defaultKind === 'person'} hintId="supportSiteHint">
+      <span slot="label" data-site-label>{defaultKind === 'shop' ? t.shop : t.gateway}</span>
       <div data-site-combobox class="support-site-combobox">
-        <input data-site-search type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="supportSiteOptions" aria-describedby="supportSiteHint supportSiteStatus" class="form-input" placeholder={t.search} aria-label={t.gateway} autocomplete="off" />
+        <input data-site-search type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="supportSiteOptions" aria-describedby="supportSiteHint supportSiteStatus" class="form-input" placeholder={t.search} aria-label={defaultKind === 'shop' ? t.shop : t.gateway} autocomplete="off" />
         <span class="support-site-chevron" aria-hidden="true">▾</span>
         <input data-site-value type="hidden" name="siteId" />
         <div id="supportSiteOptions" data-site-options role="listbox" aria-label={t.select} class="support-site-options" hidden></div>
       </div>
-      <p slot="hint"><span data-site-submit-hint>{t.submitGatewayHint}</span> <a data-site-submit data-shop-submit={Astro.locals.localizePath('/shops?submit-dialog')} data-gateway-submit={Astro.locals.localizePath('/llm-gateway?submit-dialog')} href={Astro.locals.localizePath('/llm-gateway?submit-dialog')} data-umami-event="internal-link-click" data-umami-event-link-type="support-submit-site" data-umami-event-url={Astro.locals.localizePath('/llm-gateway?submit-dialog')} class="link link-primary">{t.submitSite}</a></p>
+      <p slot="hint"><span data-site-submit-hint>{defaultKind === 'shop' ? t.submitShopHint : t.submitGatewayHint}</span>{hintSpace}<a data-site-submit data-shop-submit={Astro.locals.localizePath('/shops?submit-dialog')} data-gateway-submit={Astro.locals.localizePath('/llm-gateway?submit-dialog')} href={submitPath} data-umami-event="internal-link-click" data-umami-event-link-type="support-submit-site" data-umami-event-url={submitPath} class="link support-rule-link">{t.submitSite}</a>{hintSentenceEnd}<span data-shop-onboarding hidden={defaultKind !== 'shop'}>{hintSpace}{Astro.locals.messages.shops.openShopPrompt}{hintSpace}<OpenShopLink class="link support-rule-link" label={Astro.locals.messages.shops.openShopLink} />{hintSentenceEnd}</span></p>
       <p slot="error" id="supportSiteStatus" data-site-status role="status" class="form-field-hint"></p>
     </FormField>
-    <FormField label={t.email} for="supportEmail" required hint={t.emailHint} hintId="supportEmailHint"><input id="supportEmail" name="email" type="email" required aria-describedby="supportEmailHint" maxlength="254" autocomplete="email" placeholder={t.emailPlaceholder} class="form-input" /></FormField>
-    <FormField label={t.message} for="supportMessage" hint={t.messageHint} hintId="supportMessageHint"><input id="supportMessage" name="message" maxlength="120" aria-describedby="supportMessageHint" placeholder={t.messagePlaceholder} class="form-input" /></FormField>
-    <button data-support-next type="button" class="btn support-button w-full">{t.continue} <span aria-hidden="true">→</span></button>
     </div>
     <div data-support-step="2" class="submission-form" hidden>
-    <div class="support-review"><span data-review-identity></span><button data-support-back type="button" class="btn btn-ghost btn-xs">{t.back}</button></div>
+    <div class="support-review"><span data-review-identity></span></div>
+    <FormField label={t.email} for="supportEmail" required hint={t.emailHint} hintId="supportEmailHint"><input id="supportEmail" name="email" type="email" required aria-describedby="supportEmailHint" maxlength="254" autocomplete="email" placeholder={t.emailPlaceholder} class="form-input" /></FormField>
+    <FormField label={t.message} for="supportMessage" hint={t.messageHint} hintId="supportMessageHint"><input id="supportMessage" name="message" maxlength="120" aria-describedby="supportMessageHint" placeholder={t.messagePlaceholder} class="form-input" /></FormField>
     <div class="support-amount-presets">{[8.88, 18.88, 50, 100].map(amount => <button type="button" class="btn btn-sm" data-support-amount={amount} aria-pressed={amount === 8.88 ? 'true' : 'false'}>¥{amount}</button>)}</div>
     <FormField label={t.amount} for="supportAmount" required hint={t.limit} hintId="supportAmountHint"><input id="supportAmount" name="amount" type="number" aria-describedby="supportAmountHint" min="5" max="5000" step="0.01" value="8.88" required inputmode="decimal" class="form-input" /></FormField>
     <FormField group label={t.paymentMethod} required>
@@ -90,11 +76,44 @@ const t = Astro.locals.messages.support;
         <label><input type="radio" name="paymentType" value="alipay" class="radio radio-sm" /><img src="/assets/payment-icons/alipay.svg" width="24" height="24" alt="" /><span>{t.alipay}</span></label>
       </div>
     </FormField>
-    <p data-payment-status role="status" class="form-field-hint"></p>
-    <button data-pay-button type="submit" class="btn support-button w-full">{t.pay}</button>
-    <p class="form-field-hint">{t.returned}</p>
+
     </div>
   </form>
+  <section data-support-step="3" data-return-status-panel hidden class="support-return-status" aria-live="polite">
+    <div class="support-payment-hero">
+      <span data-payment-loading class="loading loading-spinner" aria-hidden="true" hidden></span>
+      <h3 data-payment-state-title tabindex="-1" class="support-payment-state-title"></h3>
+      <p data-return-status role="status"></p>
+      <p data-payment-window-hint hidden></p>
+    </div>
+    <dl data-order-summary class="support-order-summary" hidden>
+      <div><dt>{t.summaryIdentity}</dt><dd data-success-identity></dd></div>
+      <div><dt>{t.identityColumn}</dt><dd data-summary-kind></dd></div>
+      <div><dt>{t.summaryAmount}</dt><dd data-success-amount></dd></div>
+      <div><dt>{t.paymentMethod}</dt><dd data-summary-payment></dd></div>
+      <div data-success-message-row hidden><dt>{t.message}</dt><dd data-success-message></dd></div>
+    </dl>
+    <p data-support-returned class="form-field-hint">{t.returned}</p>
+
+  </section>
+<div slot="footer" class="support-footer-actions">
+    <div data-support-step="1">
+    <button data-support-next type="button" class="btn support-button w-full">{t.continue} <span aria-hidden="true">→</span></button>
+    </div>
+    <div data-support-step="2" hidden class="submission-step-actions" data-active-step="2">
+      <button data-support-back type="button" class="btn back-button"><span aria-hidden="true">←</span> {t.back}</button>
+      <button data-pay-button type="submit" form="supportForm" class="btn support-button">{t.pay} <span aria-hidden="true">→</span></button>
+    </div>
+    <div data-support-step="3" hidden class="support-payment-actions">
+      <button data-cancel-payment type="button" class="btn btn-outline btn-sm" hidden>{t.cancelPayment}</button>
+      <button data-edit-details type="button" class="btn back-button btn-sm" hidden><span aria-hidden="true">←</span> {t.back}</button>
+      <button data-restart-support type="button" class="btn support-button btn-sm" hidden>{t.restart}</button>
+      <button data-open-payment type="button" class="btn btn-outline btn-sm" hidden>{t.openPayment}</button>
+      <button data-check-payment type="button" class="btn support-button btn-sm" hidden>{t.checkStatus}</button>
+      <button data-support-close type="button" class="btn btn-outline btn-sm" hidden>{t.close}</button>
+      <a data-support-list href={Astro.locals.localizePath('/supporters')} class="btn support-button btn-sm" hidden>{t.viewList}</a>
+    </div>
+  </div>
 </Dialog>
 <script>
   import '../scripts/SupportDialog.js';

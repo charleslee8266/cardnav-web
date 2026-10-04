@@ -7,6 +7,9 @@ import '../public.css';
 import Sponsors from '../components/Sponsors.astro';
 import Icon from '../components/Icon.astro';
 import announcements from '../data/announcements.json';
+import announcementInit from '../scripts/announcement-init.js?raw';
+const orderedAnnouncements = [...announcements].sort((a, b) => b.priority - a.priority);
+const announcementState = orderedAnnouncements.map(({ id, repeatAfterHours }) => ({ id, repeatAfterHours }));
 import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '../i18n/config.js';
 import { switchLocalePath } from '../i18n/paths.js';
 import publicTelemetryScriptUrl from '../scripts/public-telemetry.js?url';
@@ -141,6 +144,7 @@ function siteLinkClickAttrs(url: string, name: string) {
       document.documentElement.style.colorScheme = theme;
     })();
   </script>
+  <script is:inline data-announcements={JSON.stringify(announcementState)} set:html={announcementInit} />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
@@ -181,11 +185,11 @@ function siteLinkClickAttrs(url: string, name: string) {
   'public-body antialiased',
   'min-h-screen',
 ]}>
-{[...announcements].sort((a, b) => b.priority - a.priority).map(announcement => {
+{orderedAnnouncements.map((announcement, index) => {
   const external = !announcement.href.startsWith('/');
   const href = external ? announcement.href : linkTo(announcement.href);
   return (
-    <div data-announcement-id={announcement.id} data-repeat-after-hours={announcement.repeatAfterHours} data-telemetry-block={telemetryBlocks.shared.announcement} hidden class="public-announcement public-announcement-pending">
+    <div data-announcement-id={announcement.id} data-telemetry-block={telemetryBlocks.shared.announcement} class="public-announcement" style={`display:var(--announcement-${index}-display,${index === 0 ? "block" : "none"})`}>
       <div class="public-announcement-inner">
         <div class="public-announcement-copy">
           <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined} class="public-announcement-label" {...(external ? siteLinkClickAttrs(href, `Announcement ${announcement.id}`) : navClickAttrs(href, `Announcement ${announcement.id}`))}>
@@ -226,7 +230,7 @@ function siteLinkClickAttrs(url: string, name: string) {
 <div class="shell-menu-panel shell-submit-options">{submitItems.map(item => <a href={linkTo(item.href)} {...navClickAttrs(linkTo(item.href), item.title)}><Icon name={item.icon} /><span><b>{item.title}</b><small>{item.description}</small></span></a>)}</div>
       </details>
       <a class="shell-support-link" href={linkTo('/supporters')} {...navClickAttrs(linkTo('/supporters'), t.support.listTitle)}><Icon name="heart" />{t.support.badgeLabel}</a>
-      <a class="shell-partnership-link" href={linkTo('/partnership')} {...navClickAttrs(linkTo('/partnership'), t.nav.partnership)}>{t.nav.partnership}</a>
+      <a class="shell-partnership-link" href={linkTo('/partnership')} {...navClickAttrs(linkTo('/partnership'), t.nav.partnership)}><Icon name="handshake" />{t.nav.partnership}</a>
       <details class="shell-menu" data-language-menu>
         <summary class="shell-icon-button" aria-label={t.language.switchLanguage}><Icon name="globe" /></summary>
         <div class="shell-menu-panel">
@@ -246,10 +250,10 @@ function siteLinkClickAttrs(url: string, name: string) {
       <div class="shell-menu-panel shell-submit-options">{submitItems.map(item => <a href={linkTo(item.href)} {...navClickAttrs(linkTo(item.href), item.title)}><Icon name={item.icon} /><span><b>{item.title}</b><small>{item.description}</small></span></a>)}</div>
     </details>
     <a class="shell-support-link" href={linkTo('/supporters')} {...navClickAttrs(linkTo('/supporters'), t.support.listTitle)}><Icon name="heart" />{t.support.badgeLabel}</a>
-    <a class="shell-partnership-link" href={linkTo('/partnership')} {...navClickAttrs(linkTo('/partnership'), t.nav.partnership)}>{t.nav.partnership}</a>
+    <a class="shell-partnership-link" href={linkTo('/partnership')} {...navClickAttrs(linkTo('/partnership'), t.nav.partnership)}><Icon name="handshake" />{t.nav.partnership}</a>
   </nav>
 </header>
-<dialog id="site-navigation-dialog" class="site-navigation-dialog" aria-label={t.nav.openMenu}>
+<dialog autofocus id="site-navigation-dialog" class="site-navigation-dialog" aria-label={t.nav.openMenu}>
   <div class="drawer-heading"><b>{t.site.name}</b><button type="button" class="shell-icon-button" data-close-navigation aria-label={t.nav.closeMenu}><Icon name="close" /></button></div>
   <nav aria-label={t.home.quickNavTitle}>
     {[...primaryNavItems, ...secondaryNavItems].map(item => <a href={linkTo(item.href)} aria-current={activeNav === item.key ? 'page' : undefined} {...navClickAttrs(linkTo(item.href), item.label)}>{item.label}<Icon name="right" /></a>)}

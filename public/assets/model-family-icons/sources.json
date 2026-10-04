@@ -1,0 +1,613 @@
+{
+  "notice": "Brand marks belong to their respective owners. Official product assets take priority; third-party sources and licenses are recorded per icon. Register exact canonical family names; do not infer a family mark from its manufacturer.",
+  "icons": {
+    "doubao": {
+      "homepage": "https://www.doubao.com/chat/",
+      "url": "https://lf-flow-web-cdn.doubao.com/obj/flow-doubao/favicon/new-doubao/128x128.png",
+      "file": "doubao.png"
+    },
+    "qwen": {
+      "homepage": "https://chat.qwen.ai/",
+      "url": "https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.3.12/favicon.png",
+      "file": "qwen.png"
+    },
+    "glm": {
+      "homepage": "https://chatglm.cn/",
+      "url": "https://chatglm.cn/favicon.ico",
+      "file": "glm.ico"
+    },
+    "hunyuan": {
+      "homepage": "https://hunyuan.tencent.com/",
+      "url": "https://hunyuan-blog-web-prod-1258344703.cos.ap-guangzhou.myqcloud.com/favicon.png",
+      "file": "hunyuan.png"
+    },
+    "mimo": {
+      "homepage": "https://mimo.xiaomi.com/",
+      "url": "https://cdn.cnbj1.fds.api.mi-img.com/aife/mimo-blog-fe/doc_build/mimo.ico",
+      "file": "mimo.ico"
+    },
+    "flux": {
+      "homepage": null,
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/flux.svg",
+      "file": "flux.svg",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners."
+    },
+    "kimi": {
+      "homepage": "https://www.kimi.com/",
+      "url": "https://www.kimi.com/pwa-192.png",
+      "file": "kimi.png"
+    },
+    "ernie": {
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/wenxin-color.svg",
+      "file": "ernie.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1 (MIT)",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners."
+    },
+    "gemma": {
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/gemma-color.svg",
+      "file": "gemma.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1 (MIT)",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners."
+    },
+    "nova": {
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/nova-color.svg",
+      "file": "nova.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1 (MIT)",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners."
+    },
+    "sora": {
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/sora.svg",
+      "file": "sora.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1 (MIT)",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners."
+    },
+    "udio": {
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/udio.svg",
+      "file": "udio.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1 (MIT)",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners."
+    },
+    "dalle": {
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/dalle-color.svg",
+      "file": "dalle.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1 (MIT)",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners."
+    },
+    "kling": {
+      "familyNames": [
+        "Kling"
+      ],
+      "file": "kling.png",
+      "url": "https://p4-kling.klingai.com/kcdn/cdn-kcdn112452/kling-homepage-aio/logo-180x180.png",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://klingai.com/"
+    },
+    "wan": {
+      "familyNames": [
+        "Wan"
+      ],
+      "file": "wan.png",
+      "url": "https://g.alicdn.com/sail-web/wan-static-resources/0.0.30/images/favicon.ico",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://wan.video/"
+    },
+    "hailuo": {
+      "familyNames": [
+        "Hailuo"
+      ],
+      "file": "hailuo.png",
+      "url": "https://cdn.hailuoai.video/open-hailuo-video-web/public_assets/favicon.png",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://hailuoai.video/"
+    },
+    "step": {
+      "familyNames": [
+        "Step"
+      ],
+      "file": "step.svg",
+      "url": "https://www.stepfun.com/step_favicon.svg",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.stepfun.com/"
+    },
+    "higgsfield": {
+      "familyNames": [
+        "Higgsfield"
+      ],
+      "file": "higgsfield.png",
+      "url": "https://higgsfield.ai/icon.png",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://higgsfield.ai/"
+    },
+    "viggle": {
+      "familyNames": [
+        "Viggle"
+      ],
+      "file": "viggle.png",
+      "url": "https://viggle.ai/icon-192.png",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://viggle.ai/"
+    },
+    "longcat": {
+      "familyNames": [
+        "LongCat"
+      ],
+      "file": "longcat.svg",
+      "url": "https://s3plus.meituan.net/aigc-media-resources/longcat/yeqian-logo.svg",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://longcat.ai/"
+    },
+    "recraft": {
+      "familyNames": [
+        "Recraft"
+      ],
+      "file": "recraft.png",
+      "url": "https://framerusercontent.com/images/id5ZjKRfENkLEfAMrnKLKJfqfE.png",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.recraft.ai/"
+    },
+    "deepl": {
+      "familyNames": [
+        "DeepL"
+      ],
+      "file": "deepl.ico",
+      "url": "https://www.deepl.com/favicon.ico?favicon.2q65ixsfts1dv.ico",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.deepl.com/"
+    },
+    "internlm": {
+      "familyNames": [
+        "InternLM"
+      ],
+      "file": "internlm.png",
+      "url": "https://internlm.intern-ai.org.cn/intern logo.png",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://internlm.intern-ai.org.cn/"
+    },
+    "kolors": {
+      "familyNames": [
+        "Kolors"
+      ],
+      "file": "kolors.ico",
+      "url": "https://h1.static.yximgs.com/kos/nlav111937/images/logo.ico",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://kolors.kuaishou.com/"
+    },
+    "mureka": {
+      "familyNames": [
+        "Mureka"
+      ],
+      "file": "mureka.png",
+      "url": "https://www.mureka.ai/favicon.png",
+      "source": "Official product website",
+      "license": "Brand/trademark asset; no separate redistribution license stated by the source.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.mureka.ai/"
+    },
+    "aya": {
+      "familyNames": [
+        "Aya"
+      ],
+      "file": "aya.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/aya-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "baichuan": {
+      "familyNames": [
+        "Baichuan"
+      ],
+      "file": "baichuan.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/baichuan-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "cogvideo": {
+      "familyNames": [
+        "CogVideo"
+      ],
+      "file": "cogvideo.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/cogvideo-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://github.com/THUDM/CogVideo",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "Official page did not expose an independent reusable family icon."
+    },
+    "cogview": {
+      "familyNames": [
+        "CogView"
+      ],
+      "file": "cogview.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/cogview-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "dolphin": {
+      "familyNames": [
+        "Dolphin"
+      ],
+      "file": "dolphin.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/dolphin.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "elevenlabs": {
+      "familyNames": [
+        "ElevenLabs"
+      ],
+      "file": "elevenlabs.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/elevenlabs.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://elevenlabs.io/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "The read operation timed out"
+    },
+    "ideogram": {
+      "familyNames": [
+        "Ideogram"
+      ],
+      "file": "ideogram.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/ideogram.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://ideogram.ai/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "<urlopen error timed out>"
+    },
+    "krea": {
+      "familyNames": [
+        "Krea"
+      ],
+      "file": "krea.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/krea.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "llava": {
+      "familyNames": [
+        "LLaVA"
+      ],
+      "file": "llava.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/llava-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "morph": {
+      "familyNames": [
+        "Morph"
+      ],
+      "file": "morph.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/morph-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.morphllm.com/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "Official page did not expose an independent reusable family icon."
+    },
+    "openchat": {
+      "familyNames": [
+        "OpenChat"
+      ],
+      "file": "openchat.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/openchat-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://openchat.team/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "<urlopen error _ssl.c:1064: The handshake operation timed out>"
+    },
+    "palm": {
+      "familyNames": [
+        "PaLM"
+      ],
+      "file": "palm.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/palm-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "perceptron": {
+      "familyNames": [
+        "Perceptron"
+      ],
+      "file": "perceptron.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/perceptron.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "phind": {
+      "familyNames": [
+        "Phind"
+      ],
+      "file": "phind.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/phind.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.phind.com/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "HTTP Error 403: Forbidden"
+    },
+    "pika": {
+      "familyNames": [
+        "Pika"
+      ],
+      "file": "pika.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/pika.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://pika.art/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "<urlopen error timed out>"
+    },
+    "pixverse": {
+      "familyNames": [
+        "PixVerse"
+      ],
+      "file": "pixverse.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/pixverse-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://pixverse.ai/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "The read operation timed out"
+    },
+    "reka": {
+      "familyNames": [
+        "Reka"
+      ],
+      "file": "reka.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/reka.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://reka.ai/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "[Errno 54] Connection reset by peer"
+    },
+    "relace": {
+      "familyNames": [
+        "Relace"
+      ],
+      "file": "relace.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/relace.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://relace.ai/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "IncompleteRead(333437 bytes read, 89000 more expected)"
+    },
+    "reve": {
+      "familyNames": [
+        "Reve"
+      ],
+      "file": "reve.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/reve.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "runway": {
+      "familyNames": [
+        "Runway"
+      ],
+      "file": "runway.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/runway.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://runwayml.com/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "The read operation timed out"
+    },
+    "rwkv": {
+      "familyNames": [
+        "RWKV"
+      ],
+      "file": "rwkv.svg",
+      "url": "https://fastly.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/rwkv.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "sensenova": {
+      "familyNames": [
+        "SenseNova"
+      ],
+      "file": "sensenova.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/sensenova-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://platform.sensenova.cn/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "Official page did not expose an independent reusable family icon."
+    },
+    "spark": {
+      "familyNames": [
+        "Spark"
+      ],
+      "file": "spark.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/spark-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog."
+    },
+    "tripo": {
+      "familyNames": [
+        "Tripo"
+      ],
+      "file": "tripo.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/tripo-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.tripo3d.ai/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "<urlopen error timed out>"
+    },
+    "vidu": {
+      "familyNames": [
+        "Vidu"
+      ],
+      "file": "vidu.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/vidu-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.vidu.com/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "The read operation timed out"
+    },
+    "yi": {
+      "familyNames": [
+        "Yi"
+      ],
+      "file": "yi.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/yi-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://www.lingyiwanwu.com/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "Official page did not expose an independent reusable family icon."
+    },
+    "dreamina": {
+      "familyNames": [
+        "Dreamina"
+      ],
+      "file": "dreamina.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/jimeng-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://dreamina.capcut.com/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "The read operation timed out",
+      "sharedBrandNote": "Dreamina is the international product name for the Jimeng product brand; the explicitly selected asset is jimeng-color.svg."
+    },
+    "novelai-diffusion": {
+      "familyNames": [
+        "NovelAI Diffusion"
+      ],
+      "file": "novelai-diffusion.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/novelai.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://novelai.net/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "<urlopen error timed out>",
+      "sharedBrandNote": "Uses the NovelAI product mark for the branded NovelAI Diffusion family, explicitly registered."
+    },
+    "fish-speech": {
+      "familyNames": [
+        "Fish Speech"
+      ],
+      "file": "fish-speech.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/fishaudio.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "homepage": "https://fish.audio/",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "<urlopen error timed out>",
+      "sharedBrandNote": "Uses the Fish Audio product mark for the branded Fish Speech family, explicitly registered rather than manufacturer inference."
+    },
+    "cogito": {
+      "familyNames": [
+        "Cogito"
+      ],
+      "file": "cogito.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/deepcogito-color.svg",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "retrievedAt": "2026-10-04",
+      "sourceCatalog": "https://icons.lobehub.com/",
+      "officialLookup": "No verified direct official family asset recorded; using the explicitly named product mark from the licensed icon catalog.",
+      "sharedBrandNote": "Uses the Deep Cogito product brand for its Cogito family, explicitly registered."
+    },
+    "gpt-image": {
+      "familyNames": [
+        "GPT Image"
+      ],
+      "file": "../product-icons/gpt.svg",
+      "homepage": "https://openai.com/index/introducing-4o-image-generation/",
+      "source": "Existing OpenAI product mark; see ../product-icons/SOURCES.md",
+      "license": "MIT; see ../product-icons/LICENSE-lobehub.txt. Trademark rights remain with OpenAI.",
+      "sharedBrandNote": "GPT Image has a separate exact family key and deliberately shares the existing GPT/OpenAI product mark; this is not an independent GPT Image logo or automatic manufacturer fallback."
+    },
+    "luma": {
+      "familyNames": [
+        "Luma"
+      ],
+      "file": "luma.svg",
+      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/luma.svg",
+      "homepage": "https://lumalabs.ai/dream-machine",
+      "source": "@lobehub/icons-static-svg 1.95.1",
+      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
+      "officialLookup": "Official product website request timed out; using the explicitly named Luma product mark.",
+      "retrievedAt": "2026-10-04"
+    }
+  }
+}

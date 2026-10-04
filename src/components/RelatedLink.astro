@@ -1,0 +1,6 @@
+---
+import { relatedLinkClass, relatedLinkArrow } from '../models/related-link.js';
+interface Props { href: string; label?: string; labelAttrs?: Record<string, string>; id?: string; class?: string; target?: string; [key: string]: unknown; }
+const { href, label, class: className = '', target, labelAttrs = {}, ...attributes } = Astro.props;
+---
+<a href={href} class={`${relatedLinkClass} ${className} ${!href || href === "#" ? "hidden" : ""}`.trim()} target={target} rel={target === '_blank' ? 'noopener noreferrer' : undefined} {...attributes}><span {...labelAttrs}><slot>{label}</slot></span><Fragment set:html={relatedLinkArrow} /></a>

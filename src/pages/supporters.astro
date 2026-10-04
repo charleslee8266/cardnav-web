@@ -9,7 +9,6 @@ import PublicPage from '../layouts/PublicPage.astro';
 import DataTable from '../components/DataTable.astro';
 import DataTableCell from '../components/DataTableCell.astro';
 import DataTableHeader from '../components/DataTableHeader.astro';
-import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import { telemetryBlocks } from '../telemetry-blocks.js';
@@ -41,7 +40,7 @@ const seo = buildSeoContext({
     {(['all', 'person', 'shop', 'gateway'] as const).map(kind => <a href={Astro.locals.localizePath(`/supporters${kind === 'all' ? '' : `?identity=${kind}`}`)} class:list={['btn btn-sm', activeIdentity === kind ? 'support-button' : 'btn-ghost']} aria-current={activeIdentity === kind ? 'page' : undefined} data-umami-event="internal-link-click" data-umami-event-link-type="supporter-filter" data-umami-event-url={Astro.locals.localizePath(`/supporters${kind === 'all' ? '' : `?identity=${kind}`}`)}>
       {kind === 'all' ? t.all : identities[kind]}<span class="supporter-filter-count">{kind === 'all' ? allSupporters.length : allSupporters.filter(supporter => supporter.kind === kind).length}</span>
     </a>)}
-    <a class="supporter-rules" href={Astro.locals.localizePath('/partnership')}>{t.viewRules} ↗</a>
+    <a class="supporter-rules" href={Astro.locals.localizePath('/partnership')}>{t.viewRules} →</a>
   </nav>
   {supporters.length > 0 ? (
       <DataTable variant="gatewaySites">
@@ -80,12 +79,12 @@ const seo = buildSeoContext({
             >
               <DataTableCell label={messages.labels.sequence} align="center" sequence>{sequence}</DataTableCell>
               <DataTableCell label={t.userColumn}>
-                {supporter.url ? <a href={supporter.url} target="_blank" rel="sponsored noopener noreferrer" class="link link-hover break-words font-semibold text-primary">{name}</a> : <span class="font-semibold">{name}</span>}
+                {supporter.url ? <a href={supporter.url} target="_blank" rel="sponsored noopener noreferrer" class="supporter-name link link-hover break-words font-semibold">{name}</a> : <span class="font-semibold">{name}</span>}
               </DataTableCell>
               <DataTableCell label={t.identityColumn}><span class="badge badge-ghost badge-sm">{identity}</span></DataTableCell>
               <DataTableCell label={t.messageColumn}>{message || <span class="text-base-content/35">-</span>}</DataTableCell>
-              <DataTableCell label={t.total} align="right" class="font-bold font-mono text-primary">¥{total.toLocaleString(Astro.locals.locale)}</DataTableCell>
-              <DataTableCell label={t.amountColumn} align="right" class="font-mono">{supporter.kind === 'person' ? '-' : supporter.supportPoints.toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</DataTableCell>
+              <DataTableCell label={t.total} align="right" class="supporter-value font-bold font-mono">¥{total.toLocaleString(Astro.locals.locale)}</DataTableCell>
+              <DataTableCell label={t.amountColumn} align="right" class={supporter.kind === 'person' ? 'supporter-empty font-mono' : 'supporter-value font-mono'}>{supporter.kind === 'person' ? '-' : supporter.supportPoints.toLocaleString(Astro.locals.locale, { maximumFractionDigits: 2 })}</DataTableCell>
             </tr>
           );
         })}
@@ -96,13 +95,20 @@ const seo = buildSeoContext({
   <script>
     import '../scripts/data-table.js';
   </script>
-  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+  <script>import '../scripts/page-widgets.js';</script>
 </PublicPage>
 
 <style>
   .supporter-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--color-base-300); background: var(--color-base-100); }
+  .supporter-filters > .btn:hover { color: var(--color-support); border-color: var(--color-support-line); background: var(--color-support-soft); }
+  .supporter-filters > .btn:focus-visible { outline: 2px solid var(--color-support); outline-offset: 2px; }
+  .supporters-table-card .supporter-name, .supporters-table-card .supporter-name:hover { color: var(--color-support); }
+  .supporters-table-card .supporter-name:hover { text-decoration: underline; }
+  .supporters-table-card :global(.supporter-empty) { color: var(--color-muted); }
+  .supporters-table-card :global(.supporter-value) { color: var(--color-support); }
   .supporter-filter-count { font-size: 11px; font-variant-numeric: tabular-nums; opacity: .8; }
-  .supporter-rules { margin-left: auto; padding: 6px 8px; color: var(--merchant-partner-text); font-size: 12px; }
+  .supporter-rules { margin-left: auto; padding: 6px 8px; color: var(--color-support); font-size: 12px; }
+  .supporter-rules:hover { color: var(--color-support); text-decoration: underline; }
   .supporters-table-card { border-radius: 14px; box-shadow: var(--shadow-1); }
   .supporters-table-card .support-list-empty { border: 0; }
 </style>

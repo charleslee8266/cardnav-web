@@ -12,7 +12,7 @@
   &:disabled { background: var(--color-surface-raised); color: var(--color-muted); cursor: not-allowed; }
 }
 @utility form-dialog-body {
-  position: relative; padding: 0; border: 1px solid var(--color-base-300); border-radius: 16px; background: var(--color-base-100); color: var(--color-base-content); box-shadow: var(--shadow-3); max-height: 90dvh;
+  --dialog-content-gap: 16px; outline: none; position: relative; padding: 0; border: 1px solid var(--color-base-300); border-radius: 16px; background: var(--color-base-100); color: var(--color-base-content); box-shadow: var(--shadow-3); max-height: 90dvh;
 }
 @layer components {
   .form-dialog-compact { max-width: 560px; }
@@ -21,8 +21,9 @@
   .form-dialog-title { margin: 0; padding-right: 32px; font-size: 18px; line-height: 1.4; font-weight: 700; }
   .form-dialog-description { margin-top: 6px; font-size: 13px; line-height: 1.65; color: var(--color-muted); }
   .form-dialog-close { position: absolute; top: 14px; right: 14px; }
-  .form-dialog-content { display: grid; gap: 16px; padding: 4px 20px 20px; }
-  .submission-form { display: grid; gap: 16px; min-width: 0; }
+  .form-dialog-content { display: grid; gap: var(--dialog-content-gap); padding: 4px 20px 20px; }
+  .form-dialog-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: var(--dialog-content-gap) 20px; border-top: 1px solid var(--color-base-300); background: var(--color-surface-soft); }
+  .submission-form { display: grid; gap: var(--dialog-content-gap, 16px); min-width: 0; }
   .form-field { min-width: 0; margin: 0; border: 0; padding: 0; }
   .form-field > :not(legend) + * { margin-top: 6px; }
   .form-field-label { display: block; padding: 0; font-size: 13px; font-weight: 600; line-height: 20px; color: var(--color-ink-secondary); }
@@ -38,6 +39,10 @@
   @media (max-width: 600px) {
     .modal:has(.form-dialog-body) { align-items: end; }
     .form-dialog-body { width: 100%; max-width: none; max-height: 92dvh; border-radius: 16px 16px 0 0; }
-    .form-dialog-content { padding-bottom: max(20px,env(safe-area-inset-bottom)); }
+    .form-dialog-content, .form-dialog-footer { padding-bottom: max(20px,env(safe-area-inset-bottom)); }
   }
 }
+
+.submission-step-actions { display: grid; gap: 8px; width: 100%; grid-template-columns: minmax(0, 1fr); }
+.submission-step-actions[data-active-step="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.submission-step-actions .btn { width: 100%; min-width: 0; }

@@ -1,6 +1,12 @@
-import { createScoreDisplay, createProviderLabel } from '../data-display.js';
+import { bindProviderSelection, createProviderSelection } from '../models/provider-selection.js';
+import { bindFamilySelection, createModelFamilySelection } from '../models/family-selection.js';
+import { matchesAllSelections } from '../models/gateway-selection.js';
+import { createRelatedLink } from '../models/related-link.js';
+import { gatewayModelPath } from '../models/routes.js';
+import { renderModelFamilyList } from '../models/family-list.js';
+import { createScoreDisplay } from '../data-display.js';
 import { renderFilterSummary } from './filter-summary.js';
-import { gatewayProviderSlug } from '../shop-plan-search.js';
+import { gatewayProviderSlug } from '../models/routes.js';
 import { setTableRowSequence } from './table-sequence.js';
 /*
  * 文件说明: 中转站首页标签页、本地筛选、URL 查询参数同步、懒加载与排序埋点交互。
@@ -28,9 +34,22 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   const partnershipUrl = config.partnershipUrl || localizedFallbackPath('/partnership');
   const paymentMethodLabels = config.paymentMethodLabels || {};
   const siteSearchInput = gatewayHome.querySelector('[data-home-site-search]');
-  const siteFamilySelect = gatewayHome.querySelector('[data-home-site-family]');
-  const sitePaymentSelect = gatewayHome.querySelector('[data-home-site-payment]');
-  const siteStatusSelect = gatewayHome.querySelector('[data-home-site-status]');
+  const filterGroups = Object.fromEntries(['family', 'payment', 'status'].map(name => [name, gatewayHome.querySelector(`[data-multi-filter="${name}"]`)]));
+  const modelFamilyGroup = gatewayHome.querySelector('[data-multi-filter="model-family"]');
+  const modelProviderGroup = gatewayHome.querySelector('[data-multi-filter="model-provider"]');
+  const modelProviders = () => [...modelProviderGroup.querySelectorAll('input:checked')].map(input => input.value);
+  const modelFilterGroups = [modelFamilyGroup, modelProviderGroup];
+  const modelFamilies = () => [...modelFamilyGroup.querySelectorAll('input:checked')].map(input => input.value);
+  const activeTab = () => gatewayHome.querySelector('[data-gateway-tab][aria-selected="true"]')?.dataset.gatewayTab || 'sites';
+  const selectedValues = name => Array.from(filterGroups[name]?.querySelectorAll('input:checked') || []).map(input => input.value);
+  const matchesAny = (selected, values) => !selected.length || selected.some(value => values.includes(value));
+  function updateMultiSummaries() {
+    for (const group of [...Object.values(filterGroups), ...modelFilterGroups]) {
+      const summary = group.querySelector('[data-multi-summary]');
+      const selected = Array.from(group.querySelectorAll('input:checked'));
+      summary.textContent = selected.length ? `${summary.dataset.emptyLabel} · ${selected.length}` : summary.dataset.emptyLabel;
+    }
+  }
   const siteFavoritesInput = gatewayHome.querySelector('[data-home-site-favorites]');
   const siteSortSelect = gatewayHome.querySelector('[data-home-site-sort]');
   const modelSearchInput = gatewayHome.querySelector('[data-home-model-search]');
@@ -133,12 +152,12 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function gatewayModelTracking(model) {
-    const targetPage = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
+    const targetPage = gatewayModelPath(model.modelId, modelLinkPrefix);
     return {
       umamiEvent: 'internal-link-click',
       umamiEventLinkType: 'gateway-model',
       umamiEventName: model.modelId,
-      umamiEventFamily: model.modelProvider,
+      umamiEventFamily: model.modelFamily || undefined,
       umamiEventTargetPage: targetPage,
       umamiEventUrl: targetPage,
     };
@@ -169,15 +188,16 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function siteRowElement(site, index) {
-    const families = uniqueLabels(site.displayModelProviders, 8);
+    const families = site.displayModelFamilies || [];
     const payments = uniqueLabels(site.paymentMethods, 6);
-    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelProviders || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
+    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelProviders || []).join(' ')} ${(site.displayModelFamilies || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
     const row = document.createElement('tr');
     row.setAttribute('data-home-site-card', '');
     setDataset(row, {
       search,
-      families: families.map(gatewayProviderSlug).join(','),
-      payments: payments.join(','),
+      families: (site.displayModelFamilies || []).map(gatewayProviderSlug).join(','),
+      providers: (site.displayModelProviders || []).map(gatewayProviderSlug).join(','),
+      payments: (site.paymentMethods || []).join(','),
       priceCount: Number(site.priceCount) || 0,
       originalOrder: index,
       sortSequence: index + 1,
@@ -251,13 +271,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     row.append(scoreCell);
 
     const familiesCell = tableCell(config.supportedModelsLabel);
-    if (families.length) {
-      const wrap = el('div', 'flex flex-wrap gap-1.5');
-      families.forEach(family => wrap.append(createProviderLabel(family)));
-      familiesCell.append(wrap);
-    } else {
-      familiesCell.append(el('span', 'text-base-content/35', '-'));
-    }
+    familiesCell.innerHTML = renderModelFamilyList(families, config.supportedModelsLabel, 'gateway-sites');
     row.append(familiesCell);
 
     const modelCountCell = tableCell(config.modelCountLabel, 'right', 'font-mono');
@@ -274,11 +288,12 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const row = document.createElement('tr');
     row.setAttribute('data-home-model-card', '');
     setDataset(row, {
-      search: `${model.modelId} ${model.modelProvider}`.toLowerCase(),
+      search: `${model.modelId} ${model.modelProvider} ${model.modelFamily || ''}`.toLowerCase(),
       originalOrder: index,
       sortSequence: index + 1,
       sortModel: model.modelId,
-      sortFamily: model.modelProvider,
+      sortFamily: model.modelFamily || '',
+      sortProvider: model.modelProvider,
       sortSupportCount: Number(model.supportSiteCount) || 0,
     });
     const sequenceCell = tableCell(config.sequenceLabel, 'center', '', { sequence: true });
@@ -287,13 +302,16 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const modelCell = tableCell(config.modelLabel);
     const modelLink = el('a', 'link link-hover break-words font-mono text-sm font-semibold text-primary', model.modelId);
     modelLink.dataset.rowPrimary = '';
-    modelLink.href = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
+    modelLink.href = gatewayModelPath(model.modelId, modelLinkPrefix);
     setTracking(modelLink, gatewayModelTracking(model));
     modelCell.append(modelLink);
     row.append(modelCell);
-    const familyCell = tableCell(config.modelProviderLabel);
-    familyCell.append(createProviderLabel(model.modelProvider));
+    const familyCell = tableCell(config.modelFamilyLabel);
+    familyCell.append(model.modelFamily ? createModelFamilySelection(model.modelFamily, 'gateway-models') : document.createTextNode('—'));
     row.append(familyCell);
+    const providerCell = tableCell(config.modelProviderLabel);
+    providerCell.append(createProviderSelection(model.modelProvider, 'gateway-models'));
+    row.append(providerCell);
     const supportCountCell = tableCell(config.supportedGatewayCountLabel, 'right', 'font-mono');
     supportCountCell.textContent = model.supportSiteCount;
     row.append(supportCountCell);
@@ -327,6 +345,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       item: null,
       search: row.dataset.search || '',
       families: row.dataset.families || '',
+      providers: row.dataset.providers || '',
       payments: row.dataset.payments || '',
       priceCount: Number(row.dataset.priceCount) || 0,
       sort: type === 'sites' ? {
@@ -342,22 +361,24 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
         sequence: rowSortValue(row, 'sequence', 'number') || index + 1,
         model: rowSortValue(row, 'model'),
         family: rowSortValue(row, 'family'),
+        provider: rowSortValue(row, 'provider'),
         supportCount: rowSortValue(row, 'supportCount', 'number'),
       },
     };
   }
 
   function siteEntryFromItem(site, index) {
-    const families = uniqueLabels(site.displayModelProviders, 8);
+    const families = site.displayModelFamilies || [];
     const payments = uniqueLabels(site.paymentMethods, 6);
-    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelProviders || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
+    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelProviders || []).join(' ')} ${(site.displayModelFamilies || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
     return {
       index,
       row: null,
       item: site,
       search,
-      families: families.map(gatewayProviderSlug).join(','),
-      payments: payments.join(','),
+      families: (site.displayModelFamilies || []).map(gatewayProviderSlug).join(','),
+      providers: (site.displayModelProviders || []).map(gatewayProviderSlug).join(','),
+      payments: (site.paymentMethods || []).join(','),
       priceCount: Number(site.priceCount) || 0,
       sort: {
         sticky: isStickySite(site) ? 1 : 0,
@@ -377,13 +398,14 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       index,
       row: null,
       item: model,
-      search: `${model.modelId} ${model.modelProvider}`.toLowerCase(),
+      search: `${model.modelId} ${model.modelProvider} ${model.modelFamily || ''}`.toLowerCase(),
       families: '',
       payments: '',
       sort: {
         sequence: index + 1,
         model: model.modelId,
-        family: model.modelProvider,
+        family: model.modelFamily || '',
+        provider: model.modelProvider,
         supportCount: Number(model.supportSiteCount) || 0,
       },
     };
@@ -489,15 +511,15 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
   function filterSiteEntries() {
     const keyword = (siteSearchInput?.value || '').trim().toLowerCase();
-    const selectedFamily = siteFamilySelect?.value || '';
-    const selectedPayment = sitePaymentSelect?.value || '';
+    const selectedFamily = selectedValues('family');
+    const selectedPayment = selectedValues('payment');
     const state = gatewayLists.sites;
     state.filteredEntries = state.entries.filter(entry => {
       const matchesKeyword = !keyword || entry.search.includes(keyword);
-      const matchesFamily = !selectedFamily || entry.families.split(',').includes(selectedFamily);
-      const matchesPayment = !selectedPayment || entry.payments.split(',').includes(selectedPayment);
-      const status = siteStatusSelect?.value || '';
-      const matchesStatus = !status || (status === 'hasPrice' ? entry.priceCount > 0 : status === 'noPrice' ? entry.priceCount === 0 && entry.sort.modelCount > 0 : entry.priceCount === 0 && entry.sort.modelCount === 0);
+      const matchesFamily = matchesAllSelections(selectedFamily, entry.families.split(','));
+      const matchesPayment = matchesAllSelections(selectedPayment, entry.payments.split(','));
+      const status = entry.priceCount > 0 ? 'hasPrice' : entry.sort.modelCount > 0 ? 'noPrice' : 'noData';
+      const matchesStatus = matchesAny(selectedValues('status'), [status]);
       const matchesFavorite = !siteFavoritesInput?.checked || favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '');
       return matchesKeyword && matchesFamily && matchesPayment && matchesStatus && matchesFavorite;
     });
@@ -507,22 +529,25 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   function filterModelEntries() {
     const keyword = (modelSearchInput?.value || '').trim().toLowerCase();
     const state = gatewayLists.models;
-    const family = siteFamilySelect?.value || '';
-    state.filteredEntries = state.entries.filter(entry => (!keyword || entry.search.includes(keyword)) && (!family || gatewayProviderSlug(entry.sort.family) === family));
+    const family = modelFamilies();
+    const providers = modelProviders();
+    state.filteredEntries = state.entries.filter(entry => (!keyword || entry.search.includes(keyword)) && matchesAny(family, [gatewayProviderSlug(entry.sort.family)]) && matchesAny(providers, [gatewayProviderSlug(entry.sort.provider)]));
     return { keyword, visibleCount: state.filteredEntries.length };
   }
 
   function applySiteFilters({ track = true } = {}) {
     const { keyword, selectedFamily, selectedPayment, visibleCount } = filterSiteEntries();
     renderGatewayList(gatewayLists.sites);
-    renderFilterSummary(gatewayHome.querySelector('[data-home-site-active-filters]'), [siteSearchInput, siteFamilySelect, sitePaymentSelect, siteStatusSelect, siteFavoritesInput].map(input => ({
+    renderFilterSummary(gatewayHome.querySelector('[data-home-site-active-filters]'), [...Object.values(filterGroups).flatMap(group => [...group.querySelectorAll('[data-filter-value]')]), siteFavoritesInput].map(input => ({
       input,
-      label: () => input === siteFavoritesInput ? input.closest('label').textContent.trim() : input.options ? input.selectedOptions[0].textContent : input.value,
+      label: () => input.closest('label').textContent.trim(),
     })), {
       clearLabel: config.clearFilters,
-      countElement: gatewayHome.querySelector('[data-filter-count]'),
+      countElement: gatewayHome.querySelector('#gatewaySiteFilters').closest('[data-filter-popover]').querySelector('[data-filter-count]'),
       onChange: applySiteFilterChange,
     });
+    updateMultiSummaries();
+    if (activeTab() === 'sites') renderFamilyLinks();
     if (track) scheduleGatewayFilterTrack('sites', {
       hasQuery: Boolean(keyword),
       family: selectedFamily,
@@ -534,65 +559,74 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   function applyModelFilters({ track = true } = {}) {
     const { keyword, visibleCount } = filterModelEntries();
     renderGatewayList(gatewayLists.models);
+    renderFilterSummary(gatewayHome.querySelector('[data-home-model-active-filters]'), modelFilterGroups.flatMap(group => [...group.querySelectorAll('input')]).map(input => ({ input, label: () => input.closest('label').textContent.trim() })), {
+      clearLabel: config.clearFilters,
+      countElement: gatewayHome.querySelector('#gatewayModelFilters').closest('[data-filter-popover]').querySelector('[data-filter-count]'),
+      onChange: applyModelFilterChange,
+    });
+    updateMultiSummaries();
+    if (activeTab() === 'models') renderFamilyLinks();
     if (track) scheduleGatewayFilterTrack('models', {
       hasQuery: Boolean(keyword),
       visibleCount,
     });
   }
 
-  function selectHasValue(select, value) {
-    if (!select || !value) return false;
-    return Array.from(select.options).some(option => option.value === value);
-  }
-
-  function readSiteFilterQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    const family = gatewayProviderSlug(params.get('provider') ?? '');
-    const payment = (params.get('payment') || '').trim();
-    return {
-      family: selectHasValue(siteFamilySelect, family) ? family : '',
-      payment: selectHasValue(sitePaymentSelect, payment) ? payment : '',
-    };
+  function renderFamilyLinks() {
+    const container = gatewayHome.querySelector('[data-home-family-links]');
+    const selected = activeTab() === 'models' ? modelFamilies() : selectedValues('family');
+    const firstFamily = (config.familyOrder || []).find(family => selected.includes(family));
+    const entry = (config.familyLinks || []).find(item => item.family === firstFamily);
+    container.replaceChildren();
+    container.hidden = !entry;
+    if (!entry) return;
+    [entry.shop, entry.official, entry.leaderboard].forEach((href, index) => {
+      if (!href) return;
+      container.append(createRelatedLink({ href, label: config.relatedLabels[index].replace('{term}', entry.name) }));
+    });
   }
 
   function syncSiteFilterControlsFromQuery() {
-    const { family, payment } = readSiteFilterQueryParams();
-    if (siteFamilySelect) siteFamilySelect.value = family;
-    if (sitePaymentSelect) sitePaymentSelect.value = payment;
-    const status = new URLSearchParams(window.location.search).get('status') || '';
-    if (siteStatusSelect) siteStatusSelect.value = selectHasValue(siteStatusSelect, status) ? status : '';
-    if (siteFavoritesInput) siteFavoritesInput.checked = new URLSearchParams(window.location.search).get('favorites') === '1';
     const params = new URLSearchParams(window.location.search);
-    if (family && params.get('provider') !== family) syncSiteFilterQueryFromControls();
+    if (params.has('provider')) {
+      params.delete('provider');
+      window.history.replaceState(null, '', `${window.location.pathname}${params.size ? '?' + params : ''}${window.location.hash}`);
+    }
+    for (const [name, group] of Object.entries(filterGroups)) {
+      const values = params.getAll(name).map(value => ['family', 'provider'].includes(name) ? gatewayProviderSlug(value) : value.trim());
+      for (const input of group.querySelectorAll('input')) input.checked = values.includes(input.value);
+    }
+    if (siteFavoritesInput) siteFavoritesInput.checked = params.get('favorites') === '1';
+    modelFilterGroups.forEach(group => group.querySelectorAll('input').forEach(input => { input.checked = params.getAll(group.dataset.multiFilter).includes(input.value); }));
+    if (siteSearchInput) siteSearchInput.value = params.get('q') || '';
+    if (modelSearchInput) modelSearchInput.value = params.get('model-q') || '';
   }
 
   function syncSiteFilterQueryFromControls() {
     const url = new URL(window.location.href);
-    const selectedFamily = siteFamilySelect?.value || '';
-    const selectedPayment = sitePaymentSelect?.value || '';
-    if (selectedFamily) url.searchParams.set('provider', selectedFamily);
-    else url.searchParams.delete('provider');
-    if (selectedPayment) url.searchParams.set('payment', selectedPayment);
-    else url.searchParams.delete('payment');
-    if (siteStatusSelect?.value) url.searchParams.set('status', siteStatusSelect.value);
-    else url.searchParams.delete('status');
+    url.searchParams.delete('provider');
+    for (const name of Object.keys(filterGroups)) {
+      url.searchParams.delete(name);
+      for (const value of selectedValues(name)) url.searchParams.append(name, value);
+    }
     if (siteFavoritesInput?.checked) url.searchParams.set('favorites', '1');
     else url.searchParams.delete('favorites');
-    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    for (const group of modelFilterGroups) {
+      url.searchParams.delete(group.dataset.multiFilter);
+      group.querySelectorAll('input:checked').forEach(input => url.searchParams.append(group.dataset.multiFilter, input.value));
+    }
+    for (const [key, value] of [['q', siteSearchInput?.value || ''], ['model-q', modelSearchInput?.value || '']]) { if (value) url.searchParams.set(key, value); else url.searchParams.delete(key); }
+    if (activeTab() === 'models') url.searchParams.set('tab', 'models'); else url.searchParams.delete('tab');
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) window.history.pushState(null, '', next);
   }
 
   function hasActiveSiteFilters() {
-    return Boolean(
-      (siteSearchInput?.value || '').trim()
-      || siteFamilySelect?.value
-      || sitePaymentSelect?.value
-      || siteStatusSelect?.value
-      || siteFavoritesInput?.checked
-    );
+    return Boolean((siteSearchInput?.value || '').trim() || Object.keys(filterGroups).some(name => selectedValues(name).length) || siteFavoritesInput?.checked);
   }
 
   function hasActiveModelFilters() {
-    return Boolean((modelSearchInput?.value || '').trim() || siteFamilySelect?.value);
+    return Boolean((modelSearchInput?.value || '').trim() || modelFamilies().length || modelProviders().length);
   }
 
   function resetVisibleLimit(type) {
@@ -649,7 +683,14 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
   function applySiteFilterChange() {
     syncSiteFilterQueryFromControls();
-    void applySharedFiltersWithDeferred({ resetLimit: true });
+    resetVisibleLimit('sites');
+    void (hasActiveSiteFilters() ? ensureGatewayDataLoaded('sites') : Promise.resolve()).then(() => applySiteFilters());
+  }
+
+  function applyModelFilterChange() {
+    syncSiteFilterQueryFromControls();
+    resetVisibleLimit('models');
+    void (hasActiveModelFilters() ? ensureGatewayDataLoaded('models') : Promise.resolve()).then(() => applyModelFilters());
   }
 
   function showTab(tabName) {
@@ -664,6 +705,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     });
     gatewayHome.querySelectorAll('[data-gateway-control]').forEach(control => { control.hidden = control.dataset.gatewayControl !== tabName; });
     if (tabName === 'sites') applySiteFilters({ track: false });
+    else applyModelFilters({ track: false });
+    syncSiteFilterQueryFromControls();
     if (changed) trackGatewayEvent('tab-change', { scope: 'gateway', tab: tabName });
   }
 
@@ -731,15 +774,26 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     tab.addEventListener('click', () => showTab(tab.dataset.gatewayTab || 'sites'));
   });
   siteSearchInput?.addEventListener('input', () => {
-    if (modelSearchInput) modelSearchInput.value = siteSearchInput.value;
-    void applySharedFiltersWithDeferred({ resetLimit: true });
+    applySiteFilterChange();
   });
-  siteFamilySelect?.addEventListener('change', applySiteFilterChange);
-  sitePaymentSelect?.addEventListener('change', applySiteFilterChange);
-  siteStatusSelect?.addEventListener('change', applySiteFilterChange);
+  Object.values(filterGroups).forEach(group => group.addEventListener('change', applySiteFilterChange));
   siteFavoritesInput?.addEventListener('change', applySiteFilterChange);
-  gatewayHome.querySelector('[data-home-site-reset]')?.addEventListener('click', () => {
-    for (const input of [siteSearchInput, modelSearchInput, siteFamilySelect, sitePaymentSelect, siteStatusSelect]) input.value = '';
+  modelFilterGroups.forEach(group => group.addEventListener('change', applyModelFilterChange));
+  bindProviderSelection('gateway-models', provider => {
+    const input = [...modelProviderGroup.querySelectorAll('input')].find(input => input.value === provider);
+    if (input) { input.checked = true; applyModelFilterChange(); }
+  });
+  bindFamilySelection('gateway-sites', family => {
+    const input = [...filterGroups.family.querySelectorAll('input')].find(input => input.value === family);
+    if (input) { input.checked = true; applySiteFilterChange(); }
+  });
+  bindFamilySelection('gateway-models', family => {
+    const input = [...modelFamilyGroup.querySelectorAll('input')].find(input => input.value === family);
+    if (input) { input.checked = true; applyModelFilterChange(); }
+  });
+  gatewayHome.querySelector('#gatewayModelFilters')?.addEventListener('filter-clear', () => { modelFilterGroups.forEach(group => group.querySelectorAll('input').forEach(input => { input.checked = false; })); applyModelFilterChange(); });
+  gatewayHome.querySelector('#gatewaySiteFilters')?.addEventListener('filter-clear', () => {
+    Object.values(filterGroups).forEach(group => group.querySelectorAll('input').forEach(input => { input.checked = false; }));
     siteFavoritesInput.checked = false;
     applySiteFilterChange();
   });
@@ -753,8 +807,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     trackGatewayEvent('sort-change', { scope: 'gateway', tab: 'sites', key, direction: key ? 'desc' : 'none' });
   });
   modelSearchInput?.addEventListener('input', () => {
-    if (siteSearchInput) siteSearchInput.value = modelSearchInput.value;
-    void applySharedFiltersWithDeferred({ resetLimit: true });
+    applyModelFilterChange();
   });
   gatewayHome.querySelectorAll('[data-gateway-load-more]').forEach(button => {
     button.addEventListener('click', () => loadMore(button.dataset.gatewayLoadMore || 'sites'));
@@ -763,9 +816,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     table.addEventListener('click', handleGatewaySort, { capture: true });
   });
   syncSiteFilterControlsFromQuery();
+  showTab(new URLSearchParams(window.location.search).get('tab') === 'models' ? 'models' : 'sites');
   void applySharedFiltersWithDeferred({ track: false, resetLimit: true });
   window.addEventListener('popstate', () => {
     syncSiteFilterControlsFromQuery();
+    showTab(new URLSearchParams(window.location.search).get('tab') === 'models' ? 'models' : 'sites');
     void applySharedFiltersWithDeferred({ track: false, resetLimit: true });
   });
 })();

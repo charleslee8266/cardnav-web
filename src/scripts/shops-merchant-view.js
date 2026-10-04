@@ -138,6 +138,7 @@ export function renderMerchantRows({
   shopsMessages,
   createScoreDisplay,
   createRelativeTime,
+  createPlatformSelection,
   createFavoriteButton,
   createTrackedLink,
   initializeFavorites,
@@ -190,6 +191,7 @@ export function renderMerchantRows({
     row.dataset.originalIndex = String(index);
     row.dataset.rank = String(index + 1);
     row.dataset.sequence = String(index + 1);
+    row.dataset.platformName = accessors.shopSitePlatformName(site) || shopsMessages.selfHosted;
     row.dataset.productCount = String(siteProducts.length);
     row.dataset.hotProducts = String(hotProducts.length > 0 ? productScoreValue(hotProducts[0], accessors) : 0);
 
@@ -218,6 +220,10 @@ export function renderMerchantRows({
 
     merchantCell.appendChild(merchantHeader);
     row.appendChild(merchantCell);
+    const platformCell = appendTextElement(row, 'div', 'merchant-table-cell merchant-table-cell-platform', '');
+    platformCell.dataset.label = shopsMessages.tableLabels?.platform || 'Platform';
+    appendTextElement(platformCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.platform || 'Platform');
+    platformCell.appendChild(createPlatformSelection(accessors.shopSitePlatformName(site), 'merchants'));
 
     const productsCell = document.createElement('div');
     productsCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';

@@ -1,12 +1,16 @@
 ---
-import { getSponsorListId } from '../sponsor-provider.js';
+import SponsorContent from './SponsorContent.astro';
+import { getSponsorListId, getSponsors } from '../sponsor-provider.js';
 import type { PageType } from '../page-types.js';
 import type { SponsorPlacement } from '../sponsor-provider.js';
 const { placement, pageType } = Astro.props as { placement: SponsorPlacement; pageType?: PageType };
 const listId = pageType ? getSponsorListId({ placement, pageType }) : null;
+// Static content builds have no database connection; their footer keeps the live fragment contract.
+const deferred = Astro.isPrerendered;
+const sponsors = !deferred && listId && pageType ? await getSponsors({ placement, pageType, locale: Astro.locals.locale }) : [];
 const query = new URLSearchParams({ placement, pageType: pageType ?? '', locale: Astro.locals.locale });
 ---
-{listId && <div hidden data-sponsor-fragment={`/api/sponsors?${query}`}></div>}
+{listId && <div hidden={sponsors.length === 0} data-sponsor-deferred={deferred || undefined} data-sponsor-fragment={`/api/sponsors?${query}`}><SponsorContent placement={placement} pageType={pageType} sponsors={sponsors} /></div>}
 <script>
   import '../scripts/sponsor-fragments.js';
 </script>

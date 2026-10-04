@@ -25,7 +25,7 @@ import { matchOfficialPriceCatalogEntries } from '../src/official-price.js';
 import { buildSeoContext } from '../src/seo.js';
 import { indexNowKey } from '../src/site.js';
 import { localizePath, switchLocalePath } from '../src/i18n/paths.js';
-import { quickPlanGatewayPath, quickPlanSearchPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug, quickPlanSearchTermForSlug, quickPlanSearchTerms } from '../src/shop-plan-search.js';
+import { quickPlanGatewayPath, quickPlanSearchPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug, quickPlanSearchTermForSlug, quickPlanSearchTerms } from '../src/models/product-catalog.js';
 
 process.env.DATABASE_URL ??= 'postgres://postgres:cardnav@localhost:5432/cardnav';
 process.env.PUBLIC_SITE_URL = 'https://cardnav.xyz';
@@ -96,6 +96,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
       id: 'gpt-5',
       modelId: 'gpt-5',
       modelProvider: 'OpenAI',
+      modelFamily: 'GPT',
       supportSiteCount: 3,
       priceCount: 4,
       latestGatewayRefreshAt: '2026-06-24T10:00:00.000Z',
@@ -105,6 +106,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
       id: 'one-site-model',
       modelId: 'one-site-model',
       modelProvider: 'OpenAI',
+      modelFamily: 'GPT',
       supportSiteCount: 1,
       priceCount: 4,
       latestGatewayRefreshAt: null,
@@ -114,6 +116,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
       id: 'other-family-model',
       modelId: 'other-family-model',
       modelProvider: 'Other',
+      modelFamily: null,
       supportSiteCount: 4,
       priceCount: 4,
       latestGatewayRefreshAt: null,
@@ -153,7 +156,7 @@ test('cardnav-web sitemap includes hidden quick plan SEO slug pages', () => {
   assert.equal(buildQuickPlanSearchSeoRoutes().length, quickPlanSearchTerms.length);
 });
 
-test('quick plan tips map official price pages and gateway providers', () => {
+test('quick plan tips map official price pages and model families', () => {
   const plusTerm = quickPlanSearchTerms.find(term => term.label === 'GPT Plus');
   const claudeTerm = quickPlanSearchTerms.find(term => term.label === 'Claude Pro');
   const geminiTerm = quickPlanSearchTerms.find(term => term.label === 'Gemini Pro');
@@ -162,17 +165,17 @@ test('quick plan tips map official price pages and gateway providers', () => {
   const xPremiumTerm = quickPlanSearchTermForOfficialPriceSlug('x-premium');
 
   assert.equal(plusTerm?.officialPriceSlug, 'gpt-plus');
-  assert.equal(plusTerm?.gatewayProvider, 'openai');
-  assert.equal(plusTerm?.gatewayProviderName, 'OpenAI');
-  assert.equal(plusTerm ? quickPlanGatewayPath(plusTerm) : '', '/llm-gateway?provider=openai');
-  assert.equal(claudeTerm?.gatewayProvider, 'anthropic');
-  assert.equal(claudeTerm?.gatewayProviderName, 'Anthropic');
-  assert.equal(geminiTerm?.gatewayProvider, 'google');
-  assert.equal(geminiTerm?.gatewayProviderName, 'Google');
-  assert.equal(grokTerm?.gatewayProvider, 'xai');
-  assert.equal(grokTerm?.gatewayProviderName, 'xAI');
+  assert.equal(plusTerm?.gatewayFamily, 'gpt');
+  assert.equal(plusTerm?.gatewayFamilyName, 'GPT');
+  assert.equal(plusTerm ? quickPlanGatewayPath(plusTerm) : '', '/llm-gateway?family=gpt');
+  assert.equal(claudeTerm?.gatewayFamily, 'claude');
+  assert.equal(claudeTerm?.gatewayFamilyName, 'Claude');
+  assert.equal(geminiTerm?.gatewayFamily, 'gemini');
+  assert.equal(geminiTerm?.gatewayFamilyName, 'Gemini');
+  assert.equal(grokTerm?.gatewayFamily, 'grok');
+  assert.equal(grokTerm?.gatewayFamilyName, 'Grok');
   assert.equal(cursorTerm?.officialPriceSlug, 'cursor-pro');
-  assert.equal(cursorTerm?.gatewayProvider, undefined);
+  assert.equal(cursorTerm?.gatewayFamily, undefined);
   assert.equal(cursorTerm ? quickPlanGatewayPath(cursorTerm) : '', '');
   assert.equal(xPremiumTerm?.slug, 'x-premium');
 });

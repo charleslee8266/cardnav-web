@@ -1,6 +1,9 @@
 ---
+import { gatewayFamilyPath } from '../../models/routes.js';
+import { gatewayModelPath } from '../../models/routes.js';
 import RefreshTime from '../../components/RefreshTime.astro';
 import ScoreDisplay from '../../components/ScoreDisplay.astro';
+import ModelFamilyLabel from '../../components/ModelFamilyLabel.astro';
 import ProviderLabel from '../../components/ProviderLabel.astro';
 /*
 文件说明: 渲染单个 AI 大模型 API 中转站详情页，展示模型覆盖和价格记录。
@@ -16,7 +19,6 @@ import {
   formatAvailabilityPercent,
   formatLatencySeconds,
   formatPrice,
-  shortList,
 } from '../../gateway-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import DataTableHeader from '../../components/DataTableHeader.astro';
@@ -75,7 +77,7 @@ const seo = buildSeoContext({
 });
 
 function modelHref(modelId: string) {
-  return linkTo(`/llm-gateway/models/${encodeURIComponent(modelId)}`);
+  return linkTo(gatewayModelPath(modelId));
 }
 
 function priceSortValue(value: number | null) {
@@ -139,7 +141,8 @@ function gatewayModelClickAttrs(modelId: string) {
       <div><dt>{t.labels.latestRefresh}</dt><dd><RefreshTime timestamp={site.latestGatewayRefreshAt} fallback={t.labels.notRecorded} /></dd></div>
     </dl></section>
     <section><h2>{t.llmGateway.paymentMethods}</h2><div class="gateway-payment-list">{site.paymentMethods.length ? site.paymentMethods.map(method => { const icon = paymentIcon(method); const label = t.llmGateway.paymentMethodLabels[method as keyof typeof t.llmGateway.paymentMethodLabels] || method; return <span class="gateway-payment-label"><span class="payment-icon" aria-hidden="true">{icon.src ? <img src={icon.src} alt="" width="19" height="14" /> : icon.fallback}</span>{label}</span>; }) : '—'}</div></section>
-    <section><h2>{t.llmGateway.supportedFamilies}</h2><div class="flex flex-wrap gap-2">{shortList(site.displayModelProviders, 12).map(family => <ProviderLabel name={family} />)}</div></section>
+    <section><h2>{t.llmGateway.modelProvider}</h2><div class="flex flex-wrap gap-2">{site.displayModelProviders.map(provider => <ProviderLabel name={provider} />)}</div></section>
+    <section><h2>{t.llmGateway.supportedFamilies}</h2><div class="flex flex-wrap gap-2">{site.displayModelFamilies.map(family => <ModelFamilyLabel name={family} href={Astro.locals.localizePath(gatewayFamilyPath(family))} />)}</div></section>
     <section><a href={linkTo('/llm-gateway')} class="text-primary text-sm">← {t.llmGateway.backToList}</a></section>
   </aside>
 

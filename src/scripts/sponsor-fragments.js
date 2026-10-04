@@ -11,7 +11,7 @@ function checkSponsorImages(container) {
 }
 checkSponsorImages(document);
 
-/** Live sponsor sections stay independent from cached page HTML. */
+/** SSR supplies the first paint; later refreshes keep an open page current. */
 const requests = new Map();
 function requestFragment(url) {
   if (!requests.has(url)) {
@@ -35,15 +35,14 @@ for (const container of document.querySelectorAll('[data-sponsor-fragment]')) {
       container.hidden = !container.querySelector('section');
       checkSponsorImages(container);
     } catch (error) {
-      container.replaceChildren();
-      container.hidden = true;
       console.error('Unable to load sponsors', error);
     } finally {
       inFlight = false;
       if (!document.hidden) timer = setTimeout(refresh, 60_000);
     }
   }
-  void refresh();
+  if (container.hasAttribute('data-sponsor-deferred')) void refresh();
+  else if (!document.hidden) timer = setTimeout(refresh, 60_000);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) clearTimeout(timer);
     else void refresh();

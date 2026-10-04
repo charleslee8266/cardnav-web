@@ -6,7 +6,7 @@ import OfficialPriceContent from '../../components/OfficialPriceContent.astro';
 import { localizeOfficialPriceGroups } from '../../localized-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildOfficialPriceGroupsForActiveSlug, resolveOfficialPriceSlug } from '../../official-price.js';
-import { canonicalOfficialPriceSlug, quickPlanDisplayName, quickPlanSearchTermForOfficialPriceSlug } from '../../shop-plan-search.js';
+import { canonicalOfficialPriceSlug, quickPlanDisplayName, quickPlanSearchTermForOfficialPriceSlug } from '../../models/product-catalog.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 import { loadOfficialPriceCatalog, loadOfficialPricesByUrlSlug } from '../../store.js';

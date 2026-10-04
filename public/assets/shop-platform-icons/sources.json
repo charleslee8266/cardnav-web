@@ -1,0 +1,40 @@
+{
+  "notice": "Platform brand assets are obtained from official homepages or supplied by the site owner. Brand marks remain the property of their owners. No separate redistribution license was stated.",
+  "retrievedAt": "2026-10-04",
+  "platforms": {
+    "ldxp": {
+      "name": "链动小铺",
+      "families": [
+        "platform-ldxp",
+        "platform-wzyp"
+      ],
+      "homepage": "https://www.ldxp.cn/",
+      "status": "owner-supplied",
+      "assetUrl": null,
+      "file": "ldxp.ico",
+      "evidence": "Site owner supplied ldxp.ico on 2026-10-04 for the platform mark; ICO contains a 64×64 image. Remote asset origin was not independently verified."
+    },
+    "16688": {
+      "name": "16688",
+      "families": [
+        "platform-16688"
+      ],
+      "homepage": "https://www.16688.com.cn/",
+      "assetUrl": "https://static.16688.com.cn/upload/admin/20260821/24/db8d837a7116daffa82897fd178ff9.png",
+      "file": "16688.png",
+      "status": "verified",
+      "evidence": "Homepage link rel=\"icon\" type=\"image/png\". Image visually verified as orange 16688 wordmark."
+    },
+    "catfk": {
+      "name": "云猫寄售",
+      "families": [
+        "platform-catfk"
+      ],
+      "homepage": "https://catfk.com/",
+      "assetUrl": "https://static.catfk.com/53/f5754a4982c82d923bbfaed147b160.jpg",
+      "file": "catfk.jpg",
+      "status": "verified",
+      "evidence": "Normal rendered homepage title 云猫寄售 and dynamically inserted link rel=\"icon\". Image visually verified as blue cloud/cat brand mark."
+    }
+  }
+}

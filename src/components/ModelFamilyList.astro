@@ -1,0 +1,6 @@
+---
+import { renderModelFamilyList } from '../models/family-list.js';
+import './model-family-list.css';
+type Props = { families: string[]; label: string; selectScope?: string };
+---
+<Fragment set:html={renderModelFamilyList(Astro.props.families, Astro.props.label, Astro.props.selectScope)} />

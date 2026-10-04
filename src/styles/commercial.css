@@ -29,6 +29,7 @@
   .sponsor-plan-grid { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 0 12px 12px; }
   .sponsor-plan-link { padding: 0; font-size: 11px; line-height: 1.7; color: var(--color-primary); text-underline-offset: 3px; }
   .sponsor-plan-link:hover { text-decoration: underline; }
+  .sponsor-card:hover .sponsor-plan-price { text-decoration: underline; text-underline-offset: 3px; }
   .sponsor-mobile-details { display: none; }
   .sponsor-section[data-placement='after-hero'] .sponsor-copy { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   @container (max-width: 64rem) { .sponsor-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

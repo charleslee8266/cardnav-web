@@ -5,7 +5,7 @@ import { pageTypes, type PageType } from '../../page-types.js';
 import { isLocale } from '../../i18n/config.js';
 import { getMessages } from '../../i18n/messages.js';
 import { localizePath } from '../../i18n/paths.js';
-import type { SponsorPlacement } from '../../sponsor-provider.js';
+import { getSponsors, type SponsorPlacement } from '../../sponsor-provider.js';
 
 const placement = Astro.url.searchParams.get('placement');
 const pageType = Astro.url.searchParams.get('pageType');
@@ -16,8 +16,9 @@ if (!placement || !['page-bottom', 'after-hero', 'content-bottom'].includes(plac
   || !pageType || !pageTypes.includes(pageType as PageType) || !locale || !isLocale(locale)) {
   return new Response('Invalid sponsor request', { status: 400, headers: { 'Cache-Control': 'no-store' } });
 }
+const sponsors = await getSponsors({ placement: placement as SponsorPlacement, pageType: pageType as PageType, locale });
 Astro.locals.locale = locale;
 Astro.locals.messages = getMessages(locale);
 Astro.locals.localizePath = pathname => localizePath(pathname, locale);
 ---
-<SponsorContent placement={placement as SponsorPlacement} pageType={pageType as PageType} />
+<SponsorContent sponsors={sponsors} placement={placement as SponsorPlacement} pageType={pageType as PageType} />

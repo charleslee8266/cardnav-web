@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildShopSearchQuery, matchesShopSearchQuery } from '../src/shop-search-query.js';
 
-import { quickPlanSearchTermForSlug, quickPlanGatewayPath, gatewayProviderSlug, quickPlanProducts, quickProductSearchQuery } from '../src/shop-plan-search.js';
+import { quickPlanSearchTermForSlug, quickPlanGatewayPath, quickPlanProducts, quickProductSearchQuery } from '../src/models/product-catalog.js';
+import { gatewayProviderSlug } from '../src/models/routes.js';
 
 const baseOptions = { matchCategory: false, matchMerchant: false, fuzzy: false };
 
@@ -227,11 +228,11 @@ test('new quick categories filter stored values and Gemini legacy routes resolve
 test('all plans inherit gateway links from their product including Free and Lite tiers', () => {
   for (const product of quickPlanProducts.filter(product => product.gateway)) {
     for (const term of product.terms) {
-      assert.equal(quickPlanGatewayPath(term), `/llm-gateway?provider=${product.gateway!.id}`);
-      assert.equal(term.gatewayProviderName, product.gateway!.name);
+      assert.equal(quickPlanGatewayPath(term), `/llm-gateway?family=${product.gateway!.id}`);
+      assert.equal(term.gatewayFamilyName, product.gateway!.name);
     }
   }
-  assert.equal(quickPlanGatewayPath(quickPlanSearchTermForSlug('claude-free')!), '/llm-gateway?provider=anthropic');
+  assert.equal(quickPlanGatewayPath(quickPlanSearchTermForSlug('claude-free')!), '/llm-gateway?family=claude');
   assert.equal(quickPlanGatewayPath(quickPlanSearchTermForSlug('kyc')!), '');
 });
 

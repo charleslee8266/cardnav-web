@@ -1,0 +1,8 @@
+---
+import { shopPlatformIcon } from '../shop-platform.js';
+import './platform-label.css';
+type Props = { name: string; selfHostedLabel: string };
+const { name, selfHostedLabel } = Astro.props;
+const icon = shopPlatformIcon(name);
+---
+<span class="shop-platform-label">{icon && <img src={icon} alt="" width="16" height="16" />}<span class="shop-platform-label-text">{name || selfHostedLabel}</span></span>

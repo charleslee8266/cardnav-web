@@ -1,4 +1,6 @@
 ---
+import { leaderboardFamilyPath } from '../models/routes.js';
+import RelatedLink from './RelatedLink.astro';
 import RefreshTime from './RefreshTime.astro';
 import HeroMetric from './HeroMetric.astro';
 /*
@@ -14,7 +16,8 @@ import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
-import { productForOfficialPrice, productIconPath, quickPlanProducts, quickPlanShortLabel, quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
+import { defaultOfficialPricePlan, productForOfficialPrice, quickPlanProducts, quickPlanShortLabel, quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../models/product-catalog.js';
+import { productIconPath } from '../models/product-icons.js';
 import Sponsors from './Sponsors.astro';
 import type { PageType } from '../page-types.js';
 
@@ -37,7 +40,7 @@ const relatedGatewayFamilyName = relatedShopSearchTerm ? quickPlanGatewayFamilyN
 const productGroups = Array.from(new Set(groups.map(group => group.appSlug)), app => {
   const plans = groups.filter(group => group.appSlug === app);
   const product = productForOfficialPrice(app, plans[0].urlSlug);
-  return { id: app, name: product?.label ?? plans[0].appName, product, plans };
+  return { id: app, name: product?.label ?? plans[0].appName, product, plans, defaultPath: defaultOfficialPricePlan(plans)!.pathname };
 }).sort((a, b) => {
   const order = (id: string) => { const i = quickPlanProducts.findIndex(p => p.id === id); return i < 0 ? 999 : i; };
   return order(a.product?.id ?? a.id) - order(b.product?.id ?? b.id);
@@ -81,17 +84,18 @@ function countryFlag(countryCode: string): CountryFlag {
 {(groups.length > 0 || relatedShopSearchTerm || currentGroup) && (
   <section data-telemetry-block={telemetryBlocks.officialPrices.table} class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden data-workspace">
     {(groups.length > 0 || relatedShopSearchTerm) && (
-      <div class="border-b border-base-300 bg-base-100 px-4 py-3">
-        <div class="flex flex-col gap-3">
+      <div class="data-workspace-controls">
+        <div class="data-workspace-control-stack">
           {groups.length > 0 && (
             <nav class="official-plan-groups" aria-label={t.officialPrice.navLabel}>
               <div class="official-brand-row">
-                {productGroups.map(product => <a href={linkTo(product.plans[0].pathname)} class="plan-option plan-product" aria-current={currentProduct?.id === product.id ? 'true' : undefined}>
+                <a href={linkTo('/official-price')} class="plan-option plan-product">{t.shops.allPlans}</a>
+                {productGroups.map(product => <a href={linkTo(product.defaultPath)} class="plan-option plan-product" aria-current={currentProduct?.id === product.id ? 'true' : undefined}>
                   {product.product?.icon ? <img src={productIconPath(product.product.icon)} alt="" width="18" height="18" class:list={['plan-brand-icon', product.product.monochrome && 'plan-icon-mono']} /> : <span class="plan-letter" aria-hidden="true">{product.product?.symbol || product.name.slice(0, 1)}</span>}
                   {product.name}
                 </a>)}
               </div>
-              {currentProduct && <div class="official-package-row">
+              {currentProduct && <div class="plan-group-options">
                 <span class="plan-panel-label">{t.shops.productPlans.replace('{product}', currentProduct.name)}</span>
                 <div class="plan-package-scroll">
                   {currentProduct.plans.map(group => {
@@ -105,39 +109,11 @@ function countryFlag(countryCode: string): CountryFlag {
             </nav>
           )}
           {relatedShopSearchTerm && (
-            <div class="flex flex-row flex-wrap items-center justify-start gap-2">
-              {relatedGatewayTipPath && (
-                <a
-                  href={relatedGatewayTipPath}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="data-crosslink inline-flex"
-                  data-umami-event="internal-link-click" data-umami-event-link-type="official-price-gateway-tip"
-                  data-umami-event-url={relatedGatewayTipPath}
-                  data-umami-event-name={relatedGatewayFamilyName}
-                >
-                  <span>{t.officialPrice.gatewayTip.replace('{term}', relatedGatewayFamilyName)}</span>
-                  <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m13 6 6 6-6 6"></path>
-                  </svg>
-                </a>
-              )}
-              <a
-                href={relatedShopSearchPath}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="data-crosslink inline-flex"
-                data-umami-event="internal-link-click" data-umami-event-link-type="official-price-shop-tip"
-                data-umami-event-url={relatedShopSearchPath}
-                data-umami-event-name={relatedShopSearchTerm.label}
-              >
-                <span>{t.officialPrice.shopProductsTip.replace('{term}', relatedShopSearchTerm.label)}</span>
-                <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="m13 6 6 6-6 6"></path>
-                </svg>
-              </a>
+            <div class="data-workspace-related">
+              {relatedGatewayTipPath && <RelatedLink href={relatedGatewayTipPath} label={t.officialPrice.gatewayTip.replace('{term}', relatedGatewayFamilyName)} target="_blank" data-umami-event="internal-link-click" data-umami-event-link-type="official-price-gateway-tip" data-umami-event-url={relatedGatewayTipPath} data-umami-event-name={relatedGatewayFamilyName} />}
+              <RelatedLink href={relatedShopSearchPath} label={t.officialPrice.shopProductsTip.replace('{term}', relatedShopSearchTerm.label)} target="_blank" data-umami-event="internal-link-click" data-umami-event-link-type="official-price-shop-tip" data-umami-event-url={relatedShopSearchPath} data-umami-event-name={relatedShopSearchTerm.label} />
+              {relatedShopSearchTerm.gatewayFamily && <RelatedLink href={linkTo(leaderboardFamilyPath(relatedShopSearchTerm.gatewayFamily))} label={t.shops.leaderboardTip.replace('{term}', relatedGatewayFamilyName)} />}
+
             </div>
           )}
         </div>
@@ -145,7 +121,7 @@ function countryFlag(countryCode: string): CountryFlag {
     )}
     {currentGroup && (
       <>
-        <div class="official-baseline-summary"><span>{t.officialPrice.usBaseline}</span>{baseline ? <><strong>{baseline.priceText} {baseline.currencyCode}</strong><span>≈ {baseline.equivalentPriceText}</span></> : <span>{t.officialPrice.baselineUnavailable}</span>}</div>
+        <div class="official-baseline-summary"><span>{t.officialPrice.baseline}</span>{baseline ? <><strong>{baseline.localizedCountryLabel} {baseline.priceText} {baseline.currencyCode}</strong><span>≈ {baseline.equivalentPriceText}</span></> : <span>{t.officialPrice.baselineUnavailable}</span>}</div>
         <DataTable
           variant="compact"
           emptyText={t.officialPrice.empty}
@@ -157,7 +133,7 @@ function countryFlag(countryCode: string): CountryFlag {
             <DataTableHeader label={t.officialPrice.localPrice} helpTip={t.officialPrice.note} sortKey="price" sortType="number" />
             <DataTableHeader label={t.officialPrice.currency} sortKey="currency" sortType="text" />
             <DataTableHeader label={t.officialPrice.cnyPrice} helpTip={t.officialPrice.description} sortKey="equivalentPrice" sortType="number" />
-            <DataTableHeader label={t.officialPrice.comparedToUs} sortKey="difference" sortType="number" align="right" />
+            <DataTableHeader label={t.officialPrice.comparedToBaseline} sortKey="difference" sortType="number" align="right" />
           </Fragment>
           {currentGroup.prices.map((item, idx) => {
             const flag = countryFlag(item.countryCode);
@@ -171,7 +147,7 @@ function countryFlag(countryCode: string): CountryFlag {
                 <DataTableCell label={t.officialPrice.localPrice} align="right">{item.priceText}</DataTableCell>
                 <DataTableCell label={t.officialPrice.currency}><span class="official-price-secondary">{item.currencyCode}</span></DataTableCell>
                 <DataTableCell label={t.officialPrice.cnyPrice} align="right"><span class="official-price-value">{item.equivalentPriceText}</span>{baseline && <span class:list={['official-price-meter', difference !== null && difference < -.05 && 'is-lower', difference !== null && difference > .05 && 'is-higher']} aria-hidden="true"><i style={`width:${item.cnyPrice / maximumPrice * 100}%`}></i><b style={`left:${baseline.cnyPrice / maximumPrice * 100}%`}></b></span>}</DataTableCell>
-                <DataTableCell label={t.officialPrice.comparedToUs} align="right"><OfficialPriceComparison percent={difference} baseline={item === baseline} /></DataTableCell>
+                <DataTableCell label={t.officialPrice.comparedToBaseline} align="right"><OfficialPriceComparison percent={difference} baseline={item === baseline} /></DataTableCell>
               </tr>
             );
           })}
@@ -190,7 +166,4 @@ function countryFlag(countryCode: string): CountryFlag {
 <style>
   .official-plan-groups { display: grid; gap: 12px; min-width: 0; }
   .official-brand-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-  .official-package-row { display: flex; gap: 12px; align-items: center; min-width: 0; border-top: 1px solid var(--color-base-300); padding-top: 10px; }
-  .official-plan-groups .plan-option[aria-current] { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-base-100)); border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-base-300)); }
-  @media (max-width: 540px) { .official-package-row { align-items: flex-start; flex-direction: column; gap: 7px; } }
 </style>

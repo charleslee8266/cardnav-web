@@ -1,5 +1,5 @@
-import { getProviderIcon } from './provider-icons.js';
-import { gatewayProviderSlug, quickPlanProducts, productIconPath } from './shop-plan-search.js';
+import { getProviderIcon, isMonochromeProviderIcon } from './models/provider-icons.js';
+import { getModelFamilyIcon } from './models/family-icons.js';
 
 /** Shared presentation for stored scores and update times. */
 export function scorePresentation(value: number | null | undefined, maximum = 100) {
@@ -22,14 +22,21 @@ export function createScoreDisplay(value: number | null | undefined) {
   meter.append(fill); span.append(meter);
   return span;
 }
-/** Reuse the product registry so provider marks have one asset source. */
+/** Provider logos and model-family marks have independent registries. */
 export function providerPresentation(name: string) {
-  const slug = gatewayProviderSlug(name);
-  const product = quickPlanProducts.find(item => item.gateway?.id === slug);
-  return { name, icon: product?.icon ? productIconPath(product.icon) : getProviderIcon(name) || '', monochrome: product?.monochrome ?? false };
+  return { name, icon: getProviderIcon(name) || '', monochrome: isMonochromeProviderIcon(name) };
 }
 export function createProviderLabel(name: string) {
-  const provider = providerPresentation(name);
+  return createBrandLabel(providerPresentation(name));
+}
+export function modelFamilyPresentation(name: string) {
+  const asset = getModelFamilyIcon(name);
+  return { name, icon: asset?.path || '', monochrome: asset?.monochrome ?? false };
+}
+export function createModelFamilyLabel(name: string) {
+  return createBrandLabel(modelFamilyPresentation(name));
+}
+function createBrandLabel(provider: { name: string; icon: string; monochrome: boolean }) {
   const label = document.createElement('span');
   label.className = 'data-provider';
   if (provider.icon) {

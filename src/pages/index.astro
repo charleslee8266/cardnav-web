@@ -1,22 +1,26 @@
 ---
+import { gatewayModelPath } from '../models/routes.js';
 /*
 文件说明: 渲染 CardNav 公开首页，按卡片模块展示模型、订阅价格、热门产品和卡网商家入口。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import PublicPage from '../layouts/PublicPage.astro';
+import ShopPlanGroups from '../components/ShopPlanGroups.astro';
 import Sponsors from '../components/Sponsors.astro';
 import { localizeModelLeaderboardGroups, localizeOfficialPriceGroups } from '../localized-display.js';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildOfficialPriceGroups, matchOfficialPriceCatalogEntries } from '../official-price.js';
 import Icon from '../components/Icon.astro';
-import ProviderLabel from '../components/ProviderLabel.astro';
+import ModelFamilyLabel from '../components/ModelFamilyLabel.astro';
 import RefreshTime from '../components/RefreshTime.astro';
-import { quickPlanProducts, quickProductDefaultPlan, quickPlanSearchSeoPath, productForOfficialPrice, productIconPath } from '../shop-plan-search.js';
-import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
+import { productForOfficialPrice } from '../models/product-catalog.js';
+import { productIconPath } from '../models/product-icons.js';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
 import {
   loadShopProductsData,
+  loadOfficialPriceStats,
+  loadModelLeaderboardStats,
   loadModelLeaderboardRowsForTask,
   loadModelLeaderboardTaskSlugs,
   loadOfficialPriceCatalog,
@@ -36,11 +40,15 @@ const preferredOfficialPlans = [
   { app: 'claude', plan: 'pro' },
   { app: 'claude', plan: '20x' },
 ];
-const shopProductsData = await loadShopProductsData({ productLimit: 5 });
-const officialPriceCatalog = await loadOfficialPriceCatalog();
-const leaderboardTaskSlugs = await loadModelLeaderboardTaskSlugs();
-const gatewayData = await loadGatewaySites();
-const gatewayModelData = await loadGatewayModels();
+const [shopProductsData, officialPriceCatalog, leaderboardTaskSlugs, gatewayData, gatewayModelData, officialPriceStats, leaderboardStats] = await Promise.all([
+  loadShopProductsData({ productLimit: 5 }),
+  loadOfficialPriceCatalog(),
+  loadModelLeaderboardTaskSlugs(),
+  loadGatewaySites(),
+  loadGatewayModels(),
+  loadOfficialPriceStats(),
+  loadModelLeaderboardStats(),
+]);
 const matchedOfficialEntries = matchOfficialPriceCatalogEntries(officialPriceCatalog, preferredOfficialPlans);
 const officialPrices: PublicOfficialPriceRow[] = [];
 for (const entry of matchedOfficialEntries) {
@@ -71,7 +79,6 @@ const pathCards = [
   { title: t.home.leaderboardPathTitle, feature: t.nav.modelLeaderboard, description: t.home.leaderboardPathShortDescription, href: '/model-leaderboard', icon: 'trophy' },
   { title: t.home.guidePathTitle, feature: t.nav.guide, description: t.home.guidePathShortDescription, href: '/guide', icon: 'book' },
 ] as const;
-const hotTerms = quickPlanProducts.filter(product => !product.hiddenFromQuickFilters).slice(0, 6).map(product => ({ label: product.label, href: quickPlanSearchSeoPath(quickProductDefaultPlan(product)) }));
 
 const toolCards = [
   {
@@ -123,7 +130,7 @@ const modelHighlightGroups = localizeModelLeaderboardGroups(
 
 const gatewayHighlights = gatewayData.sites.slice(0, 5).map(site => ({
   title: site.name,
-  providers: site.displayModelProviders.slice(0, 3),
+  providers: site.displayModelFamilies.slice(0, 3),
   meta: site.host,
   value: site.modelCount > 0 ? t.home.gatewayModelCountLabel.replace('{count}', String(site.modelCount)) : t.home.noGatewayModelData,
   href: `/llm-gateway/${site.slug}`,
@@ -131,10 +138,10 @@ const gatewayHighlights = gatewayData.sites.slice(0, 5).map(site => ({
 
 const gatewayModelHighlights = gatewayModelData.models.slice(0, 5).map(model => ({
   title: model.modelId,
-  providers: [model.modelProvider],
+  providers: model.modelFamily ? [model.modelFamily] : [],
   meta: '',
   value: t.home.gatewaySupportCountLabel.replace('{count}', String(model.supportSiteCount)),
-  href: `/llm-gateway/models/${encodeURIComponent(model.modelId)}`,
+  href: gatewayModelPath(model.modelId),
 }));
 
 const productHighlights = shopProductsData.products.slice(0, 5).map(product => ({
@@ -179,11 +186,13 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
       <input name="q" type="search" placeholder={t.home.searchPlaceholder} aria-label={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
       <button type="submit" class="btn btn-primary">{t.actions.search}</button>
     </form>
-    <div class="home-hot-terms">{hotTerms.map(term => <a href={linkTo(term.href)} {...homeCtaClickAttrs(term.href, term.label)}>{term.label}</a>)}</div>
+    <div class="home-hot-terms"><ShopPlanGroups mode="navigate" productLimit={8} initialSearchQuery="" officialPriceUrlSlugs={new Set<string>()} /></div>
     <div class="home-stat-line">
-      <span>{t.labels.collectedSites}<b>{shopProductsData.totalSiteCount.toLocaleString(Astro.locals.locale)}</b></span>
-      <span>{t.labels.products}<b>{shopProductsData.totalProductCount.toLocaleString(Astro.locals.locale)}</b></span>
-      <span>{t.nav.mobileLlmGateway}<b>{gatewayData.sites.length.toLocaleString(Astro.locals.locale)}</b></span>
+      <a href={linkTo('/shops?tab=merchants')}>{t.labels.collectedSites}<b>{shopProductsData.totalSiteCount.toLocaleString(Astro.locals.locale)}</b></a>
+      <a href={linkTo('/shops')}>{t.labels.products}<b>{shopProductsData.totalProductCount.toLocaleString(Astro.locals.locale)}</b></a>
+      <a href={linkTo('/llm-gateway')}>{t.nav.mobileLlmGateway}<b>{gatewayData.totalSiteCount.toLocaleString(Astro.locals.locale)}</b></a>
+      <a href={linkTo('/official-price')}>{t.home.subscriptionPlans}<b>{officialPriceStats.productCount.toLocaleString(Astro.locals.locale)}</b></a>
+      <a href={linkTo('/model-leaderboard')}>{t.home.modelLeaderboard}<b>{leaderboardStats.modelCount.toLocaleString(Astro.locals.locale)}</b></a>
       {shopProductsData.latestRefreshedAt && <span>{t.labels.latestRefresh}<b><RefreshTime timestamp={shopProductsData.latestRefreshedAt} /></b></span>}
     </div>
   </section>
@@ -212,7 +221,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
           <button type="button" data-home-tab="gateway-models" aria-controls="gateway-models" aria-pressed="false">{t.llmGateway.modelView}</button>
         </div><a class="home-more" href={linkTo('/llm-gateway')} {...homeCtaClickAttrs('/llm-gateway', t.home.openGateway)}>{t.home.openGateway}<Icon name="right" /></a></header>
         {[{id:'gateway-sites', rows:gatewayHighlights}, {id:'gateway-models', rows:gatewayModelHighlights}].map((group, index) => <div id={group.id} data-home-panel hidden={index !== 0}>
-          <ul class="home-highlight-list">{group.rows.map(item => <li><a href={linkTo(item.href)} {...homeCtaClickAttrs(item.href, item.title)}><span class="home-row-title">{item.title}</span><span class="home-gateway-detail"><span class="home-row-value">{item.value}</span><span class="home-row-providers">{item.providers.map(provider => <ProviderLabel name={provider} />)}</span></span></a></li>)}</ul>
+          <ul class="home-highlight-list">{group.rows.map(item => <li><a href={linkTo(item.href)} {...homeCtaClickAttrs(item.href, item.title)}><span class="home-row-title">{item.title}</span><span class="home-gateway-detail"><span class="home-row-value">{item.value}</span><span class="home-row-providers">{item.providers.map(provider => <ModelFamilyLabel name={provider} />)}</span></span></a></li>)}</ul>
           {!group.rows.length && <p class="home-empty">{t.llmGateway.empty}</p>}
         </div>)}
       </article>
@@ -234,7 +243,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
     </div>
   </section>
   <script is:inline slot="scripts" type="application/json" id="home-search-config" set:html={JSON.stringify({ shopsPath: linkTo('/shops') })}></script>
-  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+  <script>import '../scripts/page-widgets.js';</script>
 </PublicPage>
 <script>
   document.querySelectorAll('[data-home-tabs]').forEach(group => {

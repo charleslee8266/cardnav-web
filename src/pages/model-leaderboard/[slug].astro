@@ -11,6 +11,7 @@ import { publicSiteUrl } from '../../site.js';
 import { loadModelLeaderboardStats, loadModelLeaderboardRowsForTaskPage, loadModelLeaderboardTaskSlugs } from '../../store.js';
 
 const taskSlug = Astro.params.slug || '';
+const family = Astro.url.searchParams.getAll('family');
 const initialRowCount = 30;
 const [taskSlugs, stats] = await Promise.all([loadModelLeaderboardTaskSlugs(), loadModelLeaderboardStats()]);
 const activePage = await loadModelLeaderboardRowsForTaskPage(taskSlug, { limit: initialRowCount });
@@ -41,7 +42,7 @@ const seo = buildSeoContext({
 ---
 
 <PublicPage activeNav="model-leaderboard" pageType="model-leaderboard-detail" {...seo}>
-  <ModelLeaderboardContent stats={stats} pageType="model-leaderboard-detail" groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updatedAt={latestFetchedAt} />
+  <ModelLeaderboardContent providers={Astro.url.searchParams.getAll('provider')} query={Astro.url.searchParams.get('q') || ''} family={family} stats={stats} pageType="model-leaderboard-detail" groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updatedAt={latestFetchedAt} />
   <script>
     import '../../scripts/data-table.js';
     import '../../scripts/deferred-table-core.js';

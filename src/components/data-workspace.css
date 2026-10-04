@@ -1,5 +1,6 @@
 /* V3 explorer controls: 36px inputs on one toolbar; secondary choices below. */
 .data-workspace { min-width: 0; overflow: visible; }
+.data-workspace-control-stack { display: flex; flex-direction: column; gap: 10px; }
 .data-workspace-controls { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 12px; border-bottom: 1px solid var(--color-base-300); }
 .data-workspace-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .data-workspace-search { flex: 1; min-width: 240px; }
@@ -52,3 +53,10 @@
 
 .data-crosslink { width: fit-content; align-items: center; gap: 6px; min-height: 30px; padding: 4px 10px; border: 1px solid var(--color-brand-line); border-radius: 7px; background: var(--color-brand-soft); color: var(--color-primary); font-size: 12px; font-weight: 550; line-height: 1.5; text-decoration: none; }
 .data-crosslink:hover { background: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100)); border-color: var(--color-primary);  }
+
+/* Secondary controls occupy their own row and disappear when empty. */
+.data-workspace-related { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.data-workspace-related:not(:has(a:not([hidden]):not(.hidden))), .data-workspace-summary:not(:has([data-filter-summary]:not([hidden]))) { display: none; }
+.data-workspace-controls > * { margin-block: 0; }
+
+.data-filter-chip > img { width: 16px; height: 16px; flex: 0 0 16px; object-fit: contain; }

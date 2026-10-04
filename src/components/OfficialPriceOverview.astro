@@ -9,7 +9,8 @@ import Sponsors from './Sponsors.astro';
 import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
-import { productForOfficialPrice, productIconPath } from '../shop-plan-search.js';
+import { productForOfficialPrice, defaultOfficialPricePlan } from '../models/product-catalog.js';
+import { productIconPath } from '../models/product-icons.js';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import './data-workspace.css';
@@ -17,7 +18,12 @@ type Props = { stats: import('../store.js').PublicOfficialPriceStats; groups: Lo
 const { groups, updatedAt, stats } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const brands = Array.from(new Map(groups.map(group => [group.appSlug, { name: group.appName, product: productForOfficialPrice(group.appSlug, group.urlSlug) }])).entries());
+const brands = Array.from(new Set(groups.map(group => group.appSlug)), appSlug => {
+  const plans = groups.filter(group => group.appSlug === appSlug);
+  const product = productForOfficialPrice(appSlug, plans[0].urlSlug);
+  const defaultPlan = defaultOfficialPricePlan(plans)!;
+  return { name: plans[0].appName, product, pathname: defaultPlan.pathname };
+});
 const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 65)).join('') : '';
 ---
 <PageHero title={t.officialPrice.title} description={t.officialPrice.heroDescription}>
@@ -25,13 +31,13 @@ const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => S
 </PageHero>
 <Sponsors placement="after-hero" pageType="official-price" />
 <section class="official-overview card data-workspace" data-telemetry-block={telemetryBlocks.officialPrices.table}>
-  <nav class="official-overview-brands" aria-label={t.officialPrice.navLabel}>
-    <button class="plan-option plan-product" type="button" data-official-brand="" aria-pressed="true">{t.shops.allPlans}</button>
-    {brands.map(([id, brand]) => <button class="plan-option plan-product" type="button" data-official-brand={id} aria-pressed="false">
+  <div class="data-workspace-controls"><nav class="official-overview-brands" aria-label={t.officialPrice.navLabel}>
+    <a class="plan-option plan-product" href={linkTo('/official-price')} aria-current="page">{t.shops.allPlans}</a>
+    {brands.map(brand => <a class="plan-option plan-product" href={linkTo(brand.pathname)}>
       {brand.product?.icon && <img src={productIconPath(brand.product.icon)} width="18" height="18" alt="" class:list={['plan-brand-icon', brand.product.monochrome && 'plan-icon-mono']} />}
       {brand.product?.label || brand.name}
-    </button>)}
-  </nav>
+    </a>)}
+  </nav></div>
   {groups.length > 0 && <div class="official-overview-table">
     <DataTable variant="compact" >
       <Fragment slot="head">
@@ -47,7 +53,7 @@ const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => S
         const product = productForOfficialPrice(group.appSlug, group.urlSlug);
         const baseline = officialPriceBaseline(group.prices);
         const difference = price ? officialPriceDifference(price, baseline) : null;
-        return price && <tr data-sort-baseline={baseline?.equivalentPrice ?? ""} data-sort-difference={difference ?? ""} data-sort-name={group.displayName} data-sort-country={price.localizedCountryLabel} data-sort-price={price.priceValue} data-sort-equivalent-price={price.equivalentPrice} data-official-summary-brand={group.appSlug}>
+        return price && <tr data-sort-baseline={baseline?.equivalentPrice ?? ""} data-sort-difference={difference ?? ""} data-sort-name={group.displayName} data-sort-country={price.localizedCountryLabel} data-sort-price={price.priceValue} data-sort-equivalent-price={price.equivalentPrice}>
           <DataTableCell label={t.labels.sequence} sequence align="center">{index + 1}</DataTableCell>
           <DataTableCell label={t.labels.product}><a data-row-primary href={linkTo(group.pathname)} class="official-plan-name merchant-link">{product?.icon ? <img src={productIconPath(product.icon)} width="22" height="22" alt="" class:list={['plan-brand-icon', product.monochrome && 'plan-icon-mono']} /> : product?.symbol && <span class="official-brand-symbol" aria-hidden="true">{product.symbol}</span>}{group.displayName}</a></DataTableCell>
           <DataTableCell label={t.officialPrice.baselinePrice} align="right">{baseline ? <><span class="official-price-value">{baseline.equivalentPriceText}</span><small class="official-price-secondary">{baseline.priceText} {baseline.currencyCode}</small></> : <span title={t.officialPrice.baselineUnavailable}>—</span>}</DataTableCell>
@@ -60,24 +66,10 @@ const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => S
   </div>}
   {!groups.length && <p class="data-table-empty-state">{t.officialPrice.empty}</p>}
 </section>
-<script>
-  const table = document.querySelector<HTMLElement>('.official-overview-table [data-table]');
-  const body = table?.querySelector('tbody');
-  const rows = Array.from(body?.querySelectorAll<HTMLTableRowElement>('tr') || []);
-  rows.forEach((row, index) => { row.dataset.originalOrder = String(index); });
-  document.querySelectorAll<HTMLButtonElement>('[data-official-brand]').forEach(button => {
-    button.addEventListener('click', () => {
-      const brand = button.dataset.officialBrand;
-      document.querySelectorAll('[data-official-brand]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-      body?.replaceChildren(...rows.filter(row => !brand || row.dataset.officialSummaryBrand === brand));
-      const api = window as Window & { applyDataTableSort?: (table: HTMLElement) => void };
-      if (table) api.applyDataTableSort?.(table);
-    });
-  });
-</script>
+
 <style>
   .official-overview { min-width: 0; border: 1px solid var(--color-base-300); background: var(--color-base-100); overflow: hidden; }
-  .official-overview-brands { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 14px 16px 12px; border-bottom: 1px solid var(--color-base-300); }
+  .official-overview-brands { display: flex; align-items: center; gap: 6px; overflow-x: auto; }
   .official-overview-table { min-width: 0; }
   .official-plan-name { display: inline-flex; align-items: center; gap: 10px; }
   .official-brand-symbol { display: inline-grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; font-size: 22px; line-height: 1; }

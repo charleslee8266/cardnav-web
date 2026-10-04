@@ -14,6 +14,7 @@ type Props = {
 };
 
 const { kind = 'sponsor', label, description, href, linkLabel } = Astro.props;
+const sentenceEnd = Astro.locals.messages.shops.submitTypeSentenceEnd;
 const tooltipId = `merchant-disclosure-${randomUUID()}`;
 ---
 
@@ -22,7 +23,7 @@ const tooltipId = `merchant-disclosure-${randomUUID()}`;
     <span class="min-w-0 truncate">{label}</span>
     <button type="button" class="merchant-badge-info" popovertarget={tooltipId} aria-label={`${label} · ${description}`} aria-haspopup="dialog">i</button>
     <span id={tooltipId} class="merchant-badge-tooltip public-floating-layer" popover="auto" role="dialog" aria-label={label}>
-      {description} <a href={href} class="merchant-badge-link" data-umami-event="internal-link-click" data-umami-event-link-type={kind === 'support' ? 'support-list' : 'sponsor-lead'} data-umami-event-url={href}>{linkLabel}</a>
+      {description} <a href={href} class="merchant-badge-link" data-umami-event="internal-link-click" data-umami-event-link-type={kind === 'support' ? 'support-list' : 'sponsor-lead'} data-umami-event-url={href}>{linkLabel}</a>{sentenceEnd}
     </span>
   </span>
 </span>

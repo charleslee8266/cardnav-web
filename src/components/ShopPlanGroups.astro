@@ -1,12 +1,13 @@
 ---
-import { type QuickPlanSearchTerm, quickPlanProducts, productIconPath, quickProductDefaultPlan, quickProductSearchTerm, quickProductSearchQuery, quickPlanShortLabel, quickPlanDisplayName, quickPlanHeroName, quickPlanSearchSeoPath, quickPlanGatewayPath, quickPlanGatewayFamilyName } from '../shop-plan-search.js';
-import { officialPricePathname } from '../official-price.js';
+import { type QuickPlanSearchTerm, quickPlanProducts, quickProductDefaultPlan, quickProductSearchTerm, quickProductSearchQuery, quickPlanShortLabel, quickPlanDisplayName, quickPlanHeroName, quickPlanSearchSeoPath, quickPlanGatewayPath, quickPlanGatewayFamilyName } from '../models/product-catalog.js';
+import { productIconPath } from '../models/product-icons.js';
+import { officialPricePathname } from '../models/routes.js';
 import { autoCategoryLabel } from '../shop-auto-category.js';
-type Props = { mode?: 'filter' | 'navigate'; initialSearchQuery: string; officialPriceUrlSlugs: Set<string> };
-const { initialSearchQuery, officialPriceUrlSlugs, mode = 'filter' } = Astro.props;
+type Props = { mode?: 'filter' | 'navigate'; productLimit?: number; initialSearchQuery: string; officialPriceUrlSlugs: Set<string> };
+const { initialSearchQuery, officialPriceUrlSlugs, mode = 'filter', productLimit } = Astro.props;
 const linkTo = Astro.locals.localizePath;
 const language = Astro.locals.locale;
-const visibleProducts = quickPlanProducts.filter(product => !product.hiddenFromQuickFilters);
+const visibleProducts = quickPlanProducts.filter(product => !product.hiddenFromQuickFilters).slice(0, productLimit);
 const groups = mode === 'filter' ? visibleProducts.filter(product => product.terms.length > 1) : [];
 const initialProduct = quickPlanProducts.find(product => (product.terms.some(term => term.query === initialSearchQuery) || quickProductSearchQuery(product.id) === initialSearchQuery));
 function navigationProps(term: QuickPlanSearchTerm) {
@@ -24,7 +25,7 @@ function buttonProps(term: QuickPlanSearchTerm) {
     'data-quick-plan-path': linkTo(quickPlanSearchSeoPath(term)),
     'data-official-price-path': term.officialPriceSlug && officialPriceUrlSlugs.has(term.officialPriceSlug) ? linkTo(officialPricePathname(term.officialPriceSlug)) : undefined,
     'data-gateway-path': quickPlanGatewayPath(term) ? linkTo(quickPlanGatewayPath(term)) : undefined,
-    'data-gateway-provider': term.gatewayProvider,
+    'data-gateway-family': term.gatewayFamily,
     'data-gateway-product-name': quickPlanGatewayFamilyName(term),
     'aria-label': term.label,
     'aria-pressed': initialSearchQuery === term.query,

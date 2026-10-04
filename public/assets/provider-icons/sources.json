@@ -113,6 +113,157 @@
       "contentType": "image/png",
       "file": "midjourney.png",
       "sourceType": "Official organization avatar"
+    },
+    "SpaceXAI": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "spacexai.svg"
+    },
+    "Tencent": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "tencent.svg"
+    },
+    "Xiaomi": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "xiaomi.svg"
+    },
+    "StepFun": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "stepfun.svg"
+    },
+    "Thinky": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "thinky.svg"
+    },
+    "Upstage": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "upstage.svg"
+    },
+    "Poolside": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "poolside.svg"
+    },
+    "IBM": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "ibm.svg"
+    },
+    "Inception AI": {
+      "homepage": "https://arena.ai/leaderboard/code/webdev",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "inception-ai.svg"
+    },
+    "Baidu": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "baidu.svg"
+    },
+    "Meituan": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "meituan.svg"
+    },
+    "Nvidia": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "nvidia.svg"
+    },
+    "Amazon": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "amazon.svg"
+    },
+    "Cohere": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "cohere.svg"
+    },
+    "Ai2": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "ai2.svg"
+    },
+    "Ant Group": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "ant-group.svg"
+    },
+    "Microsoft": {
+      "homepage": "https://arena.ai/leaderboard/text/creative-writing",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "microsoft.svg"
+    },
+    "Microsoft AI": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "microsoft-ai.svg"
+    },
+    "Reve": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "reve.svg"
+    },
+    "Ideogram": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "ideogram.svg"
+    },
+    "Luma AI": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "luma-ai.svg"
+    },
+    "Recraft": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "recraft.svg"
+    },
+    "Krea": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "krea.svg"
+    },
+    "HiDream": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "hidream.svg"
+    },
+    "Runway": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "runway.svg"
+    },
+    "Leonardo AI": {
+      "homepage": "https://arena.ai/leaderboard/text-to-image",
+      "source": "Inline manufacturer SVG in the Arena leaderboard model cell",
+      "file": "leonardo-ai.svg"
+    },
+    "OpenAI": {
+      "homepage": "https://arena.ai/leaderboard",
+      "iconLink": "https://arena.ai/leaderboard",
+      "contentType": "image/svg+xml",
+      "file": "openai.svg",
+      "source": "Organization logo embedded in Arena leaderboard"
+    },
+    "Anthropic": {
+      "homepage": "https://arena.ai/leaderboard",
+      "iconLink": "https://arena.ai/leaderboard",
+      "contentType": "image/svg+xml",
+      "file": "anthropic.svg",
+      "source": "Organization logo embedded in Arena leaderboard"
+    },
+    "Google": {
+      "homepage": "https://arena.ai/leaderboard",
+      "iconLink": "https://arena.ai/leaderboard",
+      "contentType": "image/svg+xml",
+      "file": "google.svg",
+      "source": "Organization logo embedded in Arena leaderboard"
     }
   }
 }

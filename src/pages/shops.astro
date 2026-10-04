@@ -1,5 +1,9 @@
 ---
+import PlatformLabel from '../components/PlatformLabel.astro';
+import MultiSelectFilter from '../components/MultiSelectFilter.astro';
+import FilterSummary from '../components/FilterSummary.astro';
 import Icon from '../components/Icon.astro';
+import RelatedLink from '../components/RelatedLink.astro';
 /*
 文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
 */
@@ -16,17 +20,16 @@ import PublicPage from '../layouts/PublicPage.astro';
 import DataTable from '../components/DataTable.astro';
 import DataTableHeaderControl from '../components/DataTableHeaderControl.astro';
 import DataTableHeader from '../components/DataTableHeader.astro';
-import { officialPricePathname } from '../official-price.js';
+import { leaderboardFamilyPath, officialPricePathname } from '../models/routes.js';
 import { buildSeoContext } from '../seo.js';
-import { quickPlanHeroName, quickPlanDisplayName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, type QuickPlanSearchTerm } from '../shop-plan-search.js';
+import { quickPlanHeroName, quickPlanDisplayName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, type QuickPlanSearchTerm } from '../models/product-catalog.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
-import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
 import Sponsors from '../components/Sponsors.astro';
 import type { PageType } from '../page-types.js';
 import { packShopProductsData } from '../shop-products-data.js';
-import { loadOfficialPriceCatalog, loadShopProductsData } from '../store.js';
+import { loadOfficialPriceCatalog, loadShopProductsData, loadShopPlatformOptions } from '../store.js';
 
 type Props = {
   seoSearchTerm?: QuickPlanSearchTerm | null;
@@ -39,7 +42,8 @@ const linkTo = Astro.locals.localizePath;
 const requestUrl = new URL(Astro.request.url);
 const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
 const pageType = Astro.props.pageType ?? (seoSearchTerm ? 'shop-keyword' : 'shops');
-const initialSearchQuery = seoSearchTerm?.query ?? requestUrl.searchParams.get('q')?.trim() ?? '';
+const initialSearchQuery = requestUrl.searchParams.get('q')?.trim() ?? '';
+const initialCategoryQuery = seoSearchTerm?.query ?? (requestUrl.searchParams.get('category') ? `autocat: ${requestUrl.searchParams.get('category')}` : '');
 const initialFuzzySearch = requestUrl.searchParams.get('fuzzy') === '1';
 const seoSearchPageMeta = seoSearchTerm
   ? buildShopSearchPageMeta(quickPlanDisplayName(seoSearchTerm), {
@@ -55,6 +59,7 @@ const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/sh
 const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
 const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true });
 const officialPriceCatalog = await loadOfficialPriceCatalog();
+const platformOptions = await loadShopPlatformOptions();
 const officialPriceUrlSlugs = new Set(officialPriceCatalog.map(entry => entry.urlSlug.trim()).filter(Boolean));
 const initialOfficialPricePath = seoSearchTerm?.officialPriceSlug && officialPriceUrlSlugs.has(seoSearchTerm.officialPriceSlug)
   ? linkTo(officialPricePathname(seoSearchTerm.officialPriceSlug))
@@ -67,7 +72,9 @@ const initialGatewayTipPath = initialGatewayPath ? linkTo(initialGatewayPath) : 
 const initialGatewayTipLabel = initialGatewayTipPath
   ? t.shops.gatewayTip.replace('{term}', seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : '')
   : '';
-const hasInitialQuickPlanTip = Boolean(initialOfficialPricePath || initialGatewayTipPath);
+const initialLeaderboardTipPath = seoSearchTerm?.gatewayFamily ? linkTo(leaderboardFamilyPath(seoSearchTerm.gatewayFamily)) : '';
+const initialLeaderboardTipLabel = seoSearchTerm ? t.shops.leaderboardTip.replace('{term}', quickPlanGatewayFamilyName(seoSearchTerm)) : '';
+const hasInitialQuickPlanTip = Boolean(initialOfficialPricePath || initialGatewayTipPath || initialLeaderboardTipPath);
 const renderedProducts = data.products.map(product => ({
   id: product.id,
   categoryName: product.categoryName,
@@ -132,6 +139,7 @@ const shopsScriptMessages = {
   noData: t.shops.script.noData,
   officialPriceTip: t.shops.officialPriceTip,
   gatewayTip: t.shops.gatewayTip,
+  leaderboardTip: t.shops.leaderboardTip,
   hotProductsTitle: t.shops.hotProductsTitle,
   searchResultsTitle: t.shops.searchResultsTitle,
   searchResultsDescription: t.shops.searchResultsDescription,
@@ -188,12 +196,13 @@ type SortColumn = {
   helpHref?: string;
   helpLinkLabel?: string;
 };
+const platformSortColumn: SortColumn = { key: 'platformName', type: 'text', label: t.shops.platform, tip: t.shops.platformHint, helpHref: linkTo('/guide/choose-reliable-merchant'), helpLinkLabel: t.shops.guideTitle };
 const flatSortColumns: SortColumn[] = [
   { key: 'productName', type: 'text', label: t.labels.product },
   { key: 'priceValue', type: 'number', label: t.labels.price },
   { key: 'stockValue', type: 'number', label: t.labels.stock },
   { key: 'score', type: 'number', label: t.labels.productScore, tip: t.shops.productScoreTip, tipLabel: t.shops.productScoreHelpLabel },
-  { key: 'platformName', type: 'text', label: t.shops.platform, tip: t.shops.platformHint, helpHref: linkTo('/guide/choose-reliable-merchant'), helpLinkLabel: t.shops.guideTitle },
+  platformSortColumn,
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
 ] satisfies SortColumn[];
@@ -201,6 +210,7 @@ const rightAlignedProductColumns = new Set(['priceValue', 'stockValue']);
 const merchantTabLabel = t.labels.merchant;
 const merchantSortColumns: SortColumn[] = [
   { key: 'siteName', type: 'text', label: t.labels.merchant },
+  platformSortColumn,
   { key: 'productCount', type: 'number', label: t.labels.productCount },
   { key: 'hotProducts', type: 'number', label: t.shops.hotProductsTitle },
   { key: 'siteScore', type: 'number', label: t.labels.merchantScore, tip: t.shops.merchantScoreTip, tipLabel: t.shops.merchantScoreHelpLabel },
@@ -232,7 +242,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       <HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={data.latestRefreshedAt} fallback={t.labels.notRecorded} /></HeroMetric>
     </div>
     <div slot="aside" class="data-page-actions">
-      <button id="openShopSubmitModal" type="button" class="btn btn-primary btn-sm"
+      <button id="openShopSubmitModal" type="button" class="btn submit-button btn-sm"
         data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops" data-umami-event-name={t.shops.submitMerchant}>
         {t.shops.submitMerchant}
       </button>
@@ -266,7 +276,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip-wide data-tip={t.shops.advancedSearchTip}>i</button>
           </div>
           <div class="data-workspace-search" data-shop-control="merchants" hidden><input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full" placeholder={t.shops.merchantSearchPlaceholder} aria-label={t.shops.merchantSearchPlaceholder} autocomplete="off" /></div>
-          <div data-shop-control="products"><FilterPopover id="searchOptions" label={t.shops.filterOptions} doneLabel={t.shops.done}>
+          <div data-shop-control="products"><FilterPopover id="searchOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+            <MultiSelectFilter name="platform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter>
             <fieldset class="data-filter-group">
               <legend>{t.labels.price} <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button></legend>
               <div class="data-filter-price">
@@ -286,9 +297,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
               <label><input id="onlyPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
               <label><input id="onlyFavoritesFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label>
             </fieldset>
-            <button slot="footer" id="resetShopFilters" type="button" class="btn btn-sm btn-ghost">{t.shops.clearFilters}</button>
           </FilterPopover></div>
-          <div data-shop-control="merchants" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done}><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
+          <div data-shop-control="merchants" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}><MultiSelectFilter name="merchantPlatform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
               <label class="data-filter-switch"><input id="merchantFavoritesFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label></FilterPopover></div>
           <select id="shopSortSelect" data-shop-control="products" class="select select-bordered data-workspace-sort" aria-label={t.shops.sort}>
             <option value="">{t.shops.defaultSort}</option>
@@ -298,49 +308,14 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             <option value="custom" hidden>{t.shops.headerSort}</option>
           </select>
         </div>
-        <div data-shop-control="products" id="shopActiveFilters" class="data-active-filters" aria-live="polite" hidden></div>
-        <div data-shop-control="products"><ShopPlanGroups initialSearchQuery={initialSearchQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} /></div>
-        <div data-shop-control="products" id="quickPlanTips" class:list={['flex flex-wrap items-center gap-2', !hasInitialQuickPlanTip && 'hidden']}>
-          <a
-            id="gatewayTip"
-            href={initialGatewayTipPath || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            class:list={[
-              initialGatewayTipPath ? 'inline-flex' : 'hidden',
-              'data-crosslink',
-            ]}
-            data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-gateway-tip"
-            data-umami-event-url={initialGatewayTipPath || undefined}
-            data-umami-event-name={initialGatewayTipPath && seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : undefined}
-          >
-            <span data-gateway-tip-label>{initialGatewayTipLabel}</span>
-            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14"></path>
-              <path d="m13 6 6 6-6 6"></path>
-            </svg>
-          </a>
-          <a
-            id="officialPriceTip"
-            href={initialOfficialPricePath || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            class:list={[
-              initialOfficialPricePath ? 'inline-flex' : 'hidden',
-              'data-crosslink',
-            ]}
-            data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-official-price-tip"
-            data-umami-event-url={initialOfficialPricePath || undefined}
-            data-umami-event-name={initialOfficialPricePath ? seoSearchTerm?.label : undefined}
-          >
-            <span data-official-price-tip-label>{initialOfficialPriceTipLabel}</span>
-            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14"></path>
-              <path d="m13 6 6 6-6 6"></path>
-            </svg>
-          </a>
+        <div data-shop-control="products"><ShopPlanGroups initialSearchQuery={initialCategoryQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} /></div>
+        <div data-shop-control="products" class="data-workspace-summary"><FilterSummary id="shopActiveFilters" clearLabel={t.shops.clearFilters} /></div>
+        <div data-shop-control="products" id="quickPlanTips" class:list={['data-workspace-related', !hasInitialQuickPlanTip && 'hidden']}>
+          <RelatedLink id="gatewayTip" href={initialGatewayTipPath || '#'} label={initialGatewayTipLabel} labelAttrs={{ 'data-gateway-tip-label': '' }} target="_blank" class={initialGatewayTipPath ? '' : 'hidden'} data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-gateway-tip" data-umami-event-url={initialGatewayTipPath || undefined} />
+          <RelatedLink id="officialPriceTip" href={initialOfficialPricePath || '#'} label={initialOfficialPriceTipLabel} labelAttrs={{ 'data-official-price-tip-label': '' }} target="_blank" class={initialOfficialPricePath ? '' : 'hidden'} data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-official-price-tip" data-umami-event-url={initialOfficialPricePath || undefined} />
+          <RelatedLink id="leaderboardTip" href={initialLeaderboardTipPath || '#'} label={initialLeaderboardTipLabel} target="_blank" class={initialLeaderboardTipPath ? '' : 'hidden'} data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-leaderboard-tip" data-umami-event-url={initialLeaderboardTipPath || undefined} />
         </div>
-        <div id="merchantActiveFilters" data-shop-control="merchants" class="data-active-filters" hidden></div>
+        <div data-shop-control="merchants" class="data-workspace-summary" hidden><FilterSummary id="merchantActiveFilters" clearLabel={t.shops.clearFilters} /></div>
       </form>
     <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products" data-telemetry-block={telemetryBlocks.shops.products}>
 
@@ -421,7 +396,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
 
   <script is:inline type="application/json" id="shop-products-data" set:html={shopProductsJsonValue}></script>
   <script is:inline type="application/json" id="shops-messages" set:html={JSON.stringify(shopsScriptMessages)}></script>
-  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+  <script>import '../scripts/page-widgets.js';</script>
   <script>
     import '../scripts/index.js';
   </script>

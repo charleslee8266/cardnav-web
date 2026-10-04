@@ -7,7 +7,6 @@ import Sponsors from './Sponsors.astro';
 import GuideTree from './GuideTree.astro';
 import ArticleToc from './ArticleToc.astro';
 import './content.css';
-import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
 import type { PageType } from '../page-types.js';
 
@@ -84,4 +83,4 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
   <ArticleToc target="guide-article" />
 </section>
 <Sponsors placement="content-bottom" pageType={pageType} />
-<script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+<script>import '../scripts/page-widgets.js';</script>

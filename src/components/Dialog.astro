@@ -19,15 +19,17 @@ const {
 } = Astro.props;
 ---
 <dialog {...attributes} id={id} class:list={['modal', className]} aria-labelledby={titleId}>
-  <div class:list={['modal-box form-dialog-body', size === 'wide' ? 'form-dialog-wide' : 'form-dialog-compact']}>
+  <div tabindex="-1" autofocus class:list={['modal-box form-dialog-body', size === 'wide' ? 'form-dialog-wide' : 'form-dialog-compact']}>
     <form method="dialog" class="form-dialog-close">
       <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={closeLabel} data-umami-event="button-click" data-umami-event-scope="dialog" data-umami-event-action="close">✕</button>
     </form>
     <header class="form-dialog-header">
     <h2 id={titleId} class="form-dialog-title">{title}</h2>
     {description && <p class="form-dialog-description">{description}</p>}
+    <slot name="description" />
     </header>
     <div class="form-dialog-content"><slot /></div>
+    {Astro.slots.has('footer') && <footer class="form-dialog-footer"><slot name="footer" /></footer>}
   </div>
   <form method="dialog" class="modal-backdrop">
     <button type="submit" aria-label={backdropLabel}>{closeLabel}</button>

@@ -146,3 +146,32 @@ test('all LDXP and WZYP aliases share one canonical storefront URL', () => {
     assert.deepEqual(validatePublicSubmittedUrl(`https://${host}/shop/key`), { ok: true, url: `https://${host}/shop/key` });
   }
 });
+
+test('URL confirmation explains only transformations applied to the submitted address', () => {
+  const changes: import('../src/submitted-url.js').PublicSubmittedUrlChange[] = [];
+  assert.deepEqual(validatePublicSubmittedUrl('http://pay.ldxp.cn:8080/shop/store/?token=secret#products', changes), {
+    ok: true, url: 'https://wzyp.cn/shop/store',
+  });
+  assert.deepEqual(changes, [
+    { kind: 'fragment' },
+    { kind: 'alias', from: 'pay.ldxp.cn', to: 'wzyp.cn' },
+    { kind: 'protocol', from: 'http', to: 'https' },
+    { kind: 'port', from: '8080' },
+    { kind: 'query' },
+    { kind: 'trailingSlash' },
+  ]);
+});
+
+test('unchanged storefront addresses have no conversion notices and unrelated query parameters are preserved', () => {
+  for (const input of ['https://wzyp.cn/shop/store', 'https://example.com', 'https://example.com/store?locale=en']) {
+    const changes: import('../src/submitted-url.js').PublicSubmittedUrlChange[] = [];
+    assert.deepEqual(validatePublicSubmittedUrl(input, changes), { ok: true, url: input });
+    assert.deepEqual(changes, []);
+  }
+});
+
+test('confirmation records URL parser normalization and a removed ending slash accurately', () => {
+  const changes: import('../src/submitted-url.js').PublicSubmittedUrlChange[] = [];
+  assert.deepEqual(validatePublicSubmittedUrl(' HTTPS://Example.COM:443/store/ ', changes), { ok: true, url: 'https://example.com/store' });
+  assert.deepEqual(changes.map(change => change.kind), ['trim', 'format', 'trailingSlash']);
+});

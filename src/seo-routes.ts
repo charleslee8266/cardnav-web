@@ -1,3 +1,4 @@
+import { gatewayModelPath } from './models/routes.js';
 /**
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
@@ -9,7 +10,7 @@ import { localizeTaskLabel } from './localized-display.js';
 import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
 import { loadPageContent } from './page-content.js';
-import { quickPlanSearchSeoPath, quickPlanSearchTerms } from './shop-plan-search.js';
+import { quickPlanSearchSeoPath, quickPlanSearchTerms } from './models/product-catalog.js';
 import { buildShopSearchPageMeta } from './shop-search-page-meta.js';
 import type { PublicGatewayModelRow, PublicGatewaySiteRow } from './store.js';
 
@@ -225,7 +226,7 @@ export function buildGatewaySeoRoutes(gatewaySites: PublicGatewaySiteRow[], loca
 export function buildGatewayModelSeoRoutes(gatewayModels: PublicGatewayModelRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
   const messages = getMessages(locale);
   return getIndexableGatewayModels(gatewayModels).map(model => ({
-    pathname: routePath(`/llm-gateway/models/${encodeURIComponent(model.modelId)}`, locale),
+    pathname: routePath(gatewayModelPath(model.modelId), locale),
     title: messages.llmGateway.modelDetailSeoTitle.replace('{model}', model.modelId),
     description: messages.llmGateway.modelDetailSeoDescription.replace('{model}', model.modelId),
     changefreq: 'daily' as const,

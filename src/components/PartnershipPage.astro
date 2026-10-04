@@ -38,7 +38,7 @@ const contactAttrs = {'target':'_blank','rel':'noopener noreferrer','data-umami-
       <ol>
         {option.items.map(item => <li>{ruleParts(item).map(part => part.href ? <a class="support-list-link" href={part.href}>{part.text}</a> : part.text)}</li>)}
       </ol>
-      <div class="partnership-actions">{index === 1 ? <><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=gateway')}>{c.supportActions[0]}</a><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=shop')}>{c.supportActions[1]}</a></> : <a class:list={['btn',index === 0 ? 'affiliate-action' : 'partnership-action']} href={telegramGroupUrl} {...contactAttrs}>{c.actions[index]}</a>}</div>
+      <div class="partnership-actions">{index === 1 ? <><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=gateway')}>{c.supportActions[0]}</a><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=shop')}>{c.supportActions[1]}</a></> : <a class:list={['btn',index === 0 ? 'submit-button' : 'partnership-button']} href={telegramGroupUrl} {...contactAttrs}>{c.actions[index]}</a>}</div>
     </article>)}
     </div>
   </section>
@@ -74,5 +74,5 @@ const contactAttrs = {'target':'_blank','rel':'noopener noreferrer','data-umami-
   </div>
   </section>
   {c.rules.slice(2).map(rule => <section class="partnership-module partnership-standalone-rules"><h2>{rule.title}</h2><div class="partnership-panel partnership-rule-body"><ol>{rule.items.map(item => <li>{item}</li>)}</ol></div></section>)}
-  <section class="partnership-section partnership-panel partnership-contact" id="contact"><span class="cooperation-icon"><Icon name="send" /></span><div><h2>{c.contact}</h2><p>{c.contactNote}</p></div><a class="btn partnership-action" href={telegramGroupUrl} {...contactAttrs}>{c.actions[6]}</a></section>
+  <section class="partnership-section partnership-panel partnership-contact" id="contact"><span class="cooperation-icon"><Icon name="send" /></span><div><h2>{c.contact}</h2><p>{c.contactNote}</p></div><a class="btn partnership-button" href={telegramGroupUrl} {...contactAttrs}>{c.actions[6]}</a></section>
 </div>

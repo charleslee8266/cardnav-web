@@ -1,0 +1,10 @@
+---
+import { gatewayProviderSlug } from '../models/routes.js';
+import './model-family-list.css';
+import { modelFamilyPresentation } from '../data-display.js';
+type Props = { name: string; selectScope?: string; href?: string };
+const family = modelFamilyPresentation(Astro.props.name);
+const { selectScope, href } = Astro.props;
+const Tag = selectScope ? 'button' : href ? 'a' : 'span';
+---
+<Tag class:list={['data-provider', selectScope && 'model-family-select']} type={selectScope ? 'button' : undefined} href={href} data-select-family={selectScope ? gatewayProviderSlug(family.name) : undefined} data-family-scope={selectScope}>{family.icon && <img src={family.icon} alt="" width="14" height="14" class:list={{ 'data-provider-mono': family.monochrome }} />}{family.name}</Tag>

@@ -37,7 +37,7 @@ window.CardNavMerchantBadge = {
       link.dataset.umamiEvent = 'internal-link-click';
       link.dataset.umamiEventLinkType = kind === 'support' ? 'support-list' : 'sponsor-lead';
       link.dataset.umamiEventUrl = href;
-      if (href) tooltip.appendChild(link);
+      if (href) tooltip.append(link, document.createTextNode(document.documentElement.lang.startsWith('zh') ? '。' : '.'));
       badge.append(info, tooltip);
     }
     return group;

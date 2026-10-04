@@ -15,9 +15,10 @@
   .home-search button { flex-shrink: 0; min-height: 36px; height: 36px; padding-inline: 14px; border-radius: 8px; font-size: 13px; font-weight: 550; line-height: 1.6; border: 1px solid var(--color-primary); background: var(--color-primary); color: var(--color-primary-content); box-shadow: none; transition: background .15s, border-color .15s; }
   .home-search button:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
   .home-hot-terms { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-  .home-hot-terms a { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border: 1px solid var(--color-base-300); border-radius: 20px; background: var(--color-base-100); font-size: 12px; color: var(--color-ink-secondary); transition: color .15s, border-color .15s; }
-  .home-hot-terms a:hover { border-color: var(--color-brand-line); }
   .home-stat-line { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px 18px; margin-top: 18px; font-size: 13px; color: var(--color-muted); }
+  .home-stat-line > a { color: inherit; white-space: nowrap; text-decoration: none; }
+  .home-stat-line > a:hover { color: inherit; text-decoration: underline; }
+  .home-stat-line > a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: 3px; }
   .home-stat-line b { margin-left: 4px; font-weight: 650; color: var(--color-base-content); font-variant-numeric: tabular-nums; }
   .home-paths { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
   .home-path { display: flex; flex-direction: column; gap: 6px; padding: 16px; background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 14px; box-shadow: var(--shadow-1); transition: border-color .15s, box-shadow .15s; }
@@ -72,3 +73,5 @@
   @media (max-width: 760px) { .home-hero { padding: 20px 0 18px; } .home-hero h1 { font-size: 25px; } .home-tagline { font-size: 19px; } .home-brand { gap: 8px; } .home-brand-domain { font-size: 15px; } .home-brand img { width: 48px; height: 48px; } }
   @media (max-width: 640px) { .home-paths { grid-template-columns: minmax(0,1fr); gap: 8px; } .home-path { padding: 12px 14px; gap: 4px; } .home-path div { min-width: 0; } .home-guide-steps { grid-template-columns: minmax(0,1fr); } .home-search { padding-left: 10px; } .home-search button { padding-inline: 16px; } }
 }
+
+.home-hot-terms .plan-groups { justify-content: center; flex-wrap: wrap; }

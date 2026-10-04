@@ -6,6 +6,7 @@
 @import "./components/data-table.css";
 @import "./components/shop-plan-groups.css";
 @import "./components/form.css";
+@import "./components/gateway-submit.css";
 @import "./styles/shell.css";
 @import "./styles/home.css";
 @import "./styles/page.css";
@@ -129,34 +130,48 @@
   --color-error-content: #ffffff;
 }
 
-@utility support-button {
-  --btn-color: var(--color-support-soft);
-  --btn-fg: var(--color-support);
-  background-color: var(--color-support-soft);
-  border-color: var(--color-support-line);
-  color: var(--color-support);
+/* Dialog and commercial actions share the support button's visual strength. */
+@utility commercial-button {
+  --btn-color: oklch(from var(--color-support-soft) l var(--commerce-chroma, c) var(--commerce-hue, h));
+  --btn-fg: var(--commerce-color);
+  background-color: var(--btn-color);
+  border: 1px solid oklch(from color-mix(in oklch, var(--color-support) 65%, var(--color-support-line)) l var(--commerce-chroma, c) var(--commerce-hue, h));
+  color: var(--commerce-color);
   &:hover:not(:disabled) {
-    --btn-color: var(--color-support);
-    --btn-fg: var(--color-support);
-    background-color: color-mix(in srgb, var(--color-support) 12%, var(--color-base-100));
-    border-color: var(--color-support);
-    color: var(--color-support);
+    --btn-color: var(--commerce-color);
+    background-color: oklch(from color-mix(in srgb, var(--color-support) 12%, var(--color-base-100)) l var(--commerce-chroma, c) var(--commerce-hue, h));
+    border-color: oklch(from var(--color-support) l var(--commerce-chroma, c) var(--commerce-hue, h));
+    color: var(--commerce-color);
   }
 }
 
+@utility back-button {
+  --commerce-color: var(--color-base-content);
+  --commerce-chroma: 0;
+  @apply commercial-button;
+}
+
+@utility support-button {
+  --commerce-color: var(--color-support);
+  @apply commercial-button;
+}
+
+@utility submit-button {
+  --commerce-color: var(--color-primary);
+  --commerce-hue: 264;
+  @apply commercial-button;
+}
+
+@utility partnership-button {
+  --commerce-color: var(--merchant-partner-text);
+  --commerce-hue: 80;
+  @apply commercial-button;
+}
+
 @utility open-shop-button {
-  --btn-color: var(--color-brand-soft);
-  --btn-fg: var(--color-primary);
-  background-color: var(--color-brand-soft);
-  border-color: var(--color-brand-line);
-  color: var(--color-primary);
-  &:hover:not(:disabled) {
-    --btn-color: var(--color-primary);
-    --btn-fg: var(--color-primary);
-    background-color: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100));
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
+  --commerce-color: oklch(from var(--color-support) l c 150);
+  --commerce-hue: 150;
+  @apply commercial-button;
 }
 
 @layer base {

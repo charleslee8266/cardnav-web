@@ -1,5 +1,6 @@
 import { shopPlatformName } from './shop-platform.js';
-import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice } from './shop-plan-search.js';
+import { createFamilyNavigation } from './models/family-navigation.js';
+import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice } from './models/product-catalog.js';
 /**
  * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
  */
@@ -49,11 +50,14 @@ export type PublicGatewaySiteRow = {
   avgSuccessLatencyMs: number | null;
   summary: string;
   modelProviders: string[];
+  modelFamilies: string[];
   paymentMethods: string[];
   modelCount: number;
   priceCount: number;
   recentModelProviders: string[];
+  recentModelFamilies: string[];
   displayModelProviders: string[];
+  displayModelFamilies: string[];
   refreshStatus: string;
   refreshErrorType: string;
   latestGatewayRefreshAt: string | null;
@@ -62,6 +66,7 @@ export type PublicGatewaySiteRow = {
 
 export type PublicGatewayPriceRow = {
   modelId: string;
+  modelFamily: string | null;
   unit: string;
   currency: string | null;
   inputPrice: number | null;
@@ -73,6 +78,7 @@ export type PublicGatewayPriceRow = {
 export type PublicGatewayModelRow = {
   id: string;
   modelId: string;
+  modelFamily: string | null;
   modelProvider: string;
   supportSiteCount: number;
   priceCount: number;
@@ -240,6 +246,8 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
   const url = String(row.url);
   const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
   const recentProviders = Array.isArray(row.recent_model_providers) ? row.recent_model_providers.map(String) : [];
+  const recentFamilies = Array.isArray(row.recent_model_families) ? row.recent_model_families.map(String) : [];
+  const declaredFamilies = Array.isArray(row.model_families) ? row.model_families.map(String) : [];
   const declaredProviders = Array.isArray(row.model_providers) ? row.model_providers.map(String) : [];
   return {
     id: String(row.id || ''),
@@ -266,6 +274,9 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     modelCount: Number(row.model_count) || 0,
     priceCount: Number(row.price_count) || 0,
     recentModelProviders: recentProviders,
+    modelFamilies: declaredFamilies,
+    recentModelFamilies: recentFamilies,
+    displayModelFamilies: recentFamilies,
     displayModelProviders: recentProviders.length > 0 ? recentProviders : [...new Set(declaredProviders)],
     refreshStatus: '',
     refreshErrorType: '',
@@ -282,6 +293,7 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
     unitsForModel: Array.isArray(row.units_for_model) ? row.units_for_model.map(String) : [],
     pricesForModel: Array.isArray(row.prices_for_model) ? row.prices_for_model.map((price: Record<string, unknown>) => ({
       modelId,
+      modelFamily: price.modelFamily ? String(price.modelFamily) : null,
       unit: String(price.unit || ''),
       currency: price.currency ? String(price.currency) : null,
       inputPrice: price.inputPrice == null ? null : Number(price.inputPrice),
@@ -536,10 +548,12 @@ export async function loadGatewaySites(options: PublicListLimitOptions & { query
       gateway_sites.support_total_cents,
       gateway_sites.support_points,
       gateway_sites.model_providers,
+      gateway_sites.model_families,
       gateway_sites.payment_methods,
       gateway_sites.model_count,
       gateway_sites.price_count,
       gateway_sites.recent_model_providers,
+      gateway_sites.recent_model_families,
       gateway_sites.latest_price_fetched_at AS latest_gateway_refresh_at,
       ROW_NUMBER() OVER (
         PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
@@ -587,7 +601,7 @@ export async function loadGatewaySites(options: PublicListLimitOptions & { query
 export async function loadGatewayModels(options: PublicListLimitOptions = {}) {
   const limit = safeListLimit(options.limit);
   const result = await getPool().query(`
-    SELECT model_id, model_provider, support_site_count, price_count,
+    SELECT model_id, model_provider, model_family, support_site_count, price_count,
       latest_price_fetched_at AS latest_gateway_refresh_at
     FROM gateway_model_summaries
     ORDER BY support_site_count DESC, max_site_score DESC, model_id ASC, model_provider ASC
@@ -607,6 +621,7 @@ export async function loadGatewayModels(options: PublicListLimitOptions = {}) {
       id: modelId,
       modelId,
       modelProvider: String(row.model_provider || 'Other'),
+      modelFamily: row.model_family ? String(row.model_family) : null,
       supportSiteCount: Number(row.support_site_count) || 0,
       priceCount: Number(row.price_count) || 0,
       latestGatewayRefreshAt,
@@ -642,10 +657,12 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
       gateway_sites.support_total_cents,
       gateway_sites.support_points,
       gateway_sites.model_providers,
+      gateway_sites.model_families,
       gateway_sites.payment_methods,
       gateway_sites.model_count,
       gateway_sites.price_count,
       gateway_sites.recent_model_providers,
+      gateway_sites.recent_model_families,
       gateway_sites.latest_price_fetched_at AS latest_gateway_refresh_at
     FROM gateway_sites
     WHERE gateway_sites.status = 'online'
@@ -662,13 +679,13 @@ async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayMo
   const normalizedModelId = modelId.trim();
   if (!normalizedModelId) return null;
   const result = await getPool().query(`
-    SELECT prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other') AS model_provider,
+    SELECT prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other') AS model_provider, prices.model_family,
       COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count,
       COUNT(*)::INTEGER AS price_count, MAX(prices.fetched_at) AS latest_gateway_refresh_at
     FROM gateway_model_prices prices
     INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
     WHERE prices.model_id = $1 AND gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-    GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other')
+    GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other'), prices.model_family
     ORDER BY COUNT(DISTINCT prices.site_id) DESC, MAX(gateway_sites.score) DESC, model_provider ASC
     LIMIT 1
   `, [normalizedModelId]);
@@ -679,6 +696,7 @@ async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayMo
     id: String(row.model_id),
     modelId: String(row.model_id),
     modelProvider: String(row.model_provider || 'Other'),
+    modelFamily: row.model_family ? String(row.model_family) : null,
     supportSiteCount: Number(row.support_site_count) || 0,
     priceCount: Number(row.price_count) || 0,
     latestGatewayRefreshAt,
@@ -694,6 +712,7 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
   const priceResult = await getPool().query(`
     SELECT
       prices.model_id,
+      prices.model_family,
       prices.unit,
       prices.currency,
       prices.input_price,
@@ -720,6 +739,7 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
     site,
     prices: priceResult.rows.map(row => ({
       modelId: String(row.model_id),
+      modelFamily: row.model_family ? String(row.model_family) : null,
       unit: String(row.unit || ''),
       currency: row.currency ? String(row.currency) : null,
       inputPrice: row.input_price == null ? null : Number(row.input_price),
@@ -746,6 +766,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
         ARRAY_AGG(DISTINCT unit ORDER BY unit) FILTER (WHERE unit <> '') AS units_for_model,
         jsonb_agg(
           jsonb_build_object(
+            'modelFamily', model_family,
             'unit', unit,
             'currency', currency,
             'inputPrice', input_price,
@@ -779,10 +800,12 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       gateway_sites.support_total_cents,
       gateway_sites.support_points,
       gateway_sites.model_providers,
+      gateway_sites.model_families,
       gateway_sites.payment_methods,
       gateway_sites.model_count,
       gateway_sites.price_count,
       gateway_sites.recent_model_providers,
+      gateway_sites.recent_model_families,
       gateway_sites.latest_price_fetched_at AS latest_gateway_refresh_at,
       model_price_summary.price_count_for_model,
       COALESCE(model_price_summary.units_for_model, ARRAY[]::text[]) AS units_for_model,
@@ -1085,6 +1108,10 @@ export type PublicModelLeaderboardRow = {
   sourceBoardSlug: string;
   rank: number;
   modelName: string;
+  modelOrganization: string | null;
+  modelFamily: string | null;
+  gatewayPath?: string | null;
+  shopPath?: string | null;
   score: number;
   fetchedAt: string;
 };
@@ -1226,6 +1253,8 @@ export async function loadModelLeaderboardRowsForTask(taskSlug: string, options:
       source_board_slug,
       rank,
       model_name,
+      model_organization,
+      model_family,
       score,
       fetched_at
     FROM model_leaderboards
@@ -1233,7 +1262,7 @@ export async function loadModelLeaderboardRowsForTask(taskSlug: string, options:
     ORDER BY rank ASC
     ${limit ? 'LIMIT $2' : ''}
   `, limit ? [normalizedTaskSlug, limit] : [normalizedTaskSlug]);
-  return result.rows.map(mapModelLeaderboardRow);
+  return attachLeaderboardNavigation(result.rows.map(mapModelLeaderboardRow));
 }
 
 export async function loadModelLeaderboardRowsForTaskPage(taskSlug: string, options: PublicListLimitOptions = {}) {
@@ -1248,6 +1277,8 @@ export async function loadModelLeaderboardRowsForTaskPage(taskSlug: string, opti
       source_board_slug,
       rank,
       model_name,
+      model_organization,
+      model_family,
       score,
       fetched_at,
       COUNT(*) OVER()::INTEGER AS total_count,
@@ -1259,7 +1290,7 @@ export async function loadModelLeaderboardRowsForTaskPage(taskSlug: string, opti
   `, limit ? [normalizedTaskSlug, limit] : [normalizedTaskSlug]);
   const firstRow = result.rows[0] ?? {};
   return {
-    rows: result.rows.map(mapModelLeaderboardRow),
+    rows: await attachLeaderboardNavigation(result.rows.map(mapModelLeaderboardRow)),
     totalCount: Number(firstRow.total_count) || 0,
     latestFetchedAt: isoTimestamp(firstRow.latest_fetched_at),
   };
@@ -1274,9 +1305,24 @@ function mapModelLeaderboardRow(row: Record<string, unknown>): PublicModelLeader
     sourceBoardSlug: String(row.source_board_slug),
     rank: Number(row.rank),
     modelName: String(row.model_name),
+    modelOrganization: row.model_organization ? String(row.model_organization) : null,
+    modelFamily: row.model_family ? String(row.model_family) : null,
     score: Number(row.score),
     fetchedAt: isoTimestamp(row.fetched_at) ?? '',
   };
+}
+
+async function attachLeaderboardNavigation(rows: PublicModelLeaderboardRow[]) {
+  if (!rows.length) return rows;
+  const result = await getPool().query(`
+    SELECT ARRAY(SELECT DISTINCT unnest(recent_model_families) FROM gateway_sites WHERE status = 'online' AND type = 'gateway') AS gateway_families,
+      ARRAY(SELECT DISTINCT product.auto_category FROM shop_products product
+        JOIN shop_sites site ON site.id = product.site_id
+        WHERE product.active = true AND site.status = 'online' AND site.type = 'cardShop') AS shop_categories
+  `);
+  const available = result.rows[0] ?? {};
+  const navigation = createFamilyNavigation(available.gateway_families ?? [], available.shop_categories ?? []);
+  return rows.map(row => ({ ...row, ...navigation(row.modelFamily) }));
 }
 
 export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow[]> {
@@ -1290,6 +1336,8 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
       source_board_slug,
       rank,
       model_name,
+      model_organization,
+      model_family,
       score,
       fetched_at
     FROM model_leaderboards
@@ -1303,7 +1351,7 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
       END ASC,
       rank ASC
   `);
-  return result.rows.map(row => mapModelLeaderboardRow(row));
+  return attachLeaderboardNavigation(result.rows.map(mapModelLeaderboardRow));
 }
 
 export type PublicOfficialPriceStats = { productCount: number; regionCount: number };
@@ -1327,4 +1375,10 @@ export async function loadModelLeaderboardStats(): Promise<PublicModelLeaderboar
     WHERE task_slug IN ('coding', 'creative-writing', 'math', 'text-to-image')
   `);
   return { scenarioCount: Number(result.rows[0]?.scenario_count) || 0, modelCount: Number(result.rows[0]?.model_count) || 0 };
+}
+
+
+export async function loadShopPlatformOptions(): Promise<string[]> {
+  const result = await getPool().query("SELECT DISTINCT family FROM shop_sites WHERE status = 'online' AND type = 'cardShop'");
+  return [...new Set(result.rows.map(row => shopPlatformName(row.family)))].sort();
 }

@@ -1,0 +1,18 @@
+---
+type Props = { name: string; label: string; allLabel: string; options: { value: string; label: string }[] };
+const { name, label, allLabel, options } = Astro.props;
+---
+<details class="multi-select-filter" data-multi-filter={name}>
+  <summary aria-label={label}><span data-multi-summary data-empty-label={allLabel}>{allLabel}</span><span aria-hidden="true">⌄</span></summary>
+  <div class="multi-select-options" role="group" aria-label={label}>
+    {options.map(option => <label><input type="checkbox" value={option.value} data-filter-value /><span data-filter-option-label><slot name={option.value}>{option.label}</slot></span></label>)}
+  </div>
+</details>
+<style>
+.multi-select-filter { min-width: 0; border: 1px solid var(--color-base-300, #dce1e8); border-radius: 6px; }
+summary { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 11px; cursor:pointer; font-size:13px; list-style:none; }
+summary::-webkit-details-marker { display:none; }
+.multi-select-options { max-height:210px; overflow:auto; padding:4px; border-top:1px solid var(--color-base-300, #dce1e8); }
+.multi-select-options :global(label) { display:flex; align-items:center; gap:8px; padding:6px 8px; font-size:13px; cursor:pointer; }
+.multi-select-options :global(input) { accent-color:#2563eb; }
+</style>

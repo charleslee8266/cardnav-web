@@ -6,9 +6,9 @@
 .data-table tbody td, .data-table tbody th, .merchant-table-cell { padding: 11px 12px; border: 0; border-bottom: 1px solid var(--table-line); vertical-align: middle; font-size: 13px; font-weight: 400; color: var(--color-base-content); overflow-wrap: anywhere; }
 .data-table tbody tr:last-child > *, .merchant-row:last-child > * { border-bottom: 0; }
 .data-table, .merchant-table { --table-line: var(--color-base-300); --table-muted: var(--color-muted); --table-faint: var(--color-faint); --table-surface-2: var(--color-surface-soft); --table-surface-3: var(--color-surface-raised); }
-.data-table tbody tr, .merchant-row { --row-background: var(--color-base-100); --row-hover-black: 2%; }
+.data-table tbody tr, .merchant-row { --row-background: var(--color-base-100); --row-hover-black: 2%; --row-soft-tint: 45%; }
 [data-theme="dark"] .data-table tbody tr, [data-theme="dark"] .merchant-row { --row-hover-black: 8%; }
-.data-table [data-pin-kind="partner"], .merchant-row[data-pin-kind="partner"] { --row-background: color-mix(in srgb, var(--color-partner-soft) 45%, var(--color-base-100)); }
+.data-table [data-pin-kind="partner"], .merchant-row[data-pin-kind="partner"] { --row-background: color-mix(in srgb, var(--color-partner-soft) var(--row-soft-tint), var(--color-base-100)); }
 .data-table [data-pin-kind="support"], .merchant-row[data-pin-kind="support"] { --row-background: color-mix(in srgb, var(--color-support-soft) 50%, var(--color-base-100)); }
 .data-table tbody tr > *, .merchant-row > * { background: var(--row-background); transition: background-color 120ms ease; }
 .data-table tbody tr:hover > *, .merchant-row:hover > * { background: color-mix(in srgb, var(--row-background), black var(--row-hover-black)); }
@@ -58,8 +58,8 @@
 .gateway-site-table th[data-column-key="families"] { width: 150px; }
 .gateway-site-table th[data-column-key="modelCount"] { width: 80px; }
 .gateway-site-table th[data-column-key="payments"] { width: 130px; }
-.gateway-model-table { min-width: 500px; }
-.gateway-model-table th[data-column-key="model"] { width: 55%; }
+.gateway-model-table { min-width: 640px; }
+.gateway-model-table th[data-column-key="model"] { width: 45%; }
 .data-table-gateway-prices { min-width: 760px; }
 .data-table-gateway-model-sites { min-width: 850px; }
 .data-table-gateway-prices th[data-column-key="model"], .data-table-gateway-model-sites th[data-column-key="name"] { width: 28%; }
@@ -94,9 +94,9 @@
 .payment-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 19px; border: 1px solid var(--color-base-300); border-radius: 4px; background: white; color: #555; font-size: 10px; }
 .payment-icon img { width: 19px; height: 14px; object-fit: contain; }
 .merchant-table { min-width: 760px; }
-.merchant-table-head, .merchant-row { display: grid; grid-template-columns: 44px minmax(180px, 1.2fr) 112px minmax(220px, 1.4fr) 135px 110px; }
+.merchant-table-head, .merchant-row { display: grid; grid-template-columns: 44px minmax(180px, 1.2fr) 100px 112px minmax(220px, 1.4fr) 135px 110px; }
 .merchant-table-head { background: var(--table-surface-2); color: var(--table-muted); font-size: 12px; font-weight: 600; }
-.merchant-table-head-cell { min-width: 0; border-bottom: 1px solid var(--table-line); }
+.merchant-table-head-cell { position: relative; min-width: 0; border-bottom: 1px solid var(--table-line); }
 .merchant-table-cell { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
 .merchant-table-cell-index { align-items: center; }
 .merchant-table-mobile-label { display: none; }
@@ -143,3 +143,7 @@
 
 /* The row owns pointer activation; retain the primary anchor for keyboard navigation. */
 .data-row-model-name { color: inherit; text-decoration: none; pointer-events: none; }
+
+.shop-platform-select { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.shop-platform-select:hover { color: inherit; text-decoration: underline; }
+.shop-platform-select:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }

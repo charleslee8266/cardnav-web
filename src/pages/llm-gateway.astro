@@ -1,6 +1,13 @@
 ---
+import FilterSummary from '../components/FilterSummary.astro';
+import { gatewayModelPath } from '../models/routes.js';
+import { loadGatewayFamilyFilterOptions, loadModelFamilyCatalog, loadGatewayPaymentFilterOptions, loadGatewayProviderFilterOptions } from '../models/family-catalog-store.js';
+import MultiSelectFilter from '../components/MultiSelectFilter.astro';
+import { familyRelatedPaths } from '../models/family-navigation.js';
 import ProviderLabel from '../components/ProviderLabel.astro';
-import { gatewayProviderSlug } from '../shop-plan-search.js';
+import ModelFamilyLabel from '../components/ModelFamilyLabel.astro';
+import ModelFamilyList from '../components/ModelFamilyList.astro';
+import { gatewayProviderSlug } from '../models/routes.js';
 /*
 文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示排行并支持本地加载更多。
 */
@@ -18,7 +25,6 @@ import DataTable from '../components/DataTable.astro';
 import DataTableCell from '../components/DataTableCell.astro';
 import DataTableHeader from '../components/DataTableHeader.astro';
 import {
-  collectFilterOptions,
   paymentIcon,
   paymentLabel,
   uniqueLabels,
@@ -26,7 +32,6 @@ import {
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl, telegramGroupUrl } from '../site.js';
 import { loadGatewayModels, loadGatewaySites } from '../store.js';
-import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import Sponsors from '../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
@@ -53,7 +58,7 @@ const paymentMethodLabels = t.llmGateway.paymentMethodLabels;
 const paymentLabelFor = (key: string) => paymentLabel(key, paymentMethodLabels);
 
 function modelHref(modelId: string) {
-  return linkTo(`/llm-gateway/models/${encodeURIComponent(modelId)}`);
+  return linkTo(gatewayModelPath(modelId));
 }
 
 function gatewaySiteClickAttrs(site: { name: string; slug: string; outboundUrl: string }) {
@@ -76,13 +81,13 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
   };
 }
 
-function gatewayModelClickAttrs(model: { modelId: string; modelProvider: string }) {
+function gatewayModelClickAttrs(model: { modelId: string; modelProvider: string; modelFamily: string | null }) {
   const targetPage = modelHref(model.modelId);
   return {
     'data-umami-event': 'internal-link-click',
     'data-umami-event-link-type': 'gateway-model',
     'data-umami-event-name': model.modelId,
-    'data-umami-event-family': model.modelProvider,
+    'data-umami-event-family': model.modelFamily || undefined,
     'data-umami-event-target-page': targetPage,
     'data-umami-event-url': targetPage,
   };
@@ -92,11 +97,22 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
   return Boolean(site.sponsor);
 }
 
-const modelFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.displayModelProviders));
-const paymentFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.paymentMethods));
+const modelFilterOptions = await loadGatewayFamilyFilterOptions();
+const familyCatalog = await loadModelFamilyCatalog();
+const modelProviderOptions = await loadGatewayProviderFilterOptions();
+const paymentFilterOptions = await loadGatewayPaymentFilterOptions();
 const hasMoreSites = gatewayData.totalSiteCount > topSites.length;
 const hasMoreModels = gatewayModelData.totalModelCount > topModels.length;
 const gatewayHomeConfig = {
+  familyOrder: familyCatalog.map(({ name }) => gatewayProviderSlug(name)),
+  familyLinks: familyCatalog.map(({ name }) => {
+    const paths = familyRelatedPaths(name);
+    return { family: gatewayProviderSlug(name), name: paths.name,
+      shop: paths.shopPath ? linkTo(paths.shopPath) : '', official: paths.officialPath ? linkTo(paths.officialPath) : '',
+      leaderboard: paths.leaderboardPath ? linkTo(paths.leaderboardPath) : '' };
+  }),
+  relatedLabels: [t.officialPrice.shopProductsTip, t.shops.officialPriceTip, t.shops.leaderboardTip],
+  locale: Astro.locals.locale,
   gatewayLinkPrefix: linkTo('/llm-gateway'),
   modelLinkPrefix: linkTo('/llm-gateway/models'),
   sitePageSize: GATEWAY_SITE_PAGE_SIZE,
@@ -129,6 +145,7 @@ const gatewayHomeConfig = {
   paymentMethodsLabel: t.llmGateway.paymentMethods,
   paymentMethodLabels: t.llmGateway.paymentMethodLabels,
   modelLabel: t.labels.model,
+  modelFamilyLabel: t.llmGateway.modelFamily,
   modelProviderLabel: t.llmGateway.modelProvider,
   supportedGatewayCountLabel: t.llmGateway.supportedGatewayCount,
 };
@@ -142,7 +159,7 @@ const gatewayHomeConfig = {
       <HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={gatewayData.latestRefreshedAt} fallback={t.labels.notRecorded} /></HeroMetric>
     </div>
     <div slot="aside" class="data-page-actions">
-      <button id="openGatewaySubmitModal" type="button" class="btn btn-primary btn-sm" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
+      <button id="openGatewaySubmitModal" type="button" class="btn submit-button btn-sm" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
         {t.llmGateway.submitGateway}
       </button>
       <a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-sm"><span aria-hidden="true">♥</span> {t.support.button}</a>
@@ -172,23 +189,23 @@ const gatewayHomeConfig = {
               <input data-home-site-search type="search" class="grow text-sm" placeholder={t.llmGateway.searchPlaceholder} aria-label={t.llmGateway.searchPlaceholder} />
             </label>
             <label data-gateway-control="models" class="data-workspace-search" hidden><input data-home-model-search type="search" class="input input-bordered w-full" placeholder={t.llmGateway.modelSearchPlaceholder} aria-label={t.llmGateway.modelSearchPlaceholder} /></label>
-            <div data-gateway-control="sites"><FilterPopover id="gatewaySiteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done}>
-            <select data-home-site-family class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.familyFilter}>
-              <option value="">{t.llmGateway.allFamilies}</option>
-              {modelFilterOptions.map(model => <option value={gatewayProviderSlug(model)}>{model}</option>)}
-            </select>
-            <select data-home-site-payment class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.paymentFilter}>
-              <option value="">{t.llmGateway.allPaymentMethods}</option>
-              {paymentFilterOptions.map(method => <option value={method}>{paymentLabelFor(method)}</option>)}
-            </select>
-            <select data-home-site-status class="select select-bordered" aria-label={t.llmGateway.statusFilter}>
-              <option value="">{t.llmGateway.allStatuses}</option>
-              <option value="hasPrice">{t.llmGateway.dataStatusLabels.hasPrice}</option>
-              <option value="noPrice">{t.llmGateway.dataStatusLabels.noPrice}</option>
-              <option value="noData">{t.llmGateway.dataStatusLabels.noData}</option>
-            </select>
+            <div data-gateway-control="sites"><FilterPopover id="gatewaySiteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+            <MultiSelectFilter name="family" label={t.llmGateway.familyFilter} allLabel={t.llmGateway.allFamilies} options={modelFilterOptions.map(name => ({ value: gatewayProviderSlug(name), label: name }))}>
+              {modelFilterOptions.map(name => <ModelFamilyLabel slot={gatewayProviderSlug(name)} name={name} />)}
+            </MultiSelectFilter>
+            <MultiSelectFilter name="payment" label={t.llmGateway.paymentFilter} allLabel={t.llmGateway.allPaymentMethods} options={paymentFilterOptions.map(value => ({ value, label: paymentLabelFor(value) }))}>
+              {paymentFilterOptions.map(value => <span slot={value} class="data-provider">{paymentIcon(value).src && <img src={paymentIcon(value).src} alt="" width="16" height="16" />}{paymentLabelFor(value)}</span>)}
+            </MultiSelectFilter>
+            <MultiSelectFilter name="status" label={t.llmGateway.statusFilter} allLabel={t.llmGateway.allStatuses} options={['hasPrice', 'noPrice', 'noData'].map(value => ({ value, label: t.llmGateway.dataStatusLabels[value] }))} />
             <label class="label flex gap-2 text-sm"><input data-home-site-favorites type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label>
-            <button slot="footer" data-home-site-reset type="button" class="btn btn-sm btn-ghost">{t.shops.clearFilters}</button>
+            </FilterPopover></div>
+            <div data-gateway-control="models" hidden><FilterPopover id="gatewayModelFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+              <MultiSelectFilter name="model-family" label={t.llmGateway.familyFilter} allLabel={t.llmGateway.allFamilies} options={modelFilterOptions.map(name => ({ value: gatewayProviderSlug(name), label: name }))}>
+                {modelFilterOptions.map(name => <ModelFamilyLabel slot={gatewayProviderSlug(name)} name={name} />)}
+              </MultiSelectFilter>
+              <MultiSelectFilter name="model-provider" label={t.llmGateway.providerFilter} allLabel={t.llmGateway.allProviders} options={modelProviderOptions.map(name => ({ value: gatewayProviderSlug(name), label: name }))}>
+                {modelProviderOptions.map(name => <ProviderLabel slot={gatewayProviderSlug(name)} name={name} />)}
+              </MultiSelectFilter>
             </FilterPopover></div>
             <select data-gateway-control="sites" data-home-site-sort class="select select-bordered data-workspace-sort" aria-label={t.shops.sort}>
               <option value="">{t.shops.defaultSort}</option>
@@ -196,8 +213,10 @@ const gatewayHomeConfig = {
               <option value="score">{t.labels.score} ↓</option>
               <option value="custom" hidden>{t.shops.headerSort}</option>
             </select>
-            <div data-gateway-control="sites" data-home-site-active-filters class="data-active-filters w-full" hidden></div>
           </div>
+            <FilterSummary data-gateway-control="sites" data-home-site-active-filters class="w-full" clearLabel={t.shops.clearFilters} />
+            <FilterSummary data-gateway-control="models" data-home-model-active-filters class="w-full" clearLabel={t.shops.clearFilters} />
+            <div data-home-family-links class="data-workspace-related" hidden></div>
 </div>
       <div id="gatewaySitesPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites" data-telemetry-block={telemetryBlocks.gateways.sites}>
           <DataTable
@@ -225,7 +244,7 @@ const gatewayHomeConfig = {
               <DataTableHeader label={t.llmGateway.paymentMethods} sortKey="payments" />
             </Fragment>
             {topSites.map((site, index) => {
-              const families = uniqueLabels(site.displayModelProviders, 8);
+              const families = site.displayModelFamilies;
               const paymentMethods = uniqueLabels(site.paymentMethods, 6);
               const rank = index + 1;
               return (
@@ -248,9 +267,10 @@ const gatewayHomeConfig = {
                   rowAttrs={{
                     'data-home-site-card': '',
                     'data-pin-kind': initialPins.get(site.slug),
-                    'data-search': `${site.name} ${site.url} ${site.host} ${site.displayModelProviders.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase(),
-                    'data-families': families.map(gatewayProviderSlug).join(','),
-                    'data-payments': paymentMethods.join(','),
+                    'data-search': `${site.name} ${site.url} ${site.host} ${site.displayModelProviders.join(' ')} ${site.displayModelFamilies.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase(),
+                    'data-families': site.displayModelFamilies.map(gatewayProviderSlug).join(','),
+                    'data-providers': site.displayModelProviders.map(gatewayProviderSlug).join(','),
+                    'data-payments': site.paymentMethods.join(','),
                     'data-price-count': String(site.priceCount),
                     'data-original-order': String(index),
                     'data-sort-sequence': String(rank),
@@ -262,13 +282,7 @@ const gatewayHomeConfig = {
                   }}
                 >
                   <DataTableCell label={t.llmGateway.supportedModels}>
-                    {families.length > 0 ? (
-                      <div class="flex flex-wrap gap-1.5">
-                        {families.map(family => <ProviderLabel name={family} />)}
-                      </div>
-                    ) : (
-                      <span class="text-base-content/35">-</span>
-                    )}
+                    <ModelFamilyList selectScope="gateway-sites" families={families} label={t.llmGateway.supportedModels} />
                   </DataTableCell>
                   <DataTableCell label={t.llmGateway.modelCount} align="right" class="font-mono">{site.modelCount > 0 ? site.modelCount : '-'}</DataTableCell>
                   <DataTableCell label={t.llmGateway.paymentMethods}>{paymentMethods.length > 0 ? (
@@ -305,16 +319,18 @@ const gatewayHomeConfig = {
             <Fragment slot="head">
               <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
               <DataTableHeader label={t.labels.model} helpTip={`${t.llmGateway.notePrefix}${t.llmGateway.reportIssue}${t.llmGateway.noteSuffix}`} helpHref={telegramGroupUrl} helpLinkLabel={t.llmGateway.reportIssue} sortKey="model" />
-              <DataTableHeader label={t.llmGateway.modelProvider} sortKey="family" />
+              <DataTableHeader label={t.llmGateway.modelFamily} sortKey="family" />
+              <DataTableHeader label={t.llmGateway.modelProvider} sortKey="provider" />
               <DataTableHeader label={t.llmGateway.supportedGatewayCount} sortKey="supportCount" sortType="number" align="right" />
             </Fragment>
             {topModels.map((model, index) => (
-              <tr data-home-model-card data-search={`${model.modelId} ${model.modelProvider}`.toLowerCase()} data-original-order={String(index)} data-sort-sequence={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelProvider} data-sort-support-count={String(model.supportSiteCount || 0)}>
+              <tr data-home-model-card data-search={`${model.modelId} ${model.modelProvider} ${model.modelFamily || ''}`.toLowerCase()} data-original-order={String(index)} data-sort-sequence={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelFamily || ''} data-sort-provider={model.modelProvider} data-sort-support-count={String(model.supportSiteCount || 0)}>
                 <DataTableCell label={t.labels.sequence} align="center" sequence>{index + 1}</DataTableCell>
                 <DataTableCell label={t.labels.model}>
                   <a data-row-primary href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-primary" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
                 </DataTableCell>
-                <DataTableCell label={t.llmGateway.modelProvider}><ProviderLabel name={model.modelProvider} /></DataTableCell>
+                <DataTableCell label={t.llmGateway.modelFamily}>{model.modelFamily ? <ModelFamilyLabel selectScope="gateway-models" name={model.modelFamily} /> : "—"}</DataTableCell>
+                <DataTableCell label={t.llmGateway.modelProvider}><ProviderLabel selectScope="gateway-models" name={model.modelProvider} /></DataTableCell>
                 <DataTableCell label={t.llmGateway.supportedGatewayCount} align="right" class="font-mono">{model.supportSiteCount}</DataTableCell>
               </tr>
             ))}
@@ -325,7 +341,7 @@ const gatewayHomeConfig = {
   <SupportDialog returnPage="gateways" />
   <GatewaySubmitDialog />
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
-  <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
+  <script>import '../scripts/page-widgets.js';</script>
   <script>
     import '../scripts/data-table.js';
     import '../scripts/llm-gateway-home.js';

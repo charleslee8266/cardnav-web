@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { quickPlanProducts, quickProductDefaultPlan, quickProductSearchTerm, canonicalOfficialPriceSlug, officialPlanIdentity, officialPriceStorageSlugs, quickPlanSearchTermForSlug, productForAutoCategory, quickPlanSearchTermForOfficialPriceSlug } from '../src/shop-plan-search.js';
+import { quickPlanProducts, quickProductDefaultPlan, quickProductSearchTerm, canonicalOfficialPriceSlug, officialPlanIdentity, officialPriceStorageSlugs, quickPlanSearchTermForSlug, productForAutoCategory, productForOfficialPrice, quickPlanSearchTermForOfficialPriceSlug } from '../src/models/product-catalog.js';
 
 test('official plans share category identities and link back to the same product', () => {
   for (const [app, plan, slug, name] of [
@@ -61,5 +61,56 @@ test('product defaults select a concrete category and share its official price d
   for (const [id, slug] of [['gpt', 'gpt-plus'], ['claude', 'claude-pro'], ['gemini', 'gemini-pro'], ['grok', 'supergrok'], ['x', 'x-premium']]) {
     assert.equal(quickProductDefaultPlan(quickPlanProducts.find(product => product.id === id)!).slug, slug);
     assert.equal(quickPlanSearchTermForSlug(id)?.query, `autocat: ${id}`);
+  }
+});
+
+
+test('shared routes encode model identities and shared brands keep the same marks', async () => {
+  const { gatewayModelPath, gatewayFamilyPath } = await import('../src/models/routes.js');
+  const { productIconPath } = await import('../src/models/product-icons.js');
+  const { getModelFamilyIcon } = await import('../src/models/family-icons.js');
+  assert.equal(gatewayModelPath('google/gemma-3'), '/llm-gateway/models/google%2Fgemma-3');
+  assert.equal(gatewayModelPath('google/gemma-3', '/en/llm-gateway/models'), '/en/llm-gateway/models/google%2Fgemma-3');
+  assert.equal(gatewayFamilyPath('GPT'), '/llm-gateway?family=gpt');
+  for (const id of ['gpt', 'claude', 'gemini', 'grok', 'muse']) {
+    const product = quickPlanProducts.find(product => product.id === id)!;
+    assert.equal(productIconPath(product.icon), getModelFamilyIcon(product.label).path);
+    assert.equal(product.monochrome, getModelFamilyIcon(product.label).monochrome);
+  }
+  const kimi = productForOfficialPrice('kimi', 'kimi-moderato')!;
+  assert.equal(productIconPath(kimi.icon), getModelFamilyIcon('Kimi').path);
+});
+
+test('family links require published destinations and shop links cover the whole family', async () => {
+  const { createFamilyNavigation } = await import('../src/models/family-navigation.js');
+  const link = createFamilyNavigation(['GPT', 'Claude', 'Qwen'], ['gpt-plus', 'claude-pro', 'kimi']);
+  assert.deepEqual(link('GPT'), { gatewayPath: '/llm-gateway?family=gpt', shopPath: '/shops/gpt' });
+  assert.deepEqual(link('Qwen'), { gatewayPath: '/llm-gateway?family=qwen', shopPath: null });
+  assert.deepEqual(link('Kimi'), { gatewayPath: null, shopPath: '/shops?q=autocat%3A+kimi' });
+  assert.deepEqual(link(null), { gatewayPath: null, shopPath: null });
+});
+
+test('family cross-links use default subscriptions and omit unavailable destinations', async () => {
+  const { familyRelatedPaths } = await import('../src/models/family-navigation.js');
+  assert.equal(familyRelatedPaths('GPT').officialPath, '/official-price/gpt-plus');
+  assert.equal(familyRelatedPaths('GPT').shopPath, '/shops/gpt-plus');
+  assert.equal(familyRelatedPaths('Claude').officialPath, '/official-price/claude-pro');
+  assert.equal(familyRelatedPaths('DeepSeek').officialPath, null);
+  assert.match(familyRelatedPaths('DeepSeek').shopPath ?? '', /deepseek/);
+  assert.equal(familyRelatedPaths('Kimi').officialPath, '/official-price/kimi-moderato');
+  assert.equal(familyRelatedPaths('unknown').shopPath, null);
+  assert.equal(familyRelatedPaths(null).leaderboardPath, null);
+});
+
+test('official brand destinations use declared defaults even when cheaper plans precede them', async () => {
+  const { defaultOfficialPricePlan } = await import('../src/models/product-catalog.js');
+  for (const [slugs, expected] of [
+    [['gpt-go', 'gpt-pro-500', 'gpt-plus'], 'gpt-plus'],
+    [['claude-max-20x', 'claude-pro', 'claude-max-5x'], 'claude-pro'],
+    [['gemini-plus', 'gemini-ultra-5x', 'gemini-pro'], 'gemini-pro'],
+  ] as const) {
+    const plans = slugs.map(urlSlug => ({urlSlug, pathname: `/official-price/${urlSlug}`}));
+    assert.equal(defaultOfficialPricePlan(plans)?.urlSlug, expected);
+    assert.equal(defaultOfficialPricePlan([...plans].reverse())?.urlSlug, expected);
   }
 });

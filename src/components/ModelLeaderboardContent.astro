@@ -1,4 +1,16 @@
 ---
+import FilterSummary from './FilterSummary.astro';
+import { modelFamilyPresentation, providerPresentation } from '../data-display.js';
+import FilterPopover from './FilterPopover.astro';
+import MultiSelectFilter from './MultiSelectFilter.astro';
+import ModelFamilyLabel from './ModelFamilyLabel.astro';
+import { familyRelatedPaths } from '../models/family-navigation.js';
+import { gatewayProviderSlug } from '../models/routes.js';
+import { matchesLeaderboardHighlight, leaderboardHighlightPath } from '../models/leaderboard-highlight.js';
+import { loadModelFamilyCatalog, loadLeaderboardProviderOptions } from '../models/family-catalog-store.js';
+import RelatedLink from './RelatedLink.astro';
+import ProviderLabel from './ProviderLabel.astro';
+import { getModelFamilyIcon } from '../models/family-icons.js';
 import RefreshTime from './RefreshTime.astro';
 import HeroMetric from './HeroMetric.astro';
 /*
@@ -16,6 +28,9 @@ import Sponsors from './Sponsors.astro';
 import type { PageType } from '../page-types.js';
 
 type Props = {
+  family?: string[];
+  providers?: string[];
+  query?: string;
   stats: import('../store.js').PublicModelLeaderboardStats;
   pageType: Extract<PageType, 'model-leaderboard' | 'model-leaderboard-detail'>;
   groups: LocalizedModelLeaderboardGroup[];
@@ -24,16 +39,23 @@ type Props = {
   updatedAt: string | null;
 };
 
-const { stats, pageType, groups, currentGroup, currentGroupTotalCount = currentGroup?.rows.length ?? 0, updatedAt } = Astro.props;
+const { family = [], providers = [], query = '', stats, pageType, groups, currentGroup, currentGroupTotalCount = currentGroup?.rows.length ?? 0, updatedAt } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
+const familyOptions = await loadModelFamilyCatalog();
+const providerOptions = await loadLeaderboardProviderOptions();
+const selectedProviders = providerOptions.filter(name => providers.includes(gatewayProviderSlug(name)));
+const selected = familyOptions.filter(option => family.includes(gatewayProviderSlug(option.name)));
+const related = familyRelatedPaths(selected[0]?.name || null);
+const relatedOptions = familyOptions.map(option => ({ id: gatewayProviderSlug(option.name), ...familyRelatedPaths(option.name) }));
 const initialRowCount = 30;
 const visibleRows = currentGroup?.rows.slice(0, initialRowCount) ?? [];
 const maximumScore = Math.max(1, ...visibleRows.map(row => row.score));
 const hasMoreRows = currentGroupTotalCount > visibleRows.length;
 const leaderboardApiUrl = currentGroup
-  ? `/api/model-leaderboard/${encodeURIComponent(currentGroup.taskSlug)}.json?offset=${initialRowCount}&locale=${encodeURIComponent(Astro.locals.locale)}`
+  ? `${leaderboardHighlightPath(`/api/model-leaderboard/${encodeURIComponent(currentGroup.taskSlug)}.json`, family, query, providers)}${family.length || providers.length || query ? '&' : '?'}offset=${initialRowCount}&locale=${encodeURIComponent(Astro.locals.locale)}`
   : '';
+
 ---
 
 <PageHero
@@ -53,9 +75,12 @@ const leaderboardApiUrl = currentGroup
     data-model-leaderboard-api={currentGroup ? leaderboardApiUrl : undefined}
     data-model-leaderboard-total={currentGroupTotalCount}
     data-score-max={maximumScore}
+    data-gateway-link-label={t.nav.mobileLlmGateway}
+    data-shop-link-label={t.nav.mobileShops}
   >
     {groups.length > 0 && (
       <div class="data-workspace-controls">
+        <div class="data-workspace-toolbar">
         <nav class="tool-tablist-wrap" aria-label={t.leaderboard.taskNavLabel}>
           <div class="data-segmented" role="tablist">
             {groups.map(group => {
@@ -63,7 +88,7 @@ const leaderboardApiUrl = currentGroup
               return (
                 <a
                   role="tab"
-                  href={linkTo(group.pathname)}
+                  href={linkTo(leaderboardHighlightPath(group.pathname, family, query, providers))}
                   class={`tab content-tab ${isCurrent ? 'tab-active' : ''}`}
                   aria-selected={isCurrent ? 'true' : 'false'}
                   aria-current={isCurrent ? 'page' : undefined}
@@ -74,6 +99,29 @@ const leaderboardApiUrl = currentGroup
             })}
           </div>
         </nav>
+        <form method="get" action={linkTo(currentGroup?.pathname || '/model-leaderboard')} class="leaderboard-highlight-controls" data-leaderboard-highlight-form>
+          <input class="input input-bordered input-sm" type="search" name="q" value={query} placeholder={t.leaderboard.searchPlaceholder} aria-label={t.leaderboard.searchPlaceholder} />
+          <FilterPopover id="leaderboardFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+            <MultiSelectFilter name="family" label={t.llmGateway.familyFilter} allLabel={t.llmGateway.allFamilies} options={familyOptions.map(option => ({value: gatewayProviderSlug(option.name), label: option.name}))}>
+              {familyOptions.map(option => <ModelFamilyLabel slot={gatewayProviderSlug(option.name)} name={option.name} />)}
+            </MultiSelectFilter>
+            <MultiSelectFilter name="provider" label={t.llmGateway.modelProvider} allLabel={t.llmGateway.allProviders} options={providerOptions.map(name => ({value: gatewayProviderSlug(name), label: name}))}>
+              {providerOptions.map(name => <ProviderLabel slot={gatewayProviderSlug(name)} name={name} />)}
+            </MultiSelectFilter>
+          </FilterPopover>
+        </form>
+        </div>
+          <FilterSummary data-leaderboard-active-filters clearLabel={t.shops.clearFilters}
+            items={[
+              ...selected.map(option => ({ ...modelFamilyPresentation(option.name), label: option.name, href: linkTo(leaderboardHighlightPath(currentGroup?.pathname || '/model-leaderboard', family.filter(value => value !== gatewayProviderSlug(option.name)), query, providers)) })),
+              ...selectedProviders.map(name => ({ ...providerPresentation(name), label: name, href: linkTo(leaderboardHighlightPath(currentGroup?.pathname || '/model-leaderboard', family, query, providers.filter(value => value !== gatewayProviderSlug(name)))) })),
+            ]}
+            clearHref={linkTo(leaderboardHighlightPath(currentGroup?.pathname || '/model-leaderboard', [], query))} />
+        <div data-leaderboard-related class="data-workspace-related" data-options={JSON.stringify(relatedOptions)} data-gateway-label={t.officialPrice.gatewayTip} data-shop-label={t.officialPrice.shopProductsTip} data-official-label={t.shops.officialPriceTip} data-locale-prefix={Astro.locals.locale === 'zh' ? '' : `/${Astro.locals.locale}`}>
+          {related.gatewayPath && <RelatedLink href={linkTo(related.gatewayPath)} label={t.officialPrice.gatewayTip.replace('{term}', related.name)} />}
+          {related.shopPath && <RelatedLink href={linkTo(related.shopPath)} label={t.officialPrice.shopProductsTip.replace('{term}', related.name)} />}
+          {related.officialPath && <RelatedLink href={linkTo(related.officialPath)} label={t.shops.officialPriceTip.replace('{term}', related.name)} />}
+        </div>
       </div>
     )}
     {currentGroup && (
@@ -95,12 +143,20 @@ const leaderboardApiUrl = currentGroup
             <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
             <DataTableHeader label={t.labels.model} sortKey="model" />
             <DataTableHeader label={t.labels.score} sortKey="score" sortType="number" />
+            <DataTableHeader label={t.llmGateway.modelFamily} sortKey="family" />
+            <DataTableHeader label={t.llmGateway.modelProvider} sortKey="provider" />
+            <DataTableHeader label={t.nav.mobileLlmGateway} sortable={false} />
+            <DataTableHeader label={t.nav.mobileShops} sortable={false} />
           </Fragment>
           {visibleRows.map(item => (
-            <tr data-sort-sequence={String(item.rank)} data-sort-model={item.modelName} data-sort-score={item.score}>
+            <tr class:list={{ 'leaderboard-row-highlight': matchesLeaderboardHighlight(item, family, query, providers) }} data-model-family={item.modelFamily || ''} data-sort-family={item.modelFamily || ""} data-sort-sequence={String(item.rank)} data-sort-provider={item.modelOrganization ?? ""} data-sort-model={item.modelName} data-sort-score={item.score}>
               <DataTableCell label={t.labels.sequence} align="center" sequence>{item.rank}</DataTableCell>
-              <DataTableCell label={t.labels.model} ><strong class="leaderboard-model-name">{item.modelName}</strong></DataTableCell>
+              <DataTableCell label={t.labels.model} ><strong class="leaderboard-model-name"><img src={getModelFamilyIcon(item.modelFamily || '').path} alt="" width="16" height="16" class:list={{ 'data-provider-mono': getModelFamilyIcon(item.modelFamily || '').monochrome }} /><span title={item.modelName}>{item.modelName}</span></strong></DataTableCell>
               <DataTableCell label={t.labels.score} align="right"><ScoreDisplay value={item.score} maximum={maximumScore} /></DataTableCell>
+              <DataTableCell label={t.llmGateway.modelFamily}>{item.modelFamily ? <ModelFamilyLabel name={item.modelFamily} selectScope="leaderboard" /> : "—"}</DataTableCell>
+              <DataTableCell label={t.llmGateway.modelProvider}>{item.modelOrganization ? <button type="button" class="leaderboard-provider-select" data-leaderboard-provider={gatewayProviderSlug(item.modelOrganization)}><ProviderLabel name={item.modelOrganization} /></button> : "—"}</DataTableCell>
+              <DataTableCell label={t.nav.mobileLlmGateway}>{item.gatewayPath ? <RelatedLink href={linkTo(item.gatewayPath)} label={`${item.modelFamily || ''} ${t.nav.mobileLlmGateway}`} /> : <span class="leaderboard-no-link">—</span>}</DataTableCell>
+              <DataTableCell label={t.nav.mobileShops}>{item.shopPath ? <RelatedLink href={linkTo(item.shopPath)} label={`${item.modelFamily || ''} ${t.nav.mobileShops}`} /> : <span class="leaderboard-no-link">—</span>}</DataTableCell>
             </tr>
           ))}
         </DataTable>
@@ -116,9 +172,25 @@ const leaderboardApiUrl = currentGroup
 )}
 
 <style>
-  .leaderboard-workspace :global(th[data-column-key="score"]) { width: 140px; }
+  .leaderboard-highlight-controls { display: flex; flex: 1 1 260px; min-width: 0; gap: 8px; align-items: center; }
+  .leaderboard-highlight-controls > input { flex: 1; width: 0; min-width: 150px; }
+  .leaderboard-workspace :global(.leaderboard-row-highlight) { --row-background: color-mix(in srgb, var(--color-brand-soft) var(--row-soft-tint), var(--color-base-100)); background: var(--row-background); }
+  .leaderboard-workspace :global(.leaderboard-row-highlight > td),
+  .leaderboard-workspace :global(.leaderboard-row-highlight:hover > td) { background: var(--row-background); }
+  .leaderboard-workspace :global(.leaderboard-row-highlight td:first-child) { box-shadow: inset 3px 0 var(--color-primary); }
+
+  .leaderboard-workspace :global(.data-table) { table-layout: fixed; min-width: 1060px; }
+  .leaderboard-workspace :global(th[data-column-key="provider"]) { width: 150px; }
+  .leaderboard-workspace :global(th[data-column-key="score"]) { width: 120px; }
+  .leaderboard-workspace :global(th:nth-child(6)), .leaderboard-workspace :global(th:nth-child(7)) { width: 195px; }
+  .leaderboard-workspace :global(th[data-column-key="family"]) { width: 130px; }
+  .leaderboard-workspace :global(.leaderboard-provider-select) { border: 0; padding: 0; background: none; color: inherit; cursor: pointer; }
+  .leaderboard-workspace :global(.leaderboard-provider-select:hover .data-provider) { text-decoration: underline; }
+  .leaderboard-workspace :global(.leaderboard-no-link) { color: var(--color-base-content); opacity: .35; }
   .leaderboard-workspace :global(.data-segmented a) { min-width: 90px; }
   .leaderboard-workspace :global(.data-table td[data-label]) { vertical-align: middle; }
-  .leaderboard-workspace :global(.leaderboard-model-name) { font-weight: 600; overflow-wrap: anywhere; }
+  .leaderboard-workspace :global(.leaderboard-model-name) { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; max-width: 100%; min-width: 0; }
+  .leaderboard-workspace :global(.leaderboard-model-name span) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .leaderboard-workspace :global(.leaderboard-model-name img) { flex: none; width: 16px; height: 16px; object-fit: contain; }
   .leaderboard-workspace :global(.data-table tr:nth-child(-n+3) .data-table-sequence-cell) { font-weight: 650; color: var(--color-primary); }
 </style>

@@ -16,10 +16,6 @@
 .cooperation-card li+li { margin-top:6px; }
 .partnership-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:18px; }
 .partnership-page .btn { height:auto; min-height:34px; padding:7px 12px; white-space:normal; text-align:center; font-size:13px; line-height:1.45; }
-.partnership-page .affiliate-action { color:var(--color-primary); background:var(--color-brand-soft); border-color:var(--color-brand-line); }
-.partnership-page .affiliate-action:hover { background: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100));  }
-.partnership-page .partnership-action { color:var(--merchant-partner-text); background:var(--color-partner-soft); border-color:var(--color-partner-line); }
-.partnership-page .partnership-action:hover { background: color-mix(in srgb, var(--merchant-partner-text) 12%, var(--color-base-100));  }
 .partnership-section { margin-top:24px; scroll-margin-top:100px; }
 .partnership-section>h3,.partnership-table-example>h3 { margin:0 0 14px; font-size:18px; font-weight:700; line-height:1.4; }
 .partnership-section>p { margin:-6px 0 14px; }

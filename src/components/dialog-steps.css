@@ -1,0 +1,9 @@
+.dialog-steps { --step-color: var(--color-primary); --step-soft: var(--color-brand-soft); display: flex; align-items: center; gap: 8px; list-style: none; margin: 0 0 18px; padding: 0; }
+.dialog-steps--support { --step-color: var(--color-support); --step-soft: var(--color-support-soft); }
+.dialog-steps li { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-muted); }
+.dialog-steps li + li::before { content: ''; width: 18px; height: 1px; background: var(--color-line-strong); margin-right: 2px; }
+.dialog-steps [data-step-number] { display: grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: var(--color-surface-soft); font-size: 11px; font-weight: 650; }
+.dialog-steps li[aria-current] { color: var(--color-base-content); font-weight: 650; }
+.dialog-steps li[aria-current] [data-step-number] { background: var(--step-color); color: var(--color-base-100); }
+.dialog-steps li[data-step-complete] [data-step-number] { background: var(--step-soft); color: var(--step-color); }
+@media (max-width: 420px) { .dialog-steps { gap: 5px; } .dialog-steps li { gap: 4px; font-size: 11px; } .dialog-steps li + li::before { width: 10px; } }

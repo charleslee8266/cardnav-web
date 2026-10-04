@@ -3,7 +3,7 @@
 .plan-groups { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: thin; padding-bottom: 1px; }
 .plan-option { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; gap: 5px; min-height: 30px; border: 1px solid transparent; border-radius: 999px; padding: 0 12px; background: transparent; color: var(--color-ink-secondary); font-size: 13px; line-height: 1.4; white-space: nowrap; text-decoration: none; cursor: pointer; }
 .plan-product { border-color: var(--color-base-300); background: var(--color-base-100); }
-.plan-option[aria-pressed="true"], .plan-option[aria-current] { border-color: var(--color-brand-line); background: var(--color-brand-soft); color: var(--color-primary); }
+.plan-option[aria-pressed="true"], .plan-option[aria-current], .plan-option:has(input:checked) { border-color: var(--color-brand-line); background: var(--color-brand-soft); color: var(--color-primary); }
 .plan-product:hover { border-color: var(--category-hover-border); color: var(--color-primary); }
 .plan-brand-icon { width: 14px; height: 14px; object-fit: contain; flex-shrink: 0; }
 .plan-letter { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; font-weight: 650; }
@@ -12,6 +12,6 @@
 .plan-group-options .plan-option:hover:not([aria-pressed="true"]):not([aria-current]) { background: color-mix(in srgb, var(--color-brand-soft) 50%, var(--color-base-100)); }
 .plan-panel-label { margin-left: 12px; flex-shrink: 0; color: var(--color-ink-secondary); font-size: 12px; font-weight: 600; }
 .plan-package-scroll { display: flex; min-width: 0; gap: 2px; overflow-x: auto; scrollbar-width: thin; }
-.plan-option:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.plan-option:focus-visible, .plan-option:has(input:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 .plan-group-options[hidden] { display: none !important; }
 [data-theme="dark"] .plan-icon-mono { filter: invert(1); }

@@ -1,3 +1,4 @@
+import { officialPricePathname } from './models/routes.js';
 /**
  * 文件说明: 根据数据库里的官方订阅价格元数据构建公开页分组和 URL 解析。
  */
@@ -17,9 +18,7 @@ export type OfficialPriceGroup<Row extends PublicOfficialPriceRow = PublicOffici
   prices: Row[];
 };
 
-export function officialPricePathname(urlSlug: string) {
-  return `/official-price/${urlSlug}`;
-}
+
 
 function isOfficialPriceGroupRow(price: PublicOfficialPriceRow) {
   const urlSlug = price.urlSlug.trim().toLowerCase();

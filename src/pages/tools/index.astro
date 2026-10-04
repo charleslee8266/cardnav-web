@@ -42,7 +42,7 @@ const seo = buildSeoContext({
       <p>{tool.description}</p>
       {tool.external && <p class="tool-entry-risk">{t.tools.externalRisk}</p>}
       <div class="tool-entry-actions">
-        <a href={tool.external ? tool.href : linkTo(tool.href)} target={tool.external ? '_blank' : undefined} rel={tool.external ? 'noopener noreferrer' : undefined} data-umami-event={tool.external ? 'external-link-click' : 'internal-link-click'} data-umami-event-link-type="tool-entry" data-umami-event-name={tool.title} data-umami-event-target-page={tool.external ? undefined : linkTo(tool.href)} data-umami-event-url={tool.external ? tool.href : linkTo(tool.href)} class:list={['btn btn-sm', !tool.external && 'btn-primary']}>
+        <a href={tool.external ? tool.href : linkTo(tool.href)} target={tool.external ? '_blank' : undefined} rel={tool.external ? 'noopener noreferrer' : undefined} data-umami-event={tool.external ? 'external-link-click' : 'internal-link-click'} data-umami-event-link-type="tool-entry" data-umami-event-name={tool.title} data-umami-event-target-page={tool.external ? undefined : linkTo(tool.href)} data-umami-event-url={tool.external ? tool.href : linkTo(tool.href)} class="btn btn-sm submit-button">
           {tool.external ? t.actions.openExternalTool : t.actions.openTool}<span aria-hidden="true">{tool.external ? '↗' : '→'}</span>
         </a>
         {tool.external && <span class="tool-entry-host">{new URL(tool.href).hostname}</span>}

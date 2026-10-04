@@ -10,7 +10,8 @@ function initInlineHelp(root = document) {
     if (button.dataset.helpInitialized) return;
     button.dataset.helpInitialized = 'true';
     const tipText = button.dataset.tip || '';
-    if (!tipText) return;
+    const tipContent = button.querySelector('template[data-tip-content]');
+    if (!tipText && !tipContent) return;
     const tipId = `inline-help-tip-${inlineHelpId++}`;
     button.setAttribute('aria-describedby', tipId);
     button.setAttribute('aria-expanded', 'false');
@@ -18,7 +19,8 @@ function initInlineHelp(root = document) {
     tip.id = tipId;
     tip.className = 'inline-help-tooltip public-floating-layer hidden';
     tip.classList.toggle('inline-help-tooltip-wide', button.hasAttribute('data-tip-wide'));
-    tipText.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).forEach(part => {
+    if (tipContent instanceof HTMLTemplateElement) tip.append(tipContent.content.cloneNode(true));
+    else tipText.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).forEach(part => {
       if (part.startsWith('`') && part.endsWith('`')) {
         const code = document.createElement('code');
         code.textContent = part.slice(1, -1);
@@ -41,7 +43,7 @@ function initInlineHelp(root = document) {
       link.href = linkHref;
       link.className = 'inline-help-link';
       link.textContent = linkLabel;
-      tip.append(document.createTextNode(' '), link);
+      tip.append(document.createTextNode(' '), link, document.createTextNode(document.documentElement.lang.startsWith('zh') ? '。' : '.'));
     } else tip.setAttribute('role', 'tooltip');
     document.body.appendChild(tip);
     let hideTimeout;
@@ -82,6 +84,14 @@ function initInlineHelp(root = document) {
     };
 
     button.addEventListener('click', showTip);
+    if (!link) {
+      button.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { event.preventDefault(); hideTip(); }
+      });
+      document.addEventListener('click', event => {
+        if (!button.contains(event.target) && !tip.contains(event.target)) hideTip();
+      });
+    }
     if (link) {
       button.addEventListener('keydown', event => {
         if (event.key === 'Tab' && !event.shiftKey) {
@@ -122,49 +132,6 @@ function initInlineHelp(root = document) {
       if (!tip.classList.contains('hidden')) positionTip();
     }, true);
   });
-}
-
-function initAnnouncement() {
-  const pendingAnnouncements = [];
-  const showNextAnnouncement = () => {
-    const next = pendingAnnouncements[0];
-    if (!next) return;
-    next.classList.remove('public-announcement-pending');
-    next.removeAttribute('hidden');
-  };
-
-  document.querySelectorAll('[data-announcement-id]').forEach(announcement => {
-    const button = announcement.querySelector('[data-dismiss-announcement]');
-    if (!button) return;
-
-    const storageKey = `cardnav-announcement-${announcement.dataset.announcementId}-dismissed-at`;
-    const repeatAfterHours = Number(announcement.dataset.repeatAfterHours);
-    let dismissedAt = null;
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored !== null && Number.isFinite(Number(stored))) dismissedAt = Number(stored);
-    } catch {
-      // 浏览器无法保存记录时，仍允许关闭当前页面上的公告。
-    }
-
-    const eligible = dismissedAt === null || (repeatAfterHours > 0 && Date.now() - dismissedAt >= repeatAfterHours * 60 * 60 * 1000);
-    if (!eligible) return;
-    pendingAnnouncements.push(announcement);
-
-    button.addEventListener('click', () => {
-      window.CardNavTelemetry?.track('button-click', { scope: 'site', action: 'dismiss-announcement' }, button);
-      announcement.classList.add('public-announcement-pending');
-      announcement.setAttribute('hidden', '');
-      pendingAnnouncements.shift();
-      showNextAnnouncement();
-      try {
-        localStorage.setItem(storageKey, String(Date.now()));
-      } catch {
-        // 浏览器无法保存记录时，仍允许关闭当前页面上的公告。
-      }
-    });
-  });
-  showNextAnnouncement();
 }
 
 function initPublicShell() {
@@ -246,7 +213,6 @@ for (const eventName of ['mouseenter', 'focus', 'click']) {
     if (target) initInlineHelp(target);
   }, true);
 }
-initAnnouncement();
 
 // Reading anchors follow the visible shell, including announcements before the sticky header.
 const readingHeader = document.querySelector('.site-header');

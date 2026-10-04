@@ -4,6 +4,8 @@
  */
 type SupportOpenDetail = { entry?: 'cta' | 'url'; sourceElement?: Element };
 type SupportPaymentStatus = 'pending' | 'paid' | 'cancelled' | 'failed';
+type PaymentView = SupportPaymentStatus | 'creating' | 'checking' | 'create-failed';
+type OrderSummary = { identity: string; amount: string; message: string; kind: string; paymentType: string; paymentUrl?: string };
 
 class SupportDialog {
   private dialog: HTMLDialogElement;
@@ -18,14 +20,10 @@ class SupportDialog {
   private personFields: HTMLFieldSetElement;
   private siteFields: HTMLFieldSetElement;
   private status: HTMLElement;
-  private paymentStatus: HTMLElement;
   private returnStatus: HTMLElement;
-  private dialogDescription: HTMLElement | null;
   private paymentStateTitle: HTMLElement;
-  private paymentWindowNotice: HTMLElement;
   private paymentLoading: HTMLElement;
   private paymentWindowHint: HTMLElement;
-  private successDetails: HTMLElement;
   private successIdentity: HTMLElement;
   private successAmount: HTMLElement;
   private successMessageRow: HTMLElement;
@@ -33,6 +31,8 @@ class SupportDialog {
   private openPaymentButton: HTMLButtonElement;
   private cancelPaymentButton: HTMLButtonElement;
   private paymentUrl = '';
+  private paymentView: PaymentView | null = null;
+  private orderSummary: OrderSummary | null = null;
   private payButton: HTMLButtonElement;
   private messages: Record<string, string>;
   private request?: AbortController;
@@ -59,14 +59,10 @@ class SupportDialog {
     this.personFields = dialog.querySelector('[data-person-fields]')!;
     this.siteFields = dialog.querySelector('[data-site-fields]')!;
     this.status = dialog.querySelector('[data-site-status]')!;
-    this.paymentStatus = dialog.querySelector('[data-payment-status]')!;
     this.returnStatus = dialog.querySelector('[data-return-status]')!;
-    this.dialogDescription = dialog.querySelector('.form-dialog-description');
     this.paymentStateTitle = dialog.querySelector('[data-payment-state-title]')!;
-    this.paymentWindowNotice = dialog.querySelector('[data-payment-window-notice]')!;
     this.paymentLoading = dialog.querySelector('[data-payment-loading]')!;
     this.paymentWindowHint = dialog.querySelector('[data-payment-window-hint]')!;
-    this.successDetails = dialog.querySelector('[data-success-details]')!;
     this.successIdentity = dialog.querySelector('[data-success-identity]')!;
     this.successAmount = dialog.querySelector('[data-success-amount]')!;
     this.successMessageRow = dialog.querySelector('[data-success-message-row]')!;
@@ -122,6 +118,16 @@ class SupportDialog {
       if (this.paymentUrl) window.open(this.paymentUrl, 'paymentPopup', getPaymentPopupFeatures());
     });
     this.cancelPaymentButton.addEventListener('click', () => void this.cancelPayment());
+    dialog.querySelector('[data-check-payment]')?.addEventListener('click', () => void this.checkPayment(0, true));
+    dialog.querySelector('[data-edit-details]')?.addEventListener('click', () => this.showStep(2));
+    dialog.querySelector('[data-restart-support]')?.addEventListener('click', () => {
+      this.statusToken = null;
+      this.paymentUrl = '';
+      this.paymentView = null;
+      this.orderSummary = null;
+      this.showStep(2);
+    });
+    dialog.querySelector('[data-support-close]')?.addEventListener('click', () => dialog.close());
     dialog.addEventListener('support-open', event => {
       const detail = (event as CustomEvent<SupportOpenDetail>).detail;
       this.track('support-open', { entry: detail?.entry === 'cta' ? 'cta' : 'url' }, detail?.sourceElement || this.dialog);
@@ -133,6 +139,7 @@ class SupportDialog {
       this.request?.abort();
       this.closeOptions();
     });
+    this.changeIdentity(false);
     if (dialog.open) this.open();
   }
 
@@ -148,29 +155,28 @@ class SupportDialog {
   }
 
   private open() {
-    if (!this.statusToken) {
-      if (this.dialogDescription) this.dialogDescription.hidden = false;
-      const requestedKind = new URL(window.location.href).searchParams.get('support-kind');
-      if (requestedKind === 'gateway' || requestedKind === 'shop') {
-        const input = this.form.querySelector<HTMLInputElement>(`[name="kind"][value="${requestedKind}"]`);
-        if (input && !input.checked) {
-          input.checked = true;
-          this.changeIdentity();
-        }
-      }
-      this.showStep(1);
+    if (this.busy) {
+      this.renderPaymentState('creating');
+      return;
     }
+    if (this.statusToken) {
+      this.restoreOrderSummary(this.statusToken);
+      this.renderPaymentState(this.paymentView || 'checking');
+      void this.checkPayment(0, true);
+      return;
+    }
+    this.showStep(this.step === 2 ? 2 : 1, true);
     if (this.kind !== 'person') void this.loadSites();
-    void this.checkPayment();
   }
 
-  private changeIdentity() {
+  private changeIdentity(userInitiated = true) {
     this.request?.abort();
     const isPerson = this.kind === 'person';
     this.personFields.hidden = !isPerson;
     this.personFields.disabled = !isPerson;
     this.siteFields.hidden = isPerson;
     this.siteFields.disabled = isPerson;
+    this.dialog.querySelector<HTMLElement>('[data-shop-onboarding]')!.hidden = this.kind !== 'shop';
     this.dialog.querySelectorAll<HTMLElement>('[data-benefit-kind]').forEach((benefit) => {
       benefit.hidden = benefit.dataset.benefitKind !== this.kind;
     });
@@ -183,32 +189,42 @@ class SupportDialog {
     this.closeOptions();
     this.status.textContent = '';
     this.status.className = 'form-field-hint';
-    this.paymentStatus.textContent = '';
     const label = this.kind === 'shop' ? this.messages.shop : this.messages.gateway;
     this.dialog.querySelector('[data-site-label]')!.textContent = label;
     this.search.setAttribute('aria-label', label);
     this.dialog.querySelector('[data-site-submit-hint]')!.textContent = this.kind === 'shop' ? this.messages.submitShopHint : this.messages.submitGatewayHint;
     this.siteSubmit.href = this.kind === 'shop' ? this.siteSubmit.dataset.shopSubmit! : this.siteSubmit.dataset.gatewaySubmit!;
     this.siteSubmit.dataset.umamiEventUrl = this.siteSubmit.href;
-    this.track('support-kind-change', { kind: this.kind });
-    if (!isPerson) void this.loadSites();
+    if (userInitiated) this.track('support-kind-change', { kind: this.kind });
+    if (!isPerson && this.dialog.open) void this.loadSites();
   }
 
-  private showStep(step: number) {
-    if (this.busy) return;
+  private showStep(step: number, opening = false) {
+    const changed = this.step !== step;
     this.step = step;
+    this.form.hidden = step === 3;
     this.dialog.querySelectorAll<HTMLElement>('[data-support-step]').forEach(panel => {
       panel.hidden = Number(panel.dataset.supportStep) !== step;
     });
     this.dialog.querySelectorAll<HTMLElement>('[data-step-indicator]').forEach(indicator => {
-      if (Number(indicator.dataset.stepIndicator) === step) indicator.setAttribute('aria-current', 'step');
+      const number = Number(indicator.dataset.stepIndicator);
+      indicator.toggleAttribute('data-step-complete', number < step);
+      const numberLabel = indicator.querySelector('[data-step-number]');
+      if (numberLabel) numberLabel.textContent = number < step ? '✓' : String(number);
+      if (number === step) indicator.setAttribute('aria-current', 'step');
       else indicator.removeAttribute('aria-current');
     });
+    if (step === 3 && changed) this.paymentStateTitle.focus();
     if (step === 2) {
-      const nickname = this.form.querySelector<HTMLInputElement>('[name="nickname"]')?.value.trim();
-      this.dialog.querySelector('[data-review-identity]')!.textContent = this.kind === 'person' ? nickname || this.messages.anonymous : this.search.value;
+      this.dialog.querySelector('[data-review-identity]')!.textContent = this.kind === 'person' ? this.form.querySelector<HTMLInputElement>('[name="nickname"]')!.value.trim() || this.messages.anonymous : this.search.value;
     }
-    this.dialog.querySelector<HTMLElement>(`[data-support-step="${step}"] input:not([type="hidden"]):not(:disabled)`)?.focus();
+    if (step === 1 && opening) {
+      this.dialog.querySelector<HTMLElement>('.form-dialog-body')?.focus();
+    } else if (step === 1) {
+      this.form.querySelector<HTMLInputElement>('[name="kind"]:checked')?.focus();
+    } else if (step === 2) {
+      this.dialog.querySelector<HTMLElement>('[data-support-step="2"] input:not([type="hidden"]):not(:disabled)')?.focus();
+    }
   }
 
   private nextStep() {
@@ -219,7 +235,7 @@ class SupportDialog {
     }
     const controls = this.dialog.querySelectorAll<HTMLInputElement>('[data-support-step="1"] input');
     for (const control of controls) {
-      if (!control.disabled && !control.reportValidity()) return;
+      if (!control.matches(':disabled') && !control.reportValidity()) return;
     }
     this.showStep(2);
   }
@@ -375,112 +391,77 @@ class SupportDialog {
     this.track('support-payment-status', { status, trigger });
   }
 
-  private async checkPayment(attempt = 0) {
+  private async checkPayment(attempt = 0, manual = false) {
     clearTimeout(this.statusTimer);
     this.statusRequest?.abort();
     const token = this.statusToken;
     if (!token) return;
-    this.dialog.querySelector<HTMLElement>('[data-return-status-panel]')!.hidden = false;
-    this.returnStatus.textContent = this.messages.checking;
     const request = new AbortController();
     this.statusRequest = request;
+    if (manual || !this.paymentView) this.renderPaymentState('checking');
     try {
       const response = await fetch(`/api/support/status?${new URLSearchParams({ token })}`, { signal: request.signal, headers: { 'x-cardnav-locale': this.dialog.dataset.locale! } });
       const data = await response.json();
-      if (request.signal.aborted) return;
-      if (!response.ok || !data.ok) throw new Error();
-      const paid = data.status === 'paid';
-      const cancelled = data.status === 'cancelled';
-      this.returnStatus.textContent = paid ? this.messages.paid : cancelled ? this.messages.cancelled : this.messages.pending;
-      this.reportPaymentStatus(paid ? 'paid' : cancelled ? 'cancelled' : 'pending');
-      this.openPaymentButton.hidden = paid || cancelled || !this.paymentUrl;
-      this.cancelPaymentButton.hidden = paid || cancelled;
-      if (paid) this.showPaidSummary(token);
-      if (cancelled) this.showCancelledSummary();
-      if (!paid && !cancelled && attempt < 19 && this.dialog.open) this.statusTimer = setTimeout(() => void this.checkPayment(attempt + 1), 3000);
+      if (request.signal.aborted || this.statusToken !== token) return;
+      if (!response.ok || !data.ok || !['paid', 'cancelled', 'pending'].includes(data.status)) throw new Error();
+      this.renderPaymentState(data.status);
+      this.reportPaymentStatus(data.status, manual ? 'manual' : 'automatic');
+      if (data.status === 'pending' && attempt < 19 && this.dialog.open) this.statusTimer = setTimeout(() => void this.checkPayment(attempt + 1), 3000);
     } catch {
-      if (!request.signal.aborted) {
-        this.returnStatus.textContent = this.messages.statusFailed;
-        this.reportPaymentStatus('failed');
+      if (!request.signal.aborted && this.statusToken === token) {
+        this.renderPaymentState('failed');
+        this.reportPaymentStatus('failed', manual ? 'manual' : 'automatic');
       }
     }
   }
 
-  private showCancelledSummary() {
-    this.form.hidden = true;
-    this.successDetails.hidden = false;
-    this.paymentStateTitle.hidden = true;
-    this.paymentWindowNotice.hidden = true;
-    this.paymentWindowHint.textContent = '';
-    this.openPaymentButton.hidden = true;
-    this.cancelPaymentButton.hidden = true;
-  }
-
-  private showPaidSummary(token: string) {
-    this.form.hidden = true;
-    this.successDetails.hidden = false;
-    if (this.dialogDescription) this.dialogDescription.hidden = true;
-    this.paymentStateTitle.hidden = true;
-    this.paymentWindowNotice.hidden = true;
-    this.paymentWindowHint.textContent = '';
-    this.openPaymentButton.hidden = true;
-    this.cancelPaymentButton.hidden = true;
-    this.successIdentity.textContent = this.messages.anonymous;
-    this.successAmount.textContent = '';
-    this.successMessage.textContent = '';
-    this.successMessageRow.hidden = true;
-    const storageKey = `cardnav-support-order:${token}`;
+  private restoreOrderSummary(token: string) {
     try {
-      const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null') as {
-        identity?: string;
-        amount?: string;
-        message?: string;
-      } | null;
-      if (saved) {
-        this.successIdentity.textContent = saved.identity || this.messages.anonymous;
-        this.successAmount.textContent = saved.amount ? `${saved.amount} CNY` : '';
-        this.successMessage.textContent = saved.message || '';
-        this.successMessageRow.hidden = !saved.message;
-        sessionStorage.removeItem(storageKey);
-      }
+      const saved = JSON.parse(sessionStorage.getItem(`cardnav-support-order:${token}`) || 'null') as OrderSummary | null;
+      if (saved) this.orderSummary = saved;
+      if (saved?.paymentUrl) this.paymentUrl = saved.paymentUrl;
     } catch {
-      // 会话存储不可用时仍保留赞赏成功状态。
+      // 支付状态由接口确认，会话存储不可用不影响查询。
     }
   }
 
-  private showPendingSummary(token: string) {
-    this.form.hidden = true;
-    this.successDetails.hidden = false;
-    if (this.dialogDescription) this.dialogDescription.hidden = true;
-    this.paymentStateTitle.hidden = false;
-    this.paymentStateTitle.textContent = this.messages.pendingTitle;
-    this.paymentWindowNotice.hidden = false;
-    this.paymentLoading.hidden = false;
-    this.openPaymentButton.hidden = !this.paymentUrl;
-    this.cancelPaymentButton.hidden = false;
+  private renderPaymentState(state: PaymentView, errorMessage?: string) {
+    this.paymentView = state;
+    this.showStep(3);
+    const loading = state === 'creating' || state === 'checking';
+    this.paymentLoading.hidden = !loading;
+    const titles: Record<PaymentView, string> = {
+      creating: this.messages.paying, checking: this.messages.checking,
+      pending: this.messages.pendingTitle, paid: this.messages.paidTitle,
+      cancelled: this.messages.cancelledTitle, failed: this.messages.unconfirmedTitle,
+      'create-failed': this.messages.createFailedTitle,
+    };
+    this.paymentStateTitle.textContent = titles[state];
+    this.returnStatus.textContent = errorMessage || (state === 'paid' ? this.messages.paid : state === 'failed' ? this.messages.statusFailed : state === 'create-failed' ? this.messages.failed : '');
+    this.returnStatus.hidden = !this.returnStatus.textContent;
+    this.dialog.querySelector<HTMLElement>('[data-support-returned]')!.hidden = state === 'paid' || state === 'cancelled';
+    this.paymentWindowHint.hidden = state !== 'pending';
     this.paymentWindowHint.textContent = this.messages.paymentWindowHint;
-    this.successIdentity.textContent = this.messages.anonymous;
-    this.successAmount.textContent = '';
-    this.successMessage.textContent = '';
-    this.successMessageRow.hidden = true;
-    const storageKey = `cardnav-support-order:${token}`;
-    try {
-      const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null') as {
-        identity?: string;
-        amount?: string;
-        message?: string;
-        paymentUrl?: string;
-      } | null;
-      if (saved) {
-        this.successIdentity.textContent = saved.identity || this.messages.anonymous;
-        this.successAmount.textContent = saved.amount ? `${saved.amount} CNY` : '';
-        this.successMessage.textContent = saved.message || '';
-        this.successMessageRow.hidden = !saved.message;
-        if (saved.paymentUrl) this.paymentUrl = saved.paymentUrl;
-      }
-      this.openPaymentButton.hidden = !this.paymentUrl;
-    } catch {
-      // 会话存储不可用时仍显示等待付款状态。
+    this.openPaymentButton.hidden = !['pending', 'failed'].includes(state) || !this.paymentUrl;
+    this.cancelPaymentButton.hidden = !['pending', 'failed'].includes(state);
+    this.cancelPaymentButton.disabled = false;
+    const visibility: Record<string, boolean> = {
+      'data-check-payment': state === 'pending' || state === 'failed',
+      'data-restart-support': state === 'cancelled',
+      'data-edit-details': state === 'create-failed',
+      'data-support-close': state === 'paid' || state === 'cancelled' || state === 'create-failed',
+      'data-support-list': state === 'paid',
+    };
+    for (const [attribute, visible] of Object.entries(visibility)) this.dialog.querySelector<HTMLElement>(`[${attribute}]`)!.hidden = !visible;
+    const summary = this.orderSummary;
+    this.dialog.querySelector<HTMLElement>('[data-order-summary]')!.hidden = !summary;
+    if (summary) {
+      this.successIdentity.textContent = summary.identity;
+      this.successAmount.textContent = `${summary.amount} CNY`;
+      this.successMessage.textContent = summary.message;
+      this.successMessageRow.hidden = !summary.message;
+      this.dialog.querySelector('[data-summary-kind]')!.textContent = summary.kind === 'shop' ? this.messages.shopIdentity : summary.kind === 'gateway' ? this.messages.gatewayIdentity : this.messages.person;
+      this.dialog.querySelector('[data-summary-payment]')!.textContent = this.messages[summary.paymentType] || '';
     }
   }
 
@@ -494,6 +475,8 @@ class SupportDialog {
   private async cancelPayment() {
     const token = this.statusToken;
     if (!token) return;
+    clearTimeout(this.statusTimer);
+    this.statusRequest?.abort();
     this.cancelPaymentButton.disabled = true;
     try {
       const response = await fetch(`/api/support/cancel?${new URLSearchParams({ token })}`, { method: 'POST', headers: { 'x-cardnav-locale': this.dialog.dataset.locale! } });
@@ -503,18 +486,17 @@ class SupportDialog {
       this.statusRequest?.abort();
       this.returnStatus.textContent = this.messages.cancelled;
       this.reportPaymentStatus('cancelled', 'manual');
-      this.showCancelledSummary();
+      this.renderPaymentState('cancelled');
     } catch {
-      this.returnStatus.textContent = this.messages.statusFailed;
+      this.renderPaymentState('failed');
       this.reportPaymentStatus('failed', 'manual');
-      this.cancelPaymentButton.disabled = false;
     }
   }
 
   private async pay(paymentType: string) {
     if (this.busy) return;
     this.normalizeAmount();
-    const invalidIdentityField = Array.from(this.dialog.querySelectorAll<HTMLInputElement>('[data-support-step="1"] input')).find(control => !control.disabled && !control.checkValidity());
+    const invalidIdentityField = Array.from(this.dialog.querySelectorAll<HTMLInputElement>('[data-support-step="1"] input')).find(control => !control.matches(':disabled') && !control.checkValidity());
     if (invalidIdentityField) {
       this.showStep(1);
       invalidIdentityField.reportValidity();
@@ -523,8 +505,6 @@ class SupportDialog {
     if (!this.form.reportValidity()) return;
     this.track('form-submit', { form: 'support', kind: this.kind, 'payment-type': paymentType });
     this.setBusy(true);
-    this.paymentStatus.className = 'form-field-hint';
-    this.paymentStatus.textContent = this.messages.paying;
     const fields = new FormData(this.form);
     const params = new URLSearchParams({
       kind: this.kind,
@@ -537,44 +517,43 @@ class SupportDialog {
     if (this.kind === 'person') params.set('nickname', String(fields.get('nickname') || ''));
     params.set('email', String(fields.get('email') || ''));
     params.set('message', String(fields.get('message') || ''));
+    this.orderSummary = {
+      identity: this.kind === 'person' ? String(fields.get('nickname') || '').trim() || this.messages.anonymous : this.search.value.trim(),
+      amount: this.amount.value,
+      message: String(fields.get('message') || '').trim(),
+      kind: this.kind,
+      paymentType,
+    };
+    this.renderPaymentState('creating');
     try {
       const response = await fetch('/api/support', { method: 'POST', headers: { 'x-cardnav-locale': this.dialog.dataset.locale! }, body: params });
       const data = await response.json();
       if (!response.ok || !data.ok) {
-        this.paymentStatus.className = 'form-field-error';
-        this.paymentStatus.textContent = typeof data.message === 'string' ? data.message : this.messages.failed;
+        this.renderPaymentState('create-failed', typeof data.message === 'string' ? data.message : this.messages.failed);
         this.track('support-checkout', { status: 'failed', kind: this.kind, 'payment-type': paymentType });
-        this.setBusy(false);
         return;
       }
-      const identity = this.kind === 'person'
-        ? String(fields.get('nickname') || '').trim() || this.messages.anonymous
-        : this.search.value.trim();
-      try {
-        sessionStorage.setItem(`cardnav-support-order:${data.statusToken}`, JSON.stringify({
-          identity,
-          amount: this.amount.value,
-          message: String(fields.get('message') || '').trim(),
-          paymentUrl: data.payUrl,
-        }));
-      } catch {
-        // 会话存储不可用时不影响跳转收银台。
-      }
       this.statusToken = data.statusToken;
-      this.showPendingSummary(data.statusToken);
-      this.track('support-checkout', { status: 'created', kind: this.kind, 'payment-type': paymentType });
-      void this.checkPayment();
       const target = new URL(data.payUrl);
       if (!['http:', 'https:'].includes(target.protocol)) throw new Error();
       this.paymentUrl = target.href;
-      this.openPaymentButton.hidden = false;
-      this.paymentWindowHint.textContent = this.messages.paymentWindowHint;
-      const paymentTab = window.open(target.href, 'paymentPopup', getPaymentPopupFeatures());
-      if (!paymentTab || paymentTab.closed) window.location.href = target.href;
+      this.orderSummary.paymentUrl = target.href;
+      try {
+        sessionStorage.setItem(`cardnav-support-order:${data.statusToken}`, JSON.stringify(this.orderSummary));
+      } catch {
+        // 会话存储不可用时仍使用当前弹窗的订单信息。
+      }
+      this.renderPaymentState('pending');
+      this.track('support-checkout', { status: 'created', kind: this.kind, 'payment-type': paymentType });
+      if (this.dialog.open) {
+        void this.checkPayment();
+        const paymentTab = window.open(target.href, 'paymentPopup', getPaymentPopupFeatures());
+        if (!paymentTab || paymentTab.closed) window.location.href = target.href;
+      }
     } catch {
-      this.paymentStatus.className = 'form-field-error';
-      this.paymentStatus.textContent = this.messages.failed;
+      this.renderPaymentState(this.statusToken ? 'failed' : 'create-failed');
       this.track('support-checkout', { status: 'failed', kind: this.kind, 'payment-type': paymentType });
+    } finally {
       this.setBusy(false);
     }
   }

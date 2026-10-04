@@ -1,0 +1,15 @@
+/* Gateway dialog fields and confirmation share the same measured spacing. */
+#gatewaySubmitDialog .dialog-steps { margin: 0; }
+#gatewaySubmitDialog .form-dialog-content { gap: 16px; }
+#gatewaySubmitDialog .gateway-submit-fields { display: grid; gap: 16px; }
+#gatewaySubmitDialog .gateway-payment-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+#gatewaySubmitDialog .gateway-payment-tags .plan-option:has(input:checked) { border-color: var(--color-primary); }
+#gatewaySubmitDialog .gateway-submit-review { display: grid; gap: 12px; padding: 14px; margin: 0; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-surface-soft); }
+#gatewaySubmitDialog .gateway-submit-review > div { display: grid; gap: 4px; min-width: 0; }
+#gatewaySubmitDialog .gateway-submit-review dt { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
+#gatewaySubmitDialog .gateway-submit-review dd { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-base-content); overflow-wrap: anywhere; white-space: pre-wrap; }
+#gatewaySubmitDialog .gateway-submit-notice { margin-top: 16px; padding: 12px; background: var(--color-surface-soft); border: 1px solid var(--color-base-300); border-radius: 10px; font-size: 12.5px; line-height: 1.6; }
+#gatewaySubmitDialog .gateway-submit-cooperation { background: var(--color-brand-soft); border-color: var(--color-brand-line); }
+#gatewaySubmitDialog .gateway-submit-cooperation p { margin-top: 6px; }
+#gatewaySubmitDialog .gateway-submit-link, #gatewaySubmitDialog .gateway-submit-link:hover { color: var(--color-primary); text-decoration: none; }
+#gatewaySubmitDialog .gateway-submit-link:hover { text-decoration: underline; }

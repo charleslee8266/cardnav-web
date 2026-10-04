@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
 import { buildShopSearchQuery, matchesShopSearchQuery } from '../src/shop-search-query.js';
+import { matchesShopCategory } from '../src/shop-filter-state.js';
 import { prioritizeShopProductRows } from '../src/shop-sponsored-pinning.js';
 
 // Execute the production render functions with only their DOM/data boundaries replaced.
@@ -88,7 +89,8 @@ test('product filters leave merchant listings independent, including merchants w
     showSoldOutFilter: { checked: false }, matchCategoryFilter: { checked: false }, fuzzySearchFilter: { checked: false },
     onlyFavoritesFilter: { checked: false }, merchantFavoritesFilter: { checked: false },
     favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(),
-    platformOnly: () => false,
+    platformOnly: () => false, merchantPlatformOnly: () => false, selectedPlatforms: () => [], selectedMerchantPlatforms: () => [],
+    currentQuickPlanQuery: '', selectedQuickCategoryId: () => scope.currentQuickPlanQuery, matchesShopCategory,
     flatRows: [product(sites[0], 'gpt-plus', 20), product(sites[0], 'gpt-plus', 30), product(sites[1], 'claude-pro', 40), product(sites[1], 'gpt-plus', 50, 0)],
     shopProductsData: {}, shopSites: () => sites, shopSiteId: (site: typeof sites[number]) => site.id,
     shopSiteName: (site: typeof sites[number]) => site.name, shopSiteUrl: (site: typeof sites[number]) => site.url,
@@ -98,7 +100,7 @@ test('product filters leave merchant listings independent, including merchants w
   let result = scope.matchingShopResults();
   assert.equal(result.products.length, 3);
   assert.equal(result.sites.length, 3, 'default stock filtering must not remove the empty merchant');
-  scope.searchFilter.value = 'autocat:gpt-plus';
+  scope.currentQuickPlanQuery = 'gpt-plus';
   result = scope.matchingShopResults();
   assert.equal(result.products.length, 2);
   assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['a', 'b', 'empty']);
@@ -106,26 +108,76 @@ test('product filters leave merchant listings independent, including merchants w
   result = scope.matchingShopResults();
   assert.equal(result.products.length, 3);
   assert.equal(result.sites.length, 3);
+  scope.flatRows.forEach((row: any, index: number) => { row.platformHosted = index < 2; row.platformName = index < 2 ? 'Platform A' : 'Self hosted'; });
+  scope.selectedPlatforms = () => ['Platform A'];
+  result = scope.matchingShopResults();
+  assert.equal(result.products.length, 2);
+  assert.equal(result.sites.length, 3);
+  scope.selectedPlatforms = () => ['Platform A', 'self-hosted'];
+  result = scope.matchingShopResults();
+  assert.equal(result.products.length, 3, 'multiple platforms are alternatives within the product tab');
+  scope.selectedPlatforms = () => [];
   scope.merchantSearchFilter.value = 'Beta';
   result = scope.matchingShopResults();
-  assert.equal(result.products.length, 1);
+  assert.equal(result.products.length, 3);
   assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['b']);
+  scope.selectedMerchantPlatforms = () => ['self-hosted'];
+  scope.shopSitePlatformName = (site: any) => site.id === 'a' ? 'Platform A' : '';
+  result = scope.matchingShopResults();
+  assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['b']);
+  assert.equal(result.products.length, 3, 'merchant platforms must not constrain product results');
+  scope.selectedMerchantPlatforms = () => ['Platform A'];
+  result = scope.matchingShopResults();
+  assert.equal(result.sites.length, 0, 'merchant keyword and platform intersect');
+  scope.selectedMerchantPlatforms = () => [];
   scope.priceMax.value = '40';
   result = scope.matchingShopResults();
-  assert.equal(result.products.length, 0);
+  assert.equal(result.products.length, 2);
   assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['b']);
 });
 
-test('gateway keyword/provider filtering computes inactive model matches without importing site-only constraints', () => {
-  const models = { entries: [{ search: 'openai model', sort: { family: 'OpenAI' } }, { search: 'anthropic model', sort: { family: 'Anthropic' } }], filteredEntries: [] };
-  const scope = { modelSearchInput: { value: 'model' }, siteFamilySelect: { value: 'openai' }, gatewayLists: { models }, gatewayProviderSlug: (value: string) => value.toLowerCase() };
+test('gateway models combine multiple selected families with keywords', () => {
+  const models = { entries: [
+    { search: 'gpt model', sort: { family: 'GPT', provider: 'OpenAI' } },
+    { search: 'gemma model', sort: { family: 'Gemma', provider: 'Google' } },
+    { search: 'claude model', sort: { family: 'Claude', provider: 'Anthropic' } },
+  ], filteredEntries: [] };
+  let selected: string[] = [];
+  const scope = { modelSearchInput: { value: 'model' }, modelFamilies: () => selected, modelProviders: (): string[] => [],
+    matchesAny: (values: string[], available: string[]) => !values.length || values.some(value => available.includes(value)),
+    gatewayLists: { models }, gatewayProviderSlug: (value: string) => value.toLowerCase() };
   const filter = renderer('src/scripts/llm-gateway-home.js', 'filterModelEntries', scope);
-  filter();
-  assert.equal(models.filteredEntries.length, 1);
-  scope.siteFamilySelect.value = '';
-  filter();
-  assert.equal(models.filteredEntries.length, 2);
-  scope.modelSearchInput.value = 'absent';
-  filter();
-  assert.equal(models.filteredEntries.length, 0);
+  filter(); assert.equal(models.filteredEntries.length, 3);
+  selected = ['gpt', 'claude'];
+  filter(); assert.equal(models.filteredEntries.length, 2);
+  scope.modelSearchInput.value = 'claude';
+  filter(); assert.equal(models.filteredEntries.length, 1);
+  selected = ['gpt'];
+  filter(); assert.equal(models.filteredEntries.length, 0);
+  scope.modelSearchInput.value = '';
+  selected = [];
+  scope.modelProviders = () => ['openai', 'anthropic'];
+  filter(); assert.equal(models.filteredEntries.length, 2);
+  selected = ['gemma'];
+  filter(); assert.equal(models.filteredEntries.length, 0);
+  selected = ['claude'];
+  filter(); assert.equal(models.filteredEntries.length, 1);
+});
+
+test('gateway site capabilities require all selected models and payments while status choices remain alternatives', () => {
+  const site = (families: string, payments: string, priceCount: number, modelCount = 1) => ({ search: families, families, payments, priceCount, sort: { modelCount } });
+  const sites = { entries: [site('gpt', 'alipay', 1), site('claude', 'wechat', 1), site('gpt,claude', 'alipay,wechat', 1), site('gpt,claude', 'alipay,wechat', 0), site('gpt,claude', 'alipay', 1)], filteredEntries: [] };
+  const selected: Record<string, string[]> = { family: ['gpt', 'claude'], payment: ['alipay', 'wechat'], status: ['hasPrice'] };
+  const scope = { siteSearchInput: { value: '' }, siteFavoritesInput: { checked: false }, gatewayLists: { sites },
+    selectedValues: (name: string) => selected[name],
+    matchesAllSelections: (values: string[], available: string[]) => values.every(value => available.includes(value)),
+    matchesAny: (values: string[], available: string[]) => !values.length || values.some(value => available.includes(value)) };
+  const filter = renderer('src/scripts/llm-gateway-home.js', 'filterSiteEntries', scope);
+  filter(); assert.equal(sites.filteredEntries.length, 1);
+  selected.status.push('noPrice');
+  filter(); assert.equal(sites.filteredEntries.length, 2);
+  selected.payment = ['alipay'];
+  filter(); assert.equal(sites.filteredEntries.length, 3);
+  scope.siteSearchInput.value = 'gemini';
+  filter(); assert.equal(sites.filteredEntries.length, 0);
 });

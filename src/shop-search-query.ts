@@ -3,7 +3,7 @@
  */
 import { normalizeShopSearchAliases } from './shop-search-aliases.js';
 import { parse, test, type LiqeQuery } from 'liqe';
-import { autoCategoryIdsForFilter } from './shop-plan-search.js';
+import { autoCategoryIdsForFilter } from './models/product-catalog.js';
 import { autoCategoryLabel } from './shop-auto-category.js';
 
 export type ShopSearchRow = {

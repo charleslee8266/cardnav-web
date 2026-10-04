@@ -5,6 +5,7 @@
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import FormField from './FormField.astro';
 import Dialog from './Dialog.astro';
+import DialogSteps from './DialogSteps.astro';
 import OpenShopLink from './OpenShopLink.astro';
 
 const t = Astro.locals.messages;
@@ -14,30 +15,56 @@ const linkTo = Astro.locals.localizePath;
   id="shopSubmitDialog"
   data-locale={Astro.locals.locale}
   title={t.shops.submitMerchant}
-  description={t.shops.submitDescription}
   closeLabel={t.shops.closeSubmitDialog}
   backdropLabel={t.shops.closeSubmitBackdrop}
   data-telemetry-block={telemetryBlocks.shops.submit}
 >
-  <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} {t.shops.openShopPrompt} <OpenShopLink class="link link-primary font-medium" label={t.shops.openShopLink} />{t.shops.submitTypeSentenceEnd}</p>
-  <p class="text-sm leading-6 text-base-content/80">{t.shops.submitGatewayPrompt} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
-
-  <div class="alert alert-info alert-soft shadow-sm flex flex-col items-start gap-1.5 text-left text-base-content">
-    <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
-    <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-partnership" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
-  </div>
-
-  <form id="submitForm" class="submission-form" method="post" action="/api/submit">
-    <FormField label={t.shops.urlLabel} for="urlInput" required hint={t.shops.urlAliasHint} hintId="shopUrlHint">
+  <p slot="description" class="form-dialog-description">{t.shops.submitTypeDescription}<br />{t.shops.submitGatewayPrompt}{Astro.locals.locale === 'zh' ? '' : ' '}<a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="shop-submit-link" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
+  <DialogSteps steps={[t.submit.enterUrl, t.submit.confirm, t.submit.result]} label={t.shops.submitMerchant} />
+  <form id="submitForm" novalidate class="submission-form" method="post" action="/api/submit">
+    <div data-shop-step="1">
+    <FormField label={t.shops.urlLabel} for="urlInput" required hint={t.submit.urlInputHint} hintId="shopUrlHint">
       <input id="urlInput" name="url" type="url" required value="" class="form-input" placeholder="https://example.com" autocomplete="url" aria-describedby="shopUrlHint clientError" />
       <p slot="error" id="clientError" role="alert" class="hidden form-field-error">{t.submit.invalidUrl}</p>
     </FormField>
-    <p id="submitError" role="alert" class="hidden form-field-error"></p>
-    <p id="submitSuccess" role="status" class="hidden text-sm text-primary font-medium"></p>
-    <div class="card-actions justify-start mt-2">
-      <button type="submit" class="btn btn-primary">
-        {t.actions.submit}
-      </button>
+    <p class="form-field-hint shop-submit-open-shop">{t.shops.openShopPrompt} <OpenShopLink class="shop-submit-link" label={t.shops.openShopLink} />{t.shops.submitTypeSentenceEnd}</p>
     </div>
+    <section data-shop-step="2" hidden>
+      <p class="text-sm font-medium">{t.submit.originalUrl}</p>
+      <p data-shop-original-url class="shop-submit-url"></p>
+      <p class="text-sm font-medium">{t.submit.normalizedUrl}</p>
+      <p data-shop-confirm-url class="shop-submit-url"></p>
+      <p data-shop-normalization-status class="form-field-hint"></p>
+      <ul data-shop-normalization-rules class="shop-submit-rules"></ul>
+    </section>
+    <section data-shop-step="3" hidden>
+      <p id="submitSuccess" role="status" tabindex="-1" class="text-sm text-primary font-medium"></p>
+      <p data-shop-result-url class="shop-submit-url"></p>
+      <p class="shop-submit-notice">{t.submit.shopResultDescription}</p>
+      <aside class="shop-submit-notice shop-submit-cooperation">
+        <strong>{t.shops.cooperationTitle}</strong>
+        <p>{t.shops.cooperationDescription}<a href={linkTo('/partnership')} class="shop-submit-link" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-partnership" data-umami-event-url={linkTo('/partnership')}>{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
+      </aside>
+    </section>
+    <p id="submitError" role="alert" class="hidden form-field-error"></p>
   </form>
+  <div slot="footer" class="submission-step-actions" data-active-step="1">
+    <button type="button" data-shop-back hidden class="btn back-button"><span aria-hidden="true">←</span> {t.submit.back}</button>
+    <button type="submit" form="submitForm" data-shop-continue class="btn submit-button">{t.submit.continue} <span aria-hidden="true">→</span></button>
+    <button type="submit" form="submitForm" data-shop-submit hidden class="btn submit-button">{t.actions.submit} <span aria-hidden="true">→</span></button>
+    <button type="button" data-shop-done hidden class="btn submit-button">{t.submit.done} <span aria-hidden="true">→</span></button>
+  </div>
 </Dialog>
+<script is:inline type="application/json" id="shop-submit-messages" set:html={JSON.stringify(t.submit)}></script>
+<style>
+  :global(#shopSubmitDialog .dialog-steps) { margin-bottom: 0; }
+  .shop-submit-open-shop { margin-top: 12px; }
+  .shop-submit-notice { padding: 10px 12px; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-surface-soft); color: var(--color-ink-secondary); font-size: 12.5px; line-height: 1.6; margin-top: 16px; }
+  .shop-submit-cooperation { background: var(--color-brand-soft); border-color: var(--color-brand-line); }
+  .shop-submit-cooperation p { margin-top: 6px; }
+  :global(#shopSubmitDialog .shop-submit-link), :global(#shopSubmitDialog .shop-submit-link:hover) { color: var(--color-primary); text-decoration: none; }
+  :global(#shopSubmitDialog .shop-submit-link:hover) { text-decoration: underline; }
+  .shop-submit-rules { padding-left: 18px; list-style: disc; font-size: 12px; line-height: 1.7; color: var(--color-muted); }
+  .shop-submit-url { overflow-wrap: anywhere; margin-block: .5rem 1rem; padding: .75rem; background: var(--color-base-200); border-radius: .5rem; font-size: .875rem; }
+  [data-shop-step][hidden], button[hidden] { display: none; }
+</style>

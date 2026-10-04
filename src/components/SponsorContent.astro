@@ -4,19 +4,17 @@
 */
 import SponsorGrid from './SponsorGrid.astro';
 import { telemetryBlocks } from '../telemetry-blocks.js';
-import { getSponsors } from '../sponsor-provider.js';
+import type { Sponsor } from '../sponsor-provider.js';
 import type { PageType } from '../page-types.js';
 
 const t = Astro.locals.messages;
 type Props = {
   placement: 'page-bottom' | 'after-hero' | 'content-bottom';
   pageType?: PageType;
+  sponsors: Sponsor[];
 };
 
-const { placement, pageType } = Astro.props as Props;
-const sponsors = pageType
-  ? await getSponsors({ placement, pageType, locale: Astro.locals.locale })
-  : [];
+const { placement, pageType, sponsors } = Astro.props as Props;
 const partnershipUrl = Astro.locals.localizePath('/partnership');
 const sectionId = pageType ? `sponsors-${placement}-${pageType}` : `sponsors-${placement}`;
 ---
