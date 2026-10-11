@@ -62,7 +62,6 @@ const merchantPlatformFilter = document.querySelector('#merchantPlatformFilter')
 const platformOnly = () => Boolean(onlyPlatformFilter?.checked);
 const merchantPlatformOnly = () => Boolean(merchantPlatformFilter?.checked);
 const onlyFavoritesFilter = document.querySelector('#onlyFavoritesFilter');
-const shopSortSelect = document.querySelector('#shopSortSelect');
 const priceMin = document.querySelector('#priceMin');
 const priceMax = document.querySelector('#priceMax');
 const merchantFiltersForm = document.querySelector('#merchantFilters');
@@ -1312,10 +1311,6 @@ function sortFlatProductRows(button) {
 }
 
 function updateFlatSortButtons() {
-  if (shopSortSelect) {
-    const value = currentFlatSort ? `${currentFlatSort.key}:${currentFlatSort.direction}` : '';
-    shopSortSelect.value = Array.from(shopSortSelect.options).some(option => option.value === value) ? value : 'custom';
-  }
   flatSortButtons.forEach(button => {
     const active = currentFlatSort?.key === button.dataset.sortKey;
     const headerCell = button.closest('th');
@@ -1445,15 +1440,6 @@ document.querySelector('#merchantOptions')?.addEventListener('filter-clear', () 
   for (const input of [merchantFavoritesFilter, merchantPlatformFilter]) input.checked = false;
   currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
   applyFilters();
-});
-shopSortSelect?.addEventListener('change', async () => {
-  const [key, direction] = shopSortSelect.value.split(':');
-  if (key === 'custom') return;
-  await loadShopProductsDataFromApi();
-  currentFlatSort = key ? { key, direction, type: 'number' } : null;
-  resetFlatVisibleLimit();
-  sortFlatProductRows();
-  trackUmamiEvent('sort-change', { scope: 'products', key: key || '', direction: direction || 'none' }, shopSortSelect);
 });
 showSoldOutFilter.addEventListener('change', () => {
   resetFlatVisibleLimit();

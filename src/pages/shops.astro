@@ -300,13 +300,6 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
           </FilterPopover></div>
           <div data-shop-control="merchants" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}><MultiSelectFilter name="merchantPlatform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
               <label class="data-filter-switch"><input id="merchantFavoritesFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label></FilterPopover></div>
-          <select id="shopSortSelect" data-shop-control="products" class="select select-bordered data-workspace-sort" aria-label={t.shops.sort}>
-            <option value="">{t.shops.defaultSort}</option>
-            <option value="priceValue:asc">{t.shops.priceAsc}</option>
-            <option value="stockValue:desc">{t.shops.stockDesc}</option>
-            <option value="productRefreshedAt:desc">{t.shops.refreshDesc}</option>
-            <option value="custom" hidden>{t.shops.headerSort}</option>
-          </select>
         </div>
         <div data-shop-control="products"><ShopPlanGroups initialSearchQuery={initialCategoryQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} /></div>
         <div data-shop-control="products" class="data-workspace-summary"><FilterSummary id="shopActiveFilters" clearLabel={t.shops.clearFilters} /></div>

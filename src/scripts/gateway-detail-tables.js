@@ -239,6 +239,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
 
     const infoCell = tableCell(labels.basicInfo || '');
     const infoWrap = el('div', 'data-entity-cell');
+    const contentWrap = el('div', 'data-entity-content');
     const textWrap = el('div', 'data-entity-copy');
     const titleWrap = el('div', 'flex flex-wrap items-center gap-2');
     const siteLink = el('a', 'merchant-link', site.name || '');
@@ -249,7 +250,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     siteLink.dataset.umamiEventName = site.name || '';
     siteLink.dataset.umamiEventTargetPage = detailHref;
     siteLink.dataset.umamiEventUrl = detailHref;
-    textWrap.append(favorites.create(site.slug, site.name));
+    infoWrap.append(favorites.create(site.slug, site.name));
     titleWrap.append(siteLink);
     if (site.sponsor) titleWrap.append(window.CardNavMerchantBadge.create(config.sponsorLabel || 'Partner', config.sponsorDescription || '', partnershipUrl, config.partnershipLinkLabel || 'How to partner'));
     if (Number(site.supportPoints) > 0) titleWrap.appendChild(window.CardNavMerchantBadge.create(config.supportLabel, config.supportDescription, config.supportersUrl, config.supportLinkLabel, 'support'));
@@ -284,7 +285,8 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     openLink.dataset.umamiEventName = site.name || '';
     openLink.dataset.umamiEventUrl = site.outboundUrl || site.url || '';
     actionWrap.append(detailLink, openLink);
-    infoWrap.append(textWrap, actionWrap);
+    contentWrap.append(textWrap, actionWrap);
+    infoWrap.append(contentWrap);
     infoCell.append(infoWrap);
     row.append(infoCell);
     if (Number(site.supportPoints) > 0) {

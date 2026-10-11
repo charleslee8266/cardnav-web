@@ -207,12 +207,6 @@ const gatewayHomeConfig = {
                 {modelProviderOptions.map(name => <ProviderLabel slot={gatewayProviderSlug(name)} name={name} />)}
               </MultiSelectFilter>
             </FilterPopover></div>
-            <select data-gateway-control="sites" data-home-site-sort class="select select-bordered data-workspace-sort" aria-label={t.shops.sort}>
-              <option value="">{t.shops.defaultSort}</option>
-              <option value="modelCount">{t.llmGateway.modelCount} ↓</option>
-              <option value="score">{t.labels.score} ↓</option>
-              <option value="custom" hidden>{t.shops.headerSort}</option>
-            </select>
           </div>
             <FilterSummary data-gateway-control="sites" data-home-site-active-filters class="w-full" clearLabel={t.shops.clearFilters} />
             <FilterSummary data-gateway-control="models" data-home-model-active-filters class="w-full" clearLabel={t.shops.clearFilters} />

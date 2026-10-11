@@ -51,7 +51,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     }
   }
   const siteFavoritesInput = gatewayHome.querySelector('[data-home-site-favorites]');
-  const siteSortSelect = gatewayHome.querySelector('[data-home-site-sort]');
   const modelSearchInput = gatewayHome.querySelector('[data-home-model-search]');
   const SITE_PAGE_SIZE = Number(config.sitePageSize) || 50;
   const MODEL_PAGE_SIZE = Number(config.modelPageSize) || 100;
@@ -217,13 +216,14 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
     const infoCell = tableCell(config.basicInfoLabel);
     const infoWrap = el('div', 'data-entity-cell');
+    const contentWrap = el('div', 'data-entity-content');
     const textWrap = el('div', 'data-entity-copy');
     const titleWrap = el('div', 'merchant-header');
     const siteLink = el('a', 'merchant-link', site.name);
     siteLink.dataset.rowPrimary = '';
     siteLink.href = `${gatewayLinkPrefix}/${site.slug}`;
     setTracking(siteLink, gatewaySiteTracking(site));
-    textWrap.append(favorites.create(site.slug, site.name));
+    infoWrap.append(favorites.create(site.slug, site.name));
     const titleContent = el('div', 'merchant-header-content');
     const titleRow = el('div', 'merchant-title-row');
     titleRow.append(siteLink);
@@ -258,7 +258,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     openLink.rel = site.sponsor || Number(site.supportPoints) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
     setTracking(openLink, gatewaySiteOpenTracking(site));
     actionWrap.append(detailLink, openLink);
-    infoWrap.append(textWrap, actionWrap);
+    contentWrap.append(textWrap, actionWrap);
+    infoWrap.append(contentWrap);
     infoCell.append(infoWrap);
     row.append(infoCell);
     if (Number(site.supportPoints) > 0) {
@@ -729,9 +730,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function updateSortButtons(state) {
-    if (state.type === 'sites' && siteSortSelect) {
-      siteSortSelect.value = !state.sort ? '' : ['score', 'modelCount'].includes(state.sort.key) && state.sort.direction === 'desc' ? state.sort.key : 'custom';
-    }
     const table = gatewayHome.querySelector(state.listSelector)?.closest('[data-table]');
     window.updateDataTableHeaders?.(table, state.sort);
   }
@@ -796,15 +794,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     Object.values(filterGroups).forEach(group => group.querySelectorAll('input').forEach(input => { input.checked = false; }));
     siteFavoritesInput.checked = false;
     applySiteFilterChange();
-  });
-  siteSortSelect?.addEventListener('change', async () => {
-    const key = siteSortSelect.value;
-    if (key === 'custom') return;
-    await ensureGatewayDataLoaded('sites');
-    gatewayLists.sites.sort = key ? { key, direction: 'desc', type: 'number' } : null;
-    resetVisibleLimit('sites');
-    applySiteFilters({ track: false });
-    trackGatewayEvent('sort-change', { scope: 'gateway', tab: 'sites', key, direction: key ? 'desc' : 'none' });
   });
   modelSearchInput?.addEventListener('input', () => {
     applyModelFilterChange();

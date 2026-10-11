@@ -1,6 +1,6 @@
 /* V3 data tables: one component owns the table, cells, metrics and merchant rows. */
 .data-table-frame { display: flex; flex-direction: column; min-width: 0; width: 100%; }
-.product-table-scroll, .gateway-table-scroll { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.product-table-scroll, .gateway-table-scroll { position: relative; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
 .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; line-height: 1.5; }
 .data-table thead th { padding: 0; font-size: 12px; font-weight: 600; color: var(--table-muted); background: var(--table-surface-2); text-align: left; border-bottom: 1px solid var(--table-line); }
 .data-table tbody td, .data-table tbody th, .merchant-table-cell { padding: 11px 12px; border: 0; border-bottom: 1px solid var(--table-line); vertical-align: middle; font-size: 13px; font-weight: 400; color: var(--color-base-content); overflow-wrap: anywhere; }
@@ -52,8 +52,8 @@
 .data-table-shop-products th[data-column-key="score"] { width: 128px; }
 .data-table-shop-products th[data-column-key="siteName"] { width: 170px; }
 .data-table-shop-products th[data-column-key="productRefreshedAt"] { width: 104px; }
-.gateway-site-table { table-layout: fixed; min-width: 720px; }
-.gateway-site-table th[data-column-key="name"] { width: 45%; }
+.gateway-site-table { table-layout: fixed; min-width: 880px; }
+.gateway-site-table th[data-column-key="name"] { width: auto; }
 .gateway-site-table th[data-column-key="score"] { width: 132px; }
 .gateway-site-table th[data-column-key="families"] { width: 150px; }
 .gateway-site-table th[data-column-key="modelCount"] { width: 80px; }
@@ -109,20 +109,18 @@
 .data-table :focus-visible, .merchant-table :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .data-table-frame .hidden, .merchant-table .hidden, .data-table-frame [hidden] { display: none !important; }
 
-.data-entity-cell { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.data-entity-copy { min-width: 0; }
+.data-entity-cell { display: flex; align-items: flex-start; gap: 7px; }
+.data-entity-content { display: flex; flex: 1; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.data-entity-copy { flex: 1 1 240px; min-width: 0; }
 .data-entity-copy > .text-xs { margin-top: 3px; font-size: 11px; }
 .data-entity-description { margin-top: 3px; font-size: 12px; color: color-mix(in srgb, var(--color-base-content) 58%, transparent); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.data-entity-actions { display: flex; flex-shrink: 0; align-items: center; gap: 5px; }
+.data-entity-actions { display: flex; flex-shrink: 0; align-items: center; gap: 21px; }
 
 .data-provider { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; color: var(--color-ink-secondary); font-size: 12px; }
 .data-provider img { width: 14px; height: 14px; object-fit: contain; flex-shrink: 0; }
 [data-theme="dark"] .data-provider-mono { filter: invert(1); }
 
-.data-entity-copy { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 7px; }
-.data-entity-copy > :not(.favorite-toggle) { grid-column: 2; }
-.data-entity-copy > .favorite-toggle { grid-column: 1; grid-row: 1; }
-.data-entity-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 8px; color: var(--color-base-content); font-size: 12px; font-weight: 550; text-decoration: none; }
+.data-entity-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 0; color: var(--color-base-content); font-size: 12px; font-weight: 550; text-decoration: none; }
 .data-entity-action:hover { text-decoration: underline; text-underline-offset: 3px; }
 .data-entity-actions .gateway-external-icon { width: 14px; height: 14px; }
 .auto-category-label-group { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; border: 1px solid var(--color-base-300); border-radius: 999px; padding: 0 10px; background: var(--color-base-100); }
