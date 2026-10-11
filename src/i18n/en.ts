@@ -732,7 +732,7 @@ export const enMessages: Messages = {
     "identity": "Supporting as",
     "identityColumn": "Identity",
     "userColumn": "User",
-    "person": "Individual",
+    "person": "Loyal user",
     "shopIdentity": "Merchant",
     "gatewayIdentity": "Gateway",
     "shop": "Choose a shop site",

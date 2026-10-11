@@ -732,7 +732,7 @@ export const ruMessages: Messages = {
     "identity": "Кто поддерживает",
     "identityColumn": "Тип",
     "userColumn": "Пользователь",
-    "person": "Пользователь",
+    "person": "Постоянный пользователь",
     "shopIdentity": "Продавец",
     "gatewayIdentity": "Шлюз",
     "shop": "Выберите магазин цифровых товаров",

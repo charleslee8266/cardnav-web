@@ -731,7 +731,7 @@ export const zhMessages = {
     "identity": "赞赏身份",
     "identityColumn": "身份",
     "userColumn": "用户",
-    "person": "普通用户",
+    "person": "忠实用户",
     "shopIdentity": "卡网",
     "gatewayIdentity": "中转站",
     "shop": "选择卡网站点",
