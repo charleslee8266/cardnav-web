@@ -152,9 +152,13 @@ export class SupportStore {
         SELECT id, kind, site_id, site_name, site_url, nickname, message, amount_cents, created_at, CASE WHEN kind = 'person'
           THEN COALESCE('email:' || person_email, 'order:' || id) ELSE site_id END AS identity_key
         FROM support_orders WHERE status = 'paid'
+      ), latest_messages AS (
+        SELECT DISTINCT ON (kind, identity_key) kind, identity_key, message
+        FROM paid WHERE btrim(message) <> ''
+        ORDER BY kind, identity_key, created_at DESC, id DESC
       ), supporters AS (
         SELECT DISTINCT ON (kind, identity_key)
-          kind, site_id, site_name, site_url, nickname, message,
+          kind, identity_key, site_id, site_name, site_url, nickname,
           SUM(amount_cents) OVER (PARTITION BY kind, identity_key) AS amount_cents,
           created_at, id
         FROM paid ORDER BY kind, identity_key, created_at DESC, id DESC
@@ -165,11 +169,13 @@ export class SupportStore {
           ELSE COALESCE(NULLIF(gateways.name, ''), NULLIF(supporters.site_name, ''), supporters.site_url) END AS name,
         CASE WHEN supporters.kind = 'shop' THEN shops.url
           WHEN supporters.kind = 'gateway' THEN COALESCE(NULLIF(btrim(gateways.invite_url), ''), gateways.url) END AS url,
-        supporters.amount_cents, supporters.message,
+        supporters.amount_cents, COALESCE(latest_messages.message, '') AS message,
         CASE WHEN supporters.kind = 'shop' THEN COALESCE(shops.support_points, 0)
           WHEN supporters.kind = 'gateway' THEN COALESCE(gateways.support_points, 0)
           ELSE 0 END AS support_points
       FROM supporters
+      LEFT JOIN latest_messages ON supporters.kind = latest_messages.kind
+        AND supporters.identity_key = latest_messages.identity_key
       LEFT JOIN shop_sites AS shops ON supporters.kind = 'shop' AND supporters.site_id = shops.id
         AND shops.status = 'online' AND shops.type = 'cardShop'
       LEFT JOIN gateway_sites AS gateways ON supporters.kind = 'gateway' AND supporters.site_id = gateways.site_id
