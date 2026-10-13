@@ -1,4 +1,7 @@
 ---
+import DataWorkspaceToolbar from '../../components/DataWorkspaceToolbar.astro';
+import FilterPopover from '../../components/FilterPopover.astro';
+import FilterSummary from '../../components/FilterSummary.astro';
 import { gatewayFamilyPath } from '../../models/routes.js';
 import { gatewayModelPath } from '../../models/routes.js';
 import RefreshTime from '../../components/RefreshTime.astro';
@@ -15,6 +18,8 @@ import DataTable from '../../components/DataTable.astro';
 import DataTableCell from '../../components/DataTableCell.astro';
 import {
   displayPriceUnit,
+  priceComparisonOptions,
+  priceComparisonKey,
   paymentIcon,
   formatAvailabilityPercent,
   formatLatencySeconds,
@@ -31,18 +36,30 @@ import Sponsors from '../../components/Sponsors.astro';
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const PRICE_TABLE_PAGE_SIZE = 100;
-const detail = await loadGatewayDetail(Astro.params.slug || '', { priceLimit: PRICE_TABLE_PAGE_SIZE });
+const detail = await loadGatewayDetail(Astro.params.slug || '');
 
 if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 302);
 
-const { site, prices } = detail;
+const { site } = detail;
+const unitOptions = priceComparisonOptions(detail.prices);
+const requestedUnit = Astro.url.searchParams.get('unit');
+const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || unitOptions[0]?.[0] || '';
+const initialModel = (Astro.url.searchParams.get('model') || '').trim();
+const requestedGroup = Astro.url.searchParams.get('group');
+const initialGroup = detail.prices.some(price => price.groupId === requestedGroup) ? requestedGroup : null;
+const groupOptions = [...new Map(detail.prices.map(price => [price.groupId, price.groupName || '—'])).entries()];
+const prices = detail.prices.filter(price => priceComparisonKey(price) === initialUnit && (!initialModel || price.modelId.toLowerCase().includes(initialModel.toLowerCase())) && (initialGroup === null || price.groupId === initialGroup)).slice(0, PRICE_TABLE_PAGE_SIZE);
 if (Astro.params.slug !== site.slug) return Astro.redirect(Astro.locals.localizePath(`/llm-gateway/${site.slug}`), 301);
 const priceTotalCount = site.priceCount;
 const priceTableConfig = {
   type: 'prices',
+  items: detail.prices,
+  initialUnit,
+  defaultUnit: unitOptions[0]?.[0] || '',
+  clearFilters: t.shops.clearFilters,
+  groupLabels: t.llmGateway,
   pageSize: PRICE_TABLE_PAGE_SIZE,
   totalCount: priceTotalCount,
-  apiUrl: `/api/llm-gateway/site-prices/${encodeURIComponent(site.slug)}.json?offset=${prices.length}&locale=${encodeURIComponent(Astro.locals.locale)}`,
   displaySummary: t.labels.displaySummary,
   filterEmpty: t.llmGateway.priceFilterEmpty,
   noPriceData: t.llmGateway.noPriceData,
@@ -148,14 +165,25 @@ function gatewayModelClickAttrs(modelId: string) {
 
 
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden data-workspace" data-gateway-deferred-table="prices" data-telemetry-block={telemetryBlocks.gateways.prices}>
-    <div class="border-b border-base-300 p-5">
-      <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 class="text-lg font-semibold">{t.llmGateway.priceSummaryTitle}</h2>
-          <p class="text-sm leading-6 text-base-content/65">{t.llmGateway.priceSummaryDescription}</p>
-        </div>
-        <input type="search" data-gateway-detail-search class="input input-bordered w-full sm:max-w-xs" placeholder={t.llmGateway.modelSearchPlaceholder} aria-label={t.llmGateway.modelSearchPlaceholder} />
-      </div>
+    <div class="data-workspace-controls">
+      <DataWorkspaceToolbar>
+        <h2 class="text-lg font-semibold data-workspace-heading">{t.llmGateway.priceSummaryTitle}</h2>
+        <label class="data-workspace-search"><input type="search" data-gateway-detail-search value={initialModel} class="input input-bordered w-full" placeholder={t.llmGateway.modelSearchPlaceholder} aria-label={t.llmGateway.modelSearchPlaceholder} /></label>
+        <FilterPopover id="gatewayQuoteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+          <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.group}</span>
+            <select class="select select-bordered" data-quote-group aria-label={t.llmGateway.group}>
+              <option value="" selected={initialGroup === null}>{t.llmGateway.allGroups}</option>
+              {groupOptions.map(([id, name]) => <option value={JSON.stringify(id)} selected={id === initialGroup}>{name}</option>)}
+            </select>
+          </label>
+          <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.unit}</span>
+            <select class="select select-bordered" data-quote-unit aria-label={t.llmGateway.unit}>
+              {unitOptions.map(([key, price], index) => <option value={index === 0 ? '' : key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</option>)}
+            </select>
+          </label>
+        </FilterPopover>
+      </DataWorkspaceToolbar>
+      <FilterSummary data-quote-filter-summary clearLabel={t.shops.clearFilters} />
       <p data-gateway-detail-error class="text-sm text-error mt-2" role="status" hidden>{t.llmGateway.loadFailed}</p>
     </div>
     <DataTable
@@ -165,14 +193,15 @@ function gatewayModelClickAttrs(modelId: string) {
       emptyHidden={prices.length > 0}
       emptyText={t.llmGateway.noPriceData}
       summaryText={t.labels.displaySummary}
-      loadMoreText={priceTotalCount > prices.length ? t.labels.loadMore : ''}
-      loadMoreHidden={priceTotalCount <= prices.length}
+      loadMoreText={t.labels.loadMore}
+      loadMoreHidden={false}
       loadMoreDataAttrs={{ 'data-gateway-detail-load-more': 'prices' }}
     >
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
-        <DataTableHeader label={t.labels.model} sortKey="model" />
-        <DataTableHeader label={t.llmGateway.unit} helpTip={t.llmGateway.tableHint} sortKey="unit" />
+        <DataTableHeader label={t.labels.model} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="model" />
+        <DataTableHeader label={t.llmGateway.group} sortKey="group" />
+        <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
         <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" align="right" />
@@ -181,8 +210,9 @@ function gatewayModelClickAttrs(modelId: string) {
       {prices.map((price, index) => (
         <tr
           data-sort-model={price.modelId}
+          data-sort-group={price.groupName}
           data-sort-sequence={String(index + 1)}
-          data-sort-unit={displayPriceUnit(price.unit, price.currency)}
+          data-sort-unit={displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}
           data-sort-input-price={String(priceSortValue(price.inputPrice))}
           data-sort-output-price={String(priceSortValue(price.outputPrice))}
           data-sort-cache-input-price={String(priceSortValue(price.cacheInputPrice))}
@@ -192,7 +222,12 @@ function gatewayModelClickAttrs(modelId: string) {
           <DataTableCell label={t.labels.model} class="min-w-48">
             <a data-row-primary href={modelHref(price.modelId)} class="data-row-model-name break-words font-mono text-xs font-semibold" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
           </DataTableCell>
-          <DataTableCell label={t.llmGateway.unit} class="data-price-unit">{displayPriceUnit(price.unit, price.currency)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.group}>
+            <span class="inline-flex items-center gap-1">{price.groupName || '—'}
+              {price.groupDescription && <button type="button" class="inline-help-button" data-inline-help aria-label={t.llmGateway.groupDescription}><template data-tip-content><span class="whitespace-pre-wrap">{price.groupDescription}</span></template>i</button>}
+            </span>
+          </DataTableCell>
+          <DataTableCell label={t.llmGateway.unit} class="data-price-unit">{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</DataTableCell>
           <DataTableCell label={t.llmGateway.inputPrice} align="right" class="font-mono">{formatPrice(price.inputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.outputPrice} align="right" class="font-mono">{formatPrice(price.outputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.cacheInputPrice} align="right" class="font-mono">{formatPrice(price.cacheInputPrice)}</DataTableCell>
@@ -201,12 +236,11 @@ function gatewayModelClickAttrs(modelId: string) {
       ))}
     </DataTable>
   </section>
-  <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(priceTableConfig)}></script>
+  <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(priceTableConfig).replaceAll('<', '\\u003c')}></script>
 
   </div>
   <script>
     import '../../scripts/data-table.js';
-    import '../../scripts/deferred-table-core.js';
     import '../../scripts/gateway-detail-tables.js';
   </script>
 </PublicPage>

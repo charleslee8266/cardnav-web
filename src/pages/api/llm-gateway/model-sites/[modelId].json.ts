@@ -6,12 +6,13 @@ import {
   publicReadApiCacheControl,
   publicReadApiCloudflareCacheControl,
 } from '../../../../public-data-cache.js';
+import { gatewayModelIdFromPathname } from '../../../../models/routes.js';
 import { loadGatewayModelDetail } from '../../../../store.js';
 
-export const GET: APIRoute = async ({ params, request }) => {
+export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const offset = Math.max(0, Number(url.searchParams.get('offset') || '0') || 0);
-  const detail = await loadGatewayModelDetail(params.modelId || '');
+  const detail = await loadGatewayModelDetail(gatewayModelIdFromPathname(url.pathname, '.json') || '');
 
   if (!detail) {
     return new Response(JSON.stringify({ offset, totalCount: 0, items: [] }), {

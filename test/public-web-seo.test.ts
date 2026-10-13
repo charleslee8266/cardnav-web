@@ -95,6 +95,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
     {
       id: 'gpt-5',
       modelId: 'gpt-5',
+      releaseDate: null,
       modelProvider: 'OpenAI',
       modelFamily: 'GPT',
       supportSiteCount: 3,
@@ -105,6 +106,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
     {
       id: 'one-site-model',
       modelId: 'one-site-model',
+      releaseDate: null,
       modelProvider: 'OpenAI',
       modelFamily: 'GPT',
       supportSiteCount: 1,
@@ -115,6 +117,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
     {
       id: 'other-family-model',
       modelId: 'other-family-model',
+      releaseDate: null,
       modelProvider: 'Other',
       modelFamily: null,
       supportSiteCount: 4,

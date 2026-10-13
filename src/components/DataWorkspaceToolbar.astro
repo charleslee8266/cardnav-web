@@ -1,0 +1,9 @@
+---
+import './data-workspace.css';
+---
+<div class="data-workspace-toolbar"><slot /></div>
+<style>
+  @media (max-width: 720px) {
+    .data-workspace-toolbar > :global(.data-workspace-heading) { grid-column: 1 / -1; }
+  }
+</style>

@@ -295,13 +295,14 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       sortModel: model.modelId,
       sortFamily: model.modelFamily || '',
       sortProvider: model.modelProvider,
+      sortReleaseDate: model.releaseDate || '',
       sortSupportCount: Number(model.supportSiteCount) || 0,
     });
     const sequenceCell = tableCell(config.sequenceLabel, 'center', '', { sequence: true });
     sequenceCell.textContent = String(index + 1);
     row.append(sequenceCell);
     const modelCell = tableCell(config.modelLabel);
-    const modelLink = el('a', 'link link-hover break-words font-mono text-sm font-semibold text-primary', model.modelId);
+    const modelLink = el('a', 'data-row-model-name break-words font-mono text-sm font-semibold', model.modelId);
     modelLink.dataset.rowPrimary = '';
     modelLink.href = gatewayModelPath(model.modelId, modelLinkPrefix);
     setTracking(modelLink, gatewayModelTracking(model));
@@ -313,6 +314,13 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const providerCell = tableCell(config.modelProviderLabel);
     providerCell.append(createProviderSelection(model.modelProvider, 'gateway-models'));
     row.append(providerCell);
+    const releaseDateCell = tableCell(config.releaseDateLabel, 'left', 'whitespace-nowrap font-mono');
+    if (model.releaseDate) {
+      const date = el('time', '', model.releaseDate);
+      date.dateTime = model.releaseDate;
+      releaseDateCell.append(date);
+    } else releaseDateCell.textContent = '—';
+    row.append(releaseDateCell);
     const supportCountCell = tableCell(config.supportedGatewayCountLabel, 'right', 'font-mono');
     supportCountCell.textContent = model.supportSiteCount;
     row.append(supportCountCell);
@@ -363,6 +371,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
         model: rowSortValue(row, 'model'),
         family: rowSortValue(row, 'family'),
         provider: rowSortValue(row, 'provider'),
+        releaseDate: rowSortValue(row, 'releaseDate'),
         supportCount: rowSortValue(row, 'supportCount', 'number'),
       },
     };
@@ -407,6 +416,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
         model: model.modelId,
         family: model.modelFamily || '',
         provider: model.modelProvider,
+        releaseDate: model.releaseDate || '',
         supportCount: Number(model.supportSiteCount) || 0,
       },
     };
@@ -428,6 +438,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     return (left, right) => {
       const leftValue = left.sort[sort.key];
       const rightValue = right.sort[sort.key];
+      if (sort.key === 'releaseDate' && (!leftValue || !rightValue)) {
+        return leftValue ? -1 : rightValue ? 1 : left.index - right.index;
+      }
       if (typeof leftValue === 'number' && typeof rightValue === 'number') {
         if (leftValue !== rightValue) return (leftValue - rightValue) * multiplier;
         return left.index - right.index;

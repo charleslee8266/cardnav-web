@@ -14,7 +14,7 @@
 .data-filter-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; height: 34px; padding: 0 12px; font-size: 13px; font-weight: 500; border: 1px solid var(--color-base-300); border-radius: 7px; background: var(--color-base-100); box-shadow: none; }
 .data-filter-trigger[aria-expanded="true"] { border-color: var(--color-primary); color: var(--color-primary); }
 .data-filter-count { display: inline-grid; place-items: center; min-width: 16px; height: 16px; border-radius: 50%; font-size: 10px; background: var(--color-primary); color: var(--color-primary-content); }
-.data-filter-panel { position: fixed; inset: var(--filter-top, 100px) var(--filter-right, 20px) auto auto; width: 320px; max-width: calc(100vw - 32px); margin: 0; padding: 14px 16px; max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-base-100); color: var(--color-base-content); box-shadow: 0 8px 28px #00000014; }
+.data-filter-panel { position: fixed; inset: var(--filter-top, 16px) auto auto var(--filter-left, 16px); width: 320px; max-width: var(--filter-max-width, calc(100vw - 32px)); margin: 0; padding: 14px 16px; max-height: var(--filter-max-height, calc(100dvh - 32px)); overflow: auto; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-base-100); color: var(--color-base-content); box-shadow: 0 8px 28px #00000014; }
 .data-filter-heading { display: none; }
 .data-filter-fields { display: flex; flex-direction: column; gap: 14px; }
 .data-filter-group { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }

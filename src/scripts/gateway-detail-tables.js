@@ -1,6 +1,10 @@
+import { gatewayModelPath } from '../models/routes.js';
+import { renderFilterSummary } from './filter-summary.js';
 /*
- * 文件说明: 接管中转站详情类表格的远端补齐、渐进 DOM 渲染和全量本地排序。
+ * 文件说明: 管理中转站分组报价的筛选、渐进渲染、展开与全量排序。
  */
+import { displayPriceUnit as unitLabel, priceComparisonKey, priceMetrics } from '../gateway-display.js';
+import { setTableRowSequence } from './table-sequence.js';
 import { GatewayFavorites } from './GatewayFavorites.js';
 
 (() => {
@@ -22,16 +26,10 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   const button = root.querySelector('[data-gateway-detail-load-more]');
   const summary = root.querySelector('[data-table-summary]');
   if (!(table instanceof HTMLElement) || !tbody) return;
-  if (typeof window.createDeferredTableController !== 'function') return;
   const tableType = config.type || root.dataset.gatewayDeferredTable || '';
   const favorites = new GatewayFavorites(root, { favorite: config.favoriteLabel, unfavorite: config.unfavoriteLabel }, () => { refreshFavorites(); });
 
-  function refreshFavorites() {
-    controller.state.entries.forEach(entry => {
-      entry.sort.favorite = favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') ? 1 : 0;
-    });
-    controller.renderRows();
-  }
+  function refreshFavorites() { render(); }
 
   function el(tagName, className, text) {
     const node = document.createElement(tagName);
@@ -67,106 +65,25 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     return value === null || !Number.isFinite(value) ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 6 });
   }
 
-  function displayPriceUnit(unit, currency) {
-    const code = currency?.trim().toUpperCase();
-    if (unit === '1M_tokens' || unit === 'quota_ratio') return `${code || '$'} / 1M tokens`;
-    if (code && unit) return `${code} / ${unit}`;
-    if (unit === 'call') return 'per call';
-    return unit || '-';
-  }
+  function displayPriceUnit(unit, currency) { return unitLabel(unit, currency, config.groupLabels.ratio); }
 
   function firstFinite(values) {
     const value = values.find(item => typeof item === 'number' && Number.isFinite(item));
     return typeof value === 'number' ? value : '';
   }
 
-  function numericSortValue(value) {
-    const numberValue = Number(value);
-    return Number.isFinite(numberValue) ? numberValue : Number.NEGATIVE_INFINITY;
-  }
-
-  function rowSortValue(row, key, type) {
-    const value = row.dataset[`sort${key.charAt(0).toUpperCase()}${key.slice(1)}`] ?? '';
-    if (type === 'number') {
-      const numberValue = Number(value);
-      return Number.isFinite(numberValue) ? numberValue : Number.NEGATIVE_INFINITY;
+  function groupCell(price) {
+    const cell = tableCell(config.groupLabels.group);
+    const label = el('span', 'inline-flex items-center gap-1 font-medium', price?.groupName || '—');
+    if (price?.groupDescription) {
+      const help = el('button', 'inline-help-button', 'i');
+      help.type = 'button'; help.dataset.inlineHelp = ''; help.setAttribute('aria-label', config.groupLabels.groupDescription);
+      const template = document.createElement('template'); template.dataset.tipContent = '';
+      template.content.append(el('span', 'whitespace-pre-wrap', price.groupDescription)); help.append(template);
+      label.append(help);
     }
-    return value;
-  }
-
-  function priceEntryFromRow(row, index) {
-    return {
-      index,
-      row,
-      item: null,
-      sort: {
-        sequence: rowSortValue(row, 'sequence', 'number') || index + 1,
-        model: rowSortValue(row, 'model'),
-        unit: rowSortValue(row, 'unit'),
-        inputPrice: rowSortValue(row, 'inputPrice', 'number'),
-        outputPrice: rowSortValue(row, 'outputPrice', 'number'),
-        cacheInputPrice: rowSortValue(row, 'cacheInputPrice', 'number'),
-        cacheOutputPrice: rowSortValue(row, 'cacheOutputPrice', 'number'),
-      },
-    };
-  }
-
-  function modelSiteEntryFromRow(row, index) {
-    return {
-      index,
-      row,
-      item: null,
-      sort: {
-        favorite: favorites.has(row.dataset.gatewaySiteKey || '') ? 1 : 0,
-        sticky: rowSortValue(row, 'sticky', 'number'),
-        support: rowSortValue(row, 'support', 'number'),
-        sequence: rowSortValue(row, 'sequence', 'number') || index + 1,
-        name: rowSortValue(row, 'name'),
-        unit: rowSortValue(row, 'unit'),
-        inputPrice: rowSortValue(row, 'inputPrice', 'number'),
-        outputPrice: rowSortValue(row, 'outputPrice', 'number'),
-        cacheInputPrice: rowSortValue(row, 'cacheInputPrice', 'number'),
-        cacheOutputPrice: rowSortValue(row, 'cacheOutputPrice', 'number'),
-      },
-    };
-  }
-
-  function priceEntryFromItem(item, index) {
-    return {
-      index,
-      row: null,
-      item,
-      sort: {
-        sequence: index + 1,
-        model: item.modelId || '',
-        unit: displayPriceUnit(item.unit || '', item.currency),
-        inputPrice: numericSortValue(priceSortValue(item.inputPrice)),
-        outputPrice: numericSortValue(priceSortValue(item.outputPrice)),
-        cacheInputPrice: numericSortValue(priceSortValue(item.cacheInputPrice)),
-        cacheOutputPrice: numericSortValue(priceSortValue(item.cacheOutputPrice)),
-      },
-    };
-  }
-
-  function modelSiteEntryFromItem(site, index) {
-    const prices = Array.isArray(site.pricesForModel) ? site.pricesForModel : [];
-    return {
-      index,
-      row: null,
-      item: site,
-      sort: {
-        favorite: favorites.has(site.slug) ? 1 : 0,
-        sticky: site.sponsor ? 1 : 0,
-        support: Number(site.supportPoints) || 0,
-        sequence: index + 1,
-        name: site.name || '',
-        unit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
-        inputPrice: numericSortValue(firstFinite(prices.map(price => price.inputPrice))),
-        outputPrice: numericSortValue(firstFinite(prices.map(price => price.outputPrice))),
-        cacheInputPrice: numericSortValue(firstFinite(prices.map(price => price.cacheInputPrice))),
-        cacheOutputPrice: numericSortValue(firstFinite(prices.map(price => price.cacheOutputPrice))),
-      },
-    };
+    cell.append(label);
+    return cell;
   }
 
   function priceRowElement(price, index) {
@@ -174,6 +91,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     const row = document.createElement('tr');
     setDataset(row, {
       sortModel: price.modelId || '',
+      sortGroup: price.groupName || '',
       sortSequence: index + 1,
       sortUnit: displayPriceUnit(price.unit || '', price.currency),
       sortInputPrice: priceSortValue(price.inputPrice),
@@ -189,7 +107,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     const modelCell = tableCell(labels.model || '', 'left', 'min-w-48');
     const modelLink = el('a', 'data-row-model-name break-words font-mono text-xs font-semibold', price.modelId || '');
     modelLink.dataset.rowPrimary = '';
-    modelLink.href = `${modelLinkPrefix}/${encodeURIComponent(price.modelId || '')}`;
+    modelLink.href = gatewayModelPath(price.modelId || '', modelLinkPrefix);
     modelLink.dataset.umamiEvent = 'internal-link-click';
     modelLink.dataset.umamiEventLinkType = 'gateway-model';
     modelLink.dataset.umamiEventName = price.modelId || '';
@@ -197,6 +115,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     modelLink.dataset.umamiEventUrl = modelLink.href;
     modelCell.append(modelLink);
     row.append(modelCell);
+    row.append(groupCell(price));
     row.append(tableCell(labels.unit || '', 'left', 'data-price-unit', {}).appendChild(document.createTextNode(displayPriceUnit(price.unit || '', price.currency))).parentElement);
     row.append(tableCell(labels.inputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.inputPrice))).parentElement);
     row.append(tableCell(labels.outputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.outputPrice))).parentElement);
@@ -225,6 +144,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       sortSupport: Number(site.supportPoints) || 0,
       sortSequence: index + 1,
       sortName: site.name || '',
+      sortGroup: prices[0]?.groupName || '',
       sortUnit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
       sortInputPrice: firstFinite(prices.map(price => price.inputPrice)),
       sortOutputPrice: firstFinite(prices.map(price => price.outputPrice)),
@@ -294,6 +214,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       support.append(el('strong', '', Number(site.supportPoints).toLocaleString(undefined, { maximumFractionDigits: 2 })));
       textWrap.append(support);
     }
+    row.append(groupCell(prices[0]));
     row.append(priceStackCell(labels.unit || '', prices, price => displayPriceUnit(price.unit || '', price.currency)));
     row.append(priceStackCell(labels.inputPrice || '', prices, price => formatPrice(price.inputPrice)));
     row.append(priceStackCell(labels.outputPrice || '', prices, price => formatPrice(price.outputPrice)));
@@ -302,84 +223,106 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     return row;
   }
 
-  function ensureRow(entry) {
-    if (!entry.row) {
-      entry.row = tableType === 'modelSites'
-        ? modelSiteRowElement(entry.item, entry.index)
-        : priceRowElement(entry.item, entry.index);
-    }
-    favorites.sync(entry.row);
-    entry.row.classList.remove('hidden');
-    return entry.row;
-  }
-
   const searchInput = root.querySelector('[data-gateway-detail-search]');
-  const searchQuery = () => (searchInput?.value || '').trim().toLowerCase();
-  const controller = window.createDeferredTableController({
-    filterEntry: entry => !searchQuery() || String(entry.sort.model || '').toLowerCase().includes(searchQuery()),
-    isFilterActive: () => Boolean(searchQuery()),
-    table,
-    tbody,
-    button,
-    summary,
-    pageSize: Number(config.pageSize) || 100,
-    totalCount: Number(config.totalCount) || 0,
-    apiUrl: config.apiUrl || '',
-    summaryTemplate: config.displaySummary || 'Showing {rendered} / {total}',
-    entryFromRow: (row, index) => (
-      tableType === 'modelSites' ? modelSiteEntryFromRow(row, index) : priceEntryFromRow(row, index)
-    ),
-    entryFromItem: (item, index) => (
-      tableType === 'modelSites' ? modelSiteEntryFromItem(item, index) : priceEntryFromItem(item, index)
-    ),
-    ensureRow,
-    onRender: () => {
-      const empty = root.querySelector('.data-table-empty-state');
-      empty?.classList.toggle('hidden', tbody.children.length > 0);
-      if (empty && tableType === 'prices') empty.textContent = searchQuery() ? config.filterEmpty : config.noPriceData;
-    },
-  });
+  const unitSelect = root.querySelector('[data-quote-unit]');
+  const groupSelect = root.querySelector('[data-quote-group]');
+  const items = config.items || [];
+  let sort = null;
+  let visibleLimit = Number(config.pageSize) || 100;
 
-  let searchTimer;
-  searchInput?.addEventListener('input', () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(async () => {
-      const error = root.querySelector('[data-gateway-detail-error]');
-      if (error) error.hidden = true;
-      try {
-        await controller.ensureLoaded();
-        controller.state.visibleLimit = controller.state.pageSize;
-        controller.renderRows();
-      } catch { if (error) error.hidden = false; }
-    }, 180);
-  });
-
-  async function handleSort(event) {
-    const target = event.target instanceof Element ? event.target : null;
-    if (!target) return;
-    if (target.closest('[data-inline-help]')) return;
-    const sortButton = target.closest('.data-table-sort-button') || target.closest('.data-table-head-cell-sortable')?.querySelector('.data-table-sort-button');
-    if (!(sortButton instanceof HTMLElement)) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    await controller.sortFromButton(sortButton);
-    window.CardNavTelemetry?.track('sort-change', {
-      scope: tableType,
-      key: sortButton.dataset.sortKey || '',
-      direction: sortButton.dataset.sortDirection || 'none',
-    }, root);
+  function compare(left, right, key, direction = 'asc') {
+    const a = priceMetrics.includes(key) ? left.price[key] : left[key];
+    const b = priceMetrics.includes(key) ? right.price[key] : right[key];
+    const missingA = a === null || a === undefined || (typeof a === 'number' && !Number.isFinite(a));
+    const missingB = b === null || b === undefined || (typeof b === 'number' && !Number.isFinite(b));
+    if (missingA !== missingB) return missingA ? 1 : -1;
+    const result = typeof a === 'number' && typeof b === 'number' ? a - b : String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true });
+    return result * (direction === 'desc' ? -1 : 1) || left.index - right.index;
   }
 
-  controller.initialize();
-  if (tableType === 'modelSites') refreshFavorites();
-
-  button?.addEventListener('click', async () => {
-    try {
-      await controller.loadMore();
-      window.CardNavTelemetry?.track('button-click', { scope: tableType, action: 'load-more' }, root);
-    } catch {
-      button?.removeAttribute('disabled');
+  function render() {
+    const unit = unitSelect?.value || config.defaultUnit;
+    renderFilterSummary(root.querySelector('[data-quote-filter-summary]'), [unitSelect, groupSelect].filter(Boolean).map(input => ({ input, label: () => input.selectedOptions[0]?.textContent || '' })), {
+      clearLabel: config.clearFilters,
+      countElement: root.querySelector('[data-filter-count]'),
+      onChange: resetAndRender,
+    });
+    const query = (searchInput?.value || '').trim().toLowerCase();
+    let entries;
+    if (tableType === 'modelSites') {
+      entries = items.flatMap((site, index) => {
+        if (query && ![site.name, site.host, site.url].some(value => String(value || '').toLowerCase().includes(query))) return [];
+        const prices = site.pricesForModel.filter(price => priceComparisonKey(price) === unit);
+        if (!prices.length) return [];
+        const base = { site, index, name: site.name, unit: displayPriceUnit(prices[0].unit, prices[0].currency), prices };
+        return prices.map(price => ({ ...base, price, group: price.groupName }));
+      });
+    } else {
+      entries = items.filter(price => priceComparisonKey(price) === unit && (!query || price.modelId.toLowerCase().includes(query)) && (!groupSelect || !groupSelect.value || price.groupId === JSON.parse(groupSelect.value))).map((price, index) => ({ price, index, group: price.groupName, model: price.modelId, unit: displayPriceUnit(price.unit, price.currency) }));
     }
-  });
-  table.addEventListener('click', handleSort, { capture: true });
+    if (sort) entries.sort((a, b) => compare(a, b, sort.key, sort.direction));
+    else if (tableType === 'modelSites') entries.sort((a, b) => compare(a, b, 'inputPrice'));
+    const rows = [];
+    entries.slice(0, visibleLimit).forEach((entry, index) => {
+      const row = tableType === 'modelSites' ? modelSiteRowElement({ ...entry.site, pricesForModel: [entry.price] }, index) : priceRowElement(entry.price, index);
+      setTableRowSequence(row, index + 1);
+      rows.push(row);
+    });
+    tbody.replaceChildren(...rows);
+    favorites.sync(root);
+    if (summary) summary.textContent = config.displaySummary.replace('{rendered}', String(Math.min(visibleLimit, entries.length))).replace('{total}', String(entries.length));
+    button?.classList.toggle('hidden', visibleLimit >= entries.length);
+    root.querySelector('.data-table-empty-state')?.classList.toggle('hidden', entries.length > 0);
+    window.updateDataTableHeaders?.(table, sort);
+
+  }
+
+  function readFilterQuery() {
+    const params = new URLSearchParams(window.location.search);
+    if (searchInput) searchInput.value = params.get(tableType === 'prices' ? 'model' : 'q') || '';
+    if (unitSelect) {
+      const unit = params.get('unit');
+      unitSelect.value = unit !== config.defaultUnit && [...unitSelect.options].some(option => option.value === unit) ? unit : '';
+    }
+    if (groupSelect) {
+      const group = params.has('group') ? JSON.stringify(params.get('group')) : '';
+      groupSelect.value = [...groupSelect.options].some(option => option.value === group) ? group : '';
+    }
+  }
+
+  function writeFilterQuery(replace = false) {
+    const url = new URL(window.location.href);
+    const searchKey = tableType === 'prices' ? 'model' : 'q';
+    const query = (searchInput?.value || '').trim();
+    if (query) url.searchParams.set(searchKey, query); else url.searchParams.delete(searchKey);
+    if (unitSelect?.value) url.searchParams.set('unit', unitSelect.value); else url.searchParams.delete('unit');
+    if (groupSelect?.value) url.searchParams.set('group', JSON.parse(groupSelect.value)); else url.searchParams.delete('group');
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) window.history[replace ? 'replaceState' : 'pushState'](null, '', next);
+  }
+
+  function resetAndRender() { writeFilterQuery(); visibleLimit = Number(config.pageSize) || 100; render(); }
+  root.addEventListener('filter-clear', () => { if (unitSelect) unitSelect.value = ''; if (groupSelect) groupSelect.value = ''; resetAndRender(); });
+  unitSelect?.addEventListener('change', resetAndRender);
+  groupSelect?.addEventListener('change', resetAndRender);
+  let timer;
+  searchInput?.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(resetAndRender, 180); });
+  button?.addEventListener('click', () => { visibleLimit += Number(config.pageSize) || 100; render(); });
+  table.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target || target.closest('[data-inline-help]')) return;
+    const control = target.closest('.data-table-sort-button');
+    if (!control) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    const key = control.dataset.sortKey;
+    if (!key) return;
+    const direction = sort?.key === key ? (sort.direction === 'asc' ? 'desc' : null) : 'asc';
+    sort = direction ? { key, direction, type: control.dataset.sortType } : null;
+    resetAndRender();
+    window.CardNavTelemetry?.track('sort-change', { scope: tableType, key, direction: direction || 'none' }, root);
+  }, { capture: true });
+  window.addEventListener('popstate', () => { clearTimeout(timer); readFilterQuery(); visibleLimit = Number(config.pageSize) || 100; render(); });
+  readFilterQuery();
+  writeFilterQuery(true);
+  render();
 })();

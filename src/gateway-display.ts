@@ -20,13 +20,34 @@ export function formatLatencySeconds(value: number | null) {
   return `${(value / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} s`;
 }
 
-export function displayPriceUnit(unit: string, currency?: string | null) {
-  const code = currency?.trim().toUpperCase();
-  if (unit === '1M_tokens' || unit === 'quota_ratio') return `${code || '$'} / 1M tokens`;
-  if (code && unit) return `${code} / ${unit}`;
-  if (unit === 'call') return 'per call';
-  return unit || '-';
+export function normalizePriceCurrency(currency?: string | null) {
+  const code = currency?.trim().toUpperCase() || '';
+  if (['$', 'US$', 'USD'].includes(code)) return 'USD';
+  if (['RMB', 'CNY', 'CN¥'].includes(code)) return 'CNY';
+  return code;
 }
+
+export function displayPriceUnit(unit: string, currency?: string | null, ratioLabel = '倍率') {
+  const code = normalizePriceCurrency(currency);
+  if (unit === 'quota_ratio') return ratioLabel;
+  if (unit === '1M_tokens') return `${code || '—'} / 1M tokens`;
+  if (code && unit) return `${code} / ${unit}`;
+  return unit || '—';
+}
+
+export function priceComparisonKey(price: { unit: string; currency?: string | null }) {
+  return JSON.stringify([price.unit, price.unit === 'quota_ratio' ? '' : normalizePriceCurrency(price.currency)]);
+}
+
+export function priceComparisonOptions(prices: Array<{ unit: string; currency?: string | null }>) {
+  const options = new Map(prices.map(price => [priceComparisonKey(price), price]));
+  return [...options].sort(([a], [b]) => {
+    const preferred = JSON.stringify(['1M_tokens', 'USD']);
+    return a === preferred ? -1 : b === preferred ? 1 : a.localeCompare(b);
+  });
+}
+
+export const priceMetrics = ['inputPrice', 'outputPrice', 'cacheInputPrice', 'cacheOutputPrice'] as const;
 
 export function uniqueLabels(items: string[], limit?: number) {
   const seen = new Set<string>();

@@ -65,6 +65,9 @@ export type PublicGatewaySiteRow = {
 };
 
 export type PublicGatewayPriceRow = {
+  groupId: string;
+  groupName: string;
+  groupDescription: string;
   modelId: string;
   modelFamily: string | null;
   unit: string;
@@ -78,6 +81,7 @@ export type PublicGatewayPriceRow = {
 export type PublicGatewayModelRow = {
   id: string;
   modelId: string;
+  releaseDate: string | null;
   modelFamily: string | null;
   modelProvider: string;
   supportSiteCount: number;
@@ -276,7 +280,7 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     recentModelProviders: recentProviders,
     modelFamilies: declaredFamilies,
     recentModelFamilies: recentFamilies,
-    displayModelFamilies: recentFamilies,
+    displayModelFamilies: Number(row.price_count) > 0 ? recentFamilies : declaredFamilies,
     displayModelProviders: recentProviders.length > 0 ? recentProviders : [...new Set(declaredProviders)],
     refreshStatus: '',
     refreshErrorType: '',
@@ -293,6 +297,9 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
     unitsForModel: Array.isArray(row.units_for_model) ? row.units_for_model.map(String) : [],
     pricesForModel: Array.isArray(row.prices_for_model) ? row.prices_for_model.map((price: Record<string, unknown>) => ({
       modelId,
+      groupId: String(price.groupId || ''),
+      groupName: String(price.groupName || ''),
+      groupDescription: String(price.groupDescription || ''),
       modelFamily: price.modelFamily ? String(price.modelFamily) : null,
       unit: String(price.unit || ''),
       currency: price.currency ? String(price.currency) : null,
@@ -598,13 +605,13 @@ export async function loadGatewaySites(options: PublicListLimitOptions & { query
   };
 }
 
-export async function loadGatewayModels(options: PublicListLimitOptions = {}) {
+export async function loadGatewayModels(options: PublicListLimitOptions & { sort?: 'release' | 'popular' } = {}) {
   const limit = safeListLimit(options.limit);
   const result = await getPool().query(`
-    SELECT model_id, model_provider, model_family, support_site_count, price_count,
+    SELECT model_id, model_provider, model_family, support_site_count, price_count, release_date::text,
       latest_price_fetched_at AS latest_gateway_refresh_at
     FROM gateway_model_summaries
-    ORDER BY support_site_count DESC, max_site_score DESC, model_id ASC, model_provider ASC
+    ORDER BY ${options.sort === 'popular' ? '' : 'CASE WHEN release_date IS NULL THEN 2 WHEN is_official_model_id THEN 0 ELSE 1 END ASC, release_date DESC NULLS LAST,'} support_site_count DESC, max_site_score DESC, model_id ASC, model_provider ASC
     ${limit ? 'LIMIT $1' : ''}
   `, limit ? [limit] : []);
   const summaryResult = await getPool().query(`
@@ -620,6 +627,7 @@ export async function loadGatewayModels(options: PublicListLimitOptions = {}) {
     return {
       id: modelId,
       modelId,
+      releaseDate: row.release_date ?? null,
       modelProvider: String(row.model_provider || 'Other'),
       modelFamily: row.model_family ? String(row.model_family) : null,
       supportSiteCount: Number(row.support_site_count) || 0,
@@ -681,9 +689,12 @@ async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayMo
   const result = await getPool().query(`
     SELECT prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other') AS model_provider, prices.model_family,
       COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count,
-      COUNT(*)::INTEGER AS price_count, MAX(prices.fetched_at) AS latest_gateway_refresh_at
+      COUNT(*)::INTEGER AS price_count, MAX(prices.fetched_at) AS latest_gateway_refresh_at,
+      MAX(summary.release_date)::text AS release_date
     FROM gateway_model_prices prices
     INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
+    LEFT JOIN gateway_model_summaries summary ON summary.model_id = prices.model_id
+      AND summary.model_provider = COALESCE(NULLIF(prices.model_provider, ''), 'Other')
     WHERE prices.model_id = $1 AND gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
     GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other'), prices.model_family
     ORDER BY COUNT(DISTINCT prices.site_id) DESC, MAX(gateway_sites.score) DESC, model_provider ASC
@@ -695,6 +706,7 @@ async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayMo
   return {
     id: String(row.model_id),
     modelId: String(row.model_id),
+    releaseDate: row.release_date ?? null,
     modelProvider: String(row.model_provider || 'Other'),
     modelFamily: row.model_family ? String(row.model_family) : null,
     supportSiteCount: Number(row.support_site_count) || 0,
@@ -713,6 +725,9 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
     SELECT
       prices.model_id,
       prices.model_family,
+      prices.group_id,
+      prices.group_name,
+      prices.group_description,
       prices.unit,
       prices.currency,
       prices.input_price,
@@ -720,8 +735,12 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
       prices.cache_input_price,
       prices.cache_output_price
     FROM gateway_model_prices prices
+    LEFT JOIN gateway_model_summaries summary
+      ON summary.model_id = prices.model_id
+      AND summary.model_provider = COALESCE(NULLIF(prices.model_provider, ''), 'Other')
     WHERE prices.site_id = $1
-    ORDER BY
+    ORDER BY CASE WHEN summary.release_date IS NULL THEN 2 WHEN summary.is_official_model_id THEN 0 ELSE 1 END ASC,
+      summary.release_date DESC NULLS LAST,
       CASE prices.model_provider
         WHEN 'OpenAI' THEN 1
         WHEN 'Anthropic' THEN 2
@@ -731,7 +750,7 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
         ELSE 20
       END ASC,
       prices.model_id ASC,
-      prices.unit ASC
+      prices.unit ASC, prices.currency ASC, prices.group_id ASC
     ${priceLimit ? 'LIMIT $2' : ''}
   `, priceLimit ? [site.id, priceLimit] : [site.id]);
 
@@ -739,6 +758,9 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
     site,
     prices: priceResult.rows.map(row => ({
       modelId: String(row.model_id),
+      groupId: String(row.group_id || ''),
+      groupName: String(row.group_name || ''),
+      groupDescription: String(row.group_description || ''),
       modelFamily: row.model_family ? String(row.model_family) : null,
       unit: String(row.unit || ''),
       currency: row.currency ? String(row.currency) : null,
@@ -767,6 +789,9 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
         jsonb_agg(
           jsonb_build_object(
             'modelFamily', model_family,
+            'groupId', group_id,
+            'groupName', group_name,
+            'groupDescription', group_description,
             'unit', unit,
             'currency', currency,
             'inputPrice', input_price,
@@ -917,9 +942,9 @@ export async function submitGatewaySite(input: { url: string; apiEndpoint?: stri
   }
   const result = await db.query(
     `INSERT INTO gateway_sites (url, api_endpoint, status, site_id, name, family, type, slug, host, weight, summary, payment_methods)
-     VALUES ($1, $2, 'accepted', md5($1 || $3), $4, NULL, 'unknown', $5, $6, 50, $7, $8::jsonb)
+     VALUES ($1, $2, 'accepted', md5($1 || $3), $4, NULL, 'unknown', $5, $6, 50, $7, $8::text[])
      ON CONFLICT (url) DO NOTHING RETURNING url`,
-    [url, apiEndpoint, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0', name, slug, host, summary, JSON.stringify(paymentMethods)],
+    [url, apiEndpoint, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0', name, slug, host, summary, paymentMethods],
   );
   if (result.rows.length === 0) return { ok: false as const, errorKey: 'duplicateUrl' satisfies SubmitSiteUrlErrorKey };
   return { ok: true as const, url };
@@ -1315,7 +1340,7 @@ function mapModelLeaderboardRow(row: Record<string, unknown>): PublicModelLeader
 async function attachLeaderboardNavigation(rows: PublicModelLeaderboardRow[]) {
   if (!rows.length) return rows;
   const result = await getPool().query(`
-    SELECT ARRAY(SELECT DISTINCT unnest(recent_model_families) FROM gateway_sites WHERE status = 'online' AND type = 'gateway') AS gateway_families,
+    SELECT ARRAY(SELECT DISTINCT unnest(CASE WHEN price_count > 0 THEN recent_model_families ELSE model_families END) FROM gateway_sites WHERE status = 'online' AND type = 'gateway') AS gateway_families,
       ARRAY(SELECT DISTINCT product.auto_category FROM shop_products product
         JOIN shop_sites site ON site.id = product.site_id
         WHERE product.active = true AND site.status = 'online' AND site.type = 'cardShop') AS shop_categories

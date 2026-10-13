@@ -1,3 +1,6 @@
+/* Neutral help controls keep a readable glyph and a softer theme-aware circle. */
+.inline-help-button, .data-table-help, .merchant-score-help { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex: 0 0 16px; border: 1px solid color-mix(in srgb, var(--color-ink-secondary) 48%, var(--color-base-100)); border-radius: 50%; padding: 0; line-height: 1; font-size: 10px; font-weight: 700; color: var(--color-ink-secondary); background: var(--color-base-100); cursor: pointer; }
+
 /* Shared appearance for table help and merchant disclosure popovers. */
 .inline-help-tooltip, .merchant-badge-tooltip {
   position: fixed;

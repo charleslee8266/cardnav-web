@@ -11,17 +11,21 @@ export async function loadModelFamilyCatalog(): Promise<{ name: string; displayO
 
 export async function loadGatewayFamilyFilterOptions(): Promise<string[]> {
   const result = await getPool().query<{ name: string }>(`
-    SELECT DISTINCT catalog.name, catalog.display_order FROM model_family_catalog AS catalog
-    JOIN gateway_sites AS sites ON catalog.name = ANY(sites.recent_model_families)
-    WHERE sites.status = 'online' AND sites.type = 'gateway'
-    ORDER BY catalog.display_order, catalog.name
+    WITH available AS (
+      SELECT DISTINCT unnest(CASE WHEN price_count > 0 THEN recent_model_families ELSE model_families END) AS name
+      FROM gateway_sites WHERE status = 'online' AND type = 'gateway'
+    )
+    SELECT available.name FROM available
+    LEFT JOIN model_family_catalog AS catalog ON catalog.name = available.name
+    WHERE available.name <> ''
+    ORDER BY catalog.display_order NULLS LAST, available.name
   `);
   return result.rows.map(row => row.name);
 }
 
 export async function loadGatewayPaymentFilterOptions(): Promise<string[]> {
   const result = await getPool().query<{ name: string }>(`
-    SELECT DISTINCT jsonb_array_elements_text(payment_methods) AS name
+    SELECT DISTINCT unnest(payment_methods) AS name
     FROM gateway_sites WHERE status = 'online' AND type = 'gateway' ORDER BY name
   `);
   return result.rows.map(row => row.name);
