@@ -3,6 +3,8 @@
  */
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import pg from 'pg';
+import { submitSiteUrl } from '../src/store.js';
 import { validatePublicSubmittedUrl } from '../src/submitted-url.js';
 
 test('public submitted URL validation rejects temporary URLs', () => {
@@ -98,10 +100,10 @@ test('public submitted URL validation rejects reserved hosts and probe URLs', ()
     reason: 'reservedHostUrl',
     url: 'http://metadata.google.internal/cardnav-audit',
   });
-  assert.deepEqual(validatePublicSubmittedUrl('https://example.edu/ctf-cardnav-test'), {
+  assert.deepEqual(validatePublicSubmittedUrl('https://example.com/ctf-cardnav-test'), {
     ok: false,
-    reason: 'probeUrl',
-    url: 'https://example.edu/ctf-cardnav-test',
+    reason: 'reservedHostUrl',
+    url: 'https://example.com/ctf-cardnav-test',
   });
   assert.deepEqual(validatePublicSubmittedUrl('https://cardnav.xyz/admin/api/action-status?ctfssrf=1'), {
     ok: false,
@@ -142,7 +144,7 @@ test('all LDXP and WZYP aliases share one canonical storefront URL', () => {
     assert.equal(validatePublicSubmittedUrl(`https://${host}/item/goods`).ok, false);
     assert.equal(validatePublicSubmittedUrl(`https://${host}/`).ok, false);
   }
-  for (const host of ['evil-ldxp.cn', 'ldxp.cn.example', 'evil-wzyp.cn', 'wzyp.cn.example']) {
+  for (const host of ['evil-ldxp.cn', 'ldxp.cn.shop', 'evil-wzyp.cn', 'wzyp.cn.shop']) {
     assert.deepEqual(validatePublicSubmittedUrl(`https://${host}/shop/key`), { ok: true, url: `https://${host}/shop/key` });
   }
 });
@@ -163,7 +165,7 @@ test('URL confirmation explains only transformations applied to the submitted ad
 });
 
 test('unchanged storefront addresses have no conversion notices and unrelated query parameters are preserved', () => {
-  for (const input of ['https://wzyp.cn/shop/store', 'https://example.com', 'https://example.com/store?locale=en']) {
+  for (const input of ['https://wzyp.cn/shop/store', 'https://merchant.shop', 'https://merchant.shop/store?locale=en']) {
     const changes: import('../src/submitted-url.js').PublicSubmittedUrlChange[] = [];
     assert.deepEqual(validatePublicSubmittedUrl(input, changes), { ok: true, url: input });
     assert.deepEqual(changes, []);
@@ -172,6 +174,95 @@ test('unchanged storefront addresses have no conversion notices and unrelated qu
 
 test('confirmation records URL parser normalization and a removed ending slash accurately', () => {
   const changes: import('../src/submitted-url.js').PublicSubmittedUrlChange[] = [];
-  assert.deepEqual(validatePublicSubmittedUrl(' HTTPS://Example.COM:443/store/ ', changes), { ok: true, url: 'https://example.com/store' });
+  assert.deepEqual(validatePublicSubmittedUrl(' HTTPS://Merchant.SHOP:443/store/ ', changes), { ok: true, url: 'https://merchant.shop/store' });
   assert.deepEqual(changes.map(change => change.kind), ['trim', 'format', 'trailingSlash']);
+});
+
+
+test('reserved example domains and their subdomains never enter the submission queue', () => {
+  for (const host of ['example.com', 'www.example.com', 'a.b.example.net', 'EXAMPLE.ORG.', 'shop.example', 'shop.test', 'shop.localhost']) {
+    for (const suffix of ['', '/store?locale=en']) {
+      const result = validatePublicSubmittedUrl(`https://${host}:8443${suffix}`);
+      assert.equal(result.ok, false, host + suffix);
+      if (!result.ok) assert.equal(result.reason, 'reservedHostUrl');
+    }
+  }
+});
+
+test('invalid DNS hosts and credential-based URL bypasses are rejected before submission', () => {
+  const inputs = [
+    "http://www.example.com0'xor(if(now()=sysdate(),sleep(15),0))xor'z",
+    'http://www.example.com0"xor(if(now()=sysdate(),sleep(15),0))xor"z',
+    `http://www.example.com'"`,
+    'https://store.shop%27',
+    'https://store_shop.com',
+    'https://-store.shop',
+    'https://store-.shop',
+    'https://store..shop',
+    `https://${'a'.repeat(64)}.shop`,
+    `https://${Array(4).fill('a'.repeat(63)).join('.')}`,
+    'https://-bad.ldxp.cn/shop/store',
+    'https://user:password@merchant.shop',
+    'https://merchant.shop@example.com',
+    'https://user@127.0.0.1',
+    'https://user@webhook.site/path',
+    'https://user@catfk.com',
+  ];
+  for (const input of inputs) assert.equal(validatePublicSubmittedUrl(input).ok, false, input);
+});
+
+test('clear injection probes in otherwise valid URLs are rejected, including encoded queries', () => {
+  const inputs = [
+    "https://merchant.shop/?id=0'xor(if(now()=sysdate(),sleep(15),0))xor'z",
+    'https://merchant.shop/?id=1%27%20OR%201%3D1--',
+    'https://merchant.shop/?id=1%2527%2520OR%25201%253D1--',
+    'https://merchant.shop/?q=union+select+password+from+users',
+    'https://merchant.shop/?q=%3Cscript%3Ealert(1)%3C/script%3E',
+    'https://merchant.shop/?q=%3Csvg%20onload=alert(1)%3E',
+    'https://merchant.shop/?bad=%zz&q=%27%20OR%201%3D1',
+    'https://merchant.shop/path/pg_sleep(15)',
+    'https://wzyp.cn/shop/store?q=sleep(15)',
+  ];
+  for (const input of inputs) {
+    const result = validatePublicSubmittedUrl(input);
+    assert.equal(result.ok, false, input);
+    if (!result.ok) assert.equal(result.reason, 'probeUrl', input);
+  }
+});
+
+test('normal international domains, ports, paths and query punctuation stay valid', () => {
+  for (const input of [
+    'https://商店.中国:8443/store?locale=zh',
+    'https://xn--czrs0t.xn--fiqs8s/store',
+    "https://merchant.shop/o'reilly?brand=O%27Reilly&sort=price&token=a+b%3D",
+    'https://merchant.shop/sleep-products?query=select&category=benchmark',
+    'https://merchant.shop/admin?test=1&probe=2',
+    'https://example.shop/admin?test=1',
+    'https://myexample.com/store',
+    'https://example.com.merchant.shop/store',
+    'https://merchant.shop:8443/store?redirect=https%3A%2F%2Fexample.com',
+  ]) {
+    const result = validatePublicSubmittedUrl(input);
+    assert.deepEqual(result, { ok: true, url: new URL(input).toString().replace(/\/$/, '') }, input);
+  }
+});
+
+
+test('public shop submission rejects example domains and injection probes without touching the database', async (context) => {
+  const query = context.mock.method(pg.Pool.prototype, 'query', () => {
+    throw new Error('Rejected submissions must not reach the database');
+  });
+  for (const input of [
+    'http://www.example.com',
+    "http://www.example.com0'xor(if(now()=sysdate(),sleep(15),0))xor'z",
+    'http://www.example.com0"xor(if(now()=sysdate(),sleep(15),0))xor"z',
+    `http://www.example.com'"`,
+    'https://merchant.shop/?q=%3Cscript%3Ealert(1)%3C/script%3E',
+    'https://user@merchant.shop',
+  ]) {
+    const validation = validatePublicSubmittedUrl(input);
+    assert.equal(validation.ok, false, input);
+    if (!validation.ok) assert.deepEqual(await submitSiteUrl(input), { ok: false, errorKey: validation.reason });
+  }
+  assert.equal(query.mock.callCount(), 0);
 });

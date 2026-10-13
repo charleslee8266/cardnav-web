@@ -24,8 +24,11 @@ const trackedShopUrlPattern = new RegExp(`^https?://(?:${wzypSubmittedHostSource
 const ipAddressUrlPattern = /^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-f:.]+\])(?::\d+)?(?:[/?#]|$)/i;
 const incompleteDomainUrlPattern = /^https?:\/\/[^/?#.[\]:]+(?::\d+)?(?:[/?#]|$)/i;
 const platformHomeUrlPattern = new RegExp(`^https?://(?:${wzypSubmittedHostSource}|catfk\\.com)(?::\\d+)?/?(?:[?#]|$)`, 'i');
-const reservedHostUrlPattern = /^https?:\/\/(?:localhost|[^/?#]+\.(?:local|internal|invalid))(?::\d+)?(?:[/?#]|$)/i;
-const probeUrlPattern = /^https?:\/\/(?:(?:[^/?#:]+\.)?example\.[^/?#:]+(?::\d+)?\/[^?#]*(?:ctf|probe|admin|test|'|%27|%20or%20|--)|httpbin\.org(?::\d+)?\/base64\/|(?:(?:www|staging)\.)?cardnav\.xyz(?::\d+)?\/(?:admin|api)(?:[/?#]|$))/i;
+const reservedHostnamePattern = /(?:^|\.)(?:example\.(?:com|net|org)|example|test|localhost|local|internal|invalid)$/i;
+const dnsLabelPattern = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+// Match executable probe syntax, not ordinary apostrophes or words in storefront paths.
+const injectionProbePattern = /\b(?:sleep|pg_sleep|benchmark)\s*\(\s*\d|\bunion\s+(?:all\s+)?select\b|['"]\s*(?:or|and|xor)\s*(?:\(|\d+\s*=)|<\s*script\b|<\s*(?:svg|img|iframe)\b[^>]*\bon\w+\s*=/i;
+const probeUrlPattern = /^https?:\/\/(?:httpbin\.org(?::\d+)?\/base64\/|(?:(?:www|staging)\.)?cardnav\.xyz(?::\d+)?\/(?:admin|api)(?:[/?#]|$))/i;
 
 export type PublicSubmittedUrlChange = {
   kind: 'trim' | 'format' | 'alias' | 'protocol' | 'port' | 'query' | 'fragment' | 'trailingSlash';
@@ -41,10 +44,17 @@ export function validatePublicSubmittedUrl(input: string, changes?: PublicSubmit
     return { ok: false, reason: 'invalidUrl' };
   }
 
+  if (url.username || url.password) return { ok: false, reason: 'invalidUrl' };
+
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     return { ok: false, reason: 'invalidUrl' };
   }
 
+  const hostname = url.hostname.replace(/\.$/, '');
+  if (!url.hostname.startsWith('[') && (hostname.length > 253 || hostname.split('.').some(label => !dnsLabelPattern.test(label)))) {
+    return { ok: false, reason: 'invalidDomainUrl', url: url.toString().replace(/\/$/, '') };
+  }
+  url.hostname = hostname;
   if (input !== input.trim()) changes?.push({ kind: 'trim' });
   // URL parsing can canonicalize host casing, default ports, escaping and dot segments.
   if (url.href.replace(/\/$/, '') !== input.trim().replace(/\/$/, '')) changes?.push({ kind: 'format' });
@@ -56,8 +66,8 @@ export function validatePublicSubmittedUrl(input: string, changes?: PublicSubmit
   if (temporaryUrlPattern.test(normalized)) return { ok: false, reason: 'temporaryUrl', url: normalized };
   if (productItemUrlPattern.test(normalized)) return { ok: false, reason: 'productItemUrl', url: normalized };
   if (platformHomeUrlPattern.test(normalized)) return { ok: false, reason: 'platformHomeUrl', url: normalized };
-  if (reservedHostUrlPattern.test(normalized)) return { ok: false, reason: 'reservedHostUrl', url: normalized };
-  if (probeUrlPattern.test(normalized)) return { ok: false, reason: 'probeUrl', url: normalized };
+  if (reservedHostnamePattern.test(url.hostname)) return { ok: false, reason: 'reservedHostUrl', url: normalized };
+  if (probeUrlPattern.test(normalized) || hasInjectionProbe(url.pathname + url.search)) return { ok: false, reason: 'probeUrl', url: normalized };
 
   if (trackedShopUrlPattern.test(normalized)) {
     if (url.href.includes('?')) changes?.push({ kind: 'query' });
@@ -78,4 +88,17 @@ function normalizeParsedPublicSubmittedUrl(url: URL, changes?: PublicSubmittedUr
     url.port = '';
   }
   return url.toString().replace(/\/$/, '');
+}
+
+function hasInjectionProbe(value: string) {
+  // Inspect raw and encoded probes without changing the submitted path or query.
+  for (let pass = 0; pass < 3; pass++) {
+    if (injectionProbePattern.test(value.replace(/\+/g, ' '))) return true;
+    const decoded = value.replace(/(?:%[0-9a-f]{2})+/gi, encoded => {
+      try { return decodeURIComponent(encoded); } catch { return encoded; }
+    });
+    if (decoded === value) break;
+    value = decoded;
+  }
+  return false;
 }
