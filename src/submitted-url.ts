@@ -16,7 +16,7 @@ export type PublicSubmittedUrlValidationResult =
   | { ok: true; url: string }
   | { ok: false; reason: PublicSubmittedUrlRejectReason; url?: string };
 
-const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)*(?:webhook\.site|serveousercontent\.com|lhr\.life|loca\.lt)(?::\d+)?(?:[/?#]|$)/i;
+const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)*(?:webhook\.site|serveousercontent\.com|lhr\.life|loca\.lt|nip\.io|sslip\.io|xip\.io)(?::\d+)?(?:[/?#]|$)/i;
 const wzypAliasHostPattern = /^(?:[a-z0-9-]+\.)*(?:ldxp|wzyp)\.cn\.?$/i;
 const wzypSubmittedHostSource = 'wzyp\\.cn';
 const productItemUrlPattern = new RegExp(`^https?://(?:${wzypSubmittedHostSource}|catfk\\.com)(?::\\d+)?/(?:item/[^/?#]+|shop/[^/?#]+/[^?#]+)`, 'i');
@@ -65,7 +65,7 @@ export function validatePublicSubmittedUrl(input: string, changes?: PublicSubmit
   if (incompleteDomainUrlPattern.test(normalized)) return { ok: false, reason: 'invalidDomainUrl', url: normalized };
   if (temporaryUrlPattern.test(normalized)) return { ok: false, reason: 'temporaryUrl', url: normalized };
   if (productItemUrlPattern.test(normalized)) return { ok: false, reason: 'productItemUrl', url: normalized };
-  if (platformHomeUrlPattern.test(normalized)) return { ok: false, reason: 'platformHomeUrl', url: normalized };
+  if (platformHomeUrlPattern.test(normalized) || (/^(?:www\.)?google\.com$/i.test(url.hostname) && url.pathname === '/')) return { ok: false, reason: 'platformHomeUrl', url: normalized };
   if (reservedHostnamePattern.test(url.hostname)) return { ok: false, reason: 'reservedHostUrl', url: normalized };
   if (probeUrlPattern.test(normalized) || hasInjectionProbe(url.pathname + url.search)) return { ok: false, reason: 'probeUrl', url: normalized };
 

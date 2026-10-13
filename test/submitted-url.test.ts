@@ -259,10 +259,44 @@ test('public shop submission rejects example domains and injection probes withou
     `http://www.example.com'"`,
     'https://merchant.shop/?q=%3Cscript%3Ealert(1)%3C/script%3E',
     'https://user@merchant.shop',
+    'http://127.0.0.1.nip.io',
+    'http://foo.127.0.0.1.nip.io',
+    'https://8-8-8-8.sslip.io',
+    'https://google.com',
   ]) {
     const validation = validatePublicSubmittedUrl(input);
     assert.equal(validation.ok, false, input);
     if (!validation.ok) assert.deepEqual(await submitSiteUrl(input), { ok: false, errorKey: validation.reason });
   }
   assert.equal(query.mock.callCount(), 0);
+});
+
+
+test('IP-mapping DNS services are rejected regardless of encoded target', () => {
+  for (const host of [
+    'nip.io', 'sslip.io', 'xip.io', '127.0.0.1.nip.io', 'foo.127.0.0.1.nip.io', 'store-127-0-0-1.sslip.io',
+    'store.8.8.8.8.nip.io', '8-8-4-4.sslip.io', '7f000001.nip.io', 'test.0--1.sslip.io',
+    '10.1.2.3.nip.io', '172-16-0-1.sslip.io', '192.168.1.1.xip.io',
+    '169.254.169.254.nip.io', '100.64.0.1.nip.io', '0.0.0.0.nip.io',
+    '224.0.0.1.nip.io', '255.255.255.255.nip.io', '127.0.0.1.NIP.IO.',
+  ]) {
+    const result = validatePublicSubmittedUrl(`http://${host}:8080/store`);
+    assert.equal(result.ok, false, host);
+    if (!result.ok) assert.equal(result.reason, 'temporaryUrl', host);
+  }
+  for (const host of ['127.0.0.1.nip.io.merchant.shop', 'my-nip.io', 'sslip.io.merchant.shop', 'myxip.io']) {
+    const url = `https://${host}/store`;
+    assert.deepEqual(validatePublicSubmittedUrl(url), { ok: true, url });
+  }
+});
+
+test('Google search homepages are not storefront submissions', () => {
+  for (const url of ['https://google.com', 'https://www.google.com/?hl=en', 'http://GOOGLE.COM.:8080/#top']) {
+    const result = validatePublicSubmittedUrl(url);
+    assert.equal(result.ok, false, url);
+    if (!result.ok) assert.equal(result.reason, 'platformHomeUrl');
+  }
+  for (const url of ['https://google.com.merchant.shop', 'https://mygoogle.com', 'https://merchant.shop/?next=https://google.com']) {
+    assert.deepEqual(validatePublicSubmittedUrl(url), { ok: true, url });
+  }
 });
