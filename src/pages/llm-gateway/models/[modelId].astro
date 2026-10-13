@@ -17,7 +17,7 @@ import SupportDialog from '../../../components/SupportDialog.astro';
 import GatewaySiteTableRow from '../../../components/GatewaySiteTableRow.astro';
 import DataTable from '../../../components/DataTable.astro';
 import DataTableCell from '../../../components/DataTableCell.astro';
-import { displayPriceUnit, formatPrice, priceComparisonOptions, priceComparisonKey } from '../../../gateway-display.js';
+import { displayPriceUnit, formatPrice, priceComparisonOptions, matchesPriceUnit, comparePriceUnits } from '../../../gateway-display.js';
 import PublicPage from '../../../layouts/PublicPage.astro';
 import DataTableHeader from '../../../components/DataTableHeader.astro';
 import { buildSeoContext } from '../../../seo.js';
@@ -37,17 +37,15 @@ if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 30
 const { model } = detail;
 const unitOptions = priceComparisonOptions(detail.sites.flatMap(site => site.pricesForModel));
 const requestedUnit = Astro.url.searchParams.get('unit');
-const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || unitOptions[0]?.[0] || '';
+const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || '';
 const initialQuery = (Astro.url.searchParams.get('q') || '').trim();
-const quotes = detail.sites.filter(site => !initialQuery || [site.name, site.host, site.url].some(value => String(value || '').toLowerCase().includes(initialQuery.toLowerCase()))).flatMap(site => site.pricesForModel.filter(price => priceComparisonKey(price) === initialUnit).map(price => ({ ...site, pricesForModel: [price] }))).sort((a, b) => (a.pricesForModel[0].inputPrice ?? Infinity) - (b.pricesForModel[0].inputPrice ?? Infinity));
+const quotes = detail.sites.filter(site => !initialQuery || [site.name, site.host, site.url].some(value => String(value || '').toLowerCase().includes(initialQuery.toLowerCase()))).flatMap(site => site.pricesForModel.filter(price => matchesPriceUnit(price, initialUnit)).map(price => ({ ...site, pricesForModel: [price] }))).sort((a, b) => comparePriceUnits(a.pricesForModel[0], b.pricesForModel[0]) || (a.pricesForModel[0].inputPrice ?? Infinity) - (b.pricesForModel[0].inputPrice ?? Infinity));
 const sites = quotes.slice(0, MODEL_SITE_PAGE_SIZE);
 const canonicalModelPath = gatewayModelPath(model.modelId);
 if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(canonicalModelPath), 301);
 const modelSiteTableConfig = {
   type: 'modelSites',
   items: detail.sites,
-  initialUnit,
-  defaultUnit: unitOptions[0]?.[0] || '',
   clearFilters: t.shops.clearFilters,
   groupLabels: t.llmGateway,
   noPriceData: t.llmGateway.noPriceData,
@@ -155,7 +153,8 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
       <FilterPopover id="gatewayQuoteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
         <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.unit}</span>
           <select class="select select-bordered" data-quote-unit aria-label={t.llmGateway.unit}>
-            {unitOptions.map(([key, price], index) => <option value={index === 0 ? '' : key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</option>)}
+            <option value="" selected={!initialUnit}>{t.llmGateway.allUnits}</option>
+            {unitOptions.map(([key, price]) => <option value={key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</option>)}
           </select>
         </label>
       </FilterPopover>

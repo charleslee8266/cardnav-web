@@ -39,12 +39,24 @@ export function priceComparisonKey(price: { unit: string; currency?: string | nu
   return JSON.stringify([price.unit, price.unit === 'quota_ratio' ? '' : normalizePriceCurrency(price.currency)]);
 }
 
-export function priceComparisonOptions(prices: Array<{ unit: string; currency?: string | null }>) {
+type PriceUnit = { unit: string; currency?: string | null };
+
+export function matchesPriceUnit(price: PriceUnit, selectedUnit: string) {
+  return !selectedUnit || priceComparisonKey(price) === selectedUnit;
+}
+
+/** Keep currencies and billing units separate when ordering prices. */
+export function comparePriceUnits(left: PriceUnit, right: PriceUnit) {
+  const a = priceComparisonKey(left);
+  const b = priceComparisonKey(right);
+  if (a === b) return 0;
+  const preferred = JSON.stringify(['1M_tokens', 'USD']);
+  return a === preferred ? -1 : b === preferred ? 1 : a.localeCompare(b);
+}
+
+export function priceComparisonOptions(prices: PriceUnit[]) {
   const options = new Map(prices.map(price => [priceComparisonKey(price), price]));
-  return [...options].sort(([a], [b]) => {
-    const preferred = JSON.stringify(['1M_tokens', 'USD']);
-    return a === preferred ? -1 : b === preferred ? 1 : a.localeCompare(b);
-  });
+  return [...options].sort(([, a], [, b]) => comparePriceUnits(a, b));
 }
 
 export const priceMetrics = ['inputPrice', 'outputPrice', 'cacheInputPrice', 'cacheOutputPrice'] as const;

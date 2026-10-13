@@ -19,7 +19,7 @@ import DataTableCell from '../../components/DataTableCell.astro';
 import {
   displayPriceUnit,
   priceComparisonOptions,
-  priceComparisonKey,
+  matchesPriceUnit,
   paymentIcon,
   formatAvailabilityPercent,
   formatLatencySeconds,
@@ -43,19 +43,18 @@ if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 30
 const { site } = detail;
 const unitOptions = priceComparisonOptions(detail.prices);
 const requestedUnit = Astro.url.searchParams.get('unit');
-const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || unitOptions[0]?.[0] || '';
+const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || '';
 const initialModel = (Astro.url.searchParams.get('model') || '').trim();
 const requestedGroup = Astro.url.searchParams.get('group');
 const initialGroup = detail.prices.some(price => price.groupId === requestedGroup) ? requestedGroup : null;
 const groupOptions = [...new Map(detail.prices.map(price => [price.groupId, price.groupName || '—'])).entries()];
-const prices = detail.prices.filter(price => priceComparisonKey(price) === initialUnit && (!initialModel || price.modelId.toLowerCase().includes(initialModel.toLowerCase())) && (initialGroup === null || price.groupId === initialGroup)).slice(0, PRICE_TABLE_PAGE_SIZE);
+const filteredPrices = detail.prices.filter(price => matchesPriceUnit(price, initialUnit) && (!initialModel || price.modelId.toLowerCase().includes(initialModel.toLowerCase())) && (initialGroup === null || price.groupId === initialGroup));
+const prices = filteredPrices.slice(0, PRICE_TABLE_PAGE_SIZE);
 if (Astro.params.slug !== site.slug) return Astro.redirect(Astro.locals.localizePath(`/llm-gateway/${site.slug}`), 301);
-const priceTotalCount = site.priceCount;
+const priceTotalCount = filteredPrices.length;
 const priceTableConfig = {
   type: 'prices',
   items: detail.prices,
-  initialUnit,
-  defaultUnit: unitOptions[0]?.[0] || '',
   clearFilters: t.shops.clearFilters,
   groupLabels: t.llmGateway,
   pageSize: PRICE_TABLE_PAGE_SIZE,
@@ -178,7 +177,8 @@ function gatewayModelClickAttrs(modelId: string) {
           </label>
           <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.unit}</span>
             <select class="select select-bordered" data-quote-unit aria-label={t.llmGateway.unit}>
-              {unitOptions.map(([key, price], index) => <option value={index === 0 ? '' : key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</option>)}
+              <option value="" selected={!initialUnit}>{t.llmGateway.allUnits}</option>
+            {unitOptions.map(([key, price]) => <option value={key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</option>)}
             </select>
           </label>
         </FilterPopover>

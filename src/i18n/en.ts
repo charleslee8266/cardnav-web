@@ -369,6 +369,7 @@ export const enMessages: Messages = {
     publicPriceSourceHint: "Prices are collected from publicly accessible model catalogs or pricing APIs. Automatic price collection is currently unavailable when a site has no public pricing source or requires login. Prices are for reference; pricing tiers and conditions follow the provider’s published information.",
     group: "Group",
     groupDescription: "Group description",
+    allUnits: "All units",
     allGroups: "All groups",
     ratio: "Multiplier",
 

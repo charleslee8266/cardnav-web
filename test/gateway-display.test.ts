@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { displayPriceUnit, priceComparisonKey } from '../src/gateway-display.js';
+import { displayPriceUnit, priceComparisonKey, matchesPriceUnit, comparePriceUnits } from '../src/gateway-display.js';
 import pg from 'pg';
 import { loadGatewayDetail, loadGatewayModelDetail } from '../src/store.js';
 
@@ -16,6 +16,21 @@ test('labels currency-specific token and media rates without assuming dollars', 
   assert.equal(displayPriceUnit('1M_tokens'), '— / 1M tokens');
   assert.notEqual(priceComparisonKey({unit: '1M_tokens', currency: 'USD'}), priceComparisonKey({unit: '1M_tokens', currency: 'CNY'}));
   assert.equal(displayPriceUnit('call'), 'call');
+});
+
+test('default unit filter retains all quotes and explicit filters preserve currency boundaries', () => {
+  const prices = [
+    { unit: '1M_tokens', currency: '$', inputPrice: 20 },
+    { unit: '1M_tokens', currency: 'USD', inputPrice: 10 },
+    { unit: '1M_tokens', currency: 'CNY', inputPrice: 1 },
+    { unit: 'quota_ratio', currency: '', inputPrice: 0.1 },
+  ];
+  assert.deepEqual(prices.filter(price => matchesPriceUnit(price, '')), prices);
+  const dollars = prices.filter(price => matchesPriceUnit(price, priceComparisonKey(prices[0])));
+  assert.deepEqual(dollars, prices.slice(0, 2));
+  assert.deepEqual(prices.filter(price => matchesPriceUnit(price, priceComparisonKey(prices[3]))), [prices[3]]);
+  const sorted = [...prices].sort((a, b) => comparePriceUnits(a, b) || a.inputPrice - b.inputPrice);
+  assert.deepEqual(sorted, [prices[1], prices[0], prices[2], prices[3]]);
 });
 
 test('public gateway and model detail reads retain the price currency', async t => {

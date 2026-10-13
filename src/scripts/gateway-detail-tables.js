@@ -1,9 +1,9 @@
 import { gatewayModelPath } from '../models/routes.js';
 import { renderFilterSummary } from './filter-summary.js';
 /*
- * 文件说明: 管理中转站分组报价的筛选、渐进渲染、展开与全量排序。
+ * 文件说明: 管理中转站分组报价的筛选、渐进渲染与全量排序。
  */
-import { displayPriceUnit as unitLabel, priceComparisonKey, priceMetrics } from '../gateway-display.js';
+import { displayPriceUnit as unitLabel, matchesPriceUnit, comparePriceUnits, priceMetrics } from '../gateway-display.js';
 import { setTableRowSequence } from './table-sequence.js';
 import { GatewayFavorites } from './GatewayFavorites.js';
 
@@ -231,6 +231,10 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   let visibleLimit = Number(config.pageSize) || 100;
 
   function compare(left, right, key, direction = 'asc') {
+    if (priceMetrics.includes(key)) {
+      const unitOrder = comparePriceUnits(left.price, right.price);
+      if (unitOrder) return unitOrder;
+    }
     const a = priceMetrics.includes(key) ? left.price[key] : left[key];
     const b = priceMetrics.includes(key) ? right.price[key] : right[key];
     const missingA = a === null || a === undefined || (typeof a === 'number' && !Number.isFinite(a));
@@ -241,7 +245,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   }
 
   function render() {
-    const unit = unitSelect?.value || config.defaultUnit;
+    const unit = unitSelect?.value || '';
     renderFilterSummary(root.querySelector('[data-quote-filter-summary]'), [unitSelect, groupSelect].filter(Boolean).map(input => ({ input, label: () => input.selectedOptions[0]?.textContent || '' })), {
       clearLabel: config.clearFilters,
       countElement: root.querySelector('[data-filter-count]'),
@@ -252,13 +256,13 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     if (tableType === 'modelSites') {
       entries = items.flatMap((site, index) => {
         if (query && ![site.name, site.host, site.url].some(value => String(value || '').toLowerCase().includes(query))) return [];
-        const prices = site.pricesForModel.filter(price => priceComparisonKey(price) === unit);
+        const prices = site.pricesForModel.filter(price => matchesPriceUnit(price, unit));
         if (!prices.length) return [];
-        const base = { site, index, name: site.name, unit: displayPriceUnit(prices[0].unit, prices[0].currency), prices };
-        return prices.map(price => ({ ...base, price, group: price.groupName }));
+        const base = { site, index, name: site.name };
+        return prices.map(price => ({ ...base, price, group: price.groupName, unit: displayPriceUnit(price.unit, price.currency) }));
       });
     } else {
-      entries = items.filter(price => priceComparisonKey(price) === unit && (!query || price.modelId.toLowerCase().includes(query)) && (!groupSelect || !groupSelect.value || price.groupId === JSON.parse(groupSelect.value))).map((price, index) => ({ price, index, group: price.groupName, model: price.modelId, unit: displayPriceUnit(price.unit, price.currency) }));
+      entries = items.filter(price => matchesPriceUnit(price, unit) && (!query || price.modelId.toLowerCase().includes(query)) && (!groupSelect || !groupSelect.value || price.groupId === JSON.parse(groupSelect.value))).map((price, index) => ({ price, index, group: price.groupName, model: price.modelId, unit: displayPriceUnit(price.unit, price.currency) }));
     }
     if (sort) entries.sort((a, b) => compare(a, b, sort.key, sort.direction));
     else if (tableType === 'modelSites') entries.sort((a, b) => compare(a, b, 'inputPrice'));
@@ -282,7 +286,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     if (searchInput) searchInput.value = params.get(tableType === 'prices' ? 'model' : 'q') || '';
     if (unitSelect) {
       const unit = params.get('unit');
-      unitSelect.value = unit !== config.defaultUnit && [...unitSelect.options].some(option => option.value === unit) ? unit : '';
+      unitSelect.value = [...unitSelect.options].some(option => option.value === unit) ? unit : '';
     }
     if (groupSelect) {
       const group = params.has('group') ? JSON.stringify(params.get('group')) : '';

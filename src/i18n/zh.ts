@@ -368,6 +368,7 @@ export const zhMessages = {
     publicPriceSourceHint: "价格数据采集自站点公开可访问的模型广场或价格接口。未开放此类接口或需要登录的站点，暂时无法自动获取价格。价格仅供参考，阶梯计费及适用条件以站点公布信息为准。",
     group: "分组",
     groupDescription: "分组描述",
+    allUnits: "全部单位",
     allGroups: "全部分组",
     ratio: "倍率",
 
