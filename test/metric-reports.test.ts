@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { enqueueReport } from '../src/scripts/metric-reports.js';
 import { readMetricEvents } from '../src/metric-request.js';
-import { METRIC_BATCH_LIMIT, METRIC_FLUSH_INTERVAL_MS } from '../src/metric-batch.js';
+import { METRIC_BATCH_LIMIT, METRIC_FLUSH_INTERVAL_MS, packMetricEvents } from '../src/metric-batch.js';
 
 test('reports batch on a timer, flush once on hide, and discard failed or overflowing telemetry', async context => {
   const documentEvents = new EventTarget();
@@ -14,7 +14,8 @@ test('reports batch on a timer, flush once on hide, and discard failed or overfl
   Object.defineProperty(globalThis, 'window', { configurable: true, value: windowEvents });
   const requests: { url: unknown; events: unknown[] }[] = [];
   context.mock.method(globalThis, 'fetch', async (url: unknown, init: RequestInit) => {
-    requests.push({ url, events: JSON.parse(String(init.body)).events });
+    const body = JSON.parse(String(init.body));
+    requests.push({ url, events: body.events ?? body.groups.flatMap((group: { ids: string[] }) => group.ids) });
     throw new Error('offline');
   });
   context.mock.timers.enable({ apis: ['setTimeout'] });
@@ -59,4 +60,39 @@ test('report endpoints accept bounded batches and cached single-event clients', 
   for (const value of [null, [], { events: [] }, { events: [null] }, { events: Array(51).fill({}) }, { text: '字'.repeat(20_000) }]) {
     assert.equal(await read(value), null);
   }
+});
+
+
+test('compact batches preserve visitor and per-event contexts without repeated fields', async () => {
+  const visitorId = '11111111-1111-4111-8111-111111111111';
+  const events = Array.from({ length: 20 }, (_, i) => ({
+    visitorId, productId: i.toString(16).padStart(32, '0'), eventType: 'impression',
+    scene: 'default', displayType: 'normal', positionBucket: '1-5',
+  }));
+  const packed = packMetricEvents(events, 'productId');
+  const json = JSON.stringify(packed);
+  assert.equal(json.split(visitorId).length - 1, 1);
+  assert.ok(json.length < JSON.stringify({ events }).length / 3);
+  const decode = (body: unknown, idField: 'productId' | 'subjectId' = 'productId') => readMetricEvents(
+    new Request('http://localhost/api/metrics', { method: 'POST', body: JSON.stringify(body) }), idField);
+  assert.deepEqual(await decode(packed), events);
+  const mixed = [events[0], { ...events[1], scene: 'search', positionBucket: '21+', eventType: 'click' }];
+  assert.deepEqual(await decode(packMetricEvents(mixed, 'productId')), mixed);
+  const interleaved = [events[0], mixed[1], events[1]];
+  assert.deepEqual(await decode(packMetricEvents(interleaved, 'productId')), interleaved,
+    'click-before-impression ordering must survive context grouping');
+  const merchant = events.map(({ productId, visitorId }) => ({ productId, visitorId }));
+  assert.deepEqual(await decode(packMetricEvents(merchant, 'productId')), merchant);
+  const gateway = [{ visitorId, subjectType: 'site', subjectId: 'example', eventType: 'open' }];
+  assert.deepEqual(await decode(packMetricEvents(gateway, 'subjectId'), 'subjectId'), gateway);
+  assert.throws(() => packMetricEvents([events[0], { ...events[1], visitorId: 'other' }], 'productId'));
+  for (const body of [
+    { visitorId, groups: [{ ids: Array(51).fill('id') }] },
+    { visitorId, groups: [{ ids: Array(30).fill('id') }, { ids: Array(30).fill('id') }] },
+    { visitorId, groups: [{ ids: [null] }] },
+    { visitorId, groups: [{ ids: ['id'], visitorId: 'other' }] },
+    { visitorId, groups: [{ ids: ['id'], productId: 'other' }] },
+    { visitorId, groups: [] },
+    { groups: [{ ids: ['id'] }] },
+  ]) assert.equal(await decode(body), null);
 });

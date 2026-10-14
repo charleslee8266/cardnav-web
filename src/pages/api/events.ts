@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 import { recordGatewayEngagement } from '../../store.js';
 
 export const POST: APIRoute = async ({ request }) => {
-  const events = await readMetricEvents(request);
+  const events = await readMetricEvents(request, 'subjectId');
   if (!events || events.some(body => typeof body.subjectId !== 'string' || typeof body.visitorId !== 'string'
     || !['site', 'model'].includes(String(body.subjectType))
     || !['detail', 'open'].includes(String(body.eventType)))) return new Response(null, { status: 400 });

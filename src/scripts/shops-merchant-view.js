@@ -117,11 +117,7 @@ function createProductChip(item, shopProductsData, shopsMessages, createTrackedL
     chip.dataset.umamiEventLinkType = 'product';
     chip.dataset.umamiEventUrl = productUrl;
     chip.dataset.umamiEventName = productTitle;
-    chip.dataset.productClickSiteId = text(accessors.shopSiteId(site));
     chip.dataset.productClickId = text(accessors.shopProductId(item));
-    chip.dataset.productClickUrl = productUrl;
-    chip.dataset.productClickCategory = categoryName;
-    chip.dataset.productClickName = productName;
     chip.dataset.productClickSource = 'merchant';
   }
 

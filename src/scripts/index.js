@@ -441,15 +441,8 @@ function reportSearchTerm(term, resultCount) {
 
 function reportProductClick(payload) {
   if (!productMetricTracker.markClick(payload.productId)) return;
-  const siteId = normalize(payload.siteId);
-  const productUrl = text(payload.productUrl).trim();
-  const categoryName = text(payload.categoryName).trim();
-  const name = text(payload.name).trim();
-  if (!siteId) return;
-  if (!productUrl && (!categoryName || !name)) return;
-
   enqueueReport('/api/product-clicks', {
-    siteId, visitorId: productMetricTracker.visitorId, productUrl, categoryName, name,
+    productId: payload.productId, visitorId: productMetricTracker.visitorId,
   });
 }
 
@@ -752,10 +745,7 @@ function createFlatProductRow(item) {
   if (productUrl) {
     const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle, { sponsor: siteSponsor || shopSiteSupportTotalCents(site) > 0 });
     productLink.dataset.rowPrimary = '';
-    productLink.dataset.productClickSiteId = siteId;
-    productLink.dataset.productClickUrl = productUrl;
-    productLink.dataset.productClickCategory = categoryName;
-    productLink.dataset.productClickName = productName;
+    productLink.dataset.productClickId = text(shopProductId(item));
     productTitleRow.appendChild(productLink);
   } else {
     appendTextElement(productTitleRow, 'span', 'product-text', productName);
@@ -1549,7 +1539,7 @@ shopTabButtons.forEach(button => {
 });
 
 document.addEventListener('click', event => {
-  const target = event.target instanceof Element ? event.target.closest('[data-product-click-site-id]') : null;
+  const target = event.target instanceof Element ? event.target.closest('[data-product-click-id]') : null;
   if (!(target instanceof HTMLElement)) return;
   const metricRow = target.closest('[data-product-metric-id]');
   if (metricRow instanceof HTMLElement) {
@@ -1558,10 +1548,6 @@ document.addEventListener('click', event => {
   }
   reportProductClick({
     productId: target.dataset.productClickId || '',
-    siteId: target.dataset.productClickSiteId || '',
-    productUrl: target.dataset.productClickUrl || '',
-    categoryName: target.dataset.productClickCategory || '',
-    name: target.dataset.productClickName || '',
   });
 });
 window.addEventListener('popstate', () => { syncFiltersFromUrl(); resetFlatVisibleLimit(); applyFilters(); });

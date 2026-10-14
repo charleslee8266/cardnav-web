@@ -52,7 +52,7 @@ test('merchant clicks and product metrics accumulate on one Beijing daily row', 
       }
     };
 
-    const { recordProductClick, recordProductMetric, recordProductMetrics } = await import('../src/store.js');
+    const { recordProductClick, recordProductMetric, recordProductMetrics, recordMerchantProductClicks } = await import('../src/store.js');
     const batchMetric = {
       productId, visitorId: '33333333-3333-4333-8333-333333333333',
       eventType: 'impression' as const, scene: 'default' as const,
@@ -64,7 +64,8 @@ test('merchant clicks and product metrics accumulate on one Beijing daily row', 
     assert.equal(batchRows.rows[0].metric_groups['default|normal|1-5'].impressions, 1);
     await admin.query(`DELETE FROM ${schema}.shop_product_daily; DELETE FROM ${schema}.shop_product_visitor_events`);
     const click = { siteId: 'site-a', productUrl: 'https://example.com/item', visitorId: '11111111-1111-4111-8111-111111111111' };
-    assert.deepEqual(await recordProductClick(click), { recorded: true });
+    assert.deepEqual(await recordMerchantProductClicks([{ productId, visitorId: click.visitorId }]), { recorded: true });
+    assert.deepEqual(await recordMerchantProductClicks([{ productId, visitorId: click.visitorId }]), { recorded: false });
     assert.deepEqual(await recordProductClick(click), { recorded: false });
     assert.deepEqual(await recordProductMetric({
       productId, visitorId: '22222222-2222-4222-8222-222222222222', eventType: 'impression', scene: 'default',

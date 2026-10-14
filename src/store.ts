@@ -1059,6 +1059,12 @@ async function recordVisitorProductEvents(inputs: VisitorProductEventInput[]) {
   }
 }
 
+export async function recordMerchantProductClicks(inputs: { productId: string; visitorId: string }[]) {
+  return recordVisitorProductEvents(inputs.map(input => ({
+    ...input, eventType: 'click', scene: 'merchant', displayType: 'merchant', positionBucket: 'unknown',
+  })));
+}
+
 export async function recordProductClick(input: ProductClickInput) {
   const siteId = input.siteId.trim();
   const productUrl = input.productUrl?.trim() ?? '';

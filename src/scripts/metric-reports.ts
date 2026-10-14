@@ -1,4 +1,4 @@
-import { METRIC_BATCH_LIMIT, METRIC_BATCH_BYTES, METRIC_FLUSH_INTERVAL_MS } from '../metric-batch.js';
+import { METRIC_BATCH_LIMIT, METRIC_BATCH_BYTES, METRIC_FLUSH_INTERVAL_MS, packMetricEvents } from '../metric-batch.js';
 
 type ReportEndpoint = '/api/product-metrics' | '/api/product-clicks' | '/api/search-terms' | '/api/events';
 const pending: { endpoint: ReportEndpoint; payload: Record<string, unknown> }[] = [];
@@ -31,16 +31,19 @@ function flushReports(): void {
   const batch = pending.splice(0);
   pendingKeys.clear();
   bytes = 0;
-  const groups = new Map<ReportEndpoint, Record<string, unknown>[]>();
+  const groups = new Map<string, { endpoint: ReportEndpoint; events: Record<string, unknown>[] }>();
   for (const { endpoint, payload } of batch) {
-    if (!groups.has(endpoint)) groups.set(endpoint, []);
-    groups.get(endpoint)!.push(payload);
+    const key = JSON.stringify([endpoint, payload.visitorId]);
+    if (!groups.has(key)) groups.set(key, { endpoint, events: [] });
+    groups.get(key)!.events.push(payload);
   }
-  for (const [endpoint, events] of groups) {
+  for (const { endpoint, events } of groups.values()) {
+    const idField = endpoint === '/api/events' ? 'subjectId'
+      : endpoint === '/api/search-terms' ? undefined : 'productId';
     // Clear before sending so visibilitychange + pagehide cannot send twice.
     void fetch(endpoint, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ events }), keepalive: true,
+      body: JSON.stringify(packMetricEvents(events, idField)), keepalive: true,
       signal: AbortSignal.timeout(10_000),
     }).catch(() => { /* Approximate statistics may be lost offline. */ });
   }

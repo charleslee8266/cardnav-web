@@ -12,7 +12,7 @@ const displayTypes = new Set(['normal', 'partner', 'support', 'favorite']);
 const positionBuckets = new Set(['1-5', '6-20', '21+']);
 
 export const POST: APIRoute = async ({ request }) => {
-  const events = await readMetricEvents(request);
+  const events = await readMetricEvents(request, 'productId');
   if (!events || events.some(body => typeof body.productId !== 'string' || typeof body.visitorId !== 'string'
     || !eventTypes.has(String(body.eventType)) || !scenes.has(String(body.scene))
     || !displayTypes.has(String(body.displayType)) || !positionBuckets.has(String(body.positionBucket)))) {
