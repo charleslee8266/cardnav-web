@@ -66,12 +66,12 @@ export const partnershipContent = {
         ]
       },
       {
-        "title": "赞赏",
+        "title": "赞赏（自助）",
         "description": "适合希望支持本站的用户和商家。",
         "items": [
           "点击下方按钮发起赞赏，可关联中转站或卡网站点。",
-          "填写信息和留言，选择金额并完成支付。",
-          "赞赏用户展示在赞赏名单中，商家按规则获得置顶展示。"
+          "填写信息和留言，选择金额并自助完成支付，无需联系客服。",
+          "赞赏用户稍后会自动展示在赞赏名单中，商家按规则获得置顶展示。"
         ],
         "placements": [
           "所有赞赏用户及留言，将展示在{supporters}页面。",
@@ -223,12 +223,12 @@ export const partnershipContent = {
         ]
       },
       {
-        "title": "Contributions",
+        "title": "Contributions (self-service)",
         "description": "For users and merchants who want to support CardNav's maintenance.",
         "items": [
           "Click the button below to contribute; you can link a gateway or shop site.",
-          "Fill in your details and message, choose an amount, and complete payment.",
-          "Contributors appear on the supporters list, and merchants receive pinned placement according to the rules."
+          "Fill in your details and message, choose an amount, and complete payment yourself without contacting support.",
+          "Contributors will automatically appear on the supporters list shortly, and merchants receive pinned placement according to the rules."
         ],
         "placements": [
           "All contributors and their messages appear on the {supporters} page.",
@@ -380,12 +380,12 @@ export const partnershipContent = {
         ]
       },
       {
-        "title": "Поддержка",
+        "title": "Поддержка (самостоятельно)",
         "description": "Для пользователей и продавцов, которые хотят поддержать работу CardNav.",
         "items": [
           "Нажмите кнопку ниже, чтобы поддержать сайт; можно указать сайт API-шлюза или магазина.",
-          "Заполните информацию и оставьте сообщение, выберите сумму и завершите оплату.",
-          "Поддержавшие пользователи отображаются в списке поддержки, а продавцы получают закреплённое размещение согласно правилам."
+          "Заполните информацию и оставьте сообщение, выберите сумму и оплатите самостоятельно, без обращения в службу поддержки.",
+          "Поддержавшие пользователи вскоре автоматически появятся в списке поддержки, а продавцы получают закреплённое размещение согласно правилам."
         ],
         "placements": [
           "Все поддержавшие пользователи и их сообщения отображаются на странице {supporters}.",
