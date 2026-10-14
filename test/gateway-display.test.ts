@@ -3,8 +3,13 @@
  */
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { displayPriceUnit, priceComparisonKey, matchesPriceUnit, comparePriceUnits } from '../src/gateway-display.js';
+import { displayPriceUnit as localizedPriceUnit, priceComparisonKey, matchesPriceUnit, comparePriceUnits } from '../src/gateway-display.js';
+import { zhMessages } from '../src/i18n/zh.js';
+import { enMessages } from '../src/i18n/en.js';
+import { ruMessages } from '../src/i18n/ru.js';
 import pg from 'pg';
+
+const displayPriceUnit = (unit: string, currency?: string) => localizedPriceUnit(unit, currency, zhMessages.llmGateway);
 import { loadGatewayDetail, loadGatewayModelDetail } from '../src/store.js';
 
 test('labels currency-specific token and media rates without assuming dollars', () => {
@@ -15,7 +20,10 @@ test('labels currency-specific token and media rates without assuming dollars', 
   assert.equal(displayPriceUnit('1M_tokens', '$'), displayPriceUnit('1M_tokens', 'USD'));
   assert.equal(displayPriceUnit('1M_tokens'), '— / 1M tokens');
   assert.notEqual(priceComparisonKey({unit: '1M_tokens', currency: 'USD'}), priceComparisonKey({unit: '1M_tokens', currency: 'CNY'}));
-  assert.equal(displayPriceUnit('call'), 'call');
+  assert.equal(displayPriceUnit('call'), '按次');
+  assert.equal(displayPriceUnit('call (image: 1K)', 'CNY'), 'CNY · 按次 (image: 1K)');
+  assert.equal(localizedPriceUnit('call', 'USD', enMessages.llmGateway), 'USD · Per call');
+  assert.equal(localizedPriceUnit('request', 'USD', ruMessages.llmGateway), 'USD · За вызов');
 });
 
 test('default unit filter retains all quotes and explicit filters preserve currency boundaries', () => {

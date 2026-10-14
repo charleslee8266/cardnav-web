@@ -65,7 +65,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     return value === null || !Number.isFinite(value) ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 6 });
   }
 
-  function displayPriceUnit(unit, currency) { return unitLabel(unit, currency, config.groupLabels.ratio); }
+  function displayPriceUnit(unit, currency) { return unitLabel(unit, currency, config.groupLabels); }
 
   function firstFinite(values) {
     const value = values.find(item => typeof item === 'number' && Number.isFinite(item));

@@ -178,7 +178,7 @@ function gatewayModelClickAttrs(modelId: string) {
           <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.unit}</span>
             <select class="select select-bordered" data-quote-unit aria-label={t.llmGateway.unit}>
               <option value="" selected={!initialUnit}>{t.llmGateway.allUnits}</option>
-            {unitOptions.map(([key, price]) => <option value={key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</option>)}
+            {unitOptions.map(([key, price]) => <option value={key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway)}</option>)}
             </select>
           </label>
         </FilterPopover>
@@ -212,7 +212,7 @@ function gatewayModelClickAttrs(modelId: string) {
           data-sort-model={price.modelId}
           data-sort-group={price.groupName}
           data-sort-sequence={String(index + 1)}
-          data-sort-unit={displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}
+          data-sort-unit={displayPriceUnit(price.unit, price.currency, t.llmGateway)}
           data-sort-input-price={String(priceSortValue(price.inputPrice))}
           data-sort-output-price={String(priceSortValue(price.outputPrice))}
           data-sort-cache-input-price={String(priceSortValue(price.cacheInputPrice))}
@@ -227,7 +227,7 @@ function gatewayModelClickAttrs(modelId: string) {
               {price.groupDescription && <button type="button" class="inline-help-button" data-inline-help aria-label={t.llmGateway.groupDescription}><template data-tip-content><span class="whitespace-pre-wrap">{price.groupDescription}</span></template>i</button>}
             </span>
           </DataTableCell>
-          <DataTableCell label={t.llmGateway.unit} class="data-price-unit">{displayPriceUnit(price.unit, price.currency, t.llmGateway.ratio)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.unit} class="data-price-unit">{displayPriceUnit(price.unit, price.currency, t.llmGateway)}</DataTableCell>
           <DataTableCell label={t.llmGateway.inputPrice} align="right" class="font-mono">{formatPrice(price.inputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.outputPrice} align="right" class="font-mono">{formatPrice(price.outputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.cacheInputPrice} align="right" class="font-mono">{formatPrice(price.cacheInputPrice)}</DataTableCell>

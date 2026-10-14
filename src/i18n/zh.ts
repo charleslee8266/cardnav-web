@@ -371,6 +371,7 @@ export const zhMessages = {
     allUnits: "全部单位",
     allGroups: "全部分组",
     ratio: "倍率",
+    perCall: "按次",
 
     heroDescription: "比较中转站的模型、价格和支付方式。",
     siteHeroDescription: "模型覆盖、参考价格与付款方式。",
