@@ -12,7 +12,11 @@
 .cooperation-number { white-space:nowrap; }
 .cooperation-card h3 { margin:0 0 4px; font-size:16px; font-weight:700; line-height:1.45; }
 .cooperation-card p { font-size:13.5px; color:var(--color-muted); line-height:1.7; }
-.cooperation-card ol { list-style:decimal; flex:1; margin:14px 0 0; padding-left:16px; font-size:13px; line-height:1.7; }
+.cooperation-card ol { list-style:decimal; margin:8px 0 0; padding-left:16px; font-size:13px; line-height:1.7; }
+.cooperation-details { margin-top:16px; scroll-margin-top:100px; }
+.cooperation-details h4 { margin:0; }
+.cooperation-details a { color:var(--coop-tone); text-underline-offset:3px; }
+.cooperation-details a:hover { text-decoration:underline; }
 .cooperation-card li+li { margin-top:6px; }
 .partnership-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:18px; }
 .partnership-page .btn { height:auto; min-height:34px; padding:7px 12px; white-space:normal; text-align:center; font-size:13px; line-height:1.45; }
@@ -66,6 +70,7 @@
 .partnership-rule-body ol { margin-top:0; list-style:decimal; }
 .partnership-rule-body a { color:var(--partnership-link-color,var(--color-primary)); text-underline-offset:3px; }
 .partnership-rule-body a:hover { text-decoration:underline; }
+.partnership-demo-identity { align-items:flex-start; }
 .partnership-demo-merchant { display:inline-flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .partnership-demo-table { overflow:hidden; }
 .partnership-demo-table .data-table thead th { padding:10px 12px; }
@@ -76,15 +81,9 @@
 .partnership-standalone-rules>.partnership-panel { margin-top:20px; }
 
 
-#support-display { --partnership-link-color:var(--color-support); }
-#rules { --partnership-link-color:var(--merchant-partner-text); }
 
 .partnership-demo-table .partnership-demo-description { color:var(--color-muted); }
 
-.partnership-placement-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-top:20px; }
-.partnership-placement-grid>.partnership-section { margin-top:0; display:flex; flex-direction:column; }
-.partnership-placement-grid .partnership-rule-body { flex:1; }
 #points>.points-grid { margin-top:20px; }
-@media(max-width:720px) { .partnership-placement-grid { grid-template-columns:1fr; } }
 
 .support-list-link:hover { text-decoration:underline; }

@@ -13,7 +13,7 @@ import { telemetryBlocks } from '../telemetry-blocks.js';
 const locale = Astro.locals.locale;
 const c = locale === 'en' ? partnershipContent.en : locale === 'ru' ? partnershipContent.ru : partnershipContent.zh;
 const link = Astro.locals.localizePath;
-const ruleParts = (text: string) => text.split(/(\{gateway\}|\{shops\}|\{supporters\})/g).map(text => ({ text: text === '{gateway}' ? c.pageLinks[0] : text === '{shops}' ? c.pageLinks[1] : text === '{supporters}' ? c.actions[3] : text, href: text === '{gateway}' ? link('/llm-gateway') : text === '{shops}' ? link('/shops') : text === '{supporters}' ? link('/supporters') : null }));
+const ruleParts = (text: string) => text.split(/(\{gateway\}|\{shops\}|\{supporters\}|\{telegram\})/g).map(text => ({ text: text === '{gateway}' ? c.pageLinks[0] : text === '{shops}' ? c.pageLinks[1] : text === '{supporters}' ? c.actions[3] : text === '{telegram}' ? c.telegramGroupLabel : text, href: text === '{gateway}' ? link('/llm-gateway') : text === '{shops}' ? link('/shops') : text === '{supporters}' ? link('/supporters') : text === '{telegram}' ? telegramGroupUrl : null }));
 const exampleSponsors: Sponsor[] = [1,2].map(number => ({
   id: `example-partner-${number}`, template: 'default', title: `${c.demoName}${number}`,
   description: c.demoIntro, url: '', links: [],
@@ -35,18 +35,29 @@ const contactAttrs = {'target':'_blank','rel':'noopener noreferrer','data-umami-
         <span class="cooperation-icon"><Icon name={(['tag','heart','store'] as const)[index]} /></span>
         <div><h3><span class="cooperation-number">{c.optionNumbers[index]}</span> · {option.title}</h3><p>{option.description}</p></div>
       </header>
+      <section class="cooperation-details">
+      <h4>{c.processTitle}</h4>
       <ol>
-        {option.items.map(item => <li>{ruleParts(item).map(part => part.href ? <a class="support-list-link" href={part.href}>{part.text}</a> : part.text)}</li>)}
+        {option.items.map(item => <li>{ruleParts(item).map(part => part.href ? <a class="support-list-link" href={part.href} target={part.href === telegramGroupUrl ? '_blank' : undefined} rel={part.href === telegramGroupUrl ? 'noopener noreferrer' : undefined}>{part.text}</a> : part.text)}</li>)}
       </ol>
-      <div class="partnership-actions">{index === 1 ? <><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=gateway')}>{c.supportActions[0]}</a><a class="btn support-button" href={link('/supporters?support-dialog&support-kind=shop')}>{c.supportActions[1]}</a></> : <a class:list={['btn',index === 0 ? 'submit-button' : 'partnership-button']} href={telegramGroupUrl} {...contactAttrs}>{c.actions[index]}</a>}</div>
+      </section>
+      <section class="cooperation-details" id={['affiliate-display','support-display','rules'][index]}>
+        <h4>{c.placementTitle}</h4>
+        <ol>{option.placements.map(item => <li>{ruleParts(item).map(part => part.href ? <a href={part.href} target={part.href === telegramGroupUrl ? '_blank' : undefined} rel={part.href === telegramGroupUrl ? 'noopener noreferrer' : undefined}>{part.text}</a> : part.text)}</li>)}</ol>
+      </section>
+      <div class="partnership-actions">{index === 1 ? <a class="btn support-button" href={link('/supporters?support-dialog&support-kind=person')}><span aria-hidden="true">♥</span> {Astro.locals.messages.support.button}</a> : <a class:list={['btn',index === 0 ? 'submit-button' : 'partnership-button']} href={telegramGroupUrl} {...contactAttrs}>{c.actions[index]}</a>}</div>
     </article>)}
     </div>
   </section>
-  <section class="partnership-module" id="placements">
-    <h2>{c.placementTitle}</h2>
-    <div class="partnership-placement-grid">
-      {c.rules.slice(0,2).map((rule,index) => <section id={index === 0 ? 'support-display' : 'rules'} class="partnership-section"><h3>{c.placementLabels[index]}</h3><div class="partnership-panel partnership-rule-body"><ol>{rule.items.map(item => <li>{ruleParts(item).map(part => part.href ? <a href={part.href}>{part.text}</a> : part.text)}</li>)}</ol></div></section>)}
-    </div>
+  <section class="partnership-module" id="sponsor-example"><h2>{c.sponsorTitle}</h2>
+    <section class="partnership-section"><h3>{c.sponsorCardRulesTitle}</h3>
+      <div class="sponsor-section"><SponsorGrid sponsors={exampleSponsors} example /></div>
+    </section>
+  <div class="partnership-table-example"><h3>{c.demoTableTitle}</h3>
+    <div class="partnership-panel partnership-demo-table"><table class="data-table"><thead><tr>{c.demoColumns.map(column => <th scope="col">{column}</th>)}</tr></thead><tbody>
+      {c.demoMerchants.map((name,index) => <tr data-pin-kind={index < 3 ? 'partner' : (index === 3 || index === 4) ? 'support' : index === 5 ? 'favorite' : undefined}><td><div class="merchant-header partnership-demo-identity"><button type="button" class="favorite-toggle" disabled aria-pressed={index === 5 ? 'true' : 'false'} aria-label={`${index === 5 ? Astro.locals.messages.shops.cancelMerchantFavorite : Astro.locals.messages.shops.merchantFavorite} ${name}`}><span aria-hidden="true">{index === 5 ? '♥' : '♡'}</span></button><div class="merchant-header-content"><span class="partnership-demo-merchant"><strong>{name}</strong>{index < 3 && <MerchantBadge kind="sponsor" label={Astro.locals.messages.sponsors.sponsorLabel} description={Astro.locals.messages.sponsors.sponsorDescription} href="#rules" linkLabel={c.placementTitle} />}{(index === 0 || index === 3 || index === 4) && <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={link('/supporters')} linkLabel={c.actions[3]} />}</span>{(index === 0 || index === 3 || index === 4) && <div class="data-support-inline">{Astro.locals.messages.support.amountColumn} <strong>{format(index === 0 ? totalPoints : index === 3 ? 50 : 25)}</strong></div>}</div></div></td><td class="partnership-demo-description">{c.demoDescriptions[index]}</td><td>{c.demoPlacements[index]}</td></tr>)}
+    </tbody></table></div>
+  </div>
   </section>
   <section class="partnership-module" id="points">
     <h2>{c.pointsTitle}</h2>
@@ -63,16 +74,6 @@ const contactAttrs = {'target':'_blank','rel':'noopener noreferrer','data-umami-
       </div>
     </div>
   </section>
-  <section class="partnership-module" id="sponsor-example"><h2>{c.sponsorTitle}</h2>
-    <section class="partnership-section"><h3>{c.sponsorCardRulesTitle}</h3>
-      <div class="sponsor-section"><SponsorGrid sponsors={exampleSponsors} example /></div>
-    </section>
-  <div class="partnership-table-example"><h3>{c.demoTableTitle}</h3>
-    <div class="partnership-panel partnership-demo-table"><table class="data-table"><thead><tr>{c.demoColumns.map(column => <th scope="col">{column}</th>)}</tr></thead><tbody>
-      {c.demoMerchants.map((name,index) => <tr data-pin-kind={index < 3 ? 'partner' : (index === 3 || index === 4) ? 'support' : undefined}><td><span class="partnership-demo-merchant"><strong>{name}</strong>{index < 3 && <MerchantBadge kind="sponsor" label={Astro.locals.messages.sponsors.sponsorLabel} description={Astro.locals.messages.sponsors.sponsorDescription} href="#rules" linkLabel={c.rules[1].title} />}{(index === 0 || index === 3 || index === 4) && <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={link('/supporters')} linkLabel={c.actions[3]} />}</span>{(index === 0 || index === 3 || index === 4) && <div class="data-support-inline">{Astro.locals.messages.support.amountColumn} <strong>{format(index === 0 ? totalPoints : index === 3 ? 50 : 25)}</strong></div>}</td><td class="partnership-demo-description">{c.demoDescriptions[index]}</td><td>{c.demoPlacements[index]}</td></tr>)}
-    </tbody></table></div>
-  </div>
-  </section>
-  {c.rules.slice(2).map(rule => <section class="partnership-module partnership-standalone-rules"><h2>{rule.title}</h2><div class="partnership-panel partnership-rule-body"><ol>{rule.items.map(item => <li>{item}</li>)}</ol></div></section>)}
+  {c.rules.map(rule => <section class="partnership-module partnership-standalone-rules"><h2>{rule.title}</h2><div class="partnership-panel partnership-rule-body"><ol>{rule.items.map(item => <li>{item}</li>)}</ol></div></section>)}
   <section class="partnership-section partnership-panel partnership-contact" id="contact"><span class="cooperation-icon"><Icon name="send" /></span><div><h2>{c.contact}</h2><p>{c.contactNote}</p></div><a class="btn partnership-button" href={telegramGroupUrl} {...contactAttrs}>{c.actions[6]}</a></section>
 </div>
