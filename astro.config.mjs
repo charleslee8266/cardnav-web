@@ -9,30 +9,10 @@ import tailwindcss from '@tailwindcss/vite';
  */
 import { defineConfig } from 'astro/config';
 
-/** 开发时修改文案/内容真源后，主动触发整页刷新，避免 SSR 页面仍显示旧文字。 */
-function publicContentHotReload() {
-  return {
-    name: 'cardnav-public-content-hot-reload',
-    handleHotUpdate({ file, server }) {
-      if (
-        /\/src\/i18n\//.test(file)
-        || /\/content\/guide\//.test(file)
-        || /\/content\/pages\/.*\.mdx$/.test(file)
-        || /\/src\/page-content\.ts$/.test(file)
-        || /\/src\/guide\.ts$/.test(file)
-        || /\/src\/pages\/.*\.astro$/.test(file)
-        || /\/src\/components\/.*\.astro$/.test(file)
-      ) {
-        server.ws.send({ type: 'full-reload' });
-        return [];
-      }
-    },
-  };
-}
-
 export default defineConfig({
   integrations: [mdx()],
   output: 'server',
+  devToolbar: { enabled: false },
   // Caddy terminates HTTPS before forwarding requests to the local Node port.
   // The API applies its own strict PUBLIC_SITE_URL origin check, while Astro's
   // default check would compare against the internal proxy URL and reject it.
@@ -43,7 +23,8 @@ export default defineConfig({
     mode: 'standalone',
   }),
   vite: {
-    plugins: [tailwindcss(), publicContentHotReload()],
+    server: { strictPort: true },
+    plugins: [tailwindcss()],
     build: {
       assetsInlineLimit: 0,
       chunkSizeWarningLimit: 1100,
