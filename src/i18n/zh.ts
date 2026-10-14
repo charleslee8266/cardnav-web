@@ -711,7 +711,8 @@ export const zhMessages = {
 
     continue: '继续',
     back: '返回',
-    viewRules: '查看规则',
+    listDisplayRule: '所有赞赏用户及留言，将展示在当前页面。',
+    viewRules: '查看细则',
     badgeLabel: '赞赏',
     badgeDescription: '该商家已赞赏支持本站。赞赏可作为商家运营活跃度的参考，但不代表对经营、履约或售后作出保证。',
     "submitSite": "点此提交",

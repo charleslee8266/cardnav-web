@@ -171,6 +171,9 @@ class SupportDialog {
 
   private changeIdentity(userInitiated = true) {
     this.request?.abort();
+    this.search.disabled = false;
+    this.search.placeholder = this.messages.search;
+    this.search.removeAttribute('aria-busy');
     const isPerson = this.kind === 'person';
     this.personFields.hidden = !isPerson;
     this.personFields.disabled = !isPerson;
@@ -266,7 +269,9 @@ class SupportDialog {
     this.loadingKind = kind;
     this.status.className = 'form-field-hint';
     this.status.textContent = '';
-    this.renderLoadingOption();
+    this.options.replaceChildren();
+    this.closeOptions();
+    this.search.placeholder = this.messages.loading;
     this.search.disabled = true;
     this.search.setAttribute('aria-busy', 'true');
     try {
@@ -287,19 +292,10 @@ class SupportDialog {
       if (this.request === request) {
         this.loadingKind = null;
         this.search.disabled = false;
+        this.search.placeholder = this.messages.search;
         this.search.removeAttribute('aria-busy');
       }
     }
-  }
-
-  private renderLoadingOption() {
-    const option = document.createElement('div');
-    option.setAttribute('aria-disabled', 'true');
-    option.className = 'support-site-option-loading';
-    option.textContent = this.messages.loading;
-    this.options.replaceChildren(option);
-    this.options.hidden = false;
-    this.search.setAttribute('aria-expanded', 'true');
   }
 
   private filterSites() {

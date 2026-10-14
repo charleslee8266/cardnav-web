@@ -126,6 +126,9 @@
 @utility support-button {
   --commerce-color: var(--color-support);
   @apply commercial-button;
+  &:focus-visible {
+    outline-color: var(--color-support);
+  }
 }
 
 @utility submit-button {

@@ -4,6 +4,8 @@
 .support-amount-presets { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
 .support-amount-presets [aria-pressed="true"] { color: var(--color-support); border-color: var(--color-support); background: var(--color-support-soft); }
 .support-identities { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit,minmax(min(100%,128px),1fr)); }
+.support-identities .radio { appearance: none; border: 1px solid var(--color-line-strong); border-radius: 50%; background: var(--color-base-100); }
+.support-identities .radio:checked { border-color: var(--color-support); background: radial-gradient(circle, var(--color-support) 0 52%, var(--color-base-100) 55%); }
 .support-identities > label,.support-payment-options > label { display: flex; align-items: center; gap: 8px; min-height: 44px; min-width: 0; padding: 10px 12px; border: 1px solid var(--color-base-300); border-radius: 8px; cursor: pointer; font-size: 13px; }
 .support-identities > label:has(input:checked),.support-payment-options > label:has(input:checked) { color: var(--color-support); border-color: var(--color-support); background: var(--color-support-soft); }
 .support-identities input,.support-payment-options input,.support-payment-options img { flex-shrink: 0; }
@@ -15,8 +17,7 @@
 .support-site-options { position: absolute; top: 100%; left: 0; z-index: 20; width: 100%; max-height: 192px; margin-top: 4px; padding: 4px; overflow-y: auto; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-base-100); box-shadow: 0 4px 16px rgb(15 23 42 / .12); }
 .support-site-options > button { display: flex; flex-direction: column; align-items: start; gap: 4px; width: 100%; padding: 8px 12px; border-radius: 6px; text-align: left; font-size: 13px; overflow-wrap: anywhere; }
 .support-site-options > button:hover,.support-site-options > button:focus-visible,.support-site-options > button[aria-selected="true"] { background: var(--color-surface-soft); }
-.support-site-options small,.support-site-option-loading { color: var(--color-muted); font-size: 12px; }
-.support-site-option-loading { padding: 8px 12px; cursor: wait; }
+.support-site-options small { color: var(--color-muted); font-size: 12px; }
 .support-return-status { padding: 16px; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-surface-soft); font-size: 13px; }
 .support-payment-state-title { margin: 0; font-size: 16px; font-weight: 700; }
 .support-list-empty { padding: 32px; border: 1px solid var(--color-base-300); border-radius: 14px; background: var(--color-base-100); color: var(--color-muted); text-align: center; }

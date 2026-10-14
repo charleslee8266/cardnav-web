@@ -712,7 +712,8 @@ export const enMessages: Messages = {
 
     continue: 'Continue',
     back: 'Back',
-    viewRules: 'View rules',
+    listDisplayRule: 'All supporters and their messages will appear on this page.',
+    viewRules: 'View details',
     badgeLabel: 'Supporter',
     badgeDescription: 'This merchant supports CardNav financially. Contributions can indicate business activity, but do not guarantee operation, fulfillment or after-sales service.',
     "submitSite": "Submit here",
