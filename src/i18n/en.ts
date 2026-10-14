@@ -372,7 +372,7 @@ export const enMessages: Messages = {
     allUnits: "All units",
     allGroups: "All groups",
     ratio: "Multiplier",
-    perCall: "Per call",
+    perCall: "call",
 
     heroDescription: "Compare gateway models, prices and payment options.",
     siteHeroDescription: "Model coverage, reference prices and payment options.",

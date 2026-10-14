@@ -20,10 +20,12 @@ test('labels currency-specific token and media rates without assuming dollars', 
   assert.equal(displayPriceUnit('1M_tokens', '$'), displayPriceUnit('1M_tokens', 'USD'));
   assert.equal(displayPriceUnit('1M_tokens'), '— / 1M tokens');
   assert.notEqual(priceComparisonKey({unit: '1M_tokens', currency: 'USD'}), priceComparisonKey({unit: '1M_tokens', currency: 'CNY'}));
-  assert.equal(displayPriceUnit('call'), '按次');
-  assert.equal(displayPriceUnit('call (image: 1K)', 'CNY'), 'CNY · 按次 (image: 1K)');
-  assert.equal(localizedPriceUnit('call', 'USD', enMessages.llmGateway), 'USD · Per call');
-  assert.equal(localizedPriceUnit('request', 'USD', ruMessages.llmGateway), 'USD · За вызов');
+  assert.equal(displayPriceUnit('call', 'USD'), 'USD / 次');
+  assert.equal(displayPriceUnit('request', 'CNY'), 'CNY / 次');
+  assert.equal(displayPriceUnit('call'), '— / 次');
+  assert.equal(displayPriceUnit('call (image: 1K)', 'CNY'), 'CNY / 次 (image: 1K)');
+  assert.equal(localizedPriceUnit('call', 'USD', enMessages.llmGateway), 'USD / call');
+  assert.equal(localizedPriceUnit('request', 'USD', ruMessages.llmGateway), 'USD / вызов');
 });
 
 test('default unit filter retains all quotes and explicit filters preserve currency boundaries', () => {

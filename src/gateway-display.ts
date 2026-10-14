@@ -32,7 +32,7 @@ export function displayPriceUnit(unit: string, currency: string | null | undefin
   if (unit === 'quota_ratio') return labels.ratio;
   if (/^(call|request)(?=\s|$)/.test(unit)) {
     const label = unit.replace(/^(call|request)/, labels.perCall);
-    return code ? `${code} · ${label}` : label;
+    return `${code || '—'} / ${label}`;
   }
   if (unit === '1M_tokens') return `${code || '—'} / 1M tokens`;
   if (code && unit) return `${code} / ${unit}`;

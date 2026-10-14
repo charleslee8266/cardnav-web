@@ -372,7 +372,7 @@ export const ruMessages: Messages = {
     allUnits: "Все единицы",
     allGroups: "Все группы",
     ratio: "Множитель",
-    perCall: "За вызов",
+    perCall: "вызов",
 
     heroDescription: "Сравните модели, цены и способы оплаты шлюзов.",
     siteHeroDescription: "Доступные модели, ориентировочные цены и оплата.",
