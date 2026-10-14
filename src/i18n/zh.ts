@@ -365,7 +365,7 @@ export const zhMessages = {
   },
   llmGateway: {
     siteQuoteSearchPlaceholder: "搜索中转站名称或域名",
-    publicPriceSourceHint: "价格数据采集自站点公开可访问的模型广场或价格接口。未开放此类接口或需要登录的站点，暂时无法自动获取价格。价格仅供参考，阶梯计费及适用条件以站点公布信息为准。",
+    publicPriceSourceHint: "1. 价格来自站点公开模型广场或接口，未公开或需登录的暂不收录。\n\n2. 各站充值倍率可能不同，美元额度不等于实际支付金额。\n\n3. 价格仅供参考，充值比例与计费规则以站点为准。",
     group: "分组",
     groupDescription: "分组描述",
     allUnits: "全部单位",

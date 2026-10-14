@@ -366,7 +366,7 @@ export const enMessages: Messages = {
   },
   llmGateway: {
     siteQuoteSearchPlaceholder: "Search gateway name or domain",
-    publicPriceSourceHint: "Prices are collected from publicly accessible model catalogs or pricing APIs. Automatic price collection is currently unavailable when a site has no public pricing source or requires login. Prices are for reference; pricing tiers and conditions follow the provider’s published information.",
+    publicPriceSourceHint: "1. Prices come from public model catalogs or APIs. Private or login-only prices are not collected.\n\n2. Top-up rates vary by provider. USD credits may differ from the amount actually paid.\n\n3. Prices are for reference. Check each provider’s top-up rates and billing rules.",
     group: "Group",
     groupDescription: "Group description",
     allUnits: "All units",
