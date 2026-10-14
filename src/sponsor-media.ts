@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { constants } from 'node:fs';
 import { open, realpath } from 'node:fs/promises';
 import path from 'node:path';
+import { publicSponsorBrowserCacheControl, publicSponsorMediaCloudflareCacheControl } from './public-data-cache.js';
 
 const mimeTypes: Record<string, string> = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
@@ -27,7 +28,8 @@ export async function serveSponsorMedia(filename: string | undefined, method = '
     return new Response(body, { headers: {
       'Content-Type': mimeType,
       'Content-Length': String(stat.size),
-      'Cache-Control': 'public, max-age=0, must-revalidate',
+      'Cache-Control': publicSponsorBrowserCacheControl,
+      'Cloudflare-CDN-Cache-Control': publicSponsorMediaCloudflareCacheControl,
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
     } });

@@ -1,5 +1,6 @@
 ---
 export const partial = true;
+import { publicSponsorBrowserCacheControl, publicSponsorFragmentCloudflareCacheControl } from '../../public-data-cache.js';
 import SponsorContent from '../../components/SponsorContent.astro';
 import { pageTypes, type PageType } from '../../page-types.js';
 import { isLocale } from '../../i18n/config.js';
@@ -17,6 +18,8 @@ if (!placement || !['page-bottom', 'after-hero', 'content-bottom'].includes(plac
   return new Response('Invalid sponsor request', { status: 400, headers: { 'Cache-Control': 'no-store' } });
 }
 const sponsors = await getSponsors({ placement: placement as SponsorPlacement, pageType: pageType as PageType, locale });
+Astro.response.headers.set('Cache-Control', publicSponsorBrowserCacheControl);
+Astro.response.headers.set('Cloudflare-CDN-Cache-Control', publicSponsorFragmentCloudflareCacheControl);
 Astro.locals.locale = locale;
 Astro.locals.messages = getMessages(locale);
 Astro.locals.localizePath = pathname => localizePath(pathname, locale);

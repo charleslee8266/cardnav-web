@@ -13,3 +13,7 @@ export const publicDevHtmlCacheControl = 'no-store';
 export const publicSitemapCacheControl = 'public, max-age=3600, stale-while-revalidate=86400';
 export const publicStaticAssetCacheControl = 'public, max-age=31536000, immutable';
 export const publicBrandAssetCacheControl = 'public, max-age=86400, stale-while-revalidate=86400';
+
+export const publicSponsorBrowserCacheControl = 'public, max-age=1800';
+export const publicSponsorFragmentCloudflareCacheControl = 'public, max-age=2592000';
+export const publicSponsorMediaCloudflareCacheControl = 'public, max-age=31536000';

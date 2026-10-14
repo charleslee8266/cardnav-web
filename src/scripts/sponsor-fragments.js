@@ -15,7 +15,7 @@ checkSponsorImages(document);
 const requests = new Map();
 function requestFragment(url) {
   if (!requests.has(url)) {
-    requests.set(url, fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10_000) }).then(async response => {
+    requests.set(url, fetch(url, { signal: AbortSignal.timeout(10_000) }).then(async response => {
       if (!response.ok) throw new Error(`Sponsor request failed: ${response.status}`);
       return response.text();
     }).finally(() => requests.delete(url)));
