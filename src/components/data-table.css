@@ -53,8 +53,8 @@
 .data-table-shop-products th[data-column-key="productRefreshedAt"] { width: 104px; }
 .gateway-site-table { table-layout: fixed; min-width: 880px; }
 .gateway-site-table th[data-column-key="name"] { width: auto; }
+.gateway-site-table th[data-column-key="families"] { width: 24%; }
 .gateway-site-table th[data-column-key="score"] { width: 132px; }
-.gateway-site-table th[data-column-key="families"] { width: clamp(280px, 30%, 480px); }
 .gateway-site-table th[data-column-key="modelCount"] { width: 112px; min-width: 112px; }
 .gateway-site-table th[data-column-key="payments"] { width: 130px; }
 .gateway-model-table { min-width: 760px; }
