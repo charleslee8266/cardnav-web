@@ -27,12 +27,12 @@ export function normalizePriceCurrency(currency?: string | null) {
   return code;
 }
 
-export function displayPriceUnit(unit: string, currency: string | null | undefined, labels: { ratio: string; perCall: string }) {
+export function displayPriceUnit(unit: string, currency: string | null | undefined, labels: { ratio: string; perCall: string; callUnit: string }) {
   const code = normalizePriceCurrency(currency);
   if (unit === 'quota_ratio') return labels.ratio;
   if (/^(call|request)(?=\s|$)/.test(unit)) {
-    const label = unit.replace(/^(call|request)/, labels.perCall);
-    return `${code || '—'} / ${label}`;
+    const label = unit.replace(/^(call|request)/, code ? labels.callUnit : labels.perCall);
+    return code ? `${code} / ${label}` : label;
   }
   if (unit === '1M_tokens') return `${code || '—'} / 1M tokens`;
   if (code && unit) return `${code} / ${unit}`;
