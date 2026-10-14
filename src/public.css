@@ -2,6 +2,7 @@
 文件说明: 公开站点样式入口，统一浅深主题与基础规则，并导入各职责组件样式。
 */
 @import "tailwindcss";
+@import "./components/controls.css";
 @import "./components/help-tooltip.css";
 @import "./components/data-table.css";
 @import "./components/shop-plan-groups.css";
@@ -11,11 +12,7 @@
 @import "./styles/home.css";
 @import "./styles/page.css";
 @import "./styles/commercial.css";
-@plugin "daisyui" { themes: false; }
-@plugin "daisyui/theme" {
-  name: "light";
-  default: true;
-  color-scheme: light;
+@theme {
   --color-base-100: #ffffff;
   --color-base-200: #f5f6f8;
   --color-base-300: #e5e7eb;
@@ -56,17 +53,8 @@
   --color-support: #be185d;
   --color-support-content: #ffffff;
   --merchant-partner-text: #a16207;
-  --radius-selector: 0.375rem;
-  --radius-field: 0.375rem;
-  --radius-box: 0.875rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-  --border: 1px;
-  --depth: 0;
-  --noise: 0;
 }
-@plugin "daisyui/theme" {
-  name: "dark";
+[data-theme="dark"] {
   color-scheme: dark;
   --color-base-100: #151a22;
   --color-base-200: #0d1117;
@@ -108,27 +96,11 @@
   --color-support: #f472b6;
   --color-support-content: #2a1320;
   --merchant-partner-text: #f5c451;
-  --radius-selector: 0.375rem;
-  --radius-field: 0.375rem;
-  --radius-box: 0.875rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-  --border: 1px;
-  --depth: 0;
-  --noise: 0;
 }
 
 @source "./**/*.astro";
 @source "./scripts/*.js";
 
-@theme {
-  --color-primary: #2563eb;
-  --color-primary-content: #ffffff;
-  --color-support: #be185d;
-  --color-support-content: #ffffff;
-  --color-error: #b91c1c;
-  --color-error-content: #ffffff;
-}
 
 /* Dialog and commercial actions share the support button's visual strength. */
 @utility commercial-button {
@@ -175,6 +147,8 @@
 }
 
 @layer base {
+  :root { color-scheme: light; }
+
   html {
     @apply min-h-full bg-base-200 text-base-content;
   }
@@ -197,12 +171,4 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
-}
-
-
-/* Standalone text links retain their semantic color on hover. */
-.link-primary:hover { color: var(--color-primary); }
-.btn-outline:hover, .btn-ghost:hover {
-  color: var(--btn-rest-fg, var(--btn-color, var(--color-base-content)));
-  background-color: color-mix(in srgb, var(--btn-color, var(--color-base-content)) 8%, var(--color-base-100));
 }

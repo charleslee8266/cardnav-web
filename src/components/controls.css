@@ -1,0 +1,60 @@
+/* Shared controls use the public theme tokens; page components own their layout. */
+@layer components {
+  .btn { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 6px; height: 40px; padding: 0 16px; border: 1px solid var(--color-base-300); border-radius: 6px; background: var(--color-base-200); color: var(--color-base-content); font-size: 14px; font-weight: 600; line-height: 1.5; text-align: center; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s; }
+  .btn-sm { height: 32px; padding-inline: 12px; font-size: 12px; }
+  .btn-circle { width: 32px; padding: 0; border-radius: 50%; }
+  .btn-primary { --btn-color: var(--color-primary); border-color: var(--btn-color); background: var(--btn-color); color: var(--color-primary-content); }
+  .btn-error { --btn-color: var(--color-error); border-color: var(--btn-color); background: var(--btn-color); color: var(--color-error-content); }
+  .btn-outline { border-color: var(--btn-color, currentColor); background: transparent; color: var(--btn-color, var(--color-base-content)); }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn:hover:not(:disabled) { background: color-mix(in srgb, var(--btn-color, var(--color-base-content)) 12%, var(--color-base-100)); }
+  .btn-primary:not(.btn-outline):hover:not(:disabled) { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+  .card { position: relative; display: flex; flex-direction: column; min-width: 0; border-radius: 14px; }
+  .card-body { display: flex; flex: 1 1 auto; flex-direction: column; gap: 8px; padding: 24px; }
+  .card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .input, .textarea, .select { width: 320px; max-width: 100%; min-width: 0; border: 1px solid var(--color-line-strong); border-radius: 6px; background: var(--color-base-100); color: var(--color-base-content); font-size: 14px; line-height: 1.5; }
+  .input, .select { height: 40px; padding: 0 12px; }
+  .input-sm, .select-sm { height: 32px; font-size: 12px; }
+  .textarea { min-height: 80px; padding: 8px 12px; }
+  .select { appearance: auto; cursor: pointer; }
+  .input::placeholder, .textarea::placeholder { color: var(--color-muted); }
+  .input:disabled, .textarea:disabled, .select:disabled { background: var(--color-surface-raised); color: var(--color-muted); cursor: not-allowed; }
+  .checkbox, .radio { flex-shrink: 0; width: 24px; height: 24px; accent-color: var(--color-primary); cursor: pointer; }
+  .checkbox-xs { width: 16px; height: 16px; }
+  .radio-sm { width: 20px; height: 20px; }
+  .checkbox:disabled, .radio:disabled { cursor: not-allowed; opacity: .45; }
+  .label { align-items: center; color: var(--color-muted); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 2px; }
+  .tabs-box { padding: 4px; border-radius: 8px; background: var(--color-base-200); }
+  .tab { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+  .tab-active { background: var(--color-base-100); box-shadow: var(--shadow-1); }
+  .badge { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid var(--badge-color, var(--color-base-300)); border-radius: 6px; background: var(--badge-color, var(--color-base-100)); color: var(--badge-content, var(--color-base-content)); font-size: 14px; white-space: nowrap; }
+  .badge-sm { height: 20px; padding-inline: 6px; font-size: 12px; }
+  .badge-ghost { background: var(--color-base-200); }
+  .badge-info { --badge-color: var(--color-info); --badge-content: var(--color-info-content); }
+  .badge-success { --badge-color: var(--color-success); --badge-content: var(--color-success-content); }
+  .badge-warning { --badge-color: var(--color-warning); --badge-content: var(--color-warning-content); }
+  .badge-error { --badge-color: var(--color-error); --badge-content: var(--color-error-content); }
+  .badge-soft { background: color-mix(in srgb, var(--badge-color) 10%, var(--color-base-100)); border-color: transparent; color: var(--badge-color); }
+  .alert { display: grid; grid-auto-flow: column; grid-template-columns: auto; align-items: center; gap: 16px; padding: 16px; border: 1px solid var(--alert-color, var(--color-base-300)); border-radius: 14px; background: var(--alert-color, var(--color-base-200)); color: var(--alert-content, var(--color-base-content)); }
+  .alert-info { --alert-color: var(--color-info); --alert-content: var(--color-info-content); }
+  .alert-warning { --alert-color: var(--color-warning); --alert-content: var(--color-warning-content); }
+  .alert-error { --alert-color: var(--color-error); --alert-content: var(--color-error-content); }
+  .alert-soft { background: color-mix(in srgb, var(--alert-color) 10%, var(--color-base-100)); border-color: transparent; color: var(--alert-color); }
+  .link { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .link-primary { color: var(--color-primary); }
+  .link-hover { text-decoration: none; }
+  .link-hover:hover { text-decoration: underline; }
+  .modal { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--color-base-content); overflow: hidden; }
+  .modal[open] { display: grid; align-items: center; justify-items: center; }
+  .modal::backdrop { background: rgb(0 0 0 / .4); }
+  .modal-box { z-index: 1; width: calc(100% - 32px); max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain; }
+  .modal-backdrop { position: absolute; inset: 0; }
+  .modal-backdrop button { width: 100%; height: 100%; cursor: pointer; color: transparent; }
+  html:has(dialog:modal) { overflow: hidden; }
+  .loading-spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid color-mix(in srgb, currentColor 20%, transparent); border-top-color: currentColor; border-radius: 50%; animation: control-spin .8s linear infinite; }
+  @keyframes control-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .loading-spinner { animation: none; } .btn { transition: none; } }
+}
