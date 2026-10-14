@@ -176,6 +176,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return applyPublicResponseHeaders(url, response, context.request.method);
   }
 
+  if (import.meta.env.DEV && url.pathname.startsWith('/api/') &&
+      String(process.env.WEB_API_DELAY_ENABLED ?? import.meta.env.WEB_API_DELAY_ENABLED ?? '').trim().toLowerCase() === 'enabled') {
+    await new Promise(resolve => setTimeout(resolve, 300 + Math.floor(Math.random() * 701)));
+  }
+
   const rewriteLocale = context.request.headers.get('x-cardnav-rewrite-locale');
   const rewriteOriginalPathname = context.request.headers.get('x-cardnav-original-pathname');
   applyLocaleLocals(context, localePathInfo, rewriteLocale, rewriteOriginalPathname);
