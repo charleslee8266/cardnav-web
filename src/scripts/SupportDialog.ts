@@ -5,7 +5,7 @@
 type SupportOpenDetail = { entry?: 'cta' | 'url'; sourceElement?: Element };
 type SupportPaymentStatus = 'pending' | 'paid' | 'cancelled' | 'failed';
 type PaymentView = SupportPaymentStatus | 'creating' | 'checking' | 'create-failed';
-type OrderSummary = { identity: string; amount: string; message: string; kind: string; paymentType: string; paymentUrl?: string };
+type OrderSummary = { identity: string; amount: string; message: string; kind: string; paymentType: string; paymentUrl?: string; email?: string; siteId?: string; nickname?: string };
 
 class SupportDialog {
   private dialog: HTMLDialogElement;
@@ -33,7 +33,6 @@ class SupportDialog {
   private paymentUrl = '';
   private paymentView: PaymentView | null = null;
   private orderSummary: OrderSummary | null = null;
-  private payButton: HTMLButtonElement;
   private messages: Record<string, string>;
   private request?: AbortController;
   private sitesByKind = new Map<string, { id: string; name: string; url: string }[]>();
@@ -69,7 +68,6 @@ class SupportDialog {
     this.successMessage = dialog.querySelector('[data-success-message]')!;
     this.openPaymentButton = dialog.querySelector('[data-open-payment]')!;
     this.cancelPaymentButton = dialog.querySelector('[data-cancel-payment]')!;
-    this.payButton = dialog.querySelector('[data-pay-button]')!;
     this.messages = JSON.parse(dialog.dataset.messages || '{}');
     this.search.addEventListener('input', () => {
       this.selectedSite.value = '';
@@ -94,9 +92,9 @@ class SupportDialog {
       if (!combobox.contains(event.target as Node)) this.closeOptions();
     });
     this.form.querySelectorAll('[name="kind"]').forEach(radio => radio.addEventListener('change', () => this.changeIdentity()));
-    this.form.querySelectorAll('[name="paymentType"]').forEach(radio => radio.addEventListener('change', () => {
-      this.track('support-payment-method-change', { 'payment-type': String((radio as HTMLInputElement).value) });
-    }));
+    this.form.querySelectorAll<HTMLInputElement>('[name="paymentType"]').forEach(radio => {
+      radio.addEventListener('change', () => this.track('support-payment-method-change', { 'payment-type': radio.value }));
+    });
     this.amount.addEventListener('blur', () => this.normalizeAmount());
     dialog.querySelector('[data-support-next]')?.addEventListener('click', () => this.nextStep());
     dialog.querySelector('[data-support-back]')?.addEventListener('click', () => this.showStep(1));
@@ -117,9 +115,13 @@ class SupportDialog {
       this.track('support-payment-window-open', {});
       if (this.paymentUrl) window.open(this.paymentUrl, 'paymentPopup', getPaymentPopupFeatures());
     });
+    dialog.querySelector('[data-reopen-payment-link]')!.addEventListener('click', event => {
+      event.preventDefault();
+      this.openPaymentButton.click();
+    });
     this.cancelPaymentButton.addEventListener('click', () => void this.cancelPayment());
     dialog.querySelector('[data-check-payment]')?.addEventListener('click', () => void this.checkPayment(0, true));
-    dialog.querySelector('[data-edit-details]')?.addEventListener('click', () => this.showStep(2));
+    dialog.querySelector('[data-edit-details]')?.addEventListener('click', () => void this.editDetails());
     dialog.querySelector('[data-restart-support]')?.addEventListener('click', () => {
       this.statusToken = null;
       this.paymentUrl = '';
@@ -163,6 +165,10 @@ class SupportDialog {
       this.restoreOrderSummary(this.statusToken);
       this.renderPaymentState(this.paymentView || 'checking');
       void this.checkPayment(0, true);
+      return;
+    }
+    if (this.step === 3 && this.orderSummary) {
+      this.renderPaymentState(this.paymentView || 'create-failed');
       return;
     }
     this.showStep(this.step === 2 ? 2 : 1, true);
@@ -437,35 +443,77 @@ class SupportDialog {
     this.returnStatus.hidden = !this.returnStatus.textContent;
     this.dialog.querySelector<HTMLElement>('[data-support-returned]')!.hidden = state === 'paid' || state === 'cancelled';
     this.paymentWindowHint.hidden = state !== 'pending';
-    this.paymentWindowHint.textContent = this.messages.paymentWindowHint;
+    this.paymentWindowHint.querySelector<HTMLAnchorElement>('[data-reopen-payment-link]')!.href = this.paymentUrl;
     this.openPaymentButton.hidden = !['pending', 'failed'].includes(state) || !this.paymentUrl;
     this.cancelPaymentButton.hidden = !['pending', 'failed'].includes(state);
     this.cancelPaymentButton.disabled = false;
     const visibility: Record<string, boolean> = {
       'data-check-payment': state === 'pending' || state === 'failed',
       'data-restart-support': state === 'cancelled',
-      'data-edit-details': state === 'create-failed',
-      'data-support-close': state === 'paid' || state === 'cancelled' || state === 'create-failed',
+      'data-edit-details': ['pending', 'failed', 'cancelled', 'create-failed'].includes(state),
+      'data-support-close': state === 'paid' || state === 'create-failed',
       'data-support-list': state === 'paid',
     };
     for (const [attribute, visible] of Object.entries(visibility)) this.dialog.querySelector<HTMLElement>(`[${attribute}]`)!.hidden = !visible;
     const summary = this.orderSummary;
     this.dialog.querySelector<HTMLElement>('[data-order-summary]')!.hidden = !summary;
     if (summary) {
+      this.dialog.querySelector('[data-summary-payment]')!.textContent = this.messages[summary.paymentType] || '—';
       this.successIdentity.textContent = summary.identity;
       this.successAmount.textContent = `${summary.amount} CNY`;
-      this.successMessage.textContent = summary.message;
-      this.successMessageRow.hidden = !summary.message;
+      this.successMessage.textContent = summary.message || '—';
+      this.successMessageRow.hidden = false;
+      this.dialog.querySelector('[data-summary-identity-label]')!.textContent = summary.kind === 'person' ? this.messages.summaryIdentity : summary.kind === 'shop' ? this.messages.shop : this.messages.gateway;
+      this.dialog.querySelector('[data-summary-email]')!.textContent = summary.email || '—';
       this.dialog.querySelector('[data-summary-kind]')!.textContent = summary.kind === 'shop' ? this.messages.shopIdentity : summary.kind === 'gateway' ? this.messages.gatewayIdentity : this.messages.person;
-      this.dialog.querySelector('[data-summary-payment]')!.textContent = this.messages[summary.paymentType] || '';
+
     }
   }
 
   private setBusy(busy: boolean) {
     this.busy = busy;
-    this.payButton.disabled = busy;
+    this.dialog.querySelectorAll<HTMLButtonElement>('[data-pay-button], [data-edit-details]').forEach(button => { button.disabled = busy; });
     this.dialog.querySelectorAll<HTMLButtonElement>('[data-support-back], [data-support-next], [data-support-amount]').forEach(button => { button.disabled = busy; });
     this.amount.readOnly = busy;
+  }
+
+  private async editDetails() {
+    const button = this.dialog.querySelector<HTMLButtonElement>('[data-edit-details]')!;
+    button.disabled = true;
+    try {
+      if (this.statusToken && this.paymentView !== 'cancelled') {
+        await this.checkPayment(0, true);
+        if (this.paymentView === 'pending') await this.cancelPayment();
+        if ((this.paymentView as PaymentView | null) !== 'cancelled') {
+          await this.checkPayment(0, true);
+          return;
+        }
+      }
+      const summary = this.orderSummary;
+      if (summary) {
+        const kindRadio = this.form.querySelector<HTMLInputElement>(`[name="kind"][value="${summary.kind}"]`);
+        if (kindRadio) kindRadio.checked = true;
+        this.changeIdentity(false);
+        this.search.value = summary.kind === 'person' ? '' : summary.identity;
+        this.selectedSite.value = summary.siteId || '';
+        this.search.setCustomValidity('');
+        for (const [name, value] of Object.entries({ nickname: summary.nickname || '', email: summary.email || '', message: summary.message, amount: summary.amount })) {
+          this.form.querySelector<HTMLInputElement>(`[name="${name}"]`)!.value = value;
+        }
+        const paymentRadio = this.form.querySelector<HTMLInputElement>(`[name="paymentType"][value="${summary.paymentType}"]`);
+        if (paymentRadio) paymentRadio.checked = true;
+        this.syncAmountPresets();
+      }
+      clearTimeout(this.statusTimer);
+      this.statusRequest?.abort();
+      this.statusToken = null;
+      this.paymentUrl = '';
+      this.paymentView = null;
+      this.orderSummary = null;
+      this.showStep(2);
+    } finally {
+      button.disabled = false;
+    }
   }
 
   private async cancelPayment() {
@@ -487,6 +535,20 @@ class SupportDialog {
       this.renderPaymentState('failed');
       this.reportPaymentStatus('failed', 'manual');
     }
+  }
+
+  private readOrderSummary(paymentType = ''): OrderSummary {
+    const fields = new FormData(this.form);
+    return {
+      identity: this.kind === 'person' ? String(fields.get('nickname') || '').trim() || this.messages.anonymous : this.search.value.trim(),
+      email: String(fields.get('email') || '').trim(),
+      nickname: String(fields.get('nickname') || '').trim(),
+      siteId: this.selectedSite.value,
+      amount: this.amount.value,
+      message: String(fields.get('message') || '').trim(),
+      kind: this.kind,
+      paymentType,
+    };
   }
 
   private async pay(paymentType: string) {
@@ -513,13 +575,7 @@ class SupportDialog {
     if (this.kind === 'person') params.set('nickname', String(fields.get('nickname') || ''));
     params.set('email', String(fields.get('email') || ''));
     params.set('message', String(fields.get('message') || ''));
-    this.orderSummary = {
-      identity: this.kind === 'person' ? String(fields.get('nickname') || '').trim() || this.messages.anonymous : this.search.value.trim(),
-      amount: this.amount.value,
-      message: String(fields.get('message') || '').trim(),
-      kind: this.kind,
-      paymentType,
-    };
+    this.orderSummary = this.readOrderSummary(paymentType);
     this.renderPaymentState('creating');
     try {
       const response = await fetch('/api/support', { method: 'POST', headers: { 'x-cardnav-locale': this.dialog.dataset.locale! }, body: params });

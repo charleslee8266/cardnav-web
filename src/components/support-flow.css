@@ -1,11 +1,11 @@
 /* 赞赏身份、金额与真实支付状态。 */
 .support-review { border-radius: 10px; padding: 10px 12px; background: var(--color-surface-soft); font-size: 13px; }
 .support-review > span { overflow-wrap: anywhere; }
-.support-amount-presets { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.support-amount-presets { display: grid; grid-template-columns: repeat(auto-fit,minmax(80px,1fr)); gap: 8px; }
 .support-amount-presets [aria-pressed="true"] { color: var(--color-support); border-color: var(--color-support); background: var(--color-support-soft); }
 .support-identities { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit,minmax(min(100%,128px),1fr)); }
-.support-identities .radio { appearance: none; border: 1px solid var(--color-line-strong); border-radius: 50%; background: var(--color-base-100); }
-.support-identities .radio:checked { border-color: var(--color-support); background: radial-gradient(circle, var(--color-support) 0 52%, var(--color-base-100) 55%); }
+.support-identities .radio,.support-payment-options .radio { appearance: none; border: 1px solid var(--color-line-strong); border-radius: 50%; background: var(--color-base-100); }
+.support-identities .radio:checked,.support-payment-options .radio:checked { border-color: var(--color-support); background: radial-gradient(circle, var(--color-support) 0 52%, var(--color-base-100) 55%); }
 .support-identities > label,.support-payment-options > label { display: flex; align-items: center; gap: 8px; min-height: 44px; min-width: 0; padding: 10px 12px; border: 1px solid var(--color-base-300); border-radius: 8px; cursor: pointer; font-size: 13px; }
 .support-identities > label:has(input:checked),.support-payment-options > label:has(input:checked) { color: var(--color-support); border-color: var(--color-support); background: var(--color-support-soft); }
 .support-identities input,.support-payment-options input,.support-payment-options img { flex-shrink: 0; }
@@ -32,10 +32,15 @@
 .support-dialog .support-rule-link, .support-dialog .support-rule-link:hover { color: var(--color-support); text-decoration: none; }
 .support-dialog .support-rule-link:hover { text-decoration: underline; }
 .support-payment-hero { display: grid; justify-items: center; gap: 12px; padding: 12px 0 18px; text-align: center; }
+.support-payment-heading { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 8px 12px; }
+.support-payment-heading > button { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
 .support-payment-hero p { margin: 0; color: var(--color-muted); line-height: 1.7; }
 .support-order-summary { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--color-base-300); border-radius: 10px; background: var(--color-base-100); }
 .support-order-summary > div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
 .support-order-summary dt { color: var(--color-muted); }
 .support-order-summary dd { min-width: 0; text-align: right; overflow-wrap: anywhere; }
 .support-footer-actions { width: 100%; }
-.support-payment-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.support-payment-actions { display: flex; gap: 8px; }
+.support-payment-actions > button, .support-payment-actions > a { flex: 1 1 0; min-width: 0; height: auto; min-height: 40px; padding: 8px; white-space: normal; }
+
+[data-payment-window-hint] { white-space: pre-line; }
