@@ -282,7 +282,7 @@ const gatewayHomeConfig = {
                   </DataTableCell>
                   <DataTableCell label={t.llmGateway.modelCount} align="right" class="font-mono">{site.modelCount > 0 ? site.modelCount : '-'}</DataTableCell>
                   <DataTableCell label={t.llmGateway.paymentMethods}>{paymentMethods.length > 0 ? (
-                    <div class="flex flex-wrap gap-1.5">
+                    <div class="flex flex-wrap gap-1">
                       {paymentMethods.map(method => {
                         const icon = paymentIcon(method);
                         const label = paymentLabelFor(method);

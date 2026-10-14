@@ -167,7 +167,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function paymentBadges(payments) {
-    const wrap = el('div', 'flex flex-wrap gap-1.5');
+    const wrap = el('div', 'flex flex-wrap gap-1');
     payments.forEach(item => {
       const icon = paymentIcon(item);
       const label = paymentLabel(item);

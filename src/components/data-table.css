@@ -93,7 +93,7 @@
 .auto-category-content { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
 .auto-category-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 14px; width: 14px; height: 14px; object-fit: contain; }
 [data-theme="dark"] .auto-category-icon-mono { filter: invert(1); }
-.payment-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 19px; border: 1px solid var(--color-base-300); border-radius: 4px; background: white; color: #555; font-size: 10px; }
+.payment-icon { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 14px; color: var(--color-ink-secondary); font-size: 10px; }
 .payment-icon img { width: 19px; height: 14px; object-fit: contain; }
 .merchant-table { min-width: 760px; }
 .merchant-table-head, .merchant-row { display: grid; grid-template-columns: 44px minmax(180px, 1.2fr) 100px 112px minmax(220px, 1.4fr) 135px 110px; }
