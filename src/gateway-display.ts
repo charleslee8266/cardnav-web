@@ -91,14 +91,14 @@ export function paymentIcon(key: string): { src: string | null; fallback: string
   const icons: Record<string, { src: string; fallback: string }> = {
     alipay: { src: '/assets/payment-icons/alipay.svg', fallback: 'A' },
     wechat: { src: '/assets/payment-icons/wechat.svg', fallback: 'W' },
-    visa: { src: '/assets/payment-icons/visa.svg', fallback: 'V' },
+    visa: { src: '/assets/payment-icons/visa.svg?v=49669f9b32', fallback: 'V' },
     mastercard: { src: '/assets/payment-icons/mastercard.svg', fallback: 'M' },
     stripe: { src: '/assets/payment-icons/stripe.svg', fallback: 'S' },
-    paypal: { src: '/assets/payment-icons/paypal.svg', fallback: 'P' },
+    paypal: { src: '/assets/payment-icons/paypal.svg?v=32c992c526', fallback: 'P' },
     tether: { src: '/assets/payment-icons/tether.svg', fallback: 'T' },
     bitcoin: { src: '/assets/payment-icons/bitcoin.svg', fallback: 'B' },
-    applepay: { src: '/assets/payment-icons/applepay.svg', fallback: 'A' },
-    googlepay: { src: '/assets/payment-icons/googlepay.svg', fallback: 'G' },
+    applepay: { src: '/assets/payment-icons/applepay.svg?v=a341b6c805', fallback: 'A' },
+    googlepay: { src: '/assets/payment-icons/googlepay.svg?v=d0825c91f6', fallback: 'G' },
   };
   return icons[key] || { src: null, fallback: key.trim().slice(0, 1).toUpperCase() };
 }
