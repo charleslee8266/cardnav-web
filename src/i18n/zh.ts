@@ -712,7 +712,7 @@ export const zhMessages = {
     back: '返回',
     viewRules: '查看规则',
     badgeLabel: '赞赏',
-    badgeDescription: '该商家已赞赏支持本站。不代表对经营、履约或售后作出保证。',
+    badgeDescription: '该商家已赞赏支持本站。赞赏可作为商家运营活跃度的参考，但不代表对经营、履约或售后作出保证。',
     "submitSite": "点此提交",
     "submitGatewayHint": "还未提交中转站？",
     "submitShopHint": "还未提交卡网？",

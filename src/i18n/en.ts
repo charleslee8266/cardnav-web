@@ -713,7 +713,7 @@ export const enMessages: Messages = {
     back: 'Back',
     viewRules: 'View rules',
     badgeLabel: 'Supporter',
-    badgeDescription: 'This merchant supports CardNav financially. This does not guarantee operation, fulfillment or after-sales service.',
+    badgeDescription: 'This merchant supports CardNav financially. Contributions can indicate business activity, but do not guarantee operation, fulfillment or after-sales service.',
     "submitSite": "Submit here",
     "submitGatewayHint": "Haven’t submitted your gateway yet?",
     "submitShopHint": "Haven’t submitted your shop yet?",
