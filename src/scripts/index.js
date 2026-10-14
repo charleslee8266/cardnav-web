@@ -1,3 +1,4 @@
+import { toggleShopFavorite } from './shop-favorites.js';
 import { createShopPlatformLabel, shopPlatformFromUrl } from '../shop-platform.js';
 import './refresh-times.js';
 import { renderFilterSummary } from './filter-summary.js';
@@ -225,10 +226,6 @@ function loadFavoriteKeys(storageKey) {
   }
 }
 
-function saveFavoriteKeys(storageKey, keys) {
-  localStorage.setItem(storageKey, JSON.stringify([...keys]));
-}
-
 function text(value) {
   return String(value ?? '');
 }
@@ -252,20 +249,6 @@ function renderFavoriteButton(button, isFavorite, favoriteKind) {
   if (icon) icon.textContent = isFavorite ? '♥' : '♡';
 }
 
-function renderFavoriteButtonsByKey(favoriteKind, key, isFavorite) {
-  favoriteButtons
-    .filter(button => button.dataset.favoriteKind === favoriteKind && button.dataset.favoriteKey === key)
-    .forEach(button => renderFavoriteButton(button, isFavorite, favoriteKind));
-
-  if (favoriteKind === 'site' && merchantViewModule) {
-    merchantViewModule.getMerchantRowElements()
-      .filter(row => row.dataset.siteId === key)
-      .forEach(row => {
-        row.dataset.favorite = isFavorite ? '1' : '0';
-      });
-  }
-}
-
 function initializeFavoriteButton(button) {
   if (button.dataset.favoriteInitialized === '1') return;
   button.dataset.favoriteInitialized = '1';
@@ -273,23 +256,17 @@ function initializeFavoriteButton(button) {
   const favoriteKind = button.dataset.favoriteKind || 'site';
   const favoriteKeys = favoriteKind === 'product' ? favoriteProductKeys : favoriteSiteKeys;
   renderFavoriteButton(button, favoriteKeys.has(key), favoriteKind);
-  button.addEventListener('click', () => {
+  button.addEventListener('click', async () => {
     if (!key) return;
-    const nextFavorite = !favoriteKeys.has(key);
-    if (favoriteKeys.has(key)) {
-      favoriteKeys.delete(key);
-    } else {
-      favoriteKeys.add(key);
-    }
+    try { await toggleShopFavorite(favoriteKind, key, button.closest('[data-product-metric-id]')?.dataset.productMetricId); } catch { return; }
+    const nextFavorite = (favoriteKind === 'product' ? favoriteProductKeys : favoriteSiteKeys).has(key);
     trackUmamiEvent('favorite-change', {
       scope: 'shops',
       kind: favoriteKind,
       key,
       action: nextFavorite ? 'add' : 'remove',
     }, button);
-    saveFavoriteKeys(favoriteKind === 'product' ? favoriteProductStorageKey : favoriteSiteStorageKey, favoriteKeys);
-    renderFavoriteButtonsByKey(favoriteKind, key, favoriteKeys.has(key));
-    applyFilters();
+
   });
 }
 
@@ -1606,3 +1583,9 @@ buildFlatRows();
 currentFlatRows = flatRows;
 syncFiltersFromUrl();
 applyFilters();
+
+window.addEventListener('shop-favorites-changed', () => {
+  loadFavorites();
+  initializeFavorites();
+  applyFilters();
+});

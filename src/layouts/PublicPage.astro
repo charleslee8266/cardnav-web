@@ -304,6 +304,10 @@ function siteLinkClickAttrs(url: string, name: string) {
 <script is:inline defer src={rowNavigationScriptUrl}></script>
 <script is:inline defer src={gatewayEngagementScriptUrl}></script>
 <script is:inline src={merchantBadgeScriptUrl}></script>
+<script>
+  import { startShopFavoriteSync } from '../scripts/shop-favorites.js';
+  startShopFavoriteSync();
+</script>
 <slot name="scripts" />
 </body>
 </html>
