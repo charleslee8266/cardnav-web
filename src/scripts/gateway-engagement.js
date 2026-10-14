@@ -1,3 +1,4 @@
+import { enqueueReport } from './metric-reports.js';
 const uuidPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 
 function visitorId() {
@@ -13,10 +14,7 @@ function visitorId() {
 const id = visitorId();
 function report(subjectType, subjectId, eventType) {
   if (!subjectId) return;
-  fetch('/api/events', {
-    method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true,
-    body: JSON.stringify({ subjectType, subjectId, eventType, visitorId: id }),
-  }).catch(() => {});
+  enqueueReport('/api/events', { subjectType, subjectId, eventType, visitorId: id });
 }
 
 const pageType = document.body.dataset.sourcePageType;

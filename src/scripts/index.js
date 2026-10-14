@@ -1,3 +1,4 @@
+import { enqueueReport } from './metric-reports.js';
 import { toggleShopFavorite } from './shop-favorites.js';
 import { createShopPlatformLabel, shopPlatformFromUrl } from '../shop-platform.js';
 import './refresh-times.js';
@@ -435,12 +436,7 @@ function reportSearchTerm(term, resultCount) {
   if (now - lastReportedAt < SEARCH_REPORT_DEDUP_WINDOW_MS) return;
   recentSearchReports.set(dedupKey, now);
 
-  fetch('/api/search-terms', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ term: normalizedTerm, resultCount: safeResultCount }),
-    keepalive: true,
-  }).catch(() => {});
+  enqueueReport('/api/search-terms', { term: normalizedTerm, resultCount: safeResultCount });
 }
 
 function reportProductClick(payload) {
@@ -452,18 +448,9 @@ function reportProductClick(payload) {
   if (!siteId) return;
   if (!productUrl && (!categoryName || !name)) return;
 
-  fetch('/api/product-clicks', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      siteId,
-      visitorId: productMetricTracker.visitorId,
-      productUrl,
-      categoryName,
-      name,
-    }),
-    keepalive: true,
-  }).catch(() => {});
+  enqueueReport('/api/product-clicks', {
+    siteId, visitorId: productMetricTracker.visitorId, productUrl, categoryName, name,
+  });
 }
 
 function scheduleSearchReport() {

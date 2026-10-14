@@ -1,3 +1,4 @@
+import { METRIC_FLUSH_INTERVAL_MS } from '../src/metric-batch.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseFavoriteSnapshot } from '../src/shop-favorites.js';
@@ -107,7 +108,7 @@ test('browser snapshots include unloaded favorites, retry failures, deduplicate 
   assert.equal(call, 1, 'a second tab cannot send while another request owns the send lock');
   finishRequest({ ok: true });
   await inFlight;
-  t.mock.timers.tick(600);
+  t.mock.timers.tick(METRIC_FLUSH_INTERVAL_MS);
   await latestSent;
   assert.deepEqual(requests.at(-1)?.siteIds, ['first-tab-site', 'second-tab-site'], 'in-flight changes automatically send the latest full list');
   assert.ok(Number(requests.at(-1)?.revision) > Number(requests.at(-2)?.revision));

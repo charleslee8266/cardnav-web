@@ -52,7 +52,17 @@ test('merchant clicks and product metrics accumulate on one Beijing daily row', 
       }
     };
 
-    const { recordProductClick, recordProductMetric } = await import('../src/store.js');
+    const { recordProductClick, recordProductMetric, recordProductMetrics } = await import('../src/store.js');
+    const batchMetric = {
+      productId, visitorId: '33333333-3333-4333-8333-333333333333',
+      eventType: 'impression' as const, scene: 'default' as const,
+      displayType: 'normal' as const, positionBucket: '1-5' as const,
+    };
+    assert.deepEqual(await recordProductMetrics([batchMetric, batchMetric]), { recorded: true });
+    assert.deepEqual(await recordProductMetrics([batchMetric]), { recorded: false });
+    const batchRows = await admin.query(`SELECT metric_groups FROM ${schema}.shop_product_daily`);
+    assert.equal(batchRows.rows[0].metric_groups['default|normal|1-5'].impressions, 1);
+    await admin.query(`DELETE FROM ${schema}.shop_product_daily; DELETE FROM ${schema}.shop_product_visitor_events`);
     const click = { siteId: 'site-a', productUrl: 'https://example.com/item', visitorId: '11111111-1111-4111-8111-111111111111' };
     assert.deepEqual(await recordProductClick(click), { recorded: true });
     assert.deepEqual(await recordProductClick(click), { recorded: false });

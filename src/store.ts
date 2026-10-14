@@ -983,65 +983,74 @@ type VisitorProductEventInput = Omit<ProductMetricInput, 'scene' | 'displayType'
   positionBucket: ProductMetricInput['positionBucket'] | 'unknown';
 };
 
-async function recordVisitorProductEvent(input: VisitorProductEventInput) {
+async function writeVisitorProductEvent(client: pg.PoolClient, input: VisitorProductEventInput) {
   if (!/^[0-9a-f]{32}$/i.test(input.productId)
     || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(input.visitorId)) {
     return { recorded: false };
   }
+  await client.query(`
+    INSERT INTO shop_product_visitor_events (product_id, observed_date, visitor_id)
+    SELECT product.id, (now() AT TIME ZONE 'Asia/Shanghai')::date, $2::uuid
+    FROM shop_products AS product
+    INNER JOIN shop_sites AS site ON site.id = product.site_id
+    WHERE product.id = $1 AND product.active = true
+      AND site.status = 'online' AND site.type = 'cardShop'
+    ON CONFLICT (product_id, observed_date, visitor_id) DO NOTHING
+  `, [input.productId, input.visitorId]);
+  const event = await client.query(`
+    SELECT visitor.impression_group, visitor.click_group
+    FROM shop_product_visitor_events AS visitor
+    INNER JOIN shop_products AS product ON product.id = visitor.product_id
+    INNER JOIN shop_sites AS site ON site.id = product.site_id
+    WHERE visitor.product_id = $1 AND visitor.visitor_id = $2::uuid
+      AND visitor.observed_date = (now() AT TIME ZONE 'Asia/Shanghai')::date
+      AND product.active = true AND site.status = 'online' AND site.type = 'cardShop'
+    FOR UPDATE OF visitor
+  `, [input.productId, input.visitorId]);
+  const prior = event.rows[0];
+  if (!prior || (input.eventType === 'impression' ? prior.impression_group : prior.click_group)) {
+    return { recorded: false };
+  }
+
+  const newClick = input.eventType === 'click';
+  const requestedGroup = `${input.scene}|${input.displayType}|${input.positionBucket}`;
+  const group = newClick ? requestedGroup : prior.impression_group ?? requestedGroup;
+  const newImpression = prior.impression_group == null || (newClick && prior.impression_group !== requestedGroup);
+  await client.query(`
+    UPDATE shop_product_visitor_events
+    SET impression_group = COALESCE(impression_group, $3),
+      click_group = CASE WHEN $4::boolean THEN $3 ELSE click_group END
+    WHERE product_id = $1 AND visitor_id = $2::uuid
+      AND observed_date = (now() AT TIME ZONE 'Asia/Shanghai')::date
+  `, [input.productId, input.visitorId, group, newClick]);
+  await client.query(`
+    INSERT INTO shop_product_daily (product_id, observed_date, clicks, metric_groups)
+    VALUES ($1, (now() AT TIME ZONE 'Asia/Shanghai')::date, $3::integer,
+      jsonb_build_object($2::text,
+        jsonb_build_object('impressions', $4::integer, 'clicks', $3::integer)))
+    ON CONFLICT (product_id, observed_date) DO UPDATE SET
+      clicks = shop_product_daily.clicks + EXCLUDED.clicks,
+      metric_groups = jsonb_set(shop_product_daily.metric_groups, ARRAY[$2::text],
+        jsonb_build_object(
+          'impressions', COALESCE((shop_product_daily.metric_groups->($2::text)->>'impressions')::integer, 0) + $4::integer,
+          'clicks', COALESCE((shop_product_daily.metric_groups->($2::text)->>'clicks')::integer, 0) + $3::integer
+        ), true)
+  `, [input.productId, group, Number(newClick), Number(newImpression)]);
+  return { recorded: true };
+}
+
+async function recordVisitorProductEvents(inputs: VisitorProductEventInput[]) {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
-    await client.query(`
-      INSERT INTO shop_product_visitor_events (product_id, observed_date, visitor_id)
-      SELECT product.id, (now() AT TIME ZONE 'Asia/Shanghai')::date, $2::uuid
-      FROM shop_products AS product
-      INNER JOIN shop_sites AS site ON site.id = product.site_id
-      WHERE product.id = $1 AND product.active = true
-        AND site.status = 'online' AND site.type = 'cardShop'
-      ON CONFLICT (product_id, observed_date, visitor_id) DO NOTHING
-    `, [input.productId, input.visitorId]);
-    const event = await client.query(`
-      SELECT visitor.impression_group, visitor.click_group
-      FROM shop_product_visitor_events AS visitor
-      INNER JOIN shop_products AS product ON product.id = visitor.product_id
-      INNER JOIN shop_sites AS site ON site.id = product.site_id
-      WHERE visitor.product_id = $1 AND visitor.visitor_id = $2::uuid
-        AND visitor.observed_date = (now() AT TIME ZONE 'Asia/Shanghai')::date
-        AND product.active = true AND site.status = 'online' AND site.type = 'cardShop'
-      FOR UPDATE OF visitor
-    `, [input.productId, input.visitorId]);
-    const prior = event.rows[0];
-    if (!prior || (input.eventType === 'impression' ? prior.impression_group : prior.click_group)) {
-      await client.query('COMMIT');
-      return { recorded: false };
+    let recorded = false;
+    // Stable product order prevents deadlocks between overlapping batches.
+    for (const input of [...inputs].sort((a, b) => a.productId.localeCompare(b.productId) || a.visitorId.localeCompare(b.visitorId))) {
+      const result = await writeVisitorProductEvent(client, input);
+      recorded ||= result.recorded;
     }
-
-    const newClick = input.eventType === 'click';
-    const requestedGroup = `${input.scene}|${input.displayType}|${input.positionBucket}`;
-    const group = newClick ? requestedGroup : prior.impression_group ?? requestedGroup;
-    const newImpression = prior.impression_group == null || (newClick && prior.impression_group !== requestedGroup);
-    await client.query(`
-      UPDATE shop_product_visitor_events
-      SET impression_group = COALESCE(impression_group, $3),
-        click_group = CASE WHEN $4::boolean THEN $3 ELSE click_group END
-      WHERE product_id = $1 AND visitor_id = $2::uuid
-        AND observed_date = (now() AT TIME ZONE 'Asia/Shanghai')::date
-    `, [input.productId, input.visitorId, group, newClick]);
-    await client.query(`
-      INSERT INTO shop_product_daily (product_id, observed_date, clicks, metric_groups)
-      VALUES ($1, (now() AT TIME ZONE 'Asia/Shanghai')::date, $3::integer,
-        jsonb_build_object($2::text,
-          jsonb_build_object('impressions', $4::integer, 'clicks', $3::integer)))
-      ON CONFLICT (product_id, observed_date) DO UPDATE SET
-        clicks = shop_product_daily.clicks + EXCLUDED.clicks,
-        metric_groups = jsonb_set(shop_product_daily.metric_groups, ARRAY[$2::text],
-          jsonb_build_object(
-            'impressions', COALESCE((shop_product_daily.metric_groups->($2::text)->>'impressions')::integer, 0) + $4::integer,
-            'clicks', COALESCE((shop_product_daily.metric_groups->($2::text)->>'clicks')::integer, 0) + $3::integer
-          ), true)
-    `, [input.productId, group, Number(newClick), Number(newImpression)]);
     await client.query('COMMIT');
-    return { recorded: true };
+    return { recorded };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -1076,24 +1085,25 @@ export async function recordProductClick(input: ProductClickInput) {
     [siteId, productUrl, categoryName, name],
   );
   if (!result.rows[0]) return { recorded: false };
-  return recordVisitorProductEvent({
+  return recordVisitorProductEvents([{
     productId: String(result.rows[0].id), visitorId: input.visitorId,
     eventType: 'click', scene: 'merchant', displayType: 'merchant', positionBucket: 'unknown',
-  });
+  }]);
 }
 
 export async function recordProductMetric(input: ProductMetricInput) {
-  if (!/^[0-9a-f]{32}$/i.test(input.productId)) {
-    return { recorded: false };
-  }
-  if (!['impression', 'click'].includes(input.eventType)
-    || !['default', 'search'].includes(input.scene)
-    || !['normal', 'partner', 'support', 'favorite'].includes(input.displayType)
-    || !['1-5', '6-20', '21+'].includes(input.positionBucket)) {
-    return { recorded: false };
-  }
+  return recordProductMetrics([input]);
+}
 
-  return recordVisitorProductEvent(input);
+export async function recordProductMetrics(inputs: ProductMetricInput[]) {
+  const valid = inputs.filter(input => /^[0-9a-f]{32}$/i.test(input.productId)
+    && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(input.visitorId)
+    && ['impression', 'click'].includes(input.eventType)
+    && ['default', 'search'].includes(input.scene)
+    && ['normal', 'partner', 'support', 'favorite'].includes(input.displayType)
+    && ['1-5', '6-20', '21+'].includes(input.positionBucket));
+  if (!valid.length) return { recorded: false };
+  return recordVisitorProductEvents(valid);
 }
 
 export async function loadPopularSearchTerms(limit = 10) {

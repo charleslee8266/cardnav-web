@@ -1,3 +1,4 @@
+import { METRIC_FLUSH_INTERVAL_MS } from '../metric-batch.js';
 /** Synchronize the browser's complete shop favorites; local favorites remain usable offline. */
 export const favoriteStorageKeys = {
   product: 'cardnav.favoriteProducts',
@@ -115,8 +116,10 @@ export async function syncShopFavorites(): Promise<void> {
 }
 
 function scheduleSync() {
-  clearTimeout(timer);
-  timer = setTimeout(() => { void syncShopFavorites(); }, 600);
+  timer ??= setTimeout(() => {
+    timer = undefined;
+    void syncShopFavorites();
+  }, METRIC_FLUSH_INTERVAL_MS);
 }
 
 export function startShopFavoriteSync(): void {

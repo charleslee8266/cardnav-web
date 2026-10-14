@@ -16,7 +16,6 @@ import publicTelemetryScriptUrl from '../scripts/public-telemetry.js?url';
 import merchantBadgeScriptUrl from '../scripts/merchant-badge.js?url';
 import publicShellScriptUrl from '../scripts/public-shell.js?url';
 import rowNavigationScriptUrl from '../scripts/row-navigation.js?url';
-import gatewayEngagementScriptUrl from '../scripts/gateway-engagement.js?url';
 import { githubRepoUrl, headerAdTagEnabled, telegramGroupUrl, xProfileUrl } from '../site.js';
 import type { PageType } from '../page-types.js';
 
@@ -302,9 +301,10 @@ function siteLinkClickAttrs(url: string, name: string) {
 <script is:inline defer src={publicTelemetryScriptUrl}></script>
 <script is:inline defer src={publicShellScriptUrl}></script>
 <script is:inline defer src={rowNavigationScriptUrl}></script>
-<script is:inline defer src={gatewayEngagementScriptUrl}></script>
+
 <script is:inline src={merchantBadgeScriptUrl}></script>
 <script>
+  import '../scripts/gateway-engagement.js';
   import { startShopFavoriteSync } from '../scripts/shop-favorites.js';
   startShopFavoriteSync();
 </script>

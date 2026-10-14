@@ -1,3 +1,4 @@
+import { enqueueReport } from './metric-reports.js';
 /*
  * 文件说明: 观察商品行可见时长，使用持久匿名访客 ID 上报去重曝光和点击。
  */
@@ -7,7 +8,6 @@ export default class ProductMetricTracker {
     this.observedElements = new Set();
     this.timers = new Map();
     this.exposedIds = new Set();
-    this.pendingExposures = new Map();
     this.clickedIds = new Set();
     this.observer = typeof IntersectionObserver === 'function'
       ? new IntersectionObserver(entries => {
@@ -50,15 +50,13 @@ export default class ProductMetricTracker {
     this.timers.delete(element);
     const productId = element.dataset.productMetricId;
     if (!productId || document.hidden || !entry.isIntersecting || entry.intersectionRatio < 0.5
-      || this.exposedIds.has(productId) || this.pendingExposures.has(productId)) return;
+      || this.exposedIds.has(productId)) return;
     const timer = setTimeout(() => {
       this.timers.delete(element);
       if (!element.isConnected || element.closest('[hidden]') || document.hidden) return;
-      const pending = this.send('impression', element).then(recorded => {
-        if (recorded) this.exposedIds.add(productId);
-        return recorded;
-      }).finally(() => this.pendingExposures.delete(productId));
-      this.pendingExposures.set(productId, pending);
+      if (this.exposedIds.has(productId)) return;
+      this.exposedIds.add(productId);
+      this.send('impression', element);
     }, 1000);
     this.timers.set(element, timer);
   }
@@ -76,24 +74,14 @@ export default class ProductMetricTracker {
     return true;
   }
 
-  async send(eventType, element) {
-    try {
-      const response = await fetch('/api/product-metrics', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          productId: element.dataset.productMetricId,
-          visitorId: this.visitorId,
-          eventType,
-          scene: element.dataset.productMetricScene,
-          displayType: element.dataset.productMetricDisplayType,
-          positionBucket: element.dataset.productMetricPositionBucket,
-        }),
-        keepalive: true,
-      });
-      return response.ok;
-    } catch {
-      return false;
-    }
+  send(eventType, element) {
+    enqueueReport('/api/product-metrics', {
+      productId: element.dataset.productMetricId,
+      visitorId: this.visitorId,
+      eventType,
+      scene: element.dataset.productMetricScene,
+      displayType: element.dataset.productMetricDisplayType,
+      positionBucket: element.dataset.productMetricPositionBucket,
+    });
   }
 }
