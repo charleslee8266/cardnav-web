@@ -17,13 +17,14 @@ import SupportDialog from '../../../components/SupportDialog.astro';
 import GatewaySiteTableRow from '../../../components/GatewaySiteTableRow.astro';
 import DataTable from '../../../components/DataTable.astro';
 import DataTableCell from '../../../components/DataTableCell.astro';
-import { displayPriceUnit, formatPrice, priceComparisonOptions, matchesPriceUnit, comparePriceUnits } from '../../../gateway-display.js';
+import { displayPriceUnit, formatPrice, priceComparisonOptions } from '../../../gateway-display.js';
 import PublicPage from '../../../layouts/PublicPage.astro';
 import DataTableHeader from '../../../components/DataTableHeader.astro';
 import { buildSeoContext } from '../../../seo.js';
 import { isIndexableGatewayModel } from '../../../seo-routes.js';
 import { publicSiteUrl } from '../../../site.js';
 import { loadGatewayModelDetail } from '../../../store.js';
+import { selectModelSiteQuotes } from '../../../model-site-quotes.js';
 import Sponsors from '../../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
@@ -39,7 +40,7 @@ const unitOptions = priceComparisonOptions(detail.sites.flatMap(site => site.pri
 const requestedUnit = Astro.url.searchParams.get('unit');
 const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || '';
 const initialQuery = (Astro.url.searchParams.get('q') || '').trim();
-const quotes = detail.sites.filter(site => !initialQuery || [site.name, site.host, site.url].some(value => String(value || '').toLowerCase().includes(initialQuery.toLowerCase()))).flatMap(site => site.pricesForModel.filter(price => matchesPriceUnit(price, initialUnit)).map(price => ({ ...site, pricesForModel: [price] }))).sort((a, b) => comparePriceUnits(a.pricesForModel[0], b.pricesForModel[0]) || (a.pricesForModel[0].inputPrice ?? Infinity) - (b.pricesForModel[0].inputPrice ?? Infinity));
+const quotes = selectModelSiteQuotes(detail.sites, { query: initialQuery, unit: initialUnit }).map(({ site, price, pinKind }) => ({ ...site, pricesForModel: [price], pinKind }));
 const sites = quotes.slice(0, MODEL_SITE_PAGE_SIZE);
 const canonicalModelPath = gatewayModelPath(model.modelId);
 if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(canonicalModelPath), 301);
@@ -207,6 +208,7 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
             openAttrs={gatewaySiteOpenAttrs(site)}
             showScore={false}
             rowAttrs={{
+              'data-pin-kind': site.pinKind,
               'data-sort-name': site.name,
               'data-sort-group': site.pricesForModel[0]?.groupName || '',
               'data-sort-unit': unitSortValue,

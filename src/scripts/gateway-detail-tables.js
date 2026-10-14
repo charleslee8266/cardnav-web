@@ -5,6 +5,7 @@ import { renderFilterSummary } from './filter-summary.js';
  */
 import { displayPriceUnit as unitLabel, matchesPriceUnit, comparePriceUnits, priceMetrics } from '../gateway-display.js';
 import { setTableRowSequence } from './table-sequence.js';
+import { selectModelSiteQuotes } from '../model-site-quotes.js';
 import { GatewayFavorites } from './GatewayFavorites.js';
 
 (() => {
@@ -254,21 +255,19 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     const query = (searchInput?.value || '').trim().toLowerCase();
     let entries;
     if (tableType === 'modelSites') {
-      entries = items.flatMap((site, index) => {
-        if (query && ![site.name, site.host, site.url].some(value => String(value || '').toLowerCase().includes(query))) return [];
-        const prices = site.pricesForModel.filter(price => matchesPriceUnit(price, unit));
-        if (!prices.length) return [];
-        const base = { site, index, name: site.name };
-        return prices.map(price => ({ ...base, price, group: price.groupName, unit: displayPriceUnit(price.unit, price.currency) }));
+      entries = selectModelSiteQuotes(items, {
+        query, unit,
+        compare: (a, b) => compare(a, b, sort?.key || 'inputPrice', sort?.direction || 'asc'),
+        unitLabel: price => displayPriceUnit(price.unit, price.currency),
       });
     } else {
       entries = items.filter(price => matchesPriceUnit(price, unit) && (!query || price.modelId.toLowerCase().includes(query)) && (!groupSelect || !groupSelect.value || price.groupId === JSON.parse(groupSelect.value))).map((price, index) => ({ price, index, group: price.groupName, model: price.modelId, unit: displayPriceUnit(price.unit, price.currency) }));
     }
-    if (sort) entries.sort((a, b) => compare(a, b, sort.key, sort.direction));
-    else if (tableType === 'modelSites') entries.sort((a, b) => compare(a, b, 'inputPrice'));
+    if (sort && tableType !== 'modelSites') entries.sort((a, b) => compare(a, b, sort.key, sort.direction));
     const rows = [];
     entries.slice(0, visibleLimit).forEach((entry, index) => {
       const row = tableType === 'modelSites' ? modelSiteRowElement({ ...entry.site, pricesForModel: [entry.price] }, index) : priceRowElement(entry.price, index);
+      if (tableType === 'modelSites') row.dataset.pinKind = entry.pinKind;
       setTableRowSequence(row, index + 1);
       rows.push(row);
     });
