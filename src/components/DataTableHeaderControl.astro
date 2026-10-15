@@ -10,7 +10,7 @@ type Props = {
   sortScope?: string;
   title?: string;
   statusText?: string;
-  helpTip?: string;
+  helpTip?: string | readonly string[];
   helpLabel?: string;
   helpClass?: string;
   helpHref?: string;
@@ -30,7 +30,7 @@ const {
   helpLinkLabel = '',
   helpClass = 'data-table-help',
 } = Astro.props;
-const hasHelp = helpTip.trim().length > 0;
+const hasHelp = Array.isArray(helpTip) ? helpTip.length > 0 : (helpTip as string).trim().length > 0;
 const buttonAttrs = {
   'data-sort-key': sortKey,
   'data-sort-type': sortType,
@@ -42,7 +42,7 @@ const buttonAttrs = {
 <div class:list={['data-table-head-content', 'data-table-sort-content', hasHelp && 'data-table-sort-content-with-help']}>
   <span class="data-table-head-label-group">
     <span class="data-table-head-label">{label}</span>
-    {hasHelp ? <button type="button" class:list={['inline-help-button', helpClass]} aria-label={helpLabel || label} data-inline-help data-tip={helpTip} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>i</button> : null}
+    {hasHelp ? <button type="button" class:list={['inline-help-button', helpClass]} aria-label={helpLabel || label} data-inline-help data-tip={typeof helpTip === 'string' ? helpTip : undefined} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>{Array.isArray(helpTip) && <template data-tip-content><ol class="inline-help-list">{helpTip.map(item => <li>{item}</li>)}</ol></template>}i</button> : null}
   </span>
   <button type="button" class="data-table-sort-button" aria-label={label} {...buttonAttrs}>
     {statusText ? <span class="data-table-sort-status sr-only">{statusText}</span> : null}

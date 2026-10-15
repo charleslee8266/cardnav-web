@@ -81,7 +81,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       const help = el('button', 'inline-help-button', 'i');
       help.type = 'button'; help.dataset.inlineHelp = ''; help.setAttribute('aria-label', config.groupLabels.groupDescription);
       const template = document.createElement('template'); template.dataset.tipContent = '';
-      template.content.append(el('span', 'whitespace-pre-wrap', price.groupDescription)); help.append(template);
+      template.content.append(el('span', 'whitespace-pre-wrap', config.groupLabels.siteNotePrefix + price.groupDescription)); help.append(template);
       label.append(help);
     }
     cell.append(label);

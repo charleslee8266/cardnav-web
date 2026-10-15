@@ -41,6 +41,7 @@ const detail = await loadGatewayDetail(Astro.params.slug || '');
 if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 302);
 
 const { site } = detail;
+const distinctApiEndpoint = site.apiEndpoint && site.apiEndpoint.replace(/\/+$/, '') !== site.url.replace(/\/+$/, '') ? site.apiEndpoint : '';
 const unitOptions = priceComparisonOptions(detail.prices);
 const requestedUnit = Astro.url.searchParams.get('unit');
 const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || '';
@@ -146,12 +147,13 @@ function gatewayModelClickAttrs(modelId: string) {
       <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer sponsored" class="btn btn-primary btn-sm mt-3" {...gatewaySiteOpenAttrs()}>{t.actions.open} ↗</a>
     </section>
     <section><h2>{t.llmGateway.basicInfo}</h2><dl>
-      <div><dt>{t.llmGateway.submitUrl}</dt><dd>{site.url}</dd></div>
-      <div><dt>{t.llmGateway.siteType}</dt><dd>{site.displayFamily || '—'}</dd></div>
-      <div><dt>{t.llmGateway.modelCount}</dt><dd>{site.modelCount}</dd></div>
-      <div><dt>{t.llmGateway.priceCount}</dt><dd>{site.priceCount}</dd></div>
       <div><dt>{t.labels.score} <button type="button" class="inline-help-button" aria-label={t.llmGateway.gatewayScoreHelpLabel} data-inline-help data-tip={t.llmGateway.gatewayScoreTip}>i</button></dt><dd><ScoreDisplay value={site.siteScore} /></dd></div>
-      <div><dt>{t.llmGateway.availability}</dt><dd>{formatAvailabilityPercent(site.availabilityPercent)}</dd></div>
+      <div><dt>{t.llmGateway.submitUrl}</dt><dd>{site.url}</dd></div>
+      {distinctApiEndpoint && <div><dt>{t.llmGateway.publicApiUrl}</dt><dd>{distinctApiEndpoint}</dd></div>}
+      <div><dt>{t.llmGateway.siteType}</dt><dd>{site.displayFamily || '—'}</dd></div>
+      <div><dt>{t.llmGateway.modelCount} <button type="button" class="inline-help-button" aria-label={t.llmGateway.modelCount} data-inline-help data-tip={t.llmGateway.publicModelSourceHint}>i</button></dt><dd>{site.modelCount}</dd></div>
+      <div><dt>{t.llmGateway.priceCount} <button type="button" class="inline-help-button" aria-label={t.llmGateway.priceCount} data-inline-help><template data-tip-content><ol class="inline-help-list">{t.llmGateway.publicPriceSourceHint.map((item: string) => <li>{item}</li>)}</ol></template>i</button></dt><dd>{site.priceCount}</dd></div>
+      <div><dt>{t.llmGateway.availability} <button type="button" class="inline-help-button" aria-label={t.llmGateway.availabilityHelpLabel} data-inline-help data-tip={t.llmGateway.availabilityTip}>i</button></dt><dd>{formatAvailabilityPercent(site.availabilityPercent)}</dd></div>
       <div><dt>{t.llmGateway.averageLatency}</dt><dd>{formatLatencySeconds(site.avgSuccessLatencyMs)}</dd></div>
       <div><dt>{t.llmGateway.createdAt}</dt><dd>{site.createdTime || t.labels.notRecorded}</dd></div>
       <div><dt>{t.labels.latestRefresh}</dt><dd><RefreshTime timestamp={site.latestGatewayRefreshAt} fallback={t.labels.notRecorded} /></dd></div>
@@ -199,13 +201,13 @@ function gatewayModelClickAttrs(modelId: string) {
     >
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
-        <DataTableHeader label={t.labels.model} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="model" />
+        <DataTableHeader label={t.labels.model} sortKey="model" />
         <DataTableHeader label={t.llmGateway.group} sortKey="group" />
         <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
-        <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
-        <DataTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" align="right" />
-        <DataTableHeader label={t.llmGateway.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" align="right" />
-        <DataTableHeader label={t.llmGateway.cacheOutputPrice} sortKey="cacheOutputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.inputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="inputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.outputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="outputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.cacheInputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="cacheInputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.cacheOutputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="cacheOutputPrice" sortType="number" align="right" />
       </Fragment>
       {prices.map((price, index) => (
         <tr
@@ -224,7 +226,7 @@ function gatewayModelClickAttrs(modelId: string) {
           </DataTableCell>
           <DataTableCell label={t.llmGateway.group}>
             <span class="inline-flex items-center gap-1">{price.groupName || '—'}
-              {price.groupDescription && <button type="button" class="inline-help-button" data-inline-help aria-label={t.llmGateway.groupDescription}><template data-tip-content><span class="whitespace-pre-wrap">{price.groupDescription}</span></template>i</button>}
+              {price.groupDescription && <button type="button" class="inline-help-button" data-inline-help aria-label={t.llmGateway.groupDescription}><template data-tip-content><span class="whitespace-pre-wrap">{t.llmGateway.siteNotePrefix}{price.groupDescription}</span></template>i</button>}
             </span>
           </DataTableCell>
           <DataTableCell label={t.llmGateway.unit} class="data-price-unit">{displayPriceUnit(price.unit, price.currency, t.llmGateway)}</DataTableCell>

@@ -184,14 +184,14 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
     >
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
-        <DataTableHeader label={t.llmGateway.basicInfo} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="name" />
+        <DataTableHeader label={t.llmGateway.basicInfo} sortKey="name" />
         <DataTableHeader label={t.labels.score} helpTip={t.llmGateway.gatewayScoreTip} helpLabel={t.llmGateway.gatewayScoreHelpLabel} sortKey="score" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.group} sortKey="group" />
         <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
-        <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
-        <DataTableHeader label={t.llmGateway.outputPrice} sortKey="outputPrice" sortType="number" align="right" />
-        <DataTableHeader label={t.llmGateway.cacheInputPrice} sortKey="cacheInputPrice" sortType="number" align="right" />
-        <DataTableHeader label={t.llmGateway.cacheOutputPrice} sortKey="cacheOutputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.inputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="inputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.outputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="outputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.cacheInputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="cacheInputPrice" sortType="number" align="right" />
+        <DataTableHeader label={t.llmGateway.cacheOutputPrice} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="cacheOutputPrice" sortType="number" align="right" />
       </Fragment>
       {sites.map((site, index) => {
         const unitSortValue = site.pricesForModel.map(price => displayPriceUnit(price.unit, price.currency, t.llmGateway)).join(' ');
@@ -230,7 +230,7 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
           >
             <DataTableCell label={t.llmGateway.group}>
               <span class="inline-flex items-center gap-1">{site.pricesForModel[0]?.groupName || '—'}
-                {site.pricesForModel[0]?.groupDescription && <button type="button" class="inline-help-button" data-inline-help aria-label={t.llmGateway.groupDescription}><template data-tip-content><span class="whitespace-pre-wrap">{site.pricesForModel[0].groupDescription}</span></template>i</button>}
+                {site.pricesForModel[0]?.groupDescription && <button type="button" class="inline-help-button" data-inline-help aria-label={t.llmGateway.groupDescription}><template data-tip-content><span class="whitespace-pre-wrap">{t.llmGateway.siteNotePrefix}{site.pricesForModel[0].groupDescription}</span></template>i</button>}
               </span>
             </DataTableCell>
             <DataTableCell label={t.llmGateway.unit}>

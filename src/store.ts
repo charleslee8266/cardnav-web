@@ -34,6 +34,7 @@ export type PublicGatewaySiteRow = {
   slug: string;
   name: string;
   url: string;
+  apiEndpoint?: string;
   outboundUrl: string;
   host: string;
   family: string;
@@ -652,6 +653,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
       gateway_sites.site_id AS id,
       gateway_sites.name AS site_name,
       gateway_sites.url,
+      gateway_sites.api_endpoint,
       gateway_sites.family,
       gateway_sites.score,
       gateway_sites.availability_percent,
@@ -680,7 +682,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
   `, [normalizedSlug]);
   const row = result.rows[0];
   if (!row) return null;
-  return mapGatewaySiteRow(row);
+  return { ...mapGatewaySiteRow(row), apiEndpoint: String(row.api_endpoint || '').trim() };
 }
 
 async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayModelRow | null> {

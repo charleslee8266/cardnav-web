@@ -13,7 +13,7 @@ type Props = {
   sortScope?: string;
   title?: string;
   statusText?: string;
-  helpTip?: string;
+  helpTip?: string | readonly string[];
   helpLabel?: string;
   helpClass?: string;
   helpHref?: string;
@@ -35,7 +35,7 @@ const {
   helpLinkLabel = '',
   helpClass,
 } = Astro.props;
-const hasHelp = helpTip.trim().length > 0;
+const hasHelp = Array.isArray(helpTip) ? helpTip.length > 0 : (helpTip as string).trim().length > 0;
 const isSequence = sortKey === 'sequence';
 const sortable = requestedSortable && !isSequence;
 ---
@@ -60,7 +60,7 @@ const sortable = requestedSortable && !isSequence;
       <span class="data-table-head-label-group">
         <span class="data-table-head-label">{label}</span>
         {hasHelp ? (
-          <button type="button" class:list={['inline-help-button', helpClass || 'data-table-help']} aria-label={helpLabel || label} data-inline-help data-tip={helpTip} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>i</button>
+          <button type="button" class:list={['inline-help-button', helpClass || 'data-table-help']} aria-label={helpLabel || label} data-inline-help data-tip={typeof helpTip === 'string' ? helpTip : undefined} data-tip-href={helpHref || undefined} data-tip-link-label={helpLinkLabel || undefined}>{Array.isArray(helpTip) && <template data-tip-content><ol class="inline-help-list">{helpTip.map(item => <li>{item}</li>)}</ol></template>}i</button>
         ) : null}
       </span>
     </div>
