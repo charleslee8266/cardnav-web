@@ -53,13 +53,13 @@ test('最低评分筛选覆盖完整报价集，在合作置顶和每站分组�
     { ...site('high', [price('a', 5)]), siteScore: 90 },
     { ...site('unknown', [price('a', 6)]), siteScore: null },
   ];
-  assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 60 }).map(q => q.site.id), ['boundary', 'boundary', 'high']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 60 }).map(q => q.site.id), ['high', 'boundary', 'boundary']);
   assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 90 }).map(q => q.site.id), ['high']);
   assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 90, query: 'boundary' }), []);
   assert.equal(selectModelSiteQuotes(sites).length, 5);
 });
 
-test('评分按数值排序，合作站仍置顶，恢复默认时回到价格顺序', () => {
+test('默认按评分降序，支持手动价格排序，合作站仍置顶', () => {
   const sites = [
     { ...site('cheap-low', [price('a', 1)]), siteScore: 9 },
     { ...site('expensive-high', [price('a', 5)]), siteScore: 80 },
@@ -67,5 +67,23 @@ test('评分按数值排序，合作站仍置顶，恢复默认时回到价格�
   ];
   assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (b.score ?? 0) - (a.score ?? 0) }).map(q => q.site.id), ['partner', 'expensive-high', 'cheap-low']);
   assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (a.score ?? 0) - (b.score ?? 0) }).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
-  assert.deepEqual(selectModelSiteQuotes(sites).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (a.price.inputPrice ?? Infinity) - (b.price.inputPrice ?? Infinity) }).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
+  assert.deepEqual(selectModelSiteQuotes(sites).map(q => q.site.id), ['partner', 'expensive-high', 'cheap-low']);
+});
+
+
+test('默认评分同分按可比价格稳定排序，空评分置后，筛选沿用默认顺序', () => {
+  const sites = [
+    { ...site('unknown-cheapest', [price('a', 0)]), siteScore: null },
+    { ...site('high-expensive', [price('a', 8), price('b', 5), price('c', 2)]), siteScore: 90 },
+    { ...site('low-cheap', [price('a', 1)]), siteScore: 60 },
+    { ...site('high-cheap', [price('a', 1)]), siteScore: 90 },
+    { ...site('zero', [price('a', 9)]), siteScore: 0 },
+  ];
+  const quotes = selectModelSiteQuotes(sites);
+  assert.deepEqual(quotes.map(q => [q.site.id, q.price.groupId]), [
+    ['high-cheap', 'a'], ['high-expensive', 'c'], ['high-expensive', 'b'],
+    ['low-cheap', 'a'], ['zero', 'a'], ['unknown-cheapest', 'a'],
+  ]);
+  assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 80 }), quotes.slice(0, 3));
 });

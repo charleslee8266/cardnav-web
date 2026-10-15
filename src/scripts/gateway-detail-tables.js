@@ -263,7 +263,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     if (tableType === 'modelSites') {
       entries = selectModelSiteQuotes(items, {
         query, unit, minScore: minScoreSelect?.value ? Number(minScoreSelect.value) : undefined,
-        compare: (a, b) => compare(a, b, sort?.key || 'inputPrice', sort?.direction || 'asc'),
+        compare: sort ? (a, b) => compare(a, b, sort.key, sort.direction) : undefined,
         unitLabel: price => displayPriceUnit(price.unit, price.currency),
       });
     } else {
@@ -286,7 +286,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       emptyState.classList.toggle('hidden', entries.length > 0);
       emptyState.textContent = query || unit || groupSelect?.value || minScoreSelect?.value ? config.filterEmpty : config.noPriceData;
     }
-    window.updateDataTableHeaders?.(table, sort);
+    window.updateDataTableHeaders?.(table, sort || (tableType === 'modelSites' ? { key: 'score', direction: 'desc', type: 'number' } : null));
 
   }
 

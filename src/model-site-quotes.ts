@@ -33,8 +33,12 @@ export function selectModelSiteQuotes(sites: PublicGatewayModelSiteRow[], option
       unit: options.unitLabel?.(price) || price.unit,
     }));
   });
-  entries.sort(options.compare || ((a, b) => comparePriceUnits(a.price, b.price)
-    || (a.price.inputPrice ?? Infinity) - (b.price.inputPrice ?? Infinity) || a.index - b.index));
+  entries.sort(options.compare || ((a, b) => {
+    const scoreA = a.score !== null && Number.isFinite(a.score) ? a.score : -Infinity;
+    const scoreB = b.score !== null && Number.isFinite(b.score) ? b.score : -Infinity;
+    return scoreB - scoreA || comparePriceUnits(a.price, b.price)
+      || (a.price.inputPrice ?? Infinity) - (b.price.inputPrice ?? Infinity) || a.index - b.index;
+  }));
 
   const groups = new Map<string, Set<string>>();
   const selected = entries.filter(({ site, price }) => {
