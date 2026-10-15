@@ -2,6 +2,7 @@
  * 文件说明: 维护卡网商品列表中合作、赞赏积分及收藏商品的展示优先级。
  * 对应文档: docs/specs/public-list-ordering.md
  */
+import { pinListRows } from './list-pinning.js';
 import {
   MAX_PINNED_FAVORITE_PRODUCTS_PER_SITE,
   MAX_PINNED_FAVORITE_PRODUCTS_TOTAL,
@@ -55,53 +56,34 @@ function balancedRowsBySite<Row extends ShopPinnedRow>(
   return selectedRows;
 }
 
-function limitedMerchantRows<Row extends ShopPinnedRow>(rows: Row[], siteLimit: number, groupLimit: number) {
-  const counts = new Map<string, number>();
-  const selectedRows: Row[] = [];
-  for (const row of rows) {
-    if (selectedRows.length >= groupLimit) break;
-    const count = counts.get(row.siteFavoriteKey) ?? 0;
-    if (count >= siteLimit) continue;
-    selectedRows.push(row);
-    counts.set(row.siteFavoriteKey, count + 1);
-  }
-  return selectedRows;
-}
-
 export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   rowEntries: Row[],
   favorites: ShopPinFavorites,
   onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void,
 ) {
-  const bySupportPoints = (left: Row, right: Row) => (right.supportPoints ?? 0) - (left.supportPoints ?? 0);
-  const sponsorRows = limitedMerchantRows(rowEntries.filter(row => row.sponsor).sort(bySupportPoints), MAX_PINNED_PARTNER_PRODUCTS_PER_SITE, MAX_PINNED_PARTNER_PRODUCTS);
-  const supportRows = limitedMerchantRows(rowEntries.filter(row => !row.sponsor && (row.supportPoints ?? 0) > 0).sort(bySupportPoints), MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE, MAX_PINNED_SUPPORT_PRODUCTS);
-  const merchantPinnedRows = new Set<Row>([...sponsorRows, ...supportRows]);
-  const ordinaryRows = rowEntries.filter(row => !merchantPinnedRows.has(row));
+  return pinListRows(rowEntries, {
+    site: row => ({ id: row.siteFavoriteKey, sponsor: row.sponsor, supportPoints: row.supportPoints }),
+    partner: { rows: MAX_PINNED_PARTNER_PRODUCTS, rowsPerSite: MAX_PINNED_PARTNER_PRODUCTS_PER_SITE },
+    support: { rows: MAX_PINNED_SUPPORT_PRODUCTS, rowsPerSite: MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE },
+    onPin,
+    favorites: ordinaryRows => {
+      const favoriteProductRows: Row[] = [];
+      const favoriteMerchantRowsBySite = new Map<string, Row[]>();
+      ordinaryRows.forEach(rowEntry => {
+        if (favorites.favoriteProductKeys.has(rowEntry.productFavoriteKey)) {
+          favoriteProductRows.push(rowEntry);
+        } else if (favorites.favoriteSiteKeys.has(rowEntry.siteFavoriteKey)) {
+          const rows = favoriteMerchantRowsBySite.get(rowEntry.siteFavoriteKey) ?? [];
+          rows.push(rowEntry);
+          favoriteMerchantRowsBySite.set(rowEntry.siteFavoriteKey, rows);
+        }
+      });
 
-  const favoriteProductRows: Row[] = [];
-  const favoriteMerchantRowsBySite = new Map<string, Row[]>();
-  ordinaryRows.forEach(rowEntry => {
-    if (favorites.favoriteProductKeys.has(rowEntry.productFavoriteKey)) {
-      favoriteProductRows.push(rowEntry);
-    } else if (favorites.favoriteSiteKeys.has(rowEntry.siteFavoriteKey)) {
-      const rows = favoriteMerchantRowsBySite.get(rowEntry.siteFavoriteKey) ?? [];
-      rows.push(rowEntry);
-      favoriteMerchantRowsBySite.set(rowEntry.siteFavoriteKey, rows);
-    }
+      const favoriteMerchantRows = balancedRowsBySite(favoriteMerchantRowsBySite, {
+        totalLimit: MAX_PINNED_FAVORITE_PRODUCTS_TOTAL,
+        siteLimit: MAX_PINNED_FAVORITE_PRODUCTS_PER_SITE,
+      });
+      return [...favoriteProductRows, ...favoriteMerchantRows];
+    },
   });
-
-  const pinnedRows = new Set<Row>(favoriteProductRows);
-  const favoriteMerchantRows = balancedRowsBySite(favoriteMerchantRowsBySite, {
-    totalLimit: MAX_PINNED_FAVORITE_PRODUCTS_TOTAL,
-    siteLimit: MAX_PINNED_FAVORITE_PRODUCTS_PER_SITE,
-  });
-  favoriteMerchantRows.forEach(row => pinnedRows.add(row));
-
-  const regularRows = ordinaryRows.filter(rowEntry => !pinnedRows.has(rowEntry));
-  sponsorRows.forEach(row => onPin?.(row, 'partner'));
-  supportRows.forEach(row => onPin?.(row, 'support'));
-  [...favoriteProductRows, ...favoriteMerchantRows].forEach(row => onPin?.(row, 'favorite'));
-  regularRows.forEach(row => onPin?.(row, ''));
-  return [...sponsorRows, ...supportRows, ...favoriteProductRows, ...favoriteMerchantRows, ...regularRows];
 }

@@ -1,6 +1,6 @@
 import { comparePriceUnits, matchesPriceUnit } from './gateway-display.js';
-import { MAX_MODEL_QUOTE_GROUPS_PER_SITE } from './list-ranking-policy.js';
-import { pinSiteRows } from './site-list-pinning.js';
+import { MAX_PINNED_PARTNER_SITES, MAX_PINNED_SUPPORT_SITES, MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE } from './list-ranking-policy.js';
+import { pinListRows } from './list-pinning.js';
 import type { PublicGatewayModelSiteRow, PublicGatewayPriceRow } from './store.js';
 
 export type ModelSiteQuote = {
@@ -43,21 +43,15 @@ export function selectModelSiteQuotes(sites: PublicGatewayModelSiteRow[], option
   const groups = new Map<string, Set<string>>();
   const selected = entries.filter(({ site, price }) => {
     const seen = groups.get(site.id) || new Set<string>();
-    if (seen.has(price.groupId) || seen.size >= MAX_MODEL_QUOTE_GROUPS_PER_SITE) return false;
+    if (seen.has(price.groupId)) return false;
     seen.add(price.groupId);
     groups.set(site.id, seen);
     return true;
   });
-  const candidates = [...new Map(selected.map(({ site }) => [site.id, site])).values()]
-    .map(site => ({ ...site, favorite: false }));
-  const pinOrder = new Map<string, number>();
-  const pinKinds = new Map<string, ModelSiteQuote['pinKind']>();
-  pinSiteRows(candidates, (site, kind) => {
-    if (kind === 'partner' || kind === 'support') {
-      pinOrder.set(site.id, pinOrder.size);
-      pinKinds.set(site.id, kind);
-    }
+  return pinListRows(selected, {
+    site: entry => entry.site,
+    partner: { sites: MAX_PINNED_PARTNER_SITES, rowsPerSite: MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE, adjacentBySite: true },
+    support: { sites: MAX_PINNED_SUPPORT_SITES, rowsPerSite: MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE, adjacentBySite: true },
+    onPin: (entry, kind) => { entry.pinKind = kind === 'favorite' ? '' : kind; },
   });
-  selected.forEach(entry => { entry.pinKind = pinKinds.get(entry.site.id) || ''; });
-  return selected.sort((a, b) => (pinOrder.get(a.site.id) ?? Infinity) - (pinOrder.get(b.site.id) ?? Infinity));
 }
