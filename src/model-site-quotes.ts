@@ -1,4 +1,4 @@
-import { comparePriceUnits, matchesPriceUnit } from './gateway-display.js';
+import { matchesPriceUnit } from './gateway-display.js';
 import { MAX_PINNED_PARTNER_SITES, MAX_PINNED_SUPPORT_SITES, MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE } from './list-ranking-policy.js';
 import { pinListRows } from './list-pinning.js';
 import type { PublicGatewayModelSiteRow, PublicGatewayPriceRow } from './store.js';
@@ -33,12 +33,7 @@ export function selectModelSiteQuotes(sites: PublicGatewayModelSiteRow[], option
       unit: options.unitLabel?.(price) || price.unit,
     }));
   });
-  entries.sort(options.compare || ((a, b) => {
-    const scoreA = a.score !== null && Number.isFinite(a.score) ? a.score : -Infinity;
-    const scoreB = b.score !== null && Number.isFinite(b.score) ? b.score : -Infinity;
-    return scoreB - scoreA || comparePriceUnits(a.price, b.price)
-      || (a.price.inputPrice ?? Infinity) - (b.price.inputPrice ?? Infinity) || a.index - b.index;
-  }));
+  if (options.compare) entries.sort(options.compare);
 
   const groups = new Map<string, Set<string>>();
   const selected = entries.filter(({ site, price }) => {

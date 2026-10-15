@@ -286,7 +286,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       emptyState.classList.toggle('hidden', entries.length > 0);
       emptyState.textContent = query || unit || groupSelect?.value || minScoreSelect?.value ? config.filterEmpty : config.noPriceData;
     }
-    window.updateDataTableHeaders?.(table, sort || (tableType === 'modelSites' ? { key: 'score', direction: 'desc', type: 'number' } : null));
+    window.updateDataTableHeaders?.(table, sort);
 
   }
 
