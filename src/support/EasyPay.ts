@@ -12,7 +12,7 @@ import type { Locale } from '../i18n/config.js';
 export type SupportKind = 'person' | 'shop' | 'gateway';
 const returnPaths = { shops: '/shops', gateways: '/llm-gateway', supporters: '/supporters' } as const;
 export function supportReturnPath(page: SupportReturnPage, token: string, locale: Locale) {
-  return localizePath(`${returnPaths[page]}?support-dialog&support-order=${token}`, locale);
+  return localizePath(`${returnPaths[page]}?dialog=support&support-order=${token}`, locale);
 }
 export function supportResultPath(token: string, locale: Locale, outcome = '') {
   const suffix = new URLSearchParams({ token });

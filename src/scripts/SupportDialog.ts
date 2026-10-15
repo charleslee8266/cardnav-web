@@ -157,6 +157,11 @@ class SupportDialog {
   }
 
   private open() {
+    const requestedKind = new URL(window.location.href).searchParams.get('support-kind');
+    if (!this.busy && !this.statusToken && this.step === 1 && ['person', 'shop', 'gateway'].includes(requestedKind || '') && requestedKind !== this.kind) {
+      const input = this.form.querySelector<HTMLInputElement>(`input[name="kind"][value="${requestedKind}"]`);
+      if (input) { input.checked = true; this.changeIdentity(false); }
+    }
     if (this.busy) {
       this.renderPaymentState('creating');
       return;

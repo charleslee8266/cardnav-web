@@ -13,8 +13,6 @@ import { gatewayProviderSlug } from '../models/routes.js';
 文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示排行并支持本地加载更多。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
-import GatewaySubmitDialog from '../components/GatewaySubmitDialog.astro';
-import SupportDialog from '../components/SupportDialog.astro';
 import { pinSiteRows } from '../site-list-pinning.js';
 import FilterPopover from '../components/FilterPopover.astro';
 import PageHero from '../components/PageHero.astro';
@@ -134,7 +132,7 @@ const gatewayHomeConfig = {
   supportTotalLabel: t.support.amountColumn,
   supportLabel: t.support.badgeLabel,
   supportDescription: t.support.badgeDescription,
-  supportersUrl: linkTo('/supporters?support-dialog'),
+  supportersUrl: linkTo('/supporters?dialog=support'),
   supportLinkLabel: t.support.amountLinkLabel,
   sponsorLabel: t.sponsors.sponsorLabel,
   sponsorDescription: t.sponsors.sponsorDescription,
@@ -161,10 +159,10 @@ const gatewayHomeConfig = {
       <HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={gatewayData.latestRefreshedAt} fallback={t.labels.notRecorded} /></HeroMetric>
     </div>
     <div slot="aside" class="data-page-actions">
-      <button id="openGatewaySubmitModal" type="button" class="btn submit-button btn-sm" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
+      <button data-open-dialog="gateway-submit" type="button" class="btn submit-button btn-sm" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
         {t.llmGateway.submitGateway}
       </button>
-      <a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-sm"><span aria-hidden="true">♥</span> {t.support.button}</a>
+      <a href="?dialog=support" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-sm"><span aria-hidden="true">♥</span> {t.support.button}</a>
     </div>
   </PageHero>
 
@@ -336,10 +334,7 @@ const gatewayHomeConfig = {
       </div>
     </section>
   )}
-  <SupportDialog returnPage="gateways" />
-  <GatewaySubmitDialog />
   <script is:inline slot="scripts" type="application/json" id="gateway-home-config" set:html={JSON.stringify(gatewayHomeConfig)}></script>
-  <script>import '../scripts/page-widgets.js';</script>
   <script>
     import '../scripts/data-table.js';
     import '../scripts/llm-gateway-home.js';

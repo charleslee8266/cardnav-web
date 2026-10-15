@@ -3,7 +3,6 @@
 文件说明: 展示已到账的个人、卡网及中转站累计赞赏名单，并提供统一赞赏入口。
 */
 import { loadSupportLeaderboard } from '../support/SupportStore.js';
-import SupportDialog from '../components/SupportDialog.astro';
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import DataTable from '../components/DataTable.astro';
@@ -41,7 +40,7 @@ const seo = buildSeoContext({
 <PublicPage activeNav="supporters" pageType="supporters" {...seo}>
   <PageHero title={t.listTitle} description={t.listHeroDescription} />
   <div class="supporter-actions">
-    <a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button"><span aria-hidden="true">♥</span> {t.button}</a>
+    <a href="?dialog=support" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button"><span aria-hidden="true">♥</span> {t.button}</a>
     <div class="supporter-rules">
       <p>{t.listDisplayRule}</p>
       <p>{merchantDisplayRule}{rulesSeparator}<a href={Astro.locals.localizePath('/partnership')} class="link link-hover">{t.viewRules}</a></p>
@@ -102,11 +101,9 @@ const seo = buildSeoContext({
       </DataTable>
   ) : <p class="support-list-empty">{t.listEmpty}</p>}
   </section>
-  <SupportDialog returnPage="supporters" />
   <script>
     import '../scripts/data-table.js';
   </script>
-  <script>import '../scripts/page-widgets.js';</script>
 </PublicPage>
 
 <style>

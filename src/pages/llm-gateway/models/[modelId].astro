@@ -13,7 +13,6 @@ import ModelFamilyLabel from '../../../components/ModelFamilyLabel.astro';
 */
 import { telemetryBlocks } from '../../../telemetry-blocks.js';
 import PageHero from '../../../components/PageHero.astro';
-import SupportDialog from '../../../components/SupportDialog.astro';
 import GatewaySiteTableRow from '../../../components/GatewaySiteTableRow.astro';
 import DataTable from '../../../components/DataTable.astro';
 import DataTableCell from '../../../components/DataTableCell.astro';
@@ -44,7 +43,7 @@ const initialMinScore = MODEL_SITE_MIN_SCORE_OPTIONS.find(score => String(score)
 const quotes = selectModelSiteQuotes(detail.sites, { query: initialQuery, unit: initialUnit, minScore: initialMinScore }).map(({ site, price, pinKind }) => ({ ...site, pricesForModel: [price], pinKind }));
 const sites = quotes.slice(0, MODEL_SITE_PAGE_SIZE);
 const canonicalModelPath = gatewayModelPath(model.modelId);
-if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(canonicalModelPath), 301);
+if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(canonicalModelPath) + Astro.url.search, 301);
 const modelSiteTableConfig = {
   type: 'modelSites',
   items: detail.sites,
@@ -63,7 +62,7 @@ const modelSiteTableConfig = {
   supportTotalLabel: t.support.amountColumn,
   supportLabel: t.support.badgeLabel,
   supportDescription: t.support.badgeDescription,
-  supportersUrl: linkTo('/supporters?support-dialog'),
+  supportersUrl: linkTo('/supporters?dialog=support'),
   supportLinkLabel: t.support.amountLinkLabel,
   sponsorLabel: t.sponsors.sponsorLabel,
   sponsorDescription: t.sponsors.sponsorDescription,
@@ -265,10 +264,8 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
     </div>
   </section>
   <script is:inline type="application/json" id="gateway-deferred-table-config" set:html={JSON.stringify(modelSiteTableConfig).replaceAll('<', '\\u003c')}></script>
-  <SupportDialog returnPage="gateways" />
   <script>
     import '../../../scripts/data-table.js';
     import '../../../scripts/gateway-detail-tables.js';
-    import '../../../scripts/page-widgets.js';
   </script>
 </PublicPage>

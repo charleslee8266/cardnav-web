@@ -1100,7 +1100,7 @@ async function applyFilters(options = {}) {
     updateMerchantProgressiveLoadSummary(0, 0);
   }
   const shouldUseCanonicalShopPath = shouldResetSearchPageMeta();
-  const openDialogQuery = ['submit-dialog', 'support-dialog'].find(key => new URLSearchParams(window.location.search).has(key));
+  const currentUrl = new URL(window.location.href);
   const params = new URLSearchParams();
   {
     if (merchantTabActive) params.set('tab', 'merchants');
@@ -1121,9 +1121,11 @@ async function applyFilters(options = {}) {
   }
   resetSearchPageMeta();
   const nextPath = currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : localizedShopsPath;
+  for (const key of ['dialog', 'support-kind', 'support-order']) {
+    if (currentUrl.searchParams.has(key)) params.set(key, currentUrl.searchParams.get(key));
+  }
   const serializedParams = params.toString();
-  const submitDialogSuffix = openDialogQuery ? `${serializedParams ? '&' : '?'}${openDialogQuery}` : '';
-  const nextUrl = `${nextPath}${serializedParams ? `?${serializedParams}` : ''}${submitDialogSuffix}`;
+  const nextUrl = `${nextPath}${serializedParams ? `?${serializedParams}` : ''}${currentUrl.hash}`;
   history.replaceState(null, '', nextUrl);
 }
 

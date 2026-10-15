@@ -13,7 +13,7 @@ import { loadOfficialPriceCatalog, loadOfficialPricesByUrlSlug } from '../../sto
 
 const requestedSlug = Astro.params.slug || '';
 const canonicalSlug = canonicalOfficialPriceSlug(requestedSlug);
-if (canonicalSlug !== requestedSlug) return Astro.redirect(Astro.locals.localizePath(`/official-price/${canonicalSlug}`), 301);
+if (canonicalSlug !== requestedSlug) return Astro.redirect(Astro.locals.localizePath(`/official-price/${canonicalSlug}`) + Astro.url.search, 301);
 const catalog = await loadOfficialPriceCatalog();
 const activePrices = await loadOfficialPricesByUrlSlug(requestedSlug);
 const groups = localizeOfficialPriceGroups(
@@ -23,7 +23,7 @@ const groups = localizeOfficialPriceGroups(
 const currentGroup = resolveOfficialPriceSlug(requestedSlug, groups);
 
 if (!currentGroup) return Astro.redirect(Astro.locals.localizePath('/official-price'), 302);
-if (Astro.params.slug !== currentGroup.urlSlug) return Astro.redirect(Astro.locals.localizePath(currentGroup.pathname), 301);
+if (Astro.params.slug !== currentGroup.urlSlug) return Astro.redirect(Astro.locals.localizePath(currentGroup.pathname) + Astro.url.search, 301);
 
 const latestFetchedAt = activePrices.reduce<string | null>((latest, price) => {
   if (!price.fetchedAt) return latest;

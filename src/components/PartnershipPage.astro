@@ -45,7 +45,7 @@ const contactAttrs = {'target':'_blank','rel':'noopener noreferrer','data-umami-
         <h4>{c.placementTitle}</h4>
         <ol>{option.placements.map(item => <li>{ruleParts(item).map(part => part.href ? <a href={part.href} target={part.href === telegramGroupUrl ? '_blank' : undefined} rel={part.href === telegramGroupUrl ? 'noopener noreferrer' : undefined}>{part.text}</a> : part.text)}</li>)}</ol>
       </section>
-      <div class="partnership-actions">{index === 1 ? <a class="btn support-button" href={link('/supporters?support-dialog&support-kind=person')}><span aria-hidden="true">♥</span> {Astro.locals.messages.support.button}</a> : <a class:list={['btn',index === 0 ? 'submit-button' : 'partnership-button']} href={telegramGroupUrl} {...contactAttrs}>{c.actions[index]}</a>}</div>
+      <div class="partnership-actions">{index === 1 ? <a class="btn support-button" href={link('/supporters?dialog=support&support-kind=person')}><span aria-hidden="true">♥</span> {Astro.locals.messages.support.button}</a> : <a class:list={['btn',index === 0 ? 'submit-button' : 'partnership-button']} href={telegramGroupUrl} {...contactAttrs}>{c.actions[index]}</a>}</div>
     </article>)}
     </div>
   </section>

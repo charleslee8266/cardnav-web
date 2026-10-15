@@ -27,3 +27,8 @@ test('highlight URLs retain every selected value and the search keyword', () => 
   assert.equal(leaderboardHighlightPath('/model-leaderboard/math', 'claude', 'opus high'), '/model-leaderboard/math?family=claude&q=opus+high');
   assert.equal(leaderboardHighlightPath('/model-leaderboard', ['claude'], 'opus', ['anthropic', 'openai']), '/model-leaderboard?family=claude&provider=anthropic&provider=openai&q=opus');
 });
+
+test('highlight updates preserve a global dialog and unrelated URL state', () => {
+  assert.equal(leaderboardHighlightPath('/model-leaderboard?family=old&q=old&dialog=gateway-submit#results', ['gpt'], 'new'), '/model-leaderboard?dialog=gateway-submit&family=gpt&q=new#results');
+  assert.equal(leaderboardHighlightPath('/model-leaderboard?dialog=support&support-kind=person&support-order=test', [], ''), '/model-leaderboard?dialog=support&support-kind=person&support-order=test');
+});

@@ -19,7 +19,7 @@ const linkTo = Astro.locals.localizePath;
   backdropLabel={t.shops.closeSubmitBackdrop}
   data-telemetry-block={telemetryBlocks.shops.submit}
 >
-  <p slot="description" class="form-dialog-description">{t.shops.submitTypeDescription}<br />{t.shops.submitGatewayPrompt}{Astro.locals.locale === 'zh' ? '' : ' '}<a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="shop-submit-link" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
+  <p slot="description" class="form-dialog-description">{t.shops.submitTypeDescription}<br />{t.shops.submitGatewayPrompt}{Astro.locals.locale === 'zh' ? '' : ' '}<a href={`?dialog=gateway-submit`} class="shop-submit-link" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`?dialog=gateway-submit`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
   <DialogSteps steps={[t.submit.enterUrl, t.submit.confirm, t.submit.result]} label={t.shops.submitMerchant} />
   <form id="submitForm" novalidate class="submission-form" method="post" action="/api/submit">
     <div data-shop-step="1">

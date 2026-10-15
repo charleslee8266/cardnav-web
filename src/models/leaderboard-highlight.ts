@@ -8,9 +8,11 @@ export function matchesLeaderboardHighlight(model: { modelName: string; modelFam
     || Boolean(keyword && model.modelName.toLocaleLowerCase().includes(keyword));
 }
 export function leaderboardHighlightPath(pathname: string, family: string | string[], query: string, providers: string[] = []) {
-  const params = new URLSearchParams();
+  const url = new URL(pathname, 'https://cardnav.invalid');
+  const params = url.searchParams;
+  for (const key of ['family', 'provider', 'q']) params.delete(key);
   for (const value of (Array.isArray(family) ? family : [family]).filter(Boolean)) params.append('family', value);
   for (const value of providers) params.append('provider', value);
   if (query.trim()) params.set('q', query.trim());
-  return `${pathname}${params.size ? `?${params}` : ''}`;
+  return `${url.pathname}${params.size ? `?${params}` : ''}${url.hash}`;
 }

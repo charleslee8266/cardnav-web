@@ -14,7 +14,7 @@ const requestedKind = Astro.url.searchParams.get('support-kind');
 const defaultKind = requestedKind === 'person' || requestedKind === 'shop' || requestedKind === 'gateway'
   ? requestedKind
   : returnPage === 'gateways' ? 'gateway' : returnPage === 'shops' ? 'shop' : 'person';
-const submitPath = Astro.locals.localizePath(defaultKind === 'shop' ? '/shops?submit-dialog' : '/llm-gateway?submit-dialog');
+const submitPath = defaultKind === 'shop' ? '?dialog=shop-submit' : '?dialog=gateway-submit';
 const t = Astro.locals.messages.support;
 const hintSpace = Astro.locals.locale === 'zh' ? '' : ' ';
 const hintSentenceEnd = Astro.locals.messages.shops.submitTypeSentenceEnd;
@@ -60,7 +60,7 @@ const hintSentenceEnd = Astro.locals.messages.shops.submitTypeSentenceEnd;
         <input data-site-value type="hidden" name="siteId" />
         <div id="supportSiteOptions" data-site-options role="listbox" aria-label={t.select} class="support-site-options" hidden></div>
       </div>
-      <p slot="hint"><span data-site-submit-hint>{defaultKind === 'shop' ? t.submitShopHint : t.submitGatewayHint}</span>{hintSpace}<a target="_blank" rel="noopener noreferrer" data-site-submit data-shop-submit={Astro.locals.localizePath('/shops?submit-dialog')} data-gateway-submit={Astro.locals.localizePath('/llm-gateway?submit-dialog')} href={submitPath} data-umami-event="internal-link-click" data-umami-event-link-type="support-submit-site" data-umami-event-url={submitPath} class="link support-rule-link">{t.submitSite}</a>{hintSentenceEnd}<span data-shop-onboarding hidden={defaultKind !== 'shop'}>{hintSpace}{Astro.locals.messages.shops.openShopPrompt}{hintSpace}<OpenShopLink class="link support-rule-link" label={Astro.locals.messages.shops.openShopLink} />{hintSentenceEnd}</span></p>
+      <p slot="hint"><span data-site-submit-hint>{defaultKind === 'shop' ? t.submitShopHint : t.submitGatewayHint}</span>{hintSpace}<a data-site-submit data-shop-submit="?dialog=shop-submit" data-gateway-submit="?dialog=gateway-submit" href={submitPath} data-umami-event="internal-link-click" data-umami-event-link-type="support-submit-site" data-umami-event-url={submitPath} class="link support-rule-link">{t.submitSite}</a>{hintSentenceEnd}<span data-shop-onboarding hidden={defaultKind !== 'shop'}>{hintSpace}{Astro.locals.messages.shops.openShopPrompt}{hintSpace}<OpenShopLink class="link support-rule-link" label={Astro.locals.messages.shops.openShopLink} />{hintSentenceEnd}</span></p>
       <p slot="error" id="supportSiteStatus" data-site-status role="status" class="form-field-hint"></p>
     </FormField>
     </div>

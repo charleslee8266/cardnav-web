@@ -240,7 +240,7 @@ test('support entry links defer to the support-open event instead of emitting na
   const calls: Array<{ name: string; data: Record<string, string> }> = [];
   context.window.umami = { track: (name: string, data: Record<string, string>) => calls.push({ name, data }) };
   const anchor = createAnchor(context, {
-    href: 'https://cardnav.xyz/shops?support-dialog',
+    href: 'https://cardnav.xyz/shops?dialog=support',
     dataset: { openSupport: '' },
   });
   const fallbackClosest = anchor.closest;

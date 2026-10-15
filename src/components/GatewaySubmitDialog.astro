@@ -10,7 +10,7 @@ const linkTo = Astro.locals.localizePath;
 const payments = Object.entries(t.llmGateway.paymentMethodLabels).map(([value, label]) => ({ value, label: String(label) }));
 ---
 <Dialog id="gatewaySubmitDialog" title={t.llmGateway.submitGateway} closeLabel={t.llmGateway.closeSubmitDialog} backdropLabel={t.llmGateway.closeSubmitBackdrop} data-telemetry-block={telemetryBlocks.gateways.submit} size="wide">
-  <p slot="description" class="form-dialog-description">{t.llmGateway.submitTypeDescription}<br />{t.llmGateway.submitShopPrompt}{Astro.locals.locale === 'zh' ? '' : ' '}<a href={`${linkTo('/shops')}?submit-dialog`} class="gateway-submit-link" data-umami-event="internal-link-click" data-umami-event-link-type="gateway-submit-shop" data-umami-event-url={`${linkTo('/shops')}?submit-dialog`}>{t.llmGateway.submitShopLink}</a>{t.llmGateway.submitTypeSentenceEnd}</p>
+  <p slot="description" class="form-dialog-description">{t.llmGateway.submitTypeDescription}<br />{t.llmGateway.submitShopPrompt}{Astro.locals.locale === 'zh' ? '' : ' '}<a href={`?dialog=shop-submit`} class="gateway-submit-link" data-umami-event="internal-link-click" data-umami-event-link-type="gateway-submit-shop" data-umami-event-url={`?dialog=shop-submit`}>{t.llmGateway.submitShopLink}</a>{t.llmGateway.submitTypeSentenceEnd}</p>
   <DialogSteps steps={[t.support.stepDetails, t.submit.confirm, t.submit.result]} label={t.llmGateway.submitGateway} />
   <form id="gatewaySubmitForm" class="submission-form" novalidate method="post" action="/api/gateway-submit">
     <div data-gateway-step="1" class="gateway-submit-fields">

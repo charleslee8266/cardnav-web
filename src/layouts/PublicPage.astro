@@ -4,6 +4,9 @@
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import '../public.css';
+import ShopSubmitDialog from '../components/ShopSubmitDialog.astro';
+import GatewaySubmitDialog from '../components/GatewaySubmitDialog.astro';
+import SupportDialog from '../components/SupportDialog.astro';
 import Sponsors from '../components/Sponsors.astro';
 import Icon from '../components/Icon.astro';
 import announcements from '../data/announcements.json';
@@ -65,8 +68,8 @@ const {
 
 const t = Astro.locals.messages;
 const submitItems = [
-  { href: '/shops?submit-dialog', title: t.shops.submitMerchant, description: t.submit.shopMenuDescription, icon: 'store' },
-  { href: '/llm-gateway?submit-dialog', title: t.llmGateway.submitGateway, description: t.submit.gatewayMenuDescription, icon: 'server' },
+  { href: '?dialog=shop-submit', title: t.shops.submitMerchant, description: t.submit.shopMenuDescription, icon: 'store' },
+  { href: '?dialog=gateway-submit', title: t.llmGateway.submitGateway, description: t.submit.gatewayMenuDescription, icon: 'server' },
 ] as const;
 const locale: Locale = Astro.locals.locale;
 const linkTo = Astro.locals.localizePath;
@@ -226,7 +229,7 @@ function siteLinkClickAttrs(url: string, name: string) {
     <div class="site-header-tools">
       <details class="shell-menu shell-submit-menu">
         <summary class="shell-text-button shell-submit-button"><Icon name="plus" />{t.actions.submit}<Icon name="down" /></summary>
-<div class="shell-menu-panel shell-submit-options">{submitItems.map(item => <a href={linkTo(item.href)} {...navClickAttrs(linkTo(item.href), item.title)}><Icon name={item.icon} /><span><b>{item.title}</b><small>{item.description}</small></span></a>)}</div>
+<div class="shell-menu-panel shell-submit-options">{submitItems.map(item => <a href={item.href} {...navClickAttrs(item.href, item.title)}><Icon name={item.icon} /><span><b>{item.title}</b><small>{item.description}</small></span></a>)}</div>
       </details>
       <a class="shell-support-link" href={linkTo('/supporters')} {...navClickAttrs(linkTo('/supporters'), t.support.listTitle)}><Icon name="heart" />{t.support.badgeLabel}</a>
       <a class="shell-partnership-link" href={linkTo('/partnership')} {...navClickAttrs(linkTo('/partnership'), t.nav.partnership)}><Icon name="handshake" />{t.nav.partnership}</a>
@@ -246,7 +249,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   <nav class="site-mobile-commerce" aria-label={t.nav.partnership}>
     <details class="shell-menu">
       <summary class="shell-text-button shell-submit-button"><Icon name="plus" />{t.actions.submit}</summary>
-      <div class="shell-menu-panel shell-submit-options">{submitItems.map(item => <a href={linkTo(item.href)} {...navClickAttrs(linkTo(item.href), item.title)}><Icon name={item.icon} /><span><b>{item.title}</b><small>{item.description}</small></span></a>)}</div>
+      <div class="shell-menu-panel shell-submit-options">{submitItems.map(item => <a href={item.href} {...navClickAttrs(item.href, item.title)}><Icon name={item.icon} /><span><b>{item.title}</b><small>{item.description}</small></span></a>)}</div>
     </details>
     <a class="shell-support-link" href={linkTo('/supporters')} {...navClickAttrs(linkTo('/supporters'), t.support.listTitle)}><Icon name="heart" />{t.support.badgeLabel}</a>
     <a class="shell-partnership-link" href={linkTo('/partnership')} {...navClickAttrs(linkTo('/partnership'), t.nav.partnership)}><Icon name="handshake" />{t.nav.partnership}</a>
@@ -258,8 +261,8 @@ function siteLinkClickAttrs(url: string, name: string) {
     {[...primaryNavItems, ...secondaryNavItems].map(item => <a href={linkTo(item.href)} aria-current={activeNav === item.key ? 'page' : undefined} {...navClickAttrs(linkTo(item.href), item.label)}>{item.label}<Icon name="right" /></a>)}
   </nav>
   <div class="drawer-links">
-    <a href={linkTo('/shops?submit-dialog')}>{t.shops.submitMerchant}</a>
-    <a href={linkTo('/llm-gateway?submit-dialog')}>{t.llmGateway.submitGateway}</a>
+    <a href="?dialog=shop-submit">{t.shops.submitMerchant}</a>
+    <a href="?dialog=gateway-submit">{t.llmGateway.submitGateway}</a>
     <a href={linkTo('/supporters')}>{t.support.listTitle}</a>
     <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" {...siteLinkClickAttrs(telegramGroupUrl, 'Drawer Telegram')}>Telegram</a>
     <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" {...siteLinkClickAttrs(githubRepoUrl, 'Drawer GitHub')}>GitHub</a>
@@ -307,6 +310,14 @@ function siteLinkClickAttrs(url: string, name: string) {
   import '../scripts/gateway-engagement.js';
   import { startShopFavoriteSync } from '../scripts/shop-favorites.js';
   startShopFavoriteSync();
+</script>
+<ShopSubmitDialog />
+<GatewaySubmitDialog />
+<SupportDialog returnPage={activeNav === 'shops' ? 'shops' : activeNav === 'llm-gateway' ? 'gateways' : 'supporters'} />
+<script>
+  import '../scripts/submission-dialogs.js';
+  import { initDialogNavigation } from '../scripts/dialog-navigation.js';
+  initDialogNavigation();
 </script>
 <slot name="scripts" />
 </body>
