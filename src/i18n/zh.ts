@@ -193,6 +193,7 @@ export const zhMessages = {
     externalSite: '外部网站',
     notRecorded: '未记录',
     loading: '加载中',
+    loadError: '加载失败，已保留原有内容，请重试。',
     loadMore: '加载更多',
     displaySummary: '当前显示 {rendered} / {total} 个',
   },
@@ -351,7 +352,6 @@ export const zhMessages = {
     cooperationDetails: '查看详情',
     cooperationSentenceEnd: '。',
     script: {
-      loading: '加载中',
       displaySummary: '当前显示 {rendered} / {total} 个匹配商品',
       merchantDisplaySummary: '当前显示 {rendered} / {total} 个匹配商家',
       stockPrefix: '库存 ',

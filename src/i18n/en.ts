@@ -194,6 +194,7 @@ export const enMessages: Messages = {
     externalSite: 'External site',
     notRecorded: 'Not recorded',
     loading: 'Loading',
+    loadError: 'Could not load. Your current results are still available. Please try again.',
     loadMore: 'Load more',
     displaySummary: 'Showing {rendered} / {total}',
   },
@@ -352,7 +353,6 @@ export const enMessages: Messages = {
     cooperationDetails: 'view details',
     cooperationSentenceEnd: '.',
     script: {
-      loading: 'Loading',
       displaySummary: 'Showing {rendered} / {total} matching products',
       merchantDisplaySummary: 'Showing {rendered} / {total} matching merchants',
       stockPrefix: 'Stock ',

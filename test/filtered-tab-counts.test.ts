@@ -22,7 +22,16 @@ function renderer(file: string, name: string, scope: Record<string, unknown>) {
 }
 class Node {
   textContent = '';
-  classList = { add() {}, remove() {}, toggle() {} };
+  classes = new Set<string>();
+  classList = {
+    add: (name: string) => { this.classes.add(name); },
+    remove: (name: string) => { this.classes.delete(name); },
+    toggle: (name: string, force?: boolean) => {
+      const enabled = force ?? !this.classes.has(name);
+      if (enabled) this.classes.add(name);
+      else this.classes.delete(name);
+    },
+  };
 }
 
 for (const kind of ['products', 'merchants'] as const) {
@@ -31,7 +40,7 @@ for (const kind of ['products', 'merchants'] as const) {
     const summary = new Node();
     let filtered = true;
     const scope = {
-      currentShopTab: kind, isShopProductsDataLoading: false,
+      currentShopTab: kind,
       document: { querySelector: () => badge }, shopsMessages: {},
       hasActiveProductFilters: () => filtered, hasActiveMerchantFilters: () => filtered,
       totalProductCount: () => 230, totalSiteCount: () => 230, shopProductsDataIsPartial: () => false,
@@ -49,9 +58,6 @@ for (const kind of ['products', 'merchants'] as const) {
     filtered = false;
     render(50, 50);
     assert.equal(badge.textContent, '230');
-    scope.isShopProductsDataLoading = true;
-    render(0, 0);
-    assert.equal(badge.textContent, '230', 'loading must not flash a zero result count');
   });
 }
 
@@ -89,6 +95,7 @@ test('product filters leave merchant listings independent, including merchants w
     showSoldOutFilter: { checked: false }, matchCategoryFilter: { checked: false }, fuzzySearchFilter: { checked: false },
     onlyFavoritesFilter: { checked: false }, merchantFavoritesFilter: { checked: false },
     favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(),
+    currentFlatSort: null,
     platformOnly: () => false, merchantPlatformOnly: () => false, selectedPlatforms: () => [], selectedMerchantPlatforms: () => [],
     currentQuickPlanQuery: '', selectedQuickCategoryId: () => scope.currentQuickPlanQuery, matchesShopCategory,
     flatRows: [product(sites[0], 'gpt-plus', 20), product(sites[0], 'gpt-plus', 30), product(sites[1], 'claude-pro', 40), product(sites[1], 'gpt-plus', 50, 0)],
@@ -180,4 +187,144 @@ test('gateway site capabilities require all selected models and payments while s
   filter(); assert.equal(sites.filteredEntries.length, 3);
   scope.siteSearchInput.value = 'gemini';
   filter(); assert.equal(sites.filteredEntries.length, 0);
+});
+
+test('product fetch failure ends loading, keeps existing rows and permits a successful retry', async () => {
+  const existingRow = { product: 'existing' };
+  let attempts = 0;
+  const scope = {
+    shopProductsDataIsPartial: () => true,
+    shopProductsDataLoadPromise: null,
+    currentShopTab: 'products',
+    shopListLoading: { products: { run: (task: () => Promise<boolean>) => task() } },
+    fetch: async () => ({ ok: ++attempts > 1, status: 503, json: async () => ({ p: [], s: [] }) }),
+    replaceShopProductsData: async () => {},
+    currentFlatRows: [existingRow],
+    currentFlatVisibleLimit: 100,
+    currentMerchantVisibleLimit: 20,
+    rowContainer: { querySelectorAll: () => [] },
+    updateFlatProgressiveLoadSummary: () => {},
+    updateMerchantProgressiveLoadSummary: () => {},
+  };
+  const load = renderer('src/scripts/index.js', 'loadShopProductsDataFromApi', scope) as unknown as () => Promise<boolean>;
+  assert.equal(await load(), false);
+  assert.equal(scope.shopProductsDataLoadPromise, null);
+  assert.deepEqual(scope.currentFlatRows, [existingRow]);
+  assert.equal(await load(), true);
+  assert.equal(attempts, 2);
+});
+
+
+test('the first 100 products retain the full count and load-more entry until all results are shown', () => {
+  const badge = new Node();
+  const summary = new Node();
+  const button = new Node();
+  const footer = new Node();
+  button.classList.add('hidden');
+  let partial = true;
+  const render = renderer('src/scripts/index.js', 'updateFlatProgressiveLoadSummary', {
+    currentShopTab: 'products',
+    document: { querySelector: () => badge }, shopsMessages: {},
+    hasActiveProductFilters: () => false,
+    totalProductCount: () => 1200,
+    shopProductsDataIsPartial: () => partial,
+    flatProductLoadSummary: summary, flatProductLoadMoreButton: button, flatProductProgressiveLoad: footer,
+  });
+  render(100, 100);
+  assert.equal(badge.textContent, '1200');
+  assert.match(summary.textContent, /100 \/ 1200/);
+  assert.equal(button.classes.has('hidden'), false);
+  assert.equal(footer.classes.has('hidden'), false);
+  partial = false;
+  render(1200, 200);
+  assert.equal(button.classes.has('hidden'), false);
+  render(1200, 1200);
+  assert.equal(button.classes.has('hidden'), true);
+});
+
+test('Gateway shared request failure preserves sorting and visible range for every caller, then permits retry', async () => {
+  let reject!: (error: Error) => void;
+  const request = new Promise<never>((_, no) => { reject = no; });
+  let fetches = 0;
+  const oldSort = { key: 'score', direction: 'desc', type: 'number' };
+  const state = { loaded: false, promise: null, apiUrl: '/test', entries: [], pageSize: 50, visibleLimit: 100, totalCount: 120, sort: oldSort, loading: { run: (task: () => Promise<unknown>) => task() } };
+  const button = { removeAttribute() {}, setAttribute() {} };
+  const scope: any = {
+    gatewayLists: { sites: state }, gatewayHome: { querySelector: () => button },
+    fetch: async () => { fetches++; return request; },
+    updateLoadMoreButton: () => {},
+    siteEntryFromItem: (item: unknown) => item,
+  };
+  const load = renderer('src/scripts/llm-gateway-home.js', 'ensureGatewayDataLoaded', scope) as unknown as (type: string) => Promise<unknown>;
+  class Control {
+    dataset = { sortKey: 'score' };
+    closest(selector: string) {
+      if (selector === '[data-table]') return {};
+      if (selector === '[data-gateway-panel]') return { dataset: { gatewayPanel: 'sites' } };
+      if (selector === '.data-table-sort-button') return this;
+      return null;
+    }
+  }
+  const handle = renderer('src/scripts/llm-gateway-home.js', 'handleGatewaySort', {
+    ...scope, Element: Control, HTMLElement: Control, ensureGatewayDataLoaded: load,
+    nextTableSort() { throw new Error('must not change sort after failure'); },
+  });
+  const a = load('sites');
+  const b = load('sites');
+  const click = handle({ target: new Control(), preventDefault() {}, stopImmediatePropagation() {} });
+  reject(new Error('offline'));
+  assert.deepEqual(await Promise.all([a, b, click]), [null, null, undefined]);
+  assert.equal(fetches, 1);
+  assert.equal(state.sort, oldSort);
+  assert.equal(state.visibleLimit, 100);
+  assert.equal(state.promise, null);
+  assert.equal(state.loaded, false);
+  scope.fetch = async () => ({ ok: true, json: async () => ({ items: [{ id: 'remaining' }], offset: 50, totalCount: 120 }) });
+  assert.equal(await load('sites'), 1);
+  assert.equal(state.loaded, true);
+});
+
+test('product initialization preserves server order even when a later product has a higher score', async () => {
+  const accessors = await import('../src/shop-products-data.js');
+  const rows: any[] = [];
+  const data = {
+    v: 1, s: [['a', 'Alpha', 'https://a.test', null, 1]], c: ['Account'], u: ['¥'], sc: 1, pc: 2, l: null, x: 0,
+    p: [
+      [0, 0, 'First', 10, 0, 'https://a.test/first', 1, 1, null, 1, 'first', 'gpt-plus'],
+      [0, 0, 'Second', 20, 0, 'https://a.test/second', 1, 1, null, 99, 'second', 'gpt-plus'],
+    ],
+  };
+  const build = renderer('src/scripts/index.js', 'buildFlatRows', {
+    ...accessors, shopProductsData: data, flatRows: rows, text: String,
+    document: { documentElement: { lang: 'zh' } }, shopsMessages: {},
+    autoCategoryLabel: () => '', formatDisplayPrice: String, priceValueForSort: Number, productStockValue: () => 1,
+  });
+  build();
+  assert.deepEqual(rows.map(row => row.productName), ['first', 'second']);
+  assert.deepEqual(rows.map(row => row.originalIndex), [0, 1]);
+});
+
+test('switching product tabs during a shared request shows feedback in both lists without fetching twice', async () => {
+  let resolve!: (value: unknown) => void;
+  const response = new Promise(yes => { resolve = yes; });
+  let fetches = 0;
+  const pending = { products: 0, merchants: 0 };
+  const feedback = (kind: 'products' | 'merchants') => ({ run: async (task: () => Promise<unknown>) => {
+    pending[kind]++;
+    try { return await task(); } finally { pending[kind]--; }
+  } });
+  const scope = {
+    shopProductsDataIsPartial: () => true, shopProductsDataLoadPromise: null, currentShopTab: 'products',
+    shopListLoading: { products: feedback('products'), merchants: feedback('merchants') },
+    fetch: async () => { fetches++; return response; }, replaceShopProductsData: async () => {},
+  };
+  const load = renderer('src/scripts/index.js', 'loadShopProductsDataFromApi', scope) as unknown as () => Promise<boolean>;
+  const products = load();
+  scope.currentShopTab = 'merchants';
+  const merchants = load();
+  assert.deepEqual(pending, { products: 1, merchants: 1 });
+  assert.equal(fetches, 1);
+  resolve({ ok: true, json: async () => ({ p: [], s: [] }) });
+  assert.deepEqual(await Promise.all([products, merchants]), [true, true]);
+  assert.deepEqual(pending, { products: 0, merchants: 0 });
 });

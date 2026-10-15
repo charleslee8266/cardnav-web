@@ -194,6 +194,7 @@ export const ruMessages: Messages = {
     externalSite: 'Внешний сайт',
     notRecorded: 'Нет данных',
     loading: 'Загрузка',
+    loadError: 'Не удалось загрузить. Текущие результаты сохранены. Попробуйте ещё раз.',
     loadMore: 'Показать еще',
     displaySummary: 'Показано {rendered} / {total}',
   },
@@ -352,7 +353,6 @@ export const ruMessages: Messages = {
     cooperationDetails: 'подробнее',
     cooperationSentenceEnd: '.',
     script: {
-      loading: 'Загрузка',
       displaySummary: 'Показано {rendered} / {total} подходящих товаров',
       merchantDisplaySummary: 'Показано {rendered} / {total} подходящих продавцов',
       stockPrefix: 'Остаток ',

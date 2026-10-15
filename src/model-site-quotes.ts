@@ -44,6 +44,7 @@ export function selectModelSiteQuotes(sites: PublicGatewayModelSiteRow[], option
     return true;
   });
   return pinListRows(selected, {
+    enabled: !options.compare,
     site: entry => entry.site,
     partner: { sites: MAX_PINNED_PARTNER_SITES, rowsPerSite: MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE, adjacentBySite: true },
     support: { sites: MAX_PINNED_SUPPORT_SITES, rowsPerSite: MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE, adjacentBySite: true },

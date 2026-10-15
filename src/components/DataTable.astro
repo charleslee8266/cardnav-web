@@ -26,10 +26,6 @@ type Props = {
   loadMoreButtonId?: string;
   loadMoreButtonHidden?: boolean;
   loadMoreDataAttrs?: Record<string, string | boolean | undefined>;
-  loadingId?: string;
-  loadingText?: string;
-  loadingHidden?: boolean;
-  loadingDataAttrs?: Record<string, string | boolean | undefined>;
 };
 
 const {
@@ -55,10 +51,6 @@ const {
   loadMoreButtonId,
   loadMoreButtonHidden = false,
   loadMoreDataAttrs = {},
-  loadingId,
-  loadingText = '',
-  loadingHidden = true,
-  loadingDataAttrs = {},
 } = Astro.props;
 
 const variantClasses = {
@@ -109,7 +101,6 @@ const tableAttrs = {
 };
 const hasEmpty = emptyText.trim().length > 0 || Astro.slots.has('empty');
 const hasLoadMore = loadMoreText.trim().length > 0 || Astro.slots.has('loadMore');
-const hasLoading = loadingText.trim().length > 0 || Astro.slots.has('loading');
 const hasSummary = summaryText.trim().length > 0 || Astro.slots.has('summary');
 const initialSummaryRendered = totalCount > 0
   ? Math.min(summaryRenderedCount > 0 ? summaryRenderedCount : (pageSize > 0 ? pageSize : totalCount), totalCount)
@@ -138,16 +129,11 @@ const initialSummaryText = summaryText
       </section>
     ) : null}
   </div>
-  {hasLoadMore || hasLoading || hasSummary ? (
+  {hasLoadMore || hasSummary ? (
     <section id={loadMoreId} class:list={['data-table-footer', loadMoreHidden && 'hidden']} data-table-load-more>
       {hasSummary ? (
         <p id={summaryId} class:list={['data-table-loading', summaryHidden && 'hidden']} data-table-summary {...summaryDataAttrs}>
           <slot name="summary">{initialSummaryText}</slot>
-        </p>
-      ) : null}
-      {hasLoading ? (
-        <p id={loadingId} class:list={['data-table-loading', loadingHidden && 'hidden']} {...loadingDataAttrs}>
-          <slot name="loading">{loadingText}</slot>
         </p>
       ) : null}
       {hasLoadMore ? (

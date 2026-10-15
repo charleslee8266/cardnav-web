@@ -1,3 +1,6 @@
+import { syncTableSortHeaders } from './table-sort-headers.js';
+import { createListLoading } from './list-loading.js';
+import { nextTableSort } from '../table-sort.js';
 import { bindProviderSelection, createProviderSelection } from '../models/provider-selection.js';
 import { bindFamilySelection, createModelFamilySelection } from '../models/family-selection.js';
 import { matchesAllSelections } from '../models/gateway-selection.js';
@@ -86,6 +89,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       sort: null,
     },
   };
+  for (const state of Object.values(gatewayLists)) {
+    state.loading = createListLoading(gatewayHome.querySelector(state.listSelector).closest('.data-table-frame'));
+  }
   let gatewayFilterTrackTimer = null;
   let lastGatewayFilterTrackKey = '';
 
@@ -455,16 +461,12 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     if (state.type === 'sites') entries.forEach(entry => {
       entry.sort.favorite = favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') ? 1 : 0;
     });
-    entries.sort(compareEntries(state.sort || { key: 'sequence', direction: 'asc' }));
-    return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 })), (row, kind) => { row.entry.pinKind = kind; }).map(row => row.entry);
+    if (state.sort) entries.sort(compareEntries(state.sort));
+    return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 })), (row, kind) => { row.entry.pinKind = kind; }, !state.sort).map(row => row.entry);
   }
 
   function loadMoreWrap(type) {
     return gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`)?.closest('[data-table-load-more]') || null;
-  }
-
-  function loadingLabel(type) {
-    return gatewayHome.querySelector(`[data-gateway-loading="${type}"]`);
   }
 
   function summaryLabel(type) {
@@ -475,11 +477,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     return (config.displaySummary || 'Showing {rendered} / {total}')
       .replace('{rendered}', String(renderedCount))
       .replace('{total}', String(totalCount));
-  }
-
-  function setLoading(type, loading) {
-    loadingLabel(type)?.classList.toggle('hidden', !loading);
-    summaryLabel(type)?.classList.toggle('hidden', loading);
   }
 
   function hasActiveFilters(state) {
@@ -647,7 +644,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     gatewayLists[type].visibleLimit = gatewayLists[type].pageSize;
   }
 
-  async function ensureGatewayDataLoaded(type) {
+  async function ensureGatewayDataLoaded(type, anchor = null) {
     const state = gatewayLists[type];
     if (!state || state.loaded) return 0;
     if (state.promise) return state.promise;
@@ -657,12 +654,12 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       return 0;
     }
     button?.setAttribute('disabled', 'disabled');
-    setLoading(type, true);
-    state.promise = (async () => {
+    state.promise = state.loading.run(async () => {
       const response = await fetch(state.apiUrl, { headers: { accept: 'application/json' } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
-      const items = Array.isArray(payload.items) ? payload.items : [];
+      if (!Array.isArray(payload.items)) throw new Error('Invalid list response');
+      const items = payload.items;
       const offset = Number(payload.offset) || state.pageSize;
       const totalCount = Number(payload.totalCount);
       if (Number.isFinite(totalCount) && totalCount > 0) state.totalCount = totalCount;
@@ -672,39 +669,34 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       state.entries.push(...entries);
       state.loaded = true;
       return entries.length;
-    })();
-    try {
-      return await state.promise;
-    } catch {
-      button?.removeAttribute('disabled');
-      return 0;
-    } finally {
+    }, { anchor }).catch(() => null).finally(() => {
       state.promise = null;
-      if (state.loaded) button?.removeAttribute('disabled');
-      setLoading(type, false);
-    }
+      button?.removeAttribute('disabled');
+      updateLoadMoreButton(state);
+    });
+    return state.promise;
   }
 
   async function applySharedFiltersWithDeferred({ track = true, resetLimit = false } = {}) {
     if (resetLimit) { resetVisibleLimit('sites'); resetVisibleLimit('models'); }
-    await Promise.all([
-      hasActiveSiteFilters() ? ensureGatewayDataLoaded('sites') : Promise.resolve(),
-      hasActiveModelFilters() ? ensureGatewayDataLoaded('models') : Promise.resolve(),
+    const [sites, models] = await Promise.all([
+      hasActiveSiteFilters() ? ensureGatewayDataLoaded('sites') : Promise.resolve(0),
+      hasActiveModelFilters() ? ensureGatewayDataLoaded('models') : Promise.resolve(0),
     ]);
-    applySiteFilters({ track });
-    applyModelFilters({ track });
+    if (sites !== null) applySiteFilters({ track });
+    if (models !== null) applyModelFilters({ track });
   }
 
   function applySiteFilterChange() {
     syncSiteFilterQueryFromControls();
     resetVisibleLimit('sites');
-    void (hasActiveSiteFilters() ? ensureGatewayDataLoaded('sites') : Promise.resolve()).then(() => applySiteFilters());
+    void (hasActiveSiteFilters() ? ensureGatewayDataLoaded('sites') : Promise.resolve()).then(result => { if (result !== null) applySiteFilters(); });
   }
 
   function applyModelFilterChange() {
     syncSiteFilterQueryFromControls();
     resetVisibleLimit('models');
-    void (hasActiveModelFilters() ? ensureGatewayDataLoaded('models') : Promise.resolve()).then(() => applyModelFilters());
+    void (hasActiveModelFilters() ? ensureGatewayDataLoaded('models') : Promise.resolve()).then(result => { if (result !== null) applyModelFilters(); });
   }
 
   function showTab(tabName) {
@@ -727,24 +719,18 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   async function loadMore(type) {
     const state = gatewayLists[type];
     if (!state) return;
-    const loadedCount = await ensureGatewayDataLoaded(type);
+    const loadedCount = await ensureGatewayDataLoaded(type, gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`));
+    if (loadedCount === null) return;
     state.visibleLimit += state.pageSize;
     if (type === 'sites') applySiteFilters({ track: false });
     else applyModelFilters({ track: false });
     trackGatewayEvent('button-click', { scope: 'gateway', action: 'load-more', tab: type, loadedCount });
   }
 
-  function nextSort(currentSort, button) {
-    const key = button.dataset.sortKey || '';
-    if (!key) return null;
-    const currentDirection = currentSort?.key === key ? currentSort.direction : null;
-    const direction = currentDirection === 'asc' ? 'desc' : (currentDirection === 'desc' ? null : 'asc');
-    return direction ? { key, direction, type: button.dataset.sortType || 'text' } : null;
-  }
 
   function updateSortButtons(state) {
     const table = gatewayHome.querySelector(state.listSelector)?.closest('[data-table]');
-    window.updateDataTableHeaders?.(table, state.sort);
+    syncTableSortHeaders(table, state.sort);
   }
 
   async function handleGatewaySort(event) {
@@ -760,8 +746,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     if (!(button instanceof HTMLElement)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    await ensureGatewayDataLoaded(type);
-    state.sort = nextSort(state.sort, button);
+    if (await ensureGatewayDataLoaded(type) === null) return;
+    state.sort = nextTableSort(state.sort, button);
     resetVisibleLimit(type);
     if (type === 'sites') applySiteFilters({ track: false });
     else applyModelFilters({ track: false });

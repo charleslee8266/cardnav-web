@@ -1,3 +1,5 @@
+import { syncTableSortHeaders } from './table-sort-headers.js';
+import { nextTableSort } from '../table-sort.js';
 import { createScoreDisplay } from '../data-display.js';
 import { gatewayModelPath } from '../models/routes.js';
 import { renderFilterSummary } from './filter-summary.js';
@@ -286,7 +288,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       emptyState.classList.toggle('hidden', entries.length > 0);
       emptyState.textContent = query || unit || groupSelect?.value || minScoreSelect?.value ? config.filterEmpty : config.noPriceData;
     }
-    window.updateDataTableHeaders?.(table, sort);
+    syncTableSortHeaders(table, sort);
 
   }
 
@@ -335,10 +337,9 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     event.preventDefault(); event.stopImmediatePropagation();
     const key = control.dataset.sortKey;
     if (!key) return;
-    const direction = sort?.key === key ? (sort.direction === 'asc' ? 'desc' : null) : 'asc';
-    sort = direction ? { key, direction, type: control.dataset.sortType } : null;
+    sort = nextTableSort(sort, control);
     resetAndRender();
-    window.CardNavTelemetry?.track('sort-change', { scope: tableType, key, direction: direction || 'none' }, root);
+    window.CardNavTelemetry?.track('sort-change', { scope: tableType, key, direction: sort?.direction || 'none' }, root);
   }, { capture: true });
   window.addEventListener('popstate', () => { clearTimeout(timer); readFilterQuery(); visibleLimit = Number(config.pageSize) || 100; render(); });
   readFilterQuery();

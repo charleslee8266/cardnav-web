@@ -1,3 +1,4 @@
+import { createDeferredTableController } from './deferred-table-core.js';
 import { bindFamilySelection, createModelFamilySelection } from '../models/family-selection.js';
 import { gatewayProviderSlug } from '../models/routes.js';
 import { renderFilterSummary } from './filter-summary.js';
@@ -131,14 +132,6 @@ function initModelLeaderboard() {
     return row;
   }
 
-  function updateSummary(summary, renderedCount, totalCount) {
-    if (!(summary instanceof HTMLElement)) return;
-    const template = summary.dataset.summaryTemplate || 'Showing {rendered} / {total}';
-    summary.textContent = template
-      .replace('{rendered}', String(renderedCount))
-      .replace('{total}', String(totalCount));
-  }
-
   document.querySelectorAll('[data-model-leaderboard]').forEach(leaderboard => {
     const form = leaderboard.querySelector('[data-leaderboard-highlight-form]');
     const queryInput = form?.querySelector('[name="q"]');
@@ -190,72 +183,50 @@ function initModelLeaderboard() {
     const maximumScore = Number(leaderboard.dataset.scoreMax) || 100;
     if (!button || !body || !apiUrl) return;
 
-    if (typeof window.createDeferredTableController === 'function') {
-      const controller = window.createDeferredTableController({
-        table: leaderboard.querySelector('table'),
-        tbody: body,
-        button,
-        summary,
-        pageSize: 30,
-        totalCount: Number(leaderboard.getAttribute('data-model-leaderboard-total')) || 0,
-        apiUrl,
-        summaryTemplate: summary?.dataset.summaryTemplate || 'Showing {rendered} / {total}',
-        entryFromRow: (row, index) => ({ index, row, item: null, sort: { sequence: Number(row.dataset.sortSequence) || index + 1, model: row.dataset.sortModel, family: row.dataset.modelFamily, provider: row.dataset.sortProvider, score: Number(row.dataset.sortScore) } }),
-        entryFromItem: (item, index) => ({ index, row: null, item, sort: { sequence: Number(item.rank) || index + 1, model: item.modelName, family: item.modelFamily, provider: item.modelOrganization, score: Number(item.score) } }),
-        ensureRow: entry => {
-          if (!entry.row) entry.row = rowElement(entry.item, maximumScore, { gateway: leaderboard.dataset.gatewayLinkLabel, shop: leaderboard.dataset.shopLinkLabel });
-          entry.row.classList.remove('hidden');
-          const current = new URL(window.location.href);
-          entry.row.classList.toggle('leaderboard-row-highlight', matchesLeaderboardHighlight({modelName: entry.row.dataset.sortModel || '', modelFamily: entry.row.dataset.modelFamily || null, modelOrganization: entry.row.dataset.sortProvider || null}, current.searchParams.getAll('family'), current.searchParams.get('q') || '', current.searchParams.getAll('provider')));
-          return entry.row;
-        },
-        getItems: payload => (Array.isArray(payload.rows) ? payload.rows : []),
-      });
-      controller.initialize();
-      leaderboard.querySelector('table').addEventListener('click', async event => {
-        const target = event.target instanceof Element ? event.target : null;
-        if (!target || target.closest('[data-inline-help]')) return;
-        const sortButton = target.closest('.data-table-sort-button') || target.closest('th')?.querySelector('.data-table-sort-button');
-        if (!sortButton) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        try {
-          await controller.sortFromButton(sortButton);
-          window.CardNavTelemetry?.track('sort-change', { scope: 'model-leaderboard', key: sortButton.dataset.sortKey, direction: sortButton.dataset.sortDirection || 'none' }, leaderboard);
-        } catch {
-          button.removeAttribute('disabled');
-        }
-      }, { capture: true });
-      button.addEventListener('click', async () => {
-        try {
-          await controller.loadMore();
-          window.CardNavTelemetry?.track('button-click', { scope: 'model-leaderboard', action: 'load-more' }, leaderboard);
-        } catch {
-          button.removeAttribute('disabled');
-        }
-      });
-      return;
-    }
-
-    button.addEventListener('click', async () => {
-      button.setAttribute('disabled', 'disabled');
+    const controller = createDeferredTableController({
+      table: leaderboard.querySelector('table'),
+      tbody: body,
+      button,
+      summary,
+      pageSize: 30,
+      totalCount: Number(leaderboard.getAttribute('data-model-leaderboard-total')) || 0,
+      apiUrl,
+      summaryTemplate: summary?.dataset.summaryTemplate || 'Showing {rendered} / {total}',
+      entryFromRow: (row, index) => ({ index, row, item: null, sort: { sequence: Number(row.dataset.sortSequence) || index + 1, model: row.dataset.sortModel, family: row.dataset.modelFamily, provider: row.dataset.sortProvider, score: Number(row.dataset.sortScore) } }),
+      entryFromItem: (item, index) => ({ index, row: null, item, sort: { sequence: Number(item.rank) || index + 1, model: item.modelName, family: item.modelFamily, provider: item.modelOrganization, score: Number(item.score) } }),
+      ensureRow: entry => {
+        if (!entry.row) entry.row = rowElement(entry.item, maximumScore, { gateway: leaderboard.dataset.gatewayLinkLabel, shop: leaderboard.dataset.shopLinkLabel });
+        entry.row.classList.remove('hidden');
+        const current = new URL(window.location.href);
+        entry.row.classList.toggle('leaderboard-row-highlight', matchesLeaderboardHighlight({modelName: entry.row.dataset.sortModel || '', modelFamily: entry.row.dataset.modelFamily || null, modelOrganization: entry.row.dataset.sortProvider || null}, current.searchParams.getAll('family'), current.searchParams.get('q') || '', current.searchParams.getAll('provider')));
+        return entry.row;
+      },
+      getItems: payload => payload.rows,
+    });
+    controller.initialize();
+    leaderboard.querySelector('table').addEventListener('click', async event => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target || target.closest('[data-inline-help]')) return;
+      const sortButton = target.closest('.data-table-sort-button') || target.closest('th')?.querySelector('.data-table-sort-button');
+      if (!sortButton) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
       try {
-        const response = await fetch(apiUrl, {
-          headers: { accept: 'application/json' },
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const payload = await response.json();
-        const rows = Array.isArray(payload.rows) ? payload.rows : [];
-        if (rows.length) body.append(...rows.map(item => rowElement(item, maximumScore, { gateway: leaderboard.dataset.gatewayLinkLabel, shop: leaderboard.dataset.shopLinkLabel })));
-        const loadedRows = body.querySelectorAll('tr.hover').length;
-        const totalCount = Number(payload.totalCount) || loadedRows;
-        updateSummary(summary, loadedRows, totalCount);
-        button.classList.add('hidden');
+        await controller.sortFromButton(sortButton);
+        window.CardNavTelemetry?.track('sort-change', { scope: 'model-leaderboard', key: sortButton.dataset.sortKey, direction: sortButton.dataset.sortDirection || 'none' }, leaderboard);
+      } catch {
+        button.removeAttribute('disabled');
+      }
+    }, { capture: true });
+    button.addEventListener('click', async () => {
+      try {
+        await controller.loadMore();
         window.CardNavTelemetry?.track('button-click', { scope: 'model-leaderboard', action: 'load-more' }, leaderboard);
       } catch {
         button.removeAttribute('disabled');
       }
-    }, { once: true });
+    });
+
   });
 }
 

@@ -183,7 +183,7 @@ function siteLinkClickAttrs(url: string, name: string) {
     </>
   )}
 </head>
-<body data-telemetry-block={telemetryBlocks.shared.page} data-source-page-type={pageType} class:list={[
+<body data-list-loading={t.labels.loading} data-list-load-error={t.labels.loadError} data-telemetry-block={telemetryBlocks.shared.page} data-source-page-type={pageType} class:list={[
   'public-body antialiased',
   'min-h-screen',
 ]}>

@@ -1,3 +1,5 @@
+import { syncTableSortHeaders } from './table-sort-headers.js';
+import { nextTableSort } from '../table-sort.js';
 import { setTableRowSequence } from './table-sequence.js';
 /*
 文件说明: 负责公开 DataTable 的排序、表头状态同步和渐进加载交互。
@@ -29,28 +31,14 @@ function stickySortKey(table) {
   return table.dataset.tableStickyKey || '';
 }
 
-function pinTableRows(table, rows) {
+function pinTableRows(table, rows, enabled = true) {
   const key = stickySortKey(table);
-  if (!key) return rows;
-  return pinSiteRows(rows.map(entry => ({ entry, sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: 0, supportPoints: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 })), (item, kind) => { item.entry.row.dataset.pinKind = kind; }).map(row => row.entry);
-}
-
-function syncDataTableHeaders(table, currentSort = null) {
-  table.querySelectorAll('.data-table-sort-button').forEach(button => {
-    const active = currentSort?.key === button.dataset.sortKey;
-    const headerCell = button.closest('th');
-    if (headerCell) {
-      headerCell.setAttribute('aria-sort', active ? (currentSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
-      headerCell.dataset.sortDirection = active ? currentSort.direction : '';
-    }
-    button.dataset.sortDirection = active ? currentSort.direction : '';
-    const indicator = headerCell?.querySelector('.data-table-sort-indicator') || button.querySelector('.data-table-sort-indicator');
-    if (indicator) indicator.dataset.sortDirection = active ? currentSort.direction : '';
-  });
+  if (!key && enabled) return rows;
+  return pinSiteRows(rows.map(entry => ({ entry, sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: 0, supportPoints: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 })), (item, kind) => { item.entry.row.dataset.pinKind = kind; }, enabled).map(row => row.entry);
 }
 
 function updateSortButtons(table) {
-  syncDataTableHeaders(table, dataTables.get(table) ?? null);
+  syncTableSortHeaders(table, dataTables.get(table) ?? null);
 }
 
 function loadMoreSection(table) {
@@ -147,7 +135,7 @@ function sortTable(table, nextSort) {
     const compared = String(leftValue).localeCompare(String(rightValue), 'zh-Hans-CN', { numeric: true });
     return compared === 0 ? left.index - right.index : compared * multiplier;
   });
-  pinTableRows(table, rows).forEach(({ row }, index) => {
+  pinTableRows(table, rows, false).forEach(({ row }, index) => {
       setTableRowSequence(row, index + 1);
       tbody.append(row);
     });
@@ -163,14 +151,9 @@ function attachDataTable(table) {
       const key = button.dataset.sortKey || '';
       if (!key) return;
       const currentSort = dataTables.get(table) ?? null;
-      const currentDirection = currentSort?.key === key ? currentSort.direction : null;
-      const direction = currentDirection === 'asc' ? 'desc' : (currentDirection === 'desc' ? null : 'asc');
-      sortTable(table, direction ? {
-        key,
-        direction,
-        type: button.dataset.sortType || 'text',
-      } : null);
-      window.CardNavTelemetry?.track('sort-change', { scope: table.id || 'data-table', key, direction: direction || 'none' }, table);
+      const nextSort = nextTableSort(currentSort, button);
+      sortTable(table, nextSort);
+      window.CardNavTelemetry?.track('sort-change', { scope: table.id || 'data-table', key, direction: nextSort?.direction || 'none' }, table);
     });
   });
   table.querySelectorAll('.data-table-head-cell-sortable').forEach(headerCell => {
@@ -193,10 +176,6 @@ function initDataTables(root = document) {
 
 window.applyDataTableSort = table => {
   if (table instanceof HTMLElement) sortTable(table);
-};
-
-window.updateDataTableHeaders = (table, currentSort = null) => {
-  if (table instanceof HTMLElement) syncDataTableHeaders(table, currentSort);
 };
 
 window.initDataTables = initDataTables;

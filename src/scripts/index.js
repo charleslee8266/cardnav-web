@@ -1,3 +1,6 @@
+import { syncTableSortHeaders } from './table-sort-headers.js';
+import { createListLoading } from './list-loading.js';
+import { nextTableSort } from '../table-sort.js';
 import { enqueueReport } from './metric-reports.js';
 import { toggleShopFavorite } from './shop-favorites.js';
 import { createShopPlatformLabel, shopPlatformFromUrl } from '../shop-platform.js';
@@ -113,8 +116,11 @@ let favoriteProductKeys = new Set();
 let currentFlatVisibleLimit = shopProductsInitialLimit(shopProductsData) || DEFAULT_FLAT_PRODUCT_LIMIT;
 let currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
 const productMetricTracker = new ProductMetricTracker();
-let isShopProductsDataLoading = false;
 let shopProductsDataLoadPromise = null;
+const shopListLoading = {
+  products: createListLoading(flatProductView),
+  merchants: createListLoading(merchantGroupedView),
+};
 let applyFiltersTimer = null;
 let searchReportTimer = null;
 let umamiFilterReportTimer = null;
@@ -296,7 +302,7 @@ function prioritizeFavoriteFlatRows(rowEntries) {
   return prioritizeShopProductRows(rowEntries, {
     favoriteProductKeys,
     favoriteSiteKeys,
-  }, (row, kind) => { row.pinKind = kind; });
+  }, (row, kind) => { row.pinKind = kind; }, !currentFlatSort);
 }
 
 function parseBound(value) {
@@ -375,16 +381,6 @@ function buildFlatRows() {
       indexCell: null,
       originalIndex: index,
     });
-  });
-  flatRows.sort((left, right) => right.score - left.score
-    || right.siteScore - left.siteScore
-    || right.inStock - left.inStock
-    || right.productRefreshedAt - left.productRefreshedAt
-    || left.categoryName.localeCompare(right.categoryName)
-    || left.productName.localeCompare(right.productName));
-  flatRows.forEach((row, index) => {
-    row.sequence = index + 1;
-    row.originalIndex = index;
   });
 }
 
@@ -856,14 +852,6 @@ function updateFlatProgressiveLoadSummary(visibleCount, renderedCount) {
     return;
   }
 
-  if (isShopProductsDataLoading) {
-    flatProductProgressiveLoad.classList.remove('hidden');
-    flatProductLoadSummary.classList.remove('hidden');
-    flatProductLoadSummary.textContent = shopsMessages.loading || 'Loading';
-    flatProductLoadMoreButton.classList.add('hidden');
-    return;
-  }
-
   const totalVisibleCount = hasActiveProductFilters() ? visibleCount : totalProductCount();
   const tabCount = document.querySelector('[data-shop-tab="products"] .tool-tab-badge');
   if (tabCount) tabCount.textContent = String(totalVisibleCount);
@@ -898,14 +886,6 @@ function updateMerchantProgressiveLoadSummary(visibleCount, renderedCount) {
     return;
   }
 
-  if (isShopProductsDataLoading) {
-    merchantProgressiveLoad.classList.remove('hidden');
-    merchantLoadSummary.classList.remove('hidden');
-    merchantLoadSummary.textContent = shopsMessages.loading || 'Loading';
-    merchantLoadMoreButton.classList.add('hidden');
-    return;
-  }
-
   const totalVisibleCount = hasActiveMerchantFilters() ? visibleCount : totalSiteCount();
   const tabCount = document.querySelector('[data-shop-tab="merchants"] .tool-tab-badge');
   if (tabCount) tabCount.textContent = String(totalVisibleCount);
@@ -932,7 +912,8 @@ async function loadMerchantViewModule() {
     if (!merchantViewScriptUrl) {
       throw new Error('shops merchant view script url is unavailable');
     }
-    merchantViewModulePromise = import(/* @vite-ignore */ merchantViewScriptUrl);
+    merchantViewModulePromise = shopListLoading.merchants.run(() => import(/* @vite-ignore */ merchantViewScriptUrl))
+      .catch(error => { merchantViewModulePromise = null; throw error; });
   }
   merchantViewModule = await merchantViewModulePromise;
   return merchantViewModule;
@@ -1045,7 +1026,7 @@ async function applyFilters(options = {}) {
     priceMaxValue,
   })) {
     const wasPartial = shopProductsDataIsPartial();
-    await loadShopProductsDataFromApi();
+    if (!await loadShopProductsDataFromApi(options.loadingAnchor)) return;
     if (wasPartial && !shopProductsDataIsPartial()) {
       return;
     }
@@ -1091,8 +1072,8 @@ async function applyFilters(options = {}) {
     updateFlatProgressiveLoadSummary(visibleFlatProductCount, renderedFlatCount);
   }
 
-  productEmptyState?.classList.toggle('hidden', merchantTabActive || visibleFlatProductCount > 0 || isShopProductsDataLoading);
-  merchantEmptyState?.classList.toggle('hidden', !merchantTabActive || visibleMerchantCount > 0 || isShopProductsDataLoading);
+  productEmptyState?.classList.toggle('hidden', merchantTabActive || visibleFlatProductCount > 0);
+  merchantEmptyState?.classList.toggle('hidden', !merchantTabActive || visibleMerchantCount > 0);
   if (merchantTabActive) {
     updateFlatProgressiveLoadSummary(0, 0);
     updateMerchantProgressiveLoadSummary(visibleMerchantCount, renderedMerchantCount);
@@ -1137,8 +1118,6 @@ function sortRows(merchantModule) {
   const sortedRows = merchantModule.getMerchantRows()
     .slice()
     .sort((a, b) => {
-
-
       if (currentMerchantSort) {
         const multiplier = currentMerchantSort.direction === 'asc' ? 1 : -1;
         const leftValue = merchantRowValue(a.element, currentMerchantSort.key, currentMerchantSort.type);
@@ -1152,11 +1131,10 @@ function sortRows(merchantModule) {
         return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
       }
 
-      return Number(b.element.dataset.siteScore) - Number(a.element.dataset.siteScore)
-        || Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
+      return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
     });
   const visibleRows = sortedRows.filter(row => row.element.dataset.filterVisible === '1');
-  const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: 0, supportPoints: Number(entry.element.dataset.supportPoints) || 0, favorite: Number(entry.element.dataset.favorite) > 0 })), (row, kind) => { row.entry.element.dataset.pinKind = kind; }).map(row => row.entry);
+  const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: 0, supportPoints: Number(entry.element.dataset.supportPoints) || 0, favorite: Number(entry.element.dataset.favorite) > 0 })), (row, kind) => { row.entry.element.dataset.pinKind = kind; }, !currentMerchantSort).map(row => row.entry);
   const hiddenRows = sortedRows.filter(row => row.element.dataset.filterVisible !== '1');
   [...pinnedRows, ...hiddenRows].forEach(({ element: row }, sortedIndex) => {
       row.dataset.sortedIndex = String(sortedIndex);
@@ -1183,12 +1161,6 @@ function merchantRowValue(row, key, type) {
   return value;
 }
 
-function nextSort(currentSort, button) {
-  const key = button.dataset.sortKey;
-  const currentDirection = currentSort?.key === key ? currentSort.direction : null;
-  const direction = currentDirection === 'asc' ? 'desc' : (currentDirection === 'desc' ? null : 'asc');
-  return direction ? { key, direction, type: button.dataset.sortType || 'text' } : null;
-}
 
 function flatRowValue(rowEntry, key, type) {
   const value = key === 'sequence' ? rowEntry.originalIndex + 1 : rowEntry[key] ?? '';
@@ -1233,10 +1205,7 @@ function filteredFlatRows() {
 
 function sortFlatProductRows(button) {
   if (button) {
-    const key = button.dataset.sortKey;
-    const currentDirection = currentFlatSort?.key === key ? currentFlatSort.direction : null;
-    const direction = currentDirection === 'asc' ? 'desc' : (currentDirection === 'desc' ? null : 'asc');
-    currentFlatSort = direction ? { key, direction, type: button.dataset.sortType || 'text' } : null;
+    currentFlatSort = nextTableSort(currentFlatSort, button);
   }
 
   const sortedRows = filteredFlatRows().slice();
@@ -1267,84 +1236,47 @@ function sortFlatProductRows(button) {
 }
 
 function updateFlatSortButtons() {
-  flatSortButtons.forEach(button => {
-    const active = currentFlatSort?.key === button.dataset.sortKey;
-    const headerCell = button.closest('th');
-    const indicator = headerCell?.querySelector('.data-table-sort-indicator') || button.querySelector('.data-table-sort-indicator');
-    const status = button.querySelector('.data-table-sort-status');
-    const directionLabel = currentFlatSort?.direction === 'asc' ? (shopsMessages.ascending || 'ascending') : (shopsMessages.descending || 'descending');
-    if (headerCell) headerCell.setAttribute('aria-sort', active ? (currentFlatSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
-    if (headerCell) headerCell.dataset.sortDirection = active ? currentFlatSort.direction : '';
-    button.dataset.sortDirection = active ? currentFlatSort.direction : '';
-    if (indicator) indicator.dataset.sortDirection = active ? currentFlatSort.direction : '';
-    if (status) status.textContent = active
-      ? (shopsMessages.currentSort || ', current {direction}').replace('{direction}', directionLabel)
-      : (shopsMessages.clickSort || ', click to sort');
-  });
+  syncTableSortHeaders(flatProductView, currentFlatSort, shopsMessages);
 }
 
 function updateMerchantSortButtons() {
-  merchantSortButtons.forEach(button => {
-    const active = currentMerchantSort?.key === button.dataset.sortKey;
-    const headerCell = button.closest('.data-table-head-cell-sortable');
-    const indicator = headerCell?.querySelector('.data-table-sort-indicator') || button.querySelector('.data-table-sort-indicator');
-    const status = button.querySelector('.data-table-sort-status');
-    const directionLabel = currentMerchantSort?.direction === 'asc' ? (shopsMessages.ascending || 'ascending') : (shopsMessages.descending || 'descending');
-    if (headerCell) headerCell.setAttribute('aria-sort', active ? (currentMerchantSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
-    if (headerCell) headerCell.dataset.sortDirection = active ? currentMerchantSort.direction : '';
-    button.dataset.sortDirection = active ? currentMerchantSort.direction : '';
-    if (indicator) indicator.dataset.sortDirection = active ? currentMerchantSort.direction : '';
-    if (status) status.textContent = active
-      ? (shopsMessages.currentSort || ', current {direction}').replace('{direction}', directionLabel)
-      : (shopsMessages.clickSort || ', click to sort');
-  });
+  syncTableSortHeaders(merchantGroupedView, currentMerchantSort, shopsMessages);
 }
 
-function replaceShopProductsData(nextShopProductsData) {
-  if (!nextShopProductsData || !Array.isArray(nextShopProductsData.p) || !Array.isArray(nextShopProductsData.s)) return;
+async function replaceShopProductsData(nextShopProductsData) {
+  if (!nextShopProductsData || !Array.isArray(nextShopProductsData.p) || !Array.isArray(nextShopProductsData.s)) throw new Error('Invalid product response');
 
   shopProductsData = {
     ...nextShopProductsData,
     x: 0,
   };
-  isShopProductsDataLoading = false;
   if (merchantViewModule) {
     merchantViewModule.resetMerchantViewState();
   }
   buildFlatRows();
   currentFlatRows = flatRows;
-  if (flatProductRowsContainer) flatProductRowsContainer.replaceChildren();
   favoriteButtons = [];
-  applyFilters();
+  await applyFilters();
 }
 
-async function loadShopProductsDataFromApi() {
-  if (!shopProductsDataIsPartial()) return;
-  if (shopProductsDataLoadPromise) return shopProductsDataLoadPromise;
+async function loadShopProductsDataFromApi(anchor = null) {
+  if (!shopProductsDataIsPartial()) return true;
+  if (shopProductsDataLoadPromise) {
+    const request = shopProductsDataLoadPromise;
+    return shopListLoading[currentShopTab].run(async () => {
+      if (!await request) throw new Error('Product request failed');
+      return true;
+    }, { anchor }).catch(() => false);
+  }
 
-  shopProductsDataLoadPromise = (async () => {
-    isShopProductsDataLoading = true;
-    updateFlatProgressiveLoadSummary(0, 0);
-    updateMerchantProgressiveLoadSummary(0, 0);
-    productEmptyState?.classList.add('hidden');
-    merchantEmptyState?.classList.add('hidden');
-    try {
-      const response = await fetch('/api/shop-products.json', { headers: { accept: 'application/json' } });
-      if (!response.ok) {
-        isShopProductsDataLoading = false;
-        await applyFilters();
-        return;
-      }
-      isShopProductsDataLoading = false;
-      replaceShopProductsData(await response.json());
-    } catch (_error) {
-      isShopProductsDataLoading = false;
-      await applyFilters();
-      // SSR rows remain usable when the API request fails.
-    } finally {
-      shopProductsDataLoadPromise = null;
-    }
-  })();
+  shopProductsDataLoadPromise = shopListLoading[currentShopTab].run(async () => {
+    const response = await fetch('/api/shop-products.json', { headers: { accept: 'application/json' } });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    await replaceShopProductsData(await response.json());
+    return true;
+  }, { anchor }).catch(() => false).finally(() => {
+    shopProductsDataLoadPromise = null;
+  });
 
   return shopProductsDataLoadPromise;
 }
@@ -1492,16 +1424,16 @@ flatProductRowsContainer?.addEventListener('click', event => {
 flatProductLoadMoreButton?.addEventListener('click', () => {
   trackUmamiEvent('button-click', { scope: 'products', action: 'load-more' }, flatProductLoadMoreButton);
   currentFlatVisibleLimit += FLAT_PRODUCT_LOAD_MORE_STEP;
-  applyFilters();
+  applyFilters({ loadingAnchor: flatProductLoadMoreButton });
 });
 merchantLoadMoreButton?.addEventListener('click', () => {
   trackUmamiEvent('button-click', { scope: 'merchants', action: 'load-more' }, merchantLoadMoreButton);
   currentMerchantVisibleLimit += MERCHANT_LOAD_MORE_STEP;
-  applyFilters();
+  applyFilters({ loadingAnchor: merchantLoadMoreButton });
 });
 flatSortButtons.forEach(button => {
   button.addEventListener('click', async () => {
-    await loadShopProductsDataFromApi();
+    if (!await loadShopProductsDataFromApi()) return;
     resetFlatVisibleLimit();
     sortFlatProductRows(button);
     trackUmamiEvent('sort-change', {
@@ -1514,7 +1446,7 @@ flatSortButtons.forEach(button => {
 
 merchantSortButtons.forEach(button => {
   button.addEventListener('click', () => {
-    currentMerchantSort = nextSort(currentMerchantSort, button);
+    currentMerchantSort = nextTableSort(currentMerchantSort, button);
     currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
     applyFilters();
     trackUmamiEvent('sort-change', {

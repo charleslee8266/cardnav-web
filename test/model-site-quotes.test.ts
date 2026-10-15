@@ -38,10 +38,12 @@ test('筛选后按原始顺序每组取一条报价，普通站保留全部分�
   assert.deepEqual(selectModelSiteQuotes(sites, {query:'missing'}), []);
 });
 
-test('更改排序重新选择置顶分组，分页保留普通报价', () => {
+test('手动排序覆盖全部报价并清除置顶，取消后恢复置顶', () => {
   const sites = [site('ordinary', [price('a',1),price('b',2),price('c',3)]), site('partner',[price('a',10),price('b',20),price('c',30)],true)];
   const quotes = selectModelSiteQuotes(sites, {compare:(a,b) => (b.price.inputPrice ?? 0)-(a.price.inputPrice ?? 0)});
   assert.deepEqual(quotes.map(q => [q.site.id,q.price.groupId]), [['partner','c'],['partner','b'],['partner','a'],['ordinary','c'],['ordinary','b'],['ordinary','a']]);
+  assert.ok(quotes.every(q => q.pinKind === ''));
+  assert.deepEqual(selectModelSiteQuotes(sites).slice(0, 2).map(q => q.pinKind), ['partner', 'partner']);
   assert.equal(quotes.slice(0,3).length,3);
   assert.equal(quotes.slice(0,50).length,6);
 });
@@ -60,15 +62,15 @@ test('最低评分筛选覆盖完整报价集，在置顶名额分配之前执�
   assert.equal(selectModelSiteQuotes(sites).length, 6);
 });
 
-test('默认沿用后端顺序，支持手动评分和价格排序，合作站仍置顶', () => {
+test('默认置顶沿用后端顺序，手动评分和价格排序覆盖合作站', () => {
   const sites = [
     { ...site('cheap-low', [price('a', 1)]), siteScore: 9 },
     { ...site('expensive-high', [price('a', 5)]), siteScore: 80 },
     { ...site('partner', [price('a', 3)], true), siteScore: 20 },
   ];
-  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (b.score ?? 0) - (a.score ?? 0) }).map(q => q.site.id), ['partner', 'expensive-high', 'cheap-low']);
-  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (a.score ?? 0) - (b.score ?? 0) }).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
-  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (a.price.inputPrice ?? Infinity) - (b.price.inputPrice ?? Infinity) }).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (b.score ?? 0) - (a.score ?? 0) }).map(q => q.site.id), ['expensive-high', 'partner', 'cheap-low']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (a.score ?? 0) - (b.score ?? 0) }).map(q => q.site.id), ['cheap-low', 'partner', 'expensive-high']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (a.price.inputPrice ?? Infinity) - (b.price.inputPrice ?? Infinity) }).map(q => q.site.id), ['cheap-low', 'partner', 'expensive-high']);
   assert.deepEqual(selectModelSiteQuotes(sites).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
 });
 

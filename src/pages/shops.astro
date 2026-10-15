@@ -127,7 +127,6 @@ const normalSeo = buildSeoContext({
 
 const shopsScriptMessages = {
   selfHosted: t.shops.selfHosted,
-  loading: t.labels.loading,
   clearFilters: t.shops.clearFilters,
   autoCategoryTip: t.shops.autoCategoryTip,
   displaySummary: t.shops.script.displaySummary,
@@ -316,8 +315,9 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
         emptyId="productEmptyState"
         emptyText={t.shops.productEmptyState}
         loadMoreId="flatProductProgressiveLoad"
-        loadingId="flatProductLoadSummary"
-        loadingText={t.labels.loading}
+        summaryId="flatProductLoadSummary"
+        summaryText={t.shops.script.displaySummary}
+        summaryHidden
         loadMoreButtonId="flatProductLoadMoreButton"
         loadMoreText={t.labels.loadMore}
         loadMoreButtonHidden

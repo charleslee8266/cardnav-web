@@ -11,8 +11,9 @@ export type SitePinRow = {
   favorite: boolean;
 };
 
-export function pinSiteRows<Row extends SitePinRow>(rows: Row[], onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void): Row[] {
+export function pinSiteRows<Row extends SitePinRow>(rows: Row[], onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void, enabled = true): Row[] {
   return pinListRows(rows, {
+    enabled,
     site: row => row,
     partner: { rows: MAX_PINNED_PARTNER_SITES },
     support: { rows: MAX_PINNED_SUPPORT_SITES },

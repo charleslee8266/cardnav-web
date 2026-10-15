@@ -31,12 +31,17 @@ function selectPins<Row>(rows: Row[], site: (row: Row) => PinSite, limits: PinLi
 }
 
 export function pinListRows<Row>(rows: Row[], options: {
+  enabled?: boolean;
   site: (row: Row) => PinSite;
   partner: PinLimits;
   support: PinLimits;
   favorites?: (remaining: Row[]) => Row[];
   onPin?: (row: Row, kind: PinKind) => void;
 }): Row[] {
+  if (options.enabled === false) {
+    rows.forEach(row => options.onPin?.(row, ''));
+    return rows;
+  }
   const byPoints = (a: Row, b: Row) => (options.site(b).supportPoints ?? 0) - (options.site(a).supportPoints ?? 0);
   const partners = selectPins(rows.filter(row => options.site(row).sponsor).sort(byPoints), options.site, options.partner);
   const supporters = selectPins(rows.filter(row => !options.site(row).sponsor && (options.site(row).supportPoints ?? 0) > 0).sort(byPoints), options.site, options.support);

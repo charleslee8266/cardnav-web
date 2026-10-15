@@ -45,7 +45,6 @@ const seo = buildSeoContext({
   <ModelLeaderboardContent providers={Astro.url.searchParams.getAll('provider')} query={Astro.url.searchParams.get('q') || ''} family={family} stats={stats} pageType="model-leaderboard-detail" groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updatedAt={latestFetchedAt} />
   <script>
     import '../../scripts/data-table.js';
-    import '../../scripts/deferred-table-core.js';
     import '../../scripts/page-widgets.js';
   </script>
 </PublicPage>

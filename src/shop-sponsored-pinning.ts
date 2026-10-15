@@ -60,8 +60,10 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   rowEntries: Row[],
   favorites: ShopPinFavorites,
   onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void,
+  enabled = true,
 ) {
   return pinListRows(rowEntries, {
+    enabled,
     site: row => ({ id: row.siteFavoriteKey, sponsor: row.sponsor, supportPoints: row.supportPoints }),
     partner: { rows: MAX_PINNED_PARTNER_PRODUCTS, rowsPerSite: MAX_PINNED_PARTNER_PRODUCTS_PER_SITE },
     support: { rows: MAX_PINNED_SUPPORT_PRODUCTS, rowsPerSite: MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE },
