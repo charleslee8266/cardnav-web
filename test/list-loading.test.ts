@@ -75,16 +75,15 @@ test('fast requests do not flash; slow requests keep existing rows and clear bus
   assert.equal(status.hidden, true);
 });
 
-test('load more reports beside the bottom action; an empty table reports inside its own region', async () => {
+test('load more and empty tables report loading immediately in their own regions', async () => {
   for (const hasRows of [true, false]) {
-    const { root, rows, loading, elapse } = setup(hasRows);
+    const { root, rows, loading } = setup(hasRows);
     const footer = new Element();
     const button = new Element();
     root.append(footer);
     footer.append(button);
     const request = deferred();
     const run = loading.run(() => request.promise, { anchor: button });
-    elapse();
     const status = hasRows ? footer.children[0] : root.children[0];
     assert.equal(status.hidden, false);
     assert.equal(status.dataset.placement, hasRows ? 'bottom' : 'list');

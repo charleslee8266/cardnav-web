@@ -34,7 +34,8 @@ export function createListLoading(root) {
         busyScopes.set(busyScope, (busyScopes.get(busyScope) || 0) + 1);
         busyScope.dataset.listLoading = 'true';
         root.dataset.listLoadState = 'loading';
-        timer = setTimeout(() => { status.hidden = false; }, 350);
+        if (anchor || !hasRows) status.hidden = false;
+        else timer = setTimeout(() => { status.hidden = false; }, 350);
       }
       try {
         return await task();
