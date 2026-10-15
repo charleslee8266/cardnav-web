@@ -24,7 +24,7 @@ import { buildSeoContext } from '../../../seo.js';
 import { isIndexableGatewayModel } from '../../../seo-routes.js';
 import { publicSiteUrl } from '../../../site.js';
 import { loadGatewayModelDetail } from '../../../store.js';
-import { selectModelSiteQuotes } from '../../../model-site-quotes.js';
+import { MODEL_SITE_MIN_SCORE_OPTIONS, selectModelSiteQuotes } from '../../../model-site-quotes.js';
 import Sponsors from '../../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
@@ -40,7 +40,8 @@ const unitOptions = priceComparisonOptions(detail.sites.flatMap(site => site.pri
 const requestedUnit = Astro.url.searchParams.get('unit');
 const initialUnit = unitOptions.find(([key]) => key === requestedUnit)?.[0] || '';
 const initialQuery = (Astro.url.searchParams.get('q') || '').trim();
-const quotes = selectModelSiteQuotes(detail.sites, { query: initialQuery, unit: initialUnit }).map(({ site, price, pinKind }) => ({ ...site, pricesForModel: [price], pinKind }));
+const initialMinScore = MODEL_SITE_MIN_SCORE_OPTIONS.find(score => String(score) === Astro.url.searchParams.get('minScore'));
+const quotes = selectModelSiteQuotes(detail.sites, { query: initialQuery, unit: initialUnit, minScore: initialMinScore }).map(({ site, price, pinKind }) => ({ ...site, pricesForModel: [price], pinKind }));
 const sites = quotes.slice(0, MODEL_SITE_PAGE_SIZE);
 const canonicalModelPath = gatewayModelPath(model.modelId);
 if (rawModelIdParam !== model.modelId) return Astro.redirect(Astro.locals.localizePath(canonicalModelPath), 301);
@@ -71,6 +72,7 @@ const modelSiteTableConfig = {
   labels: {
     sequence: t.labels.sequence,
     basicInfo: t.llmGateway.basicInfo,
+    score: t.labels.score,
     unit: t.llmGateway.unit,
     inputPrice: t.llmGateway.inputPrice,
     outputPrice: t.llmGateway.outputPrice,
@@ -158,6 +160,12 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
             {unitOptions.map(([key, price]) => <option value={key} selected={key === initialUnit}>{displayPriceUnit(price.unit, price.currency, t.llmGateway)}</option>)}
           </select>
         </label>
+        <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.minimumScore}</span>
+          <select class="select select-bordered" data-quote-min-score aria-label={t.llmGateway.minimumScore}>
+            <option value="" selected={initialMinScore === undefined}>{t.llmGateway.allScores}</option>
+            {MODEL_SITE_MIN_SCORE_OPTIONS.map(score => <option value={score} selected={score === initialMinScore}>{t.llmGateway.scoreAtLeast.replace('{score}', String(score))}</option>)}
+          </select>
+        </label>
       </FilterPopover>
       </DataWorkspaceToolbar>
       <FilterSummary data-quote-filter-summary class="w-full" clearLabel={t.shops.clearFilters} />
@@ -166,7 +174,7 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
     <DataTable
       variant="gatewayModelSites"
       emptyHidden={sites.length > 0}
-      emptyText={t.llmGateway.noPriceData}
+      emptyText={initialQuery || initialUnit || initialMinScore !== undefined ? t.llmGateway.priceFilterEmpty : t.llmGateway.noPriceData}
       totalCount={quotes.length}
       summaryRenderedCount={sites.length}
       summaryText={t.labels.displaySummary}
@@ -177,6 +185,7 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
         <DataTableHeader label={t.llmGateway.basicInfo} helpTip={t.llmGateway.publicPriceSourceHint} sortKey="name" />
+        <DataTableHeader label={t.labels.score} helpTip={t.llmGateway.gatewayScoreTip} helpLabel={t.llmGateway.gatewayScoreHelpLabel} sortKey="score" sortType="number" align="right" />
         <DataTableHeader label={t.llmGateway.group} sortKey="group" />
         <DataTableHeader label={t.llmGateway.unit} sortKey="unit" />
         <DataTableHeader label={t.llmGateway.inputPrice} sortKey="inputPrice" sortType="number" align="right" />
@@ -206,10 +215,11 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
             detailHref={linkTo(`/llm-gateway/${site.slug}`)}
             clickAttrs={gatewaySiteClickAttrs(site)}
             openAttrs={gatewaySiteOpenAttrs(site)}
-            showScore={false}
+            scoreLabel={t.labels.score}
             rowAttrs={{
               'data-pin-kind': site.pinKind,
               'data-sort-name': site.name,
+              'data-sort-score': site.siteScore ?? '',
               'data-sort-group': site.pricesForModel[0]?.groupName || '',
               'data-sort-unit': unitSortValue,
               'data-sort-input-price': String(inputSortValue),

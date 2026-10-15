@@ -9,7 +9,7 @@ function price(groupId: string, inputPrice: number | null, currency = 'USD') {
 }
 function site(id: string, prices: PublicGatewayPriceRow[], sponsor = false, supportPoints = 0) {
   return { id, slug: id, name: id, host: `${id}.test`, url: `https://${id}.test`, sponsor,
-    supportPoints, supportTotalCents: 0, pricesForModel: prices } as PublicGatewayModelSiteRow;
+    supportPoints, supportTotalCents: 0, siteScore: 0, pricesForModel: prices } as PublicGatewayModelSiteRow;
 }
 
 test('合作和赞赏各按站点分配十个名额，每站最多两个分组，超额站保留价格顺序', () => {
@@ -43,4 +43,29 @@ test('更改排序重新选择分组并保持合作置顶，分页不会重置�
   assert.deepEqual(quotes.map(q => [q.site.id,q.price.groupId]), [['partner','c'],['partner','b'],['ordinary','c'],['ordinary','b']]);
   assert.equal(quotes.slice(0,3).length,3);
   assert.equal(quotes.slice(0,50).length,4);
+});
+
+
+test('最低评分筛选覆盖完整报价集，在合作置顶和每站分组限额之前执行，保留门槛值', () => {
+  const sites = [
+    { ...site('low-partner', [price('a', 1)], true), siteScore: 59.9 },
+    { ...site('boundary', [price('a', 2), price('b', 3), price('c', 4)]), siteScore: 60 },
+    { ...site('high', [price('a', 5)]), siteScore: 90 },
+    { ...site('unknown', [price('a', 6)]), siteScore: null },
+  ];
+  assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 60 }).map(q => q.site.id), ['boundary', 'boundary', 'high']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 90 }).map(q => q.site.id), ['high']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { minScore: 90, query: 'boundary' }), []);
+  assert.equal(selectModelSiteQuotes(sites).length, 5);
+});
+
+test('评分按数值排序，合作站仍置顶，恢复默认时回到价格顺序', () => {
+  const sites = [
+    { ...site('cheap-low', [price('a', 1)]), siteScore: 9 },
+    { ...site('expensive-high', [price('a', 5)]), siteScore: 80 },
+    { ...site('partner', [price('a', 3)], true), siteScore: 20 },
+  ];
+  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (b.score ?? 0) - (a.score ?? 0) }).map(q => q.site.id), ['partner', 'expensive-high', 'cheap-low']);
+  assert.deepEqual(selectModelSiteQuotes(sites, { compare: (a, b) => (a.score ?? 0) - (b.score ?? 0) }).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
+  assert.deepEqual(selectModelSiteQuotes(sites).map(q => q.site.id), ['partner', 'cheap-low', 'expensive-high']);
 });

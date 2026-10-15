@@ -1,3 +1,4 @@
+import { createScoreDisplay } from '../data-display.js';
 import { gatewayModelPath } from '../models/routes.js';
 import { renderFilterSummary } from './filter-summary.js';
 /*
@@ -145,6 +146,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       sortSupport: Number(site.supportPoints) || 0,
       sortSequence: index + 1,
       sortName: site.name || '',
+      sortScore: site.siteScore ?? '',
       sortGroup: prices[0]?.groupName || '',
       sortUnit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
       sortInputPrice: firstFinite(prices.map(price => price.inputPrice)),
@@ -215,6 +217,9 @@ import { GatewayFavorites } from './GatewayFavorites.js';
       support.append(el('strong', '', Number(site.supportPoints).toLocaleString(undefined, { maximumFractionDigits: 2 })));
       textWrap.append(support);
     }
+    const scoreCell = tableCell(labels.score || '', 'right', 'font-mono');
+    scoreCell.append(createScoreDisplay(site.siteScore));
+    row.append(scoreCell);
     row.append(groupCell(prices[0]));
     row.append(priceStackCell(labels.unit || '', prices, price => displayPriceUnit(price.unit || '', price.currency)));
     row.append(priceStackCell(labels.inputPrice || '', prices, price => formatPrice(price.inputPrice)));
@@ -227,6 +232,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   const searchInput = root.querySelector('[data-gateway-detail-search]');
   const unitSelect = root.querySelector('[data-quote-unit]');
   const groupSelect = root.querySelector('[data-quote-group]');
+  const minScoreSelect = root.querySelector('[data-quote-min-score]');
   const items = config.items || [];
   let sort = null;
   let visibleLimit = Number(config.pageSize) || 100;
@@ -247,7 +253,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
 
   function render() {
     const unit = unitSelect?.value || '';
-    renderFilterSummary(root.querySelector('[data-quote-filter-summary]'), [unitSelect, groupSelect].filter(Boolean).map(input => ({ input, label: () => input.selectedOptions[0]?.textContent || '' })), {
+    renderFilterSummary(root.querySelector('[data-quote-filter-summary]'), [unitSelect, groupSelect, minScoreSelect].filter(Boolean).map(input => ({ input, label: () => input.selectedOptions[0]?.textContent || '' })), {
       clearLabel: config.clearFilters,
       countElement: root.querySelector('[data-filter-count]'),
       onChange: resetAndRender,
@@ -256,7 +262,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     let entries;
     if (tableType === 'modelSites') {
       entries = selectModelSiteQuotes(items, {
-        query, unit,
+        query, unit, minScore: minScoreSelect?.value ? Number(minScoreSelect.value) : undefined,
         compare: (a, b) => compare(a, b, sort?.key || 'inputPrice', sort?.direction || 'asc'),
         unitLabel: price => displayPriceUnit(price.unit, price.currency),
       });
@@ -275,7 +281,11 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     favorites.sync(root);
     if (summary) summary.textContent = config.displaySummary.replace('{rendered}', String(Math.min(visibleLimit, entries.length))).replace('{total}', String(entries.length));
     button?.classList.toggle('hidden', visibleLimit >= entries.length);
-    root.querySelector('.data-table-empty-state')?.classList.toggle('hidden', entries.length > 0);
+    const emptyState = root.querySelector('.data-table-empty-state');
+    if (emptyState) {
+      emptyState.classList.toggle('hidden', entries.length > 0);
+      emptyState.textContent = query || unit || groupSelect?.value || minScoreSelect?.value ? config.filterEmpty : config.noPriceData;
+    }
     window.updateDataTableHeaders?.(table, sort);
 
   }
@@ -286,6 +296,10 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     if (unitSelect) {
       const unit = params.get('unit');
       unitSelect.value = [...unitSelect.options].some(option => option.value === unit) ? unit : '';
+    }
+    if (minScoreSelect) {
+      const score = params.get('minScore');
+      minScoreSelect.value = [...minScoreSelect.options].some(option => option.value === score) ? score : '';
     }
     if (groupSelect) {
       const group = params.has('group') ? JSON.stringify(params.get('group')) : '';
@@ -299,15 +313,17 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     const query = (searchInput?.value || '').trim();
     if (query) url.searchParams.set(searchKey, query); else url.searchParams.delete(searchKey);
     if (unitSelect?.value) url.searchParams.set('unit', unitSelect.value); else url.searchParams.delete('unit');
+    if (minScoreSelect?.value) url.searchParams.set('minScore', minScoreSelect.value); else if (minScoreSelect) url.searchParams.delete('minScore');
     if (groupSelect?.value) url.searchParams.set('group', JSON.parse(groupSelect.value)); else url.searchParams.delete('group');
     const next = `${url.pathname}${url.search}${url.hash}`;
     if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) window.history[replace ? 'replaceState' : 'pushState'](null, '', next);
   }
 
   function resetAndRender() { writeFilterQuery(); visibleLimit = Number(config.pageSize) || 100; render(); }
-  root.addEventListener('filter-clear', () => { if (unitSelect) unitSelect.value = ''; if (groupSelect) groupSelect.value = ''; resetAndRender(); });
+  root.addEventListener('filter-clear', () => { if (unitSelect) unitSelect.value = ''; if (groupSelect) groupSelect.value = ''; if (minScoreSelect) minScoreSelect.value = ''; resetAndRender(); });
   unitSelect?.addEventListener('change', resetAndRender);
   groupSelect?.addEventListener('change', resetAndRender);
+  minScoreSelect?.addEventListener('change', resetAndRender);
   let timer;
   searchInput?.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(resetAndRender, 180); });
   button?.addEventListener('click', () => { visibleLimit += Number(config.pageSize) || 100; render(); });

@@ -8,23 +8,28 @@ export type ModelSiteQuote = {
   price: PublicGatewayPriceRow;
   index: number;
   name: string;
+  score: number | null;
   group: string;
   unit: string;
   pinKind: 'partner' | 'support' | '';
 };
 
+export const MODEL_SITE_MIN_SCORE_OPTIONS = [20, 40, 60, 80, 90] as const;
+
 /** Select quotes after filtering and ordering, then allocate pin slots per site. */
 export function selectModelSiteQuotes(sites: PublicGatewayModelSiteRow[], options: {
   query?: string;
   unit?: string;
+  minScore?: number;
   compare?: (a: ModelSiteQuote, b: ModelSiteQuote) => number;
   unitLabel?: (price: PublicGatewayPriceRow) => string;
 } = {}): ModelSiteQuote[] {
   const query = (options.query || '').trim().toLowerCase();
   const entries: ModelSiteQuote[] = sites.flatMap((site, index) => {
+    if (options.minScore !== undefined && (site.siteScore === null || !Number.isFinite(site.siteScore) || site.siteScore < options.minScore)) return [];
     if (query && ![site.name, site.host, site.url].some(value => value.toLowerCase().includes(query))) return [];
     return site.pricesForModel.filter(price => matchesPriceUnit(price, options.unit || '')).map(price => ({
-      site, price, index, name: site.name, group: price.groupName, pinKind: '' as const,
+      site, price, index, name: site.name, score: site.siteScore, group: price.groupName, pinKind: '' as const,
       unit: options.unitLabel?.(price) || price.unit,
     }));
   });

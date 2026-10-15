@@ -62,7 +62,8 @@
 .gateway-model-table th[data-column-key="releaseDate"] { width: 132px; min-width: 132px; }
 .gateway-model-table th[data-column-key="model"] { width: 45%; }
 .data-table-gateway-prices { min-width: 900px; }
-.data-table-gateway-model-sites { min-width: 1000px; }
+.data-table-gateway-model-sites { min-width: 1132px; }
+.data-table-gateway-model-sites th[data-column-key="score"] { width: 132px; min-width: 132px; }
 .data-table-gateway-prices th[data-column-key$="Price"], .data-table-gateway-model-sites th[data-column-key$="Price"] { min-width: 116px; }
 .data-table-gateway-prices th[data-column-key="group"], .data-table-gateway-model-sites th[data-column-key="group"] { width: 170px; min-width: 130px; }
 .data-table-gateway-prices th[data-column-key="model"], .data-table-gateway-model-sites th[data-column-key="name"] { width: 28%; }
