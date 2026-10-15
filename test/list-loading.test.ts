@@ -56,7 +56,7 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
-test('fast requests do not flash; slow requests keep existing rows and clear busy after completion', async () => {
+test('floating loading is delayed while busy feedback is immediate; completion clears both', async () => {
   const { root, rows, loading, elapse } = setup();
   await loading.run(async () => {});
   const status = root.children[0];
@@ -65,6 +65,7 @@ test('fast requests do not flash; slow requests keep existing rows and clear bus
   const request = deferred();
   const run = loading.run(() => request.promise);
   assert.equal(root.attributes['aria-busy'], 'true');
+  assert.equal(root.dataset.listLoading, 'true');
   assert.equal(status.hidden, true);
   elapse();
   assert.equal(status.hidden, false);
@@ -95,12 +96,11 @@ test('load more and empty tables report loading immediately in their own regions
 });
 
 test('overlapping requests retain busy until all finish, report failure and allow retry', async () => {
-  const { root, rows, loading, elapse } = setup();
+  const { root, rows, loading } = setup();
   const first = deferred();
   const second = deferred();
   const a = loading.run(() => first.promise);
   const b = loading.run(() => second.promise);
-  elapse();
   first.reject(new Error('offline'));
   await assert.rejects(a, /offline/);
   assert.equal(root.attributes['aria-busy'], 'true');

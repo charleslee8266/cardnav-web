@@ -27,15 +27,14 @@ export function createListLoading(root) {
         if (anchor) anchor.before(status);
         else if (!hasRows && root.querySelector('table')) root.querySelector('table').after(status);
         else root.prepend(status);
-        status.hidden = true;
+        status.hidden = hasRows && !anchor;
         status.dataset.state = 'loading';
         message.textContent = document.body.dataset.listLoading || 'Loading…';
         root.setAttribute('aria-busy', 'true');
         busyScopes.set(busyScope, (busyScopes.get(busyScope) || 0) + 1);
         busyScope.dataset.listLoading = 'true';
         root.dataset.listLoadState = 'loading';
-        if (anchor || !hasRows) status.hidden = false;
-        else timer = setTimeout(() => { status.hidden = false; }, 350);
+        if (status.hidden) timer = setTimeout(() => { status.hidden = false; }, 100);
       }
       try {
         return await task();
