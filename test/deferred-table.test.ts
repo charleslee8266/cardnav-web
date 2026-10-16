@@ -10,6 +10,7 @@ test('deferred sorting waits for complete data, preserves state on failure and r
   let visibleRows = [row(1), row(9)];
   const initialRows = visibleRows.slice();
   let disabled = false;
+  let replacements = 0;
   let headerSort: unknown = null;
   const button = { setAttribute() { disabled = true; }, removeAttribute() { disabled = false; }, classList: { toggle() {} } };
   const scope = {
@@ -17,7 +18,7 @@ test('deferred sorting waits for complete data, preserves state on failure and r
     syncTableSortHeaders: (_table: unknown, sort: unknown) => { headerSort = sort; },
     createListLoading: () => ({ run: (task: () => Promise<unknown>) => task() }),
     setTableRowSequence: (element: ReturnType<typeof row>, index: number) => { element.dataset.sequence = String(index); },
-    fetch: async () => ({ ok: false, status: 503, json: async () => ({ items: [{ score: 50 }, { score: 20 }], offset: 2, totalCount: 4 }) }),
+    fetch: async () => ({ ok: false, status: 503, json: async () => ({ items: [{ score: 9 }, { score: 50 }, { score: 20 }, { score: 7 }], totalCount: 4 }) }),
     HTMLElement: class {}, window: {},
   };
   const create = vm.runInNewContext(
@@ -25,7 +26,7 @@ test('deferred sorting waits for complete data, preserves state on failure and r
   );
   const controller = create({
     table: { closest: () => ({}) },
-    tbody: { querySelectorAll: () => initialRows, replaceChildren: (...rows: ReturnType<typeof row>[]) => { visibleRows = rows; } },
+    tbody: { querySelectorAll: () => initialRows, append: (...rows: ReturnType<typeof row>[]) => { visibleRows.push(...rows); }, replaceChildren: (...rows: ReturnType<typeof row>[]) => { replacements++; visibleRows = rows; } },
     button, totalCount: 4, pageSize: 2, apiUrl: '/test',
     entryFromRow: (element: ReturnType<typeof row>, index: number) => ({ index, row: element, sort: { score: element.score } }),
     entryFromItem: (item: { score: number }, index: number) => ({ index, row: row(item.score), sort: { score: item.score } }),
@@ -39,17 +40,23 @@ test('deferred sorting waits for complete data, preserves state on failure and r
   assert.equal(controller.state.entries.length, 2);
   assert.equal(disabled, false);
   assert.deepEqual(visibleRows, initialRows);
-  scope.fetch = async () => ({ ok: true, status: 200, json: async () => ({ items: [{ score: 50 }, { score: 20 }], offset: 2, totalCount: 4 }) });
+  scope.fetch = async () => ({ ok: true, status: 200, json: async () => ({ items: [{ score: 9 }, { score: 50 }, { score: 20 }, { score: 7 }], totalCount: 4 }) });
   await controller.sortFromButton(control);
+  assert.deepEqual(Array.from(controller.state.entries, (entry: any) => entry.row.score), [9, 50, 20, 7]);
   assert.deepEqual(visibleRows.map(item => item.score), [50, 20]);
   assert.equal(controller.state.sort.direction, 'desc');
   await controller.sortFromButton(control);
-  assert.deepEqual(visibleRows.map(item => item.score), [1, 9]);
+  assert.deepEqual(visibleRows.map(item => item.score), [7, 9]);
   assert.equal(controller.state.sort.direction, 'asc');
   await controller.sortFromButton(control);
   assert.equal(headerSort, null);
-  assert.deepEqual(visibleRows.map(item => item.score), [1, 9]);
+  assert.deepEqual(visibleRows.map(item => item.score), [9, 50]);
+  const firstRows = visibleRows.slice();
+  const replacementsBeforeMore = replacements;
   await controller.loadMore();
-  assert.deepEqual(visibleRows.map(item => item.score), [1, 9, 50, 20]);
+  assert.equal(replacements, replacementsBeforeMore);
+  assert.equal(visibleRows[0], firstRows[0]);
+  assert.equal(visibleRows[1], firstRows[1]);
+  assert.deepEqual(visibleRows.map(item => item.score), [9, 50, 20, 7]);
   assert.deepEqual(visibleRows.map(item => item.dataset.sequence), ['1', '2', '3', '4']);
 });

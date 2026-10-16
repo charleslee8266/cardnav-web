@@ -281,7 +281,8 @@ export const zhMessages = {
     displayOptions: '显示',
     platformHint: '平台商家通常更有保障，遇到交易问题可向所属平台投诉。自建站请谨慎核实。',
     platform: '平台', selfHosted: '自建站', onlyPlatform: '只看平台商家',
-    onlyFavorites: '仅看收藏',
+    listKind: '商家类型',
+    listKindLabels: { partner: '合作', support: '赞赏', favorite: '收藏', other: '其他' },
     clearFilters: '清除筛选',
     done: '完成',
 

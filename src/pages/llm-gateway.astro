@@ -3,6 +3,7 @@ import DataWorkspaceToolbar from '../components/DataWorkspaceToolbar.astro';
 import FilterSummary from '../components/FilterSummary.astro';
 import { gatewayModelPath } from '../models/routes.js';
 import { loadGatewayFamilyFilterOptions, loadModelFamilyCatalog, loadGatewayPaymentFilterOptions, loadGatewayProviderFilterOptions } from '../models/family-catalog-store.js';
+import ListKindFilter from '../components/ListKindFilter.astro';
 import MultiSelectFilter from '../components/MultiSelectFilter.astro';
 import { familyRelatedPaths } from '../models/family-navigation.js';
 import ProviderLabel from '../components/ProviderLabel.astro';
@@ -121,8 +122,8 @@ const gatewayHomeConfig = {
   displaySummary: t.labels.displaySummary,
   clearFilters: t.shops.clearFilters,
   dataStatusLabels: t.llmGateway.dataStatusLabels,
-  sitesApi: `/api/llm-gateway/sites.json?offset=${GATEWAY_SITE_PAGE_SIZE}&locale=${encodeURIComponent(Astro.locals.locale)}`,
-  modelsApi: `/api/llm-gateway/models.json?offset=${GATEWAY_MODEL_PAGE_SIZE}&locale=${encodeURIComponent(Astro.locals.locale)}`,
+  sitesApi: `/api/llm-gateway/sites.json?locale=${encodeURIComponent(Astro.locals.locale)}`,
+  modelsApi: `/api/llm-gateway/models.json?locale=${encodeURIComponent(Astro.locals.locale)}`,
   detailLabel: t.llmGateway.viewDetail,
   openLabel: t.actions.open,
   sequenceLabel: t.labels.sequence,
@@ -190,6 +191,7 @@ const gatewayHomeConfig = {
             </label>
             <label data-gateway-control="models" class="data-workspace-search" hidden><input data-home-model-search type="search" class="input input-bordered w-full" placeholder={t.llmGateway.modelSearchPlaceholder} aria-label={t.llmGateway.modelSearchPlaceholder} /></label>
             <div data-gateway-control="sites"><FilterPopover id="gatewaySiteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+            <ListKindFilter />
             <MultiSelectFilter name="family" label={t.llmGateway.familyFilter} allLabel={t.llmGateway.allFamilies} options={modelFilterOptions.map(name => ({ value: gatewayProviderSlug(name), label: name }))}>
               {modelFilterOptions.map(name => <ModelFamilyLabel slot={gatewayProviderSlug(name)} name={name} />)}
             </MultiSelectFilter>
@@ -197,7 +199,6 @@ const gatewayHomeConfig = {
               {paymentFilterOptions.map(value => <span slot={value} class="data-provider">{paymentIcon(value).src && <img src={paymentIcon(value).src} alt="" width="16" height="16" />}{paymentLabelFor(value)}</span>)}
             </MultiSelectFilter>
             <MultiSelectFilter name="status" label={t.llmGateway.statusFilter} allLabel={t.llmGateway.allStatuses} options={['hasPrice', 'noPrice', 'noData'].map(value => ({ value, label: t.llmGateway.dataStatusLabels[value] }))} />
-            <label class="label flex gap-2 text-sm"><input data-home-site-favorites type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label>
             </FilterPopover></div>
             <div data-gateway-control="models" hidden><FilterPopover id="gatewayModelFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
               <MultiSelectFilter name="model-family" label={t.llmGateway.familyFilter} allLabel={t.llmGateway.allFamilies} options={modelFilterOptions.map(name => ({ value: gatewayProviderSlug(name), label: name }))}>

@@ -1,7 +1,6 @@
 /**
  * 文件说明: 在原排序基础上为商家列表分配合作、赞赏和收藏展示名额。
  */
-import { MAX_PINNED_PARTNER_SITES, MAX_PINNED_SUPPORT_SITES } from './list-ranking-policy.js';
 import { pinListRows } from './list-pinning.js';
 
 export type SitePinRow = {
@@ -9,14 +8,14 @@ export type SitePinRow = {
   supportTotalCents: number;
   supportPoints?: number;
   favorite: boolean;
+  defaultIndex?: number;
 };
 
-export function pinSiteRows<Row extends SitePinRow>(rows: Row[], onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void, enabled = true): Row[] {
+export function pinSiteRows<Row extends SitePinRow>(rows: Row[], onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void, manualSort = false): Row[] {
   return pinListRows(rows, {
-    enabled,
+    manualSort,
+    defaultOrder: (a, b) => (a.defaultIndex ?? 0) - (b.defaultIndex ?? 0),
     site: row => row,
-    partner: { rows: MAX_PINNED_PARTNER_SITES },
-    support: { rows: MAX_PINNED_SUPPORT_SITES },
     favorites: remaining => remaining.filter(row => row.favorite),
     onPin,
   });

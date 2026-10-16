@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { prioritizeShopProductRows, type ShopPinnedRow } from '../src/shop-sponsored-pinning.js';
 function row(key: string, sponsor = false, supportPoints = 0): ShopPinnedRow {
-  return { productFavoriteKey: key, siteFavoriteKey: key, sponsor, supportPoints };
+  return { id: key, productFavoriteKey: key, siteFavoriteKey: key, score: 0, sponsor, supportPoints };
 }
 
 test('高积分商家在原评分顺序末尾也能获得两件置顶，余下商品回到原位置', () => {
@@ -32,7 +32,7 @@ test('partner pins precede support and favorites while overflow keeps its place'
   const partners = Array.from({ length: 12 }, (_, i) => row(`partner-${i}`, true));
   const rows = [row('ordinary'), row('low', false, 100), row('favorite'), row('high', false, 50000), ...partners];
   const sorted = prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(['favorite']), favoriteSiteKeys: new Set() });
-  assert.deepEqual(sorted.map(item => item.productFavoriteKey), [...partners.slice(0, 10).map(item => item.productFavoriteKey), 'high', 'low', 'favorite', 'ordinary', 'partner-10', 'partner-11']);
+  assert.deepEqual(sorted.map(item => item.productFavoriteKey), ['partner-0', 'partner-1', 'partner-10', 'partner-11', 'partner-2', 'partner-3', 'partner-4', 'partner-5', 'partner-6', 'partner-7', 'favorite', 'ordinary', 'low', 'high', 'partner-8', 'partner-9']);
   assert.equal(new Set(sorted).size, rows.length);
 });
 test('partners and supported merchants sort by support points and preserve ties', () => {
@@ -43,12 +43,12 @@ test('partners and supported merchants sort by support points and preserve ties'
 test('ordinary merchant favorites keep their bounded allocation', () => {
   const ordinary = Array.from({ length: 12 }, (_, i) => ({ ...row(`ordinary-${i}`), siteFavoriteKey: 'favorite-site' }));
   const sorted = prioritizeShopProductRows([row('normal'), ...ordinary], { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(['favorite-site']) });
-  assert.deepEqual(sorted.slice(0, 6).map(item => item.productFavoriteKey), ['ordinary-0', 'ordinary-1', 'ordinary-2', 'ordinary-3', 'ordinary-4', 'normal']);
-  assert.deepEqual(sorted.slice(6).map(item => item.productFavoriteKey), ordinary.slice(5).map(item => item.productFavoriteKey));
+  assert.deepEqual(sorted.slice(0, 4).map(item => item.productFavoriteKey), ['ordinary-0', 'ordinary-1', 'ordinary-10', 'normal']);
+  assert.deepEqual(sorted.slice(4).map(item => item.productFavoriteKey), ordinary.filter(item => !['ordinary-0','ordinary-1','ordinary-10'].includes(item.id)).map(item => item.productFavoriteKey));
   assert.equal(sorted.length, 13);
 });
 
-test('收藏商家总数不限，逐件收藏的商品全部提前', () => {
+test('收藏商家总数不限，逐件收藏商品与商家入选商品同分时按ID排列', () => {
   const merchants = Array.from({ length: 3 }, (_, site) => Array.from({ length: 6 }, (_, index) => ({
     ...row(`merchant-${site}-${index}`), siteFavoriteKey: `site-${site}`,
   }))).flat();
@@ -57,9 +57,8 @@ test('收藏商家总数不限，逐件收藏的商品全部提前', () => {
     favoriteProductKeys: new Set(individuallyFavorited.map(item => item.productFavoriteKey)),
     favoriteSiteKeys: new Set(['site-0', 'site-1', 'site-2']),
   });
-  assert.deepEqual(sorted.slice(0, 12), individuallyFavorited);
-  assert.equal(sorted.slice(12, 27).filter(item => item.siteFavoriteKey.startsWith('site-')).length, 15);
-  assert.equal(sorted[27].productFavoriteKey, 'normal');
+  assert.deepEqual(sorted.slice(0, 21), [...[0,1,10,11,2,3,4,5,6,7,8,9].map(index => individuallyFavorited[index]), ...merchants.filter((_, index) => index % 6 < 3)]);
+  assert.equal(sorted[21].productFavoriteKey, 'normal');
 });
 
 for (const [kind, siteLimit] of [['partner', 2], ['support', 2]] as const) {
@@ -76,12 +75,12 @@ for (const [kind, siteLimit] of [['partner', 2], ['support', 2]] as const) {
       favoriteProductKeys: new Set([`${kind}-0-3`]),
       favoriteSiteKeys: new Set(),
     }, (item, kind) => kinds.set(item, kind));
-    const expectedPins = merchants.filter((_, index) => index % 4 < siteLimit).slice(0, 10);
+    const expectedPins = merchants.filter((_, index) => index % 4 === 0 || (index % 4 === 1 && index < 16));
     assert.deepEqual(sorted.slice(0, 10), expectedPins);
     for (const item of expectedPins) assert.equal(kinds.get(item), kind);
     assert.equal(kinds.get(merchants[3]), 'favorite');
     assert.equal(kinds.get(merchants[2]), '');
-    assert.equal(kinds.get(merchants[20]), '');
+    assert.equal(kinds.get(merchants[21]), '');
     assert.equal(sorted[10].productFavoriteKey, `${kind}-0-3`);
     assert.equal(sorted[11].productFavoriteKey, 'normal');
     assert.equal(new Set(sorted).size, rows.length);
@@ -89,3 +88,35 @@ for (const [kind, siteLimit] of [['partner', 2], ['support', 2]] as const) {
     assert.deepEqual(sorted.slice(12), merchants.filter(item => !pins.has(item)));
   });
 }
+
+
+test('收藏商家各选评分最高的三件，与单独收藏商品合并按评分排序并保留超额记录', () => {
+  const a = Array.from({ length: 6 }, (_, index) => ({ ...row(`a-${index}`), siteFavoriteKey: 'a', score: 100 - index }));
+  const b = Array.from({ length: 6 }, (_, index) => ({ ...row(`b-${index}`), siteFavoriteKey: 'b', score: 80 - index }));
+  const individual = { ...row('individual'), score: 90 };
+  const normal = { ...row('normal'), score: 110 };
+  const rows = [normal, b[5], ...a, individual, ...b.slice(0, 5)];
+  const sorted = prioritizeShopProductRows(rows, {
+    favoriteProductKeys: new Set(['individual', 'a-0', 'a-5']),
+    favoriteSiteKeys: new Set(['a', 'b']),
+  });
+  assert.deepEqual(sorted, [...a.slice(0, 3), a[5], individual, ...b.slice(0, 3), normal, b[5], ...a.slice(3, 5), ...b.slice(3, 5)]);
+  assert.equal(new Set(sorted).size, rows.length);
+});
+
+test('手动排序每商家选当前前两件，收藏保持普通排序', () => {
+  const input = [
+    { ...row('ordinary'), price: 0 },
+    { ...row('support-cheap', false, 5), siteFavoriteKey: 'support', price: 1 },
+    { ...row('support-next', false, 5), siteFavoriteKey: 'support', price: 2 },
+    { ...row('favorite'), price: 3 },
+    { ...row('partner-cheap', true, 1), siteFavoriteKey: 'partner', price: 4 },
+    { ...row('partner-next', true, 1), siteFavoriteKey: 'partner', price: 5 },
+  ];
+  const kinds = new Map<string, string>();
+  const output = prioritizeShopProductRows(input, {
+    favoriteProductKeys: new Set(['favorite']), favoriteSiteKeys: new Set(['support']),
+  }, (row, kind) => kinds.set(row.productFavoriteKey, kind), true);
+  assert.deepEqual(output.map(row => row.productFavoriteKey), ['partner-cheap', 'partner-next', 'support-cheap', 'support-next', 'ordinary', 'favorite']);
+  assert.deepEqual(output.map(row => kinds.get(row.productFavoriteKey)), ['partner', 'partner', 'support', 'support', '', '']);
+});

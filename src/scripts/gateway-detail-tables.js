@@ -1,3 +1,4 @@
+import { matchesListKinds } from '../list-kind-filter.js';
 import { syncTableSortHeaders } from './table-sort-headers.js';
 import { nextTableSort } from '../table-sort.js';
 import { createScoreDisplay } from '../data-display.js';
@@ -33,7 +34,7 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   const tableType = config.type || root.dataset.gatewayDeferredTable || '';
   const favorites = new GatewayFavorites(root, { favorite: config.favoriteLabel, unfavorite: config.unfavoriteLabel }, () => { refreshFavorites(); });
 
-  function refreshFavorites() { render(); }
+  function refreshFavorites() { visibleLimit = Number(config.pageSize) || 100; render(); }
 
   function el(tagName, className, text) {
     const node = document.createElement(tagName);
@@ -235,9 +236,13 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   const unitSelect = root.querySelector('[data-quote-unit]');
   const groupSelect = root.querySelector('[data-quote-group]');
   const minScoreSelect = root.querySelector('[data-quote-min-score]');
+  const kindGroup = root.querySelector('[data-multi-filter="kind"]');
+  const selectedKinds = () => [...(kindGroup?.querySelectorAll('input:checked') || [])].map(input => input.value);
   const items = config.items || [];
   let sort = null;
   let visibleLimit = Number(config.pageSize) || 100;
+  let currentEntries = [];
+  let renderedCount = 0;
 
   function compare(left, right, key, direction = 'asc') {
     if (priceMetrics.includes(key)) {
@@ -255,7 +260,14 @@ import { GatewayFavorites } from './GatewayFavorites.js';
 
   function render() {
     const unit = unitSelect?.value || '';
-    renderFilterSummary(root.querySelector('[data-quote-filter-summary]'), [unitSelect, groupSelect, minScoreSelect].filter(Boolean).map(input => ({ input, label: () => input.selectedOptions[0]?.textContent || '' })), {
+    const kinds = selectedKinds();
+    const groupValue = groupSelect?.value || '';
+    const group = groupValue ? JSON.parse(groupValue) : null;
+    const minScore = minScoreSelect?.value ? Number(minScoreSelect.value) : undefined;
+    const kindInputs = [...(kindGroup?.querySelectorAll('input') || [])];
+    const kindSummary = kindGroup?.querySelector('[data-multi-summary]');
+    if (kindSummary) kindSummary.textContent = kinds.length ? `${kindSummary.dataset.emptyLabel} · ${kinds.length}` : kindSummary.dataset.emptyLabel;
+    renderFilterSummary(root.querySelector('[data-quote-filter-summary]'), [unitSelect, groupSelect, minScoreSelect, ...kindInputs].filter(Boolean).map(input => ({ input, label: () => input.type === 'checkbox' ? input.closest('label').textContent.trim() : input.selectedOptions[0]?.textContent || '' })), {
       clearLabel: config.clearFilters,
       countElement: root.querySelector('[data-filter-count]'),
       onChange: resetAndRender,
@@ -263,37 +275,47 @@ import { GatewayFavorites } from './GatewayFavorites.js';
     const query = (searchInput?.value || '').trim().toLowerCase();
     let entries;
     if (tableType === 'modelSites') {
-      entries = selectModelSiteQuotes(items, {
-        query, unit, minScore: minScoreSelect?.value ? Number(minScoreSelect.value) : undefined,
+      entries = selectModelSiteQuotes(items.filter(site => matchesListKinds(kinds, { sponsor: site.sponsor, supportPoints: Number(site.supportPoints) || 0, favorite: favorites.has(site.slug) })), {
+        query, unit, minScore,
         compare: sort ? (a, b) => compare(a, b, sort.key, sort.direction) : undefined,
         unitLabel: price => displayPriceUnit(price.unit, price.currency),
       });
     } else {
-      entries = items.filter(price => matchesPriceUnit(price, unit) && (!query || price.modelId.toLowerCase().includes(query)) && (!groupSelect || !groupSelect.value || price.groupId === JSON.parse(groupSelect.value))).map((price, index) => ({ price, index, group: price.groupName, model: price.modelId, unit: displayPriceUnit(price.unit, price.currency) }));
+      entries = items.filter(price => matchesPriceUnit(price, unit) && (!query || price.modelId.toLowerCase().includes(query)) && (!groupValue || price.groupId === group)).map((price, index) => ({ price, index, group: price.groupName, model: price.modelId, unit: displayPriceUnit(price.unit, price.currency) }));
     }
     if (sort && tableType !== 'modelSites') entries.sort((a, b) => compare(a, b, sort.key, sort.direction));
-    const rows = [];
-    entries.slice(0, visibleLimit).forEach((entry, index) => {
-      const row = tableType === 'modelSites' ? modelSiteRowElement({ ...entry.site, pricesForModel: [entry.price] }, index) : priceRowElement(entry.price, index);
-      if (tableType === 'modelSites') row.dataset.pinKind = entry.pinKind;
-      setTableRowSequence(row, index + 1);
-      rows.push(row);
-    });
-    tbody.replaceChildren(...rows);
-    favorites.sync(root);
-    if (summary) summary.textContent = config.displaySummary.replace('{rendered}', String(Math.min(visibleLimit, entries.length))).replace('{total}', String(entries.length));
-    button?.classList.toggle('hidden', visibleLimit >= entries.length);
+    currentEntries = entries;
+    renderEntries();
     const emptyState = root.querySelector('.data-table-empty-state');
     if (emptyState) {
       emptyState.classList.toggle('hidden', entries.length > 0);
-      emptyState.textContent = query || unit || groupSelect?.value || minScoreSelect?.value ? config.filterEmpty : config.noPriceData;
+      emptyState.textContent = query || unit || groupSelect?.value || minScoreSelect?.value || kinds.length ? config.filterEmpty : config.noPriceData;
     }
     syncTableSortHeaders(table, sort);
 
   }
 
+  function renderEntries(append = false) {
+    const limit = Math.min(visibleLimit, currentEntries.length);
+    const start = append ? renderedCount : 0;
+    const rows = currentEntries.slice(start, limit).map((entry, offset) => {
+      const index = start + offset;
+      const row = tableType === 'modelSites' ? modelSiteRowElement({ ...entry.site, pricesForModel: [entry.price] }, index) : priceRowElement(entry.price, index);
+      if (tableType === 'modelSites') row.dataset.pinKind = entry.pinKind;
+      setTableRowSequence(row, index + 1);
+      favorites.sync(row);
+      return row;
+    });
+    if (append) tbody.append(...rows);
+    else tbody.replaceChildren(...rows);
+    renderedCount = limit;
+    if (summary) summary.textContent = config.displaySummary.replace('{rendered}', String(limit)).replace('{total}', String(currentEntries.length));
+    button?.classList.toggle('hidden', visibleLimit >= currentEntries.length);
+  }
+
   function readFilterQuery() {
     const params = new URLSearchParams(window.location.search);
+    kindGroup?.querySelectorAll('input').forEach(input => { input.checked = params.getAll('kind').includes(input.value); });
     if (searchInput) searchInput.value = params.get(tableType === 'prices' ? 'model' : 'q') || '';
     if (unitSelect) {
       const unit = params.get('unit');
@@ -311,6 +333,8 @@ import { GatewayFavorites } from './GatewayFavorites.js';
 
   function writeFilterQuery(replace = false) {
     const url = new URL(window.location.href);
+    url.searchParams.delete('kind');
+    selectedKinds().forEach(value => url.searchParams.append('kind', value));
     const searchKey = tableType === 'prices' ? 'model' : 'q';
     const query = (searchInput?.value || '').trim();
     if (query) url.searchParams.set(searchKey, query); else url.searchParams.delete(searchKey);
@@ -322,13 +346,14 @@ import { GatewayFavorites } from './GatewayFavorites.js';
   }
 
   function resetAndRender() { writeFilterQuery(); visibleLimit = Number(config.pageSize) || 100; render(); }
-  root.addEventListener('filter-clear', () => { if (unitSelect) unitSelect.value = ''; if (groupSelect) groupSelect.value = ''; if (minScoreSelect) minScoreSelect.value = ''; resetAndRender(); });
+  kindGroup?.addEventListener('change', resetAndRender);
+  root.addEventListener('filter-clear', () => { kindGroup?.querySelectorAll('input').forEach(input => { input.checked = false; }); if (unitSelect) unitSelect.value = ''; if (groupSelect) groupSelect.value = ''; if (minScoreSelect) minScoreSelect.value = ''; resetAndRender(); });
   unitSelect?.addEventListener('change', resetAndRender);
   groupSelect?.addEventListener('change', resetAndRender);
   minScoreSelect?.addEventListener('change', resetAndRender);
   let timer;
   searchInput?.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(resetAndRender, 180); });
-  button?.addEventListener('click', () => { visibleLimit += Number(config.pageSize) || 100; render(); });
+  button?.addEventListener('click', () => { visibleLimit += Number(config.pageSize) || 100; renderEntries(true); });
   table.addEventListener('click', event => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target || target.closest('[data-inline-help]')) return;

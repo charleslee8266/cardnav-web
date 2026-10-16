@@ -31,10 +31,10 @@ function stickySortKey(table) {
   return table.dataset.tableStickyKey || '';
 }
 
-function pinTableRows(table, rows, enabled = true) {
+function pinTableRows(table, rows, manualSort = false) {
   const key = stickySortKey(table);
-  if (!key && enabled) return rows;
-  return pinSiteRows(rows.map(entry => ({ entry, sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: 0, supportPoints: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 })), (item, kind) => { item.entry.row.dataset.pinKind = kind; }, enabled).map(row => row.entry);
+  if (!key) return rows;
+  return pinSiteRows(rows.map(entry => ({ entry, defaultIndex: Number(entry.row.dataset.originalOrder), sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: 0, supportPoints: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 })), (item, kind) => { item.entry.row.dataset.pinKind = kind; }, manualSort).map(row => row.entry);
 }
 
 function updateSortButtons(table) {
@@ -135,7 +135,7 @@ function sortTable(table, nextSort) {
     const compared = String(leftValue).localeCompare(String(rightValue), 'zh-Hans-CN', { numeric: true });
     return compared === 0 ? left.index - right.index : compared * multiplier;
   });
-  pinTableRows(table, rows, false).forEach(({ row }, index) => {
+  pinTableRows(table, rows, true).forEach(({ row }, index) => {
       setTableRowSequence(row, index + 1);
       tbody.append(row);
     });

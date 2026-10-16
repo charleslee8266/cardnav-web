@@ -18,7 +18,7 @@
 .cooperation-details a { color:var(--coop-tone); text-underline-offset:3px; }
 .cooperation-details a:hover { text-decoration:underline; }
 .cooperation-card li+li { margin-top:6px; }
-.partnership-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:18px; }
+.partnership-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:auto; padding-top:18px; }
 .partnership-page .btn { height:auto; min-height:34px; padding:7px 12px; white-space:normal; text-align:center; font-size:13px; line-height:1.45; }
 .partnership-section { margin-top:24px; scroll-margin-top:100px; }
 .partnership-section>h3,.partnership-table-example>h3 { margin:0 0 14px; font-size:18px; font-weight:700; line-height:1.4; }
@@ -72,7 +72,7 @@
 .partnership-rule-body a:hover { text-decoration:underline; }
 .partnership-demo-identity { align-items:flex-start; }
 .partnership-demo-merchant { display:inline-flex; flex-wrap:wrap; align-items:center; gap:8px; }
-.partnership-demo-table { overflow:hidden; }
+.partnership-demo-table { margin-top:14px; overflow:hidden; }
 .partnership-demo-table .data-table thead th { padding:10px 12px; }
 .partnership-demo-merchant>strong { font-weight:650; }
 

@@ -1,0 +1,8 @@
+---
+import MultiSelectFilter from './MultiSelectFilter.astro';
+import { LIST_KINDS } from '../list-kind-filter.js';
+type Props = { name?: string };
+const { name = 'kind' } = Astro.props;
+const { listKind, listKindLabels } = Astro.locals.messages.shops;
+---
+<MultiSelectFilter name={name} label={listKind} allLabel={listKind} options={LIST_KINDS.map(value => ({ value, label: listKindLabels[value] }))} />

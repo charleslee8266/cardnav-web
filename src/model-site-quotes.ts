@@ -1,5 +1,4 @@
 import { matchesPriceUnit } from './gateway-display.js';
-import { MAX_PINNED_PARTNER_SITES, MAX_PINNED_SUPPORT_SITES, MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE } from './list-ranking-policy.js';
 import { pinListRows } from './list-pinning.js';
 import type { PublicGatewayModelSiteRow, PublicGatewayPriceRow } from './store.js';
 
@@ -44,10 +43,9 @@ export function selectModelSiteQuotes(sites: PublicGatewayModelSiteRow[], option
     return true;
   });
   return pinListRows(selected, {
-    enabled: !options.compare,
+    manualSort: Boolean(options.compare),
+    defaultOrder: (a, b) => a.index - b.index,
     site: entry => entry.site,
-    partner: { sites: MAX_PINNED_PARTNER_SITES, rowsPerSite: MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE, adjacentBySite: true },
-    support: { sites: MAX_PINNED_SUPPORT_SITES, rowsPerSite: MAX_PINNED_MODEL_QUOTE_GROUPS_PER_SITE, adjacentBySite: true },
     onPin: (entry, kind) => { entry.pinKind = kind === 'favorite' ? '' : kind; },
   });
 }

@@ -6,14 +6,7 @@ import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice
  */
 import 'dotenv/config';
 import pg from 'pg';
-import {
-  MAX_PINNED_PARTNER_PRODUCTS,
-  MAX_PINNED_PARTNER_PRODUCTS_PER_SITE,
-  MAX_PINNED_PARTNER_SITES,
-  MAX_PINNED_SUPPORT_PRODUCTS,
-  MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE,
-  MAX_PINNED_SUPPORT_SITES,
-} from './list-ranking-policy.js';
+import { MAX_PINNED_COMMERCIAL, MAX_PINNED_ROWS_PER_SITE } from './list-ranking-policy.js';
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
 export type PublicSiteRow = {
@@ -335,8 +328,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         product_count,
         in_stock_product_count,
         ROW_NUMBER() OVER (
-          PARTITION BY CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END
-          ORDER BY support_points DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
+          ORDER BY CASE WHEN sponsor THEN 0 WHEN support_points > 0 THEN 1 ELSE 2 END, support_points DESC, score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
         ) AS group_position
       FROM shop_sites
       WHERE status = 'online'
@@ -345,12 +337,12 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       SELECT * FROM ranked_sites
       ORDER BY
         CASE
-          WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES} THEN 0
-          WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
+          WHEN sponsor AND group_position <= ${MAX_PINNED_COMMERCIAL} THEN 0
+          WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_COMMERCIAL} THEN 1
           ELSE 2
         END,
-        CASE WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES}
-            OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES}
+        CASE WHEN sponsor AND group_position <= ${MAX_PINNED_COMMERCIAL}
+            OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_COMMERCIAL}
           THEN support_points END DESC NULLS LAST,
         score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
     `)
@@ -386,58 +378,36 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         AND shop_products.active = true
         ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
     ), site_pin_candidates AS (
-      SELECT candidate.id AS product_row_id, candidate.*, site.score AS site_score,
+      SELECT candidate.id AS product_row_id, candidate.*,
         site.support_points AS site_support_points, CASE WHEN site.sponsor THEN 0 ELSE 1 END AS pin_group
       FROM shop_sites site
       CROSS JOIN LATERAL (
-        SELECT id, site_id, score, in_stock, refreshed_at, category_name, name
+        SELECT id, site_id, score,
+          ROW_NUMBER() OVER (ORDER BY score DESC, id ASC) AS site_position
         FROM shop_products
         WHERE site_id = site.id AND active = TRUE
           ${options.inStockOnly ? 'AND in_stock = TRUE' : ''}
-        ORDER BY score DESC, in_stock DESC, refreshed_at DESC, category_name ASC, name ASC, id ASC
-        LIMIT CASE WHEN site.sponsor THEN ${MAX_PINNED_PARTNER_PRODUCTS_PER_SITE} ELSE ${MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE} END
+        ORDER BY score DESC, id ASC
+        LIMIT ${MAX_PINNED_ROWS_PER_SITE}
       ) candidate
       WHERE site.status = 'online' AND site.type = 'cardShop' AND (site.sponsor OR site.support_points > 0)
+    ), ranked_pin_sites AS (
+      SELECT site_id, ROW_NUMBER() OVER (PARTITION BY pin_group ORDER BY site_support_points DESC,
+        score DESC, product_row_id ASC) AS site_rank
+      FROM site_pin_candidates WHERE site_position = 1
     ), pin_candidates AS (
-      SELECT product_row_id, pin_group, site_support_points,
-        ROW_NUMBER() OVER (PARTITION BY pin_group ORDER BY site_support_points DESC,
-          score DESC, site_score DESC, in_stock DESC, refreshed_at DESC,
-          category_name ASC, name ASC, site_id ASC, product_row_id ASC) AS group_position
-      FROM site_pin_candidates
+      SELECT candidate.product_row_id, candidate.pin_group, candidate.site_support_points,
+        ROW_NUMBER() OVER (ORDER BY candidate.site_position, candidate.pin_group, ranked.site_rank) AS pin_position
+      FROM site_pin_candidates candidate
+      INNER JOIN ranked_pin_sites ranked ON ranked.site_id = candidate.site_id
     )
-    SELECT
-      base_products.product_row_id,
-      base_products.site_id,
-      base_products.site_name,
-      base_products.site_family,
-      base_products.site_url,
-      base_products.site_score,
-      base_products.site_sponsor,
-      base_products.site_support_total_cents,
-      base_products.site_support_points,
-      base_products.site_product_refresh_success_at,
-      base_products.category_name,
-      base_products.auto_category,
-      base_products.name,
-      base_products.price,
-      base_products.price_number,
-      base_products.price_unit,
-      base_products.product_url,
-      base_products.stock,
-      base_products.in_stock,
-      base_products.score,
-      base_products.refreshed_at
+    SELECT base_products.*,
+      CASE WHEN pinned.pin_position <= ${MAX_PINNED_COMMERCIAL} THEN pinned.pin_group ELSE 2 END AS display_group,
+      CASE WHEN pinned.pin_position <= ${MAX_PINNED_COMMERCIAL} THEN pinned.site_support_points END AS display_points
     FROM base_products
     LEFT JOIN pin_candidates AS pinned ON pinned.product_row_id = base_products.product_row_id
-    ORDER BY
-      CASE WHEN pinned.pin_group = 0 AND pinned.group_position <= ${MAX_PINNED_PARTNER_PRODUCTS} THEN 0
-        WHEN pinned.pin_group = 1 AND pinned.group_position <= ${MAX_PINNED_SUPPORT_PRODUCTS} THEN 1 ELSE 2 END,
-      CASE WHEN pinned.pin_group = 0 AND pinned.group_position <= ${MAX_PINNED_PARTNER_PRODUCTS}
-          OR pinned.pin_group = 1 AND pinned.group_position <= ${MAX_PINNED_SUPPORT_PRODUCTS}
-        THEN pinned.site_support_points END DESC NULLS LAST,
-      base_products.score DESC, base_products.site_score DESC, base_products.in_stock DESC,
-      base_products.refreshed_at DESC, base_products.category_name ASC, base_products.name ASC,
-      base_products.site_id ASC, base_products.product_row_id ASC
+    ORDER BY display_group, display_points DESC NULLS LAST,
+      base_products.score DESC, base_products.product_row_id ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
 
@@ -564,8 +534,7 @@ export async function loadGatewaySites(options: PublicListLimitOptions & { query
       gateway_sites.recent_model_families,
       gateway_sites.latest_price_fetched_at AS latest_gateway_refresh_at,
       ROW_NUMBER() OVER (
-        PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
-        ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+        ORDER BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END, gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
       ) AS group_position
     FROM gateway_sites
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
@@ -573,12 +542,12 @@ export async function loadGatewaySites(options: PublicListLimitOptions & { query
     SELECT * FROM ranked_sites
     ORDER BY
       CASE
-        WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES} THEN 0
-        WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
+        WHEN sponsor AND group_position <= ${MAX_PINNED_COMMERCIAL} THEN 0
+        WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_COMMERCIAL} THEN 1
         ELSE 2
       END,
-      CASE WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES}
-          OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES}
+      CASE WHEN sponsor AND group_position <= ${MAX_PINNED_COMMERCIAL}
+          OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_COMMERCIAL}
         THEN support_points END DESC NULLS LAST,
       score DESC, sort_weight DESC, created_at DESC NULLS LAST, site_name ASC, id ASC
     ${limit ? 'LIMIT $1' : ''}
@@ -839,8 +808,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       COALESCE(model_price_summary.prices_for_model, '[]'::jsonb) AS prices_for_model,
       model_price_summary.latest_model_refresh_at,
       ROW_NUMBER() OVER (
-        PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
-        ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
+        ORDER BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END, gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
       ) AS group_position
     FROM model_price_summary
     INNER JOIN gateway_sites ON gateway_sites.site_id = model_price_summary.site_id
@@ -849,12 +817,12 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
     SELECT * FROM ranked_sites
     ORDER BY
       CASE
-        WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES} THEN 0
-        WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
+        WHEN sponsor AND group_position <= ${MAX_PINNED_COMMERCIAL} THEN 0
+        WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_COMMERCIAL} THEN 1
         ELSE 2
       END,
-      CASE WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES}
-          OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES}
+      CASE WHEN sponsor AND group_position <= ${MAX_PINNED_COMMERCIAL}
+          OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_COMMERCIAL}
         THEN support_points END DESC NULLS LAST,
       score DESC, sort_weight DESC, created_at DESC NULLS LAST, site_name ASC, id ASC
     ${siteLimit ? 'LIMIT $2' : ''}

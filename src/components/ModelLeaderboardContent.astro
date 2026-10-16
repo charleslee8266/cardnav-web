@@ -53,7 +53,7 @@ const visibleRows = currentGroup?.rows.slice(0, initialRowCount) ?? [];
 const maximumScore = Math.max(1, ...visibleRows.map(row => row.score));
 const hasMoreRows = currentGroupTotalCount > visibleRows.length;
 const leaderboardApiUrl = currentGroup
-  ? `${leaderboardHighlightPath(`/api/model-leaderboard/${encodeURIComponent(currentGroup.taskSlug)}.json`, family, query, providers)}${family.length || providers.length || query ? '&' : '?'}offset=${initialRowCount}&locale=${encodeURIComponent(Astro.locals.locale)}`
+  ? `${leaderboardHighlightPath(`/api/model-leaderboard/${encodeURIComponent(currentGroup.taskSlug)}.json`, family, query, providers)}${family.length || providers.length || query ? '&' : '?'}locale=${encodeURIComponent(Astro.locals.locale)}`
   : '';
 
 ---

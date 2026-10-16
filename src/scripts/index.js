@@ -1,3 +1,4 @@
+import { matchesListKinds } from '../list-kind-filter.js';
 import { syncTableSortHeaders } from './table-sort-headers.js';
 import { createListLoading } from './list-loading.js';
 import { nextTableSort } from '../table-sort.js';
@@ -51,7 +52,7 @@ import {
   shopSiteUrl,
   shopSites,
 } from '../shop-products-data.js';
-import { prioritizeShopProductRows } from '../shop-sponsored-pinning.js';
+import { compareShopProductRows, prioritizeShopProductRows } from '../shop-sponsored-pinning.js';
 
 const filtersForm = document.querySelector('#filters');
 const searchFilter = document.querySelector('#searchFilter');
@@ -66,11 +67,13 @@ const onlyPlatformFilter = document.querySelector('#onlyPlatformFilter');
 const merchantPlatformFilter = document.querySelector('#merchantPlatformFilter');
 const platformOnly = () => Boolean(onlyPlatformFilter?.checked);
 const merchantPlatformOnly = () => Boolean(merchantPlatformFilter?.checked);
-const onlyFavoritesFilter = document.querySelector('#onlyFavoritesFilter');
+const productKindGroup = document.querySelector('[data-multi-filter="kind"]');
+const merchantKindGroup = document.querySelector('[data-multi-filter="merchantKind"]');
+const selectedProductKinds = () => [...(productKindGroup?.querySelectorAll('input:checked') || [])].map(input => input.value);
+const selectedMerchantKinds = () => [...(merchantKindGroup?.querySelectorAll('input:checked') || [])].map(input => input.value);
 const priceMin = document.querySelector('#priceMin');
 const priceMax = document.querySelector('#priceMax');
 const merchantFiltersForm = document.querySelector('#merchantFilters');
-const merchantFavoritesFilter = document.querySelector('#merchantFavoritesFilter');
 const merchantSearchFilter = document.querySelector('#merchantSearchFilter');
 const quickPlanRow = document.querySelector('#quickPlanRow');
 const quickPlanTips = document.querySelector('#quickPlanTips');
@@ -110,6 +113,7 @@ const MERCHANT_LOAD_MORE_STEP = 20;
 let currentFlatSort = null;
 let currentMerchantSort = null;
 let currentFlatRows = flatRows;
+let currentMerchantRows = [];
 let currentShopTab = 'products';
 let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
@@ -183,23 +187,25 @@ function buildActiveSearchQuery(value) {
   return buildShopSearchQuery(value);
 }
 
-function matchesSearchQuery(rowEntry, query) {
-  return matchesShopSearchQuery(rowEntry, query, currentSearchFieldOptions());
+function matchesSearchQuery(rowEntry, query, fields = currentSearchFieldOptions()) {
+  return matchesShopSearchQuery(rowEntry, query, fields);
 }
 
-function matchesMerchantFilters(name, url, id) {
-  const query = normalize(merchantSearchFilter?.value || '');
-  return (!query || normalize(`${name} ${url}`).includes(query))
-    && (!merchantFavoritesFilter?.checked || favoriteSiteKeys.has(id));
+function matchesMerchantFilters(name, url, query = normalize(merchantSearchFilter?.value || '')) {
+  return !query || normalize(`${name} ${url}`).includes(query);
 }
 
 function matchingShopResults() {
   const products = searchMatchedFlatRows();
   const merchantPlatforms = selectedMerchantPlatforms();
+  const merchantKinds = selectedMerchantKinds();
+  const onlyPlatform = merchantPlatformOnly();
+  const merchantQuery = normalize(merchantSearchFilter?.value || '');
   const sites = shopSites(shopProductsData).filter(site => {
     const id = text(shopSiteId(site));
-    return matchesMerchantFilters(text(shopSiteName(site)), text(shopSiteUrl(site)), id)
-      && (!merchantPlatformOnly() || Boolean(shopSitePlatformName(site)))
+    return matchesMerchantFilters(text(shopSiteName(site)), text(shopSiteUrl(site)), merchantQuery)
+      && matchesListKinds(merchantKinds, { sponsor: shopSiteSponsor(site), supportPoints: shopSiteSupportPoints(site), favorite: favoriteSiteKeys.has(id) })
+      && (!onlyPlatform || Boolean(shopSitePlatformName(site)))
       && (!merchantPlatforms.length || merchantPlatforms.includes(shopSitePlatformName(site) || 'self-hosted'));
   });
   return { products, sites };
@@ -209,19 +215,20 @@ function searchMatchedFlatRows() {
   const query = buildActiveSearchQuery(searchFilter?.value || '');
   const categoryId = selectedQuickCategoryId();
   const platforms = selectedPlatforms();
+  const kinds = selectedProductKinds();
+  const onlyPlatform = platformOnly();
+  const fields = currentSearchFieldOptions();
+  const showSoldOut = Boolean(showSoldOutFilter?.checked);
+  const minPrice = parseBound(priceMin?.value.trim() || '');
+  const maxPrice = parseBound(priceMax?.value.trim() || '');
   const matchedRows = flatRows.filter(rowEntry => {
-    const showSoldOut = Boolean(showSoldOutFilter?.checked);
-    const priceMinValue = priceMin?.value.trim() || '';
-    const priceMaxValue = priceMax?.value.trim() || '';
-    const minPrice = parseBound(priceMinValue);
-    const maxPrice = parseBound(priceMaxValue);
     const stockMatched = showSoldOut || rowEntry.inStock === 1;
     const priceMatched = matchesPriceRange(rowEntry.priceValue, minPrice, maxPrice);
-    const queryMatched = matchesSearchQuery(rowEntry, query) && matchesShopCategory(rowEntry.autoCategory, categoryId);
-    const favoriteMatched = !onlyFavoritesFilter?.checked || favoriteProductKeys.has(rowEntry.productFavoriteKey) || favoriteSiteKeys.has(rowEntry.siteFavoriteKey);
-    return (!platformOnly() || rowEntry.platformHosted) && (!platforms.length || platforms.includes(rowEntry.platformHosted ? rowEntry.platformName : 'self-hosted')) && stockMatched && priceMatched && queryMatched && favoriteMatched;
+    const queryMatched = matchesSearchQuery(rowEntry, query, fields) && matchesShopCategory(rowEntry.autoCategory, categoryId);
+    const kindMatched = matchesListKinds(kinds, { sponsor: rowEntry.sponsor, supportPoints: rowEntry.supportPoints, favorite: favoriteProductKeys.has(rowEntry.productFavoriteKey) || favoriteSiteKeys.has(rowEntry.siteFavoriteKey) });
+    return (!onlyPlatform || rowEntry.platformHosted) && (!platforms.length || platforms.includes(rowEntry.platformHosted ? rowEntry.platformName : 'self-hosted')) && stockMatched && priceMatched && queryMatched && kindMatched;
   });
-  return prioritizeFavoriteFlatRows(matchedRows);
+  return matchedRows;
 }
 
 function loadFavoriteKeys(storageKey) {
@@ -302,7 +309,7 @@ function prioritizeFavoriteFlatRows(rowEntries) {
   return prioritizeShopProductRows(rowEntries, {
     favoriteProductKeys,
     favoriteSiteKeys,
-  }, (row, kind) => { row.pinKind = kind; }, !currentFlatSort);
+  }, (row, kind) => { row.pinKind = kind; }, Boolean(currentFlatSort));
 }
 
 function parseBound(value) {
@@ -380,6 +387,7 @@ function buildFlatRows() {
       element: null,
       indexCell: null,
       originalIndex: index,
+      id: shopProductId(product),
     });
   });
 }
@@ -407,12 +415,11 @@ function syncFiltersFromUrl() {
     showGatewayTip(pathButton, currentQuickPlanQuery);
   } else { hideOfficialPriceTip(); hideGatewayTip(); }
   merchantSearchFilter.value = params.get('merchantQ') || '';
-  merchantFavoritesFilter.checked = params.get('merchantFavorites') === '1';
+  for (const group of [productKindGroup, merchantKindGroup]) group?.querySelectorAll('input').forEach(input => { input.checked = params.getAll(group.dataset.multiFilter).includes(input.value); });
   if (onlyPlatformFilter) onlyPlatformFilter.checked = params.get('platformOnly') === '1';
   platformFilterGroup?.querySelectorAll('input').forEach(input => { input.checked = params.getAll('platform').map(shopPlatformFromUrl).includes(input.value); });
   merchantPlatformGroup?.querySelectorAll('input').forEach(input => { input.checked = params.getAll('merchantPlatform').map(shopPlatformFromUrl).includes(input.value); });
   if (merchantPlatformFilter) merchantPlatformFilter.checked = params.get('merchantPlatformOnly') === '1';
-  if (onlyFavoritesFilter) onlyFavoritesFilter.checked = params.get('favorites') === '1';
   if (showSoldOutFilter) showSoldOutFilter.checked = params.get('showSoldOut') === '1';
   priceMin.value = params.get('priceMin') || '';
   priceMax.value = params.get('priceMax') || '';
@@ -623,7 +630,7 @@ function hasActiveProductFilters() {
   return Boolean(
     (searchFilter?.value || '').trim()
     || currentQuickPlanQuery
-    || onlyFavoritesFilter?.checked
+    || selectedProductKinds().length
     || platformOnly()
     || selectedPlatforms().length
     || showSoldOutFilter?.checked
@@ -635,14 +642,14 @@ function hasActiveProductFilters() {
 }
 
 function hasActiveMerchantFilters() {
-  return Boolean((merchantSearchFilter?.value || '').trim() || merchantFavoritesFilter?.checked || merchantPlatformOnly() || selectedMerchantPlatforms().length);
+  return Boolean((merchantSearchFilter?.value || '').trim() || selectedMerchantKinds().length || merchantPlatformOnly() || selectedMerchantPlatforms().length);
 }
 
 function shouldLoadFullShopProductsData(options = {}) {
   if (!shopProductsDataIsPartial()) return false;
   return Boolean(
     options.force
-    || onlyFavoritesFilter?.checked
+    || selectedProductKinds().length
     || platformOnly()
     || selectedPlatforms().length
     || options.merchantTab
@@ -976,7 +983,7 @@ function renderMerchantViewModule(module, matchingProducts) {
 }
 
 function updateShopFilterCounts() {
-  for (const [group, selected] of [[platformFilterGroup, selectedPlatforms()], [merchantPlatformGroup, selectedMerchantPlatforms()]]) {
+  for (const [group, selected] of [[platformFilterGroup, selectedPlatforms()], [merchantPlatformGroup, selectedMerchantPlatforms()], [productKindGroup, selectedProductKinds()], [merchantKindGroup, selectedMerchantKinds()]]) {
     const summary = group?.querySelector('[data-multi-summary]');
     if (summary) summary.textContent = selected.length ? `${summary.dataset.emptyLabel} · ${selected.length}` : summary.dataset.emptyLabel;
   }
@@ -1060,9 +1067,9 @@ async function applyFilters(options = {}) {
     renderedMerchantCount = merchantRenderState.renderedCount;
   } else {
     if (currentFlatSort) {
-      sortFlatProductRows();
+      sortFlatProductRows(undefined, matches.products);
     } else {
-      currentFlatRows = searchMatchedFlatRows();
+      currentFlatRows = prioritizeFavoriteFlatRows(matches.products);
       appendCurrentFlatRows();
       updateFlatSortButtons();
     }
@@ -1086,7 +1093,7 @@ async function applyFilters(options = {}) {
   {
     if (merchantTabActive) params.set('tab', 'merchants');
     if (merchantSearchFilter.value.trim()) params.set('merchantQ', merchantSearchFilter.value.trim());
-    if (merchantFavoritesFilter.checked) params.set('merchantFavorites', '1');
+    selectedMerchantKinds().forEach(value => params.append('merchantKind', value));
     if (productQueryValue) params.set('q', productQueryValue);
     if (currentQuickPlanQuery && !currentQuickPlanPath) params.set('category', selectedQuickCategoryId());
     if (platformOnly()) params.set('platformOnly', '1');
@@ -1094,7 +1101,7 @@ async function applyFilters(options = {}) {
     selectedMerchantPlatforms().forEach(value => params.append('merchantPlatform', value));
     if (merchantPlatformOnly()) params.set('merchantPlatformOnly', '1');
     if (showSoldOut) params.set('showSoldOut', '1');
-    if (onlyFavoritesFilter?.checked) params.set('favorites', '1');
+    selectedProductKinds().forEach(value => params.append('kind', value));
     if (matchCategoryFilter?.checked) params.set('matchCategory', '1');
     if (fuzzySearchFilter?.checked) params.set('fuzzy', '1');
     if (priceMinValue) params.set('priceMin', priceMinValue);
@@ -1112,8 +1119,6 @@ async function applyFilters(options = {}) {
 
 function sortRows(merchantModule) {
   if (!rowContainer) return { visibleCount: 0, renderedCount: 0 };
-  let visibleCount = 0;
-  let renderedCount = 0;
 
   const sortedRows = merchantModule.getMerchantRows()
     .slice()
@@ -1134,11 +1139,18 @@ function sortRows(merchantModule) {
       return Number(a.element.dataset.originalIndex) - Number(b.element.dataset.originalIndex);
     });
   const visibleRows = sortedRows.filter(row => row.element.dataset.filterVisible === '1');
-  const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: 0, supportPoints: Number(entry.element.dataset.supportPoints) || 0, favorite: Number(entry.element.dataset.favorite) > 0 })), (row, kind) => { row.entry.element.dataset.pinKind = kind; }, !currentMerchantSort).map(row => row.entry);
+  const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, defaultIndex: Number(entry.element.dataset.originalIndex), sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: 0, supportPoints: Number(entry.element.dataset.supportPoints) || 0, favorite: Number(entry.element.dataset.favorite) > 0 })), (row, kind) => { row.entry.element.dataset.pinKind = kind; }, Boolean(currentMerchantSort)).map(row => row.entry);
   const hiddenRows = sortedRows.filter(row => row.element.dataset.filterVisible !== '1');
-  [...pinnedRows, ...hiddenRows].forEach(({ element: row }, sortedIndex) => {
+  currentMerchantRows = [...pinnedRows, ...hiddenRows];
+  return renderCurrentMerchantRows(true);
+}
+
+function renderCurrentMerchantRows(reorder = false) {
+  let visibleCount = 0;
+  let renderedCount = 0;
+  currentMerchantRows.forEach(({ element: row }, sortedIndex) => {
       row.dataset.sortedIndex = String(sortedIndex);
-      rowContainer.appendChild(row);
+      if (reorder) rowContainer.appendChild(row);
       const rowVisible = row.dataset.filterVisible === '1';
       if (rowVisible) visibleCount += 1;
       const rowRendered = rowVisible && visibleCount <= currentMerchantVisibleLimit;
@@ -1174,15 +1186,18 @@ function ensureFlatRowElement(rowEntry) {
   rowEntry.element = row;
   rowEntry.indexCell = row.querySelector('.flat-row-index');
   const newFavoriteButtons = Array.from(row.querySelectorAll('.favorite-toggle'));
-  favoriteButtons = Array.from(new Set([...favoriteButtons, ...newFavoriteButtons]));
+  favoriteButtons.push(...newFavoriteButtons);
   initializeFavorites(newFavoriteButtons);
   return row;
 }
 
-function appendCurrentFlatRows() {
+function appendCurrentFlatRows(appendOnly = false) {
   if (!flatProductRowsContainer) return;
   const fragment = document.createDocumentFragment();
-  currentFlatRows.slice(0, currentFlatVisibleLimit).forEach((rowEntry, index) => {
+  const startIndex = appendOnly ? flatProductRowsContainer.children.length : 0;
+  const newRows = [];
+  currentFlatRows.slice(startIndex, currentFlatVisibleLimit).forEach((rowEntry, offset) => {
+    const index = startIndex + offset;
     const row = ensureFlatRowElement(rowEntry);
     row.dataset.pinKind = rowEntry.pinKind || '';
     row.dataset.productMetricId = shopProductId(rowEntry.product);
@@ -1194,21 +1209,23 @@ function appendCurrentFlatRows() {
     row.classList.remove('hidden');
     setTableRowSequence(row, index + 1);
     fragment.appendChild(row);
+    newRows.push(row);
   });
-  flatProductRowsContainer.replaceChildren(fragment);
-  flatProductRowsContainer.querySelectorAll('[data-product-metric-id]').forEach(row => productMetricTracker.observe(row));
+  if (appendOnly) flatProductRowsContainer.appendChild(fragment);
+  else flatProductRowsContainer.replaceChildren(fragment);
+  newRows.forEach(row => productMetricTracker.observe(row));
 }
 
 function filteredFlatRows() {
   return searchMatchedFlatRows();
 }
 
-function sortFlatProductRows(button) {
+function sortFlatProductRows(button, matchedRows = filteredFlatRows()) {
   if (button) {
     currentFlatSort = nextTableSort(currentFlatSort, button);
   }
 
-  const sortedRows = filteredFlatRows().slice();
+  const sortedRows = matchedRows.slice();
   if (currentFlatSort) {
     const multiplier = currentFlatSort.direction === 'asc' ? 1 : -1;
     sortedRows.sort((left, right) => {
@@ -1217,14 +1234,14 @@ function sortFlatProductRows(button) {
         const rightMissing = typeof right.priceValue !== 'number' || right.priceValue < 0;
         if (leftMissing && !rightMissing) return 1;
         if (!leftMissing && rightMissing) return -1;
-        if (leftMissing && rightMissing) return left.originalIndex - right.originalIndex;
+        if (leftMissing && rightMissing) return compareShopProductRows(left, right);
       }
       const leftValue = flatRowValue(left, currentFlatSort.key, currentFlatSort.type);
       const rightValue = flatRowValue(right, currentFlatSort.key, currentFlatSort.type);
       if (typeof leftValue === 'number' && typeof rightValue === 'number') {
-        return (leftValue - rightValue) * multiplier;
+        return (leftValue - rightValue) * multiplier || compareShopProductRows(left, right);
       }
-      return String(leftValue).localeCompare(String(rightValue), 'zh-Hans-CN', { numeric: true }) * multiplier;
+      return String(leftValue).localeCompare(String(rightValue), 'zh-Hans-CN', { numeric: true }) * multiplier || compareShopProductRows(left, right);
     });
   }
 
@@ -1304,8 +1321,8 @@ merchantSearchFilter?.addEventListener('input', () => {
   scheduleApplyFilters();
 });
 for (const control of [onlyPlatformFilter, merchantPlatformFilter]) control?.addEventListener('change', () => { resetFlatVisibleLimit(); applyFilters(); });
-merchantFavoritesFilter?.addEventListener('change', () => { resetFlatVisibleLimit(); applyFilters(); });
-onlyFavoritesFilter?.addEventListener('change', () => { resetFlatVisibleLimit(); applyFilters(); });
+merchantKindGroup?.addEventListener('change', () => { currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT; applyFilters(); });
+productKindGroup?.addEventListener('change', () => { resetFlatVisibleLimit(); applyFilters(); });
 merchantPlatformGroup?.addEventListener('change', () => { currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT; applyFilters(); });
 platformFilterGroup?.addEventListener('change', () => { resetFlatVisibleLimit(); applyFilters(); });
 document.addEventListener('click', event => {
@@ -1317,15 +1334,15 @@ document.addEventListener('click', event => {
   if (input) { input.checked = true; resetFlatVisibleLimit(); applyFilters(); }
 }, { capture: true });
 document.querySelector('#searchOptions')?.addEventListener('filter-clear', () => {
-  platformFilterGroup?.querySelectorAll('input').forEach(input => { input.checked = false; });
+  for (const group of [platformFilterGroup, productKindGroup]) group?.querySelectorAll('input').forEach(input => { input.checked = false; });
   for (const input of [priceMin, priceMax]) input.value = '';
-  for (const input of [showSoldOutFilter, matchCategoryFilter, fuzzySearchFilter, onlyFavoritesFilter, onlyPlatformFilter]) input.checked = false;
+  for (const input of [showSoldOutFilter, matchCategoryFilter, fuzzySearchFilter, onlyPlatformFilter]) input.checked = false;
   resetFlatVisibleLimit();
   applyFilters();
 });
 document.querySelector('#merchantOptions')?.addEventListener('filter-clear', () => {
-  merchantPlatformGroup?.querySelectorAll('input').forEach(input => { input.checked = false; });
-  for (const input of [merchantFavoritesFilter, merchantPlatformFilter]) input.checked = false;
+  for (const group of [merchantPlatformGroup, merchantKindGroup]) group?.querySelectorAll('input').forEach(input => { input.checked = false; });
+  if (merchantPlatformFilter) merchantPlatformFilter.checked = false;
   currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
   applyFilters();
 });
@@ -1424,12 +1441,22 @@ flatProductRowsContainer?.addEventListener('click', event => {
 flatProductLoadMoreButton?.addEventListener('click', () => {
   trackUmamiEvent('button-click', { scope: 'products', action: 'load-more' }, flatProductLoadMoreButton);
   currentFlatVisibleLimit += FLAT_PRODUCT_LOAD_MORE_STEP;
-  applyFilters({ loadingAnchor: flatProductLoadMoreButton });
+  if (shopProductsDataIsPartial()) {
+    applyFilters({ loadingAnchor: flatProductLoadMoreButton });
+  } else {
+    appendCurrentFlatRows(true);
+    updateFlatProgressiveLoadSummary(currentFlatRows.length, Math.min(currentFlatVisibleLimit, currentFlatRows.length));
+  }
 });
 merchantLoadMoreButton?.addEventListener('click', () => {
   trackUmamiEvent('button-click', { scope: 'merchants', action: 'load-more' }, merchantLoadMoreButton);
   currentMerchantVisibleLimit += MERCHANT_LOAD_MORE_STEP;
-  applyFilters({ loadingAnchor: merchantLoadMoreButton });
+  if (shopProductsDataIsPartial()) {
+    applyFilters({ loadingAnchor: merchantLoadMoreButton });
+  } else {
+    const state = renderCurrentMerchantRows();
+    updateMerchantProgressiveLoadSummary(state.visibleCount, state.renderedCount);
+  }
 });
 flatSortButtons.forEach(button => {
   button.addEventListener('click', async () => {

@@ -1,5 +1,5 @@
 /**
- * 文件说明: 提供中转站首页首屏之后的模型排行 JSON 数据。
+ * 文件说明: 提供中转站首页完整的模型排行 JSON 数据。
  */
 import type { APIRoute } from 'astro';
 import {
@@ -8,11 +8,9 @@ import {
 } from '../../../public-data-cache.js';
 import { loadGatewayModels } from '../../../store.js';
 
-export const GET: APIRoute = async ({ request }) => {
-  const url = new URL(request.url);
-  const offset = Math.max(0, Number(url.searchParams.get('offset') || '0') || 0);
+export const GET: APIRoute = async () => {
   const data = await loadGatewayModels();
-  return new Response(JSON.stringify({ offset, totalCount: data.totalModelCount, items: data.models.slice(offset) }), {
+  return new Response(JSON.stringify({ totalCount: data.models.length, items: data.models }), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': publicReadApiCacheControl,

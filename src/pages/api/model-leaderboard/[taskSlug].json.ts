@@ -1,6 +1,6 @@
 import { matchesLeaderboardHighlight } from '../../../models/leaderboard-highlight.js';
 /**
- * 文件说明: 提供模型排行榜首屏之后的行数据 JSON，供公开榜单页按需加载。
+ * 文件说明: 提供模型排行榜完整行数据 JSON，供公开榜单页按需加载。
  */
 import type { APIRoute } from 'astro';
 import { localizePath } from '../../../i18n/paths.js';
@@ -16,7 +16,6 @@ import { loadModelLeaderboardRowsForTask } from '../../../store.js';
 
 export const GET: APIRoute = async ({ params, request }) => {
   const url = new URL(request.url);
-  const offset = Math.max(0, Number(url.searchParams.get('offset') || '0') || 0);
   const rawLocale = url.searchParams.get('locale') || '';
   const messages = getMessages(isLocale(rawLocale) ? rawLocale : 'zh');
   const taskSlug = params.taskSlug || '';
@@ -40,7 +39,7 @@ export const GET: APIRoute = async ({ params, request }) => {
 
   return new Response(JSON.stringify({
     totalCount: currentGroup.rows.length,
-    rows: currentGroup.rows.slice(offset).map(row => ({
+    rows: currentGroup.rows.map(row => ({
       highlighted: matchesLeaderboardHighlight(row, url.searchParams.getAll('family'), url.searchParams.get('q') || '', url.searchParams.getAll('provider')),
       rank: row.rank,
       modelName: row.modelName,

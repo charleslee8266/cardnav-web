@@ -1,5 +1,6 @@
 ---
 import DataWorkspaceToolbar from '../../../components/DataWorkspaceToolbar.astro';
+import ListKindFilter from '../../../components/ListKindFilter.astro';
 import FilterPopover from '../../../components/FilterPopover.astro';
 import FilterSummary from '../../../components/FilterSummary.astro';
 import '../../../components/data-workspace.css';
@@ -153,6 +154,7 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
       <DataWorkspaceToolbar>
         <label class="data-workspace-search"><input type="search" data-gateway-detail-search value={initialQuery} class="input input-bordered w-full" placeholder={t.llmGateway.siteQuoteSearchPlaceholder} aria-label={t.llmGateway.siteQuoteSearchPlaceholder} /></label>
       <FilterPopover id="gatewayQuoteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+        <ListKindFilter />
         <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.unit}</span>
           <select class="select select-bordered" data-quote-unit aria-label={t.llmGateway.unit}>
             <option value="" selected={!initialUnit}>{t.llmGateway.allUnits}</option>

@@ -144,14 +144,18 @@ export const partnershipContent = {
       "常规列表"
     ],
     "demoTableTitle": "表格展示示例与细则",
+    "demoRules": [
+      "默认顺序：合作 → 赞赏 → 收藏 → 普通；合作、赞赏组内按积分降序或按用户操作排序。",
+      "合作与赞赏置顶区合计最多M条，每家最多N条，具体数值按实际情况调整。"
+    ],
     "demoDescriptions": [
-      "先展示合作置顶区，再展示赞赏置顶区。",
-      "多个合作商家，按赞赏积分降序排列。",
-      "单个商家最多置顶 2 条。",
-      "合作、赞赏置顶区最多各10条。",
-      "多个赞赏商家，按赞赏积分降序排列。",
-      "用户收藏展示在常规列表之前。",
-      "Aff 商家点击使用 Aff 链接跳转",
+      "同时具有合作和赞赏身份，归入合作区。",
+      "同一商家的不同商品共用名额。",
+      "",
+      "",
+      "",
+      "当前用户收藏。",
+      "使用 Aff 链接跳转，返佣合作本身不获得置顶。",
       ""
     ],
     "placementTitle": "展示位置",
@@ -301,14 +305,18 @@ export const partnershipContent = {
       "Regular list"
     ],
     "demoTableTitle": "Table display examples and detailed rules",
+    "demoRules": [
+      "Default order: Partners → Supporters → Favorites → Regular. Within partner and supporter groups, entries follow points in descending order or the user-selected sort.",
+      "Partner and supporter pinned areas share a limit of M entries, with up to N per merchant. Limits may be adjusted as needed."
+    ],
     "demoDescriptions": [
-      "The pinned partner area appears before the pinned supporter area.",
-      "Partner merchants are ordered by contribution points, highest first.",
-      "Each merchant can have at most 2 pinned entries.",
-      "The pinned partner and supporter areas each show up to 10 entries.",
-      "Supporting merchants are ordered by contribution points, highest first.",
-      "Favorites appear before the regular list.",
-      "Clicks on Aff merchants use their Aff links.",
+      "Both a partner and a supporter; placed in the partner area.",
+      "Products from the same merchant share its allocation.",
+      "",
+      "",
+      "",
+      "Favorited by the current user.",
+      "Uses an affiliate link; affiliate participation alone does not grant a pin.",
       ""
     ],
     "placementTitle": "Placements",
@@ -458,14 +466,18 @@ export const partnershipContent = {
       "Общий список"
     ],
     "demoTableTitle": "Примеры отображения в таблице и подробные правила",
+    "demoRules": [
+      "Порядок по умолчанию: партнёры → поддержавшие → избранное → остальные. В первых двух группах — по убыванию баллов или по выбранной пользователем сортировке.",
+      "В блоках партнёров и поддержки суммарно не более M закреплённых позиций, до N на продавца. Лимиты могут меняться по ситуации."
+    ],
     "demoDescriptions": [
-      "Закреплённый блок партнёров отображается перед закреплённым блоком поддержки.",
-      "Продавцы-партнёры сортируются по баллам поддержки по убыванию.",
-      "Не более 2 закреплённых позиций от одного продавца.",
-      "В закреплённых блоках партнёров и поддержки — не более 10 позиций в каждом.",
-      "Поддержавшие продавцы сортируются по баллам поддержки по убыванию.",
-      "Избранное отображается перед общим списком.",
-      "При нажатии на Aff-продавца переход выполняется по его Aff-ссылке.",
+      "Партнёр и участник поддержки; размещается в блоке партнёров.",
+      "Товары одного продавца используют общий лимит.",
+      "",
+      "",
+      "",
+      "Добавлен в избранное текущим пользователем.",
+      "Переход по Aff-ссылке; само участие в партнёрской программе не даёт закрепления.",
       ""
     ],
     "placementTitle": "Размещение",

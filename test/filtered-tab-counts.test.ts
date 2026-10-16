@@ -5,6 +5,7 @@ import test from 'node:test';
 import ts from 'typescript';
 import { buildShopSearchQuery, matchesShopSearchQuery } from '../src/shop-search-query.js';
 import { matchesShopCategory } from '../src/shop-filter-state.js';
+import { matchesListKinds } from '../src/list-kind-filter.js';
 import { prioritizeShopProductRows } from '../src/shop-sponsored-pinning.js';
 
 // Execute the production render functions with only their DOM/data boundaries replaced.
@@ -93,7 +94,8 @@ test('product filters leave merchant listings independent, including merchants w
   const scope: Record<string, any> = {
     searchFilter: { value: '' }, merchantSearchFilter: { value: '' }, priceMin: { value: '' }, priceMax: { value: '' },
     showSoldOutFilter: { checked: false }, matchCategoryFilter: { checked: false }, fuzzySearchFilter: { checked: false },
-    onlyFavoritesFilter: { checked: false }, merchantFavoritesFilter: { checked: false },
+    selectedProductKinds: () => [], selectedMerchantKinds: () => [], matchesListKinds,
+    shopSiteSponsor: () => false, shopSiteSupportPoints: () => 0,
     favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(),
     currentFlatSort: null,
     platformOnly: () => false, merchantPlatformOnly: () => false, selectedPlatforms: () => [], selectedMerchantPlatforms: () => [],
@@ -141,6 +143,19 @@ test('product filters leave merchant listings independent, including merchants w
   result = scope.matchingShopResults();
   assert.equal(result.products.length, 2);
   assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['b']);
+  scope.selectedMerchantKinds = () => ['partner'];
+  scope.shopSiteSponsor = (site: any) => site.id === 'a';
+  result = scope.matchingShopResults();
+  assert.equal(result.sites.length, 0, 'merchant type intersects the merchant search');
+  assert.equal(result.products.length, 2, 'merchant type does not constrain products');
+  scope.merchantSearchFilter.value = '';
+  result = scope.matchingShopResults();
+  assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['a']);
+  scope.selectedProductKinds = () => ['favorite'];
+  scope.favoriteProductKeys.add(scope.flatRows[1].productFavoriteKey);
+  result = scope.matchingShopResults();
+  assert.equal(result.products.length, 1);
+  assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['a']);
 });
 
 test('gateway models combine multiple selected families with keywords', () => {
@@ -174,8 +189,8 @@ test('gateway models combine multiple selected families with keywords', () => {
 test('gateway site capabilities require all selected models and payments while status choices remain alternatives', () => {
   const site = (families: string, payments: string, priceCount: number, modelCount = 1) => ({ search: families, families, payments, priceCount, sort: { modelCount } });
   const sites = { entries: [site('gpt', 'alipay', 1), site('claude', 'wechat', 1), site('gpt,claude', 'alipay,wechat', 1), site('gpt,claude', 'alipay,wechat', 0), site('gpt,claude', 'alipay', 1)], filteredEntries: [] };
-  const selected: Record<string, string[]> = { family: ['gpt', 'claude'], payment: ['alipay', 'wechat'], status: ['hasPrice'] };
-  const scope = { siteSearchInput: { value: '' }, siteFavoritesInput: { checked: false }, gatewayLists: { sites },
+  const selected: Record<string, string[]> = { family: ['gpt', 'claude'], payment: ['alipay', 'wechat'], status: ['hasPrice'], kind: [] };
+  const scope = { siteSearchInput: { value: '' }, matchesListKinds, favorites: { has: () => false }, gatewayLists: { sites },
     selectedValues: (name: string) => selected[name],
     matchesAllSelections: (values: string[], available: string[]) => values.every(value => available.includes(value)),
     matchesAny: (values: string[], available: string[]) => !values.length || values.some(value => available.includes(value)) };
@@ -187,6 +202,27 @@ test('gateway site capabilities require all selected models and payments while s
   filter(); assert.equal(sites.filteredEntries.length, 3);
   scope.siteSearchInput.value = 'gemini';
   filter(); assert.equal(sites.filteredEntries.length, 0);
+});
+
+test('gateway type filters match actual statuses independently of pin allocation and sorting', () => {
+  const entries = [
+    { item: { slug: 'partner' }, sort: { sticky: 1, support: 5, modelCount: 1 } },
+    { item: { slug: 'favorite' }, sort: { sticky: 0, support: 0, modelCount: 1 } },
+    { item: { slug: 'other' }, sort: { sticky: 0, support: 0, modelCount: 1 } },
+  ].map(entry => ({ ...entry, search: '', families: '', payments: '', priceCount: 1 }));
+  const sites = { entries, filteredEntries: [], sort: { key: 'score', direction: 'desc' } };
+  let kinds: string[] = ['favorite'];
+  const filter = renderer('src/scripts/llm-gateway-home.js', 'filterSiteEntries', {
+    siteSearchInput: { value: '' }, gatewayLists: { sites }, matchesListKinds,
+    favorites: { has: (key: string) => key !== 'other' },
+    selectedValues: (name: string) => name === 'kind' ? kinds : [],
+    matchesAllSelections: () => true, matchesAny: () => true,
+  });
+  filter(); assert.deepEqual(Array.from(sites.filteredEntries), entries.slice(0, 2));
+  kinds = ['support'];
+  filter(); assert.deepEqual(Array.from(sites.filteredEntries), entries.slice(0, 1));
+  kinds = ['partner', 'other'];
+  filter(); assert.deepEqual(Array.from(sites.filteredEntries), [entries[0], entries[2]]);
 });
 
 test('product fetch failure ends loading, keeps existing rows and permits a successful retry', async () => {
@@ -279,9 +315,17 @@ test('Gateway shared request failure preserves sorting and visible range for eve
   assert.equal(state.visibleLimit, 100);
   assert.equal(state.promise, null);
   assert.equal(state.loaded, false);
-  scope.fetch = async () => ({ ok: true, json: async () => ({ items: [{ id: 'remaining' }], offset: 50, totalCount: 120 }) });
+  state.entries = [{ id: 'stale' }] as any;
+  scope.fetch = async () => ({ ok: true, json: async () => ({ items: [{ id: 'current' }], totalCount: 1 }) });
   assert.equal(await load('sites'), 1);
   assert.equal(state.loaded, true);
+  assert.deepEqual(Array.from(state.entries), [{ id: 'current' }]);
+  assert.equal(state.totalCount, 1);
+  state.loaded = false;
+  scope.fetch = async () => ({ ok: true, json: async () => ({ items: [], totalCount: 0 }) });
+  assert.equal(await load('sites'), 0);
+  assert.equal(state.entries.length, 0);
+  assert.equal(state.totalCount, 0);
 });
 
 test('product initialization preserves server order even when a later product has a higher score', async () => {
@@ -302,6 +346,40 @@ test('product initialization preserves server order even when a later product ha
   build();
   assert.deepEqual(rows.map(row => row.productName), ['first', 'second']);
   assert.deepEqual(rows.map(row => row.originalIndex), [0, 1]);
+});
+
+test('product load-more appends the next range and preserves existing row elements and sequence', () => {
+  const row = () => ({ dataset: {}, classList: { remove() {} } });
+  const first = row(), second = row(), third = row();
+  const container = {
+    children: [first, second],
+    appendChild(fragment: {children: ReturnType<typeof row>[]}) { this.children.push(...fragment.children); },
+    replaceChildren(fragment: {children: ReturnType<typeof row>[]}) { this.children = [...fragment.children]; },
+  };
+  const entries = [first, second, third].map((element,index)=>({element,product:String(index),productFavoriteKey:String(index)}));
+  const scope = {
+    flatProductRowsContainer: container,
+    currentFlatRows: entries,
+    currentFlatVisibleLimit: 3,
+    document: { createDocumentFragment: () => ({children: [] as ReturnType<typeof row>[], appendChild(element: ReturnType<typeof row>) {this.children.push(element);} }) },
+    ensureFlatRowElement: (entry: typeof entries[number]) => entry.element,
+    shopProductId: String,
+    searchFilter: {value:''}, favoriteProductKeys:new Set(),
+    setTableRowSequence: (element: ReturnType<typeof row>,index: number) => { Object.assign(element.dataset,{sequence:String(index)}); },
+    productMetricTracker: {observe() {}},
+  };
+  const append = renderer('src/scripts/index.js','appendCurrentFlatRows',scope);
+  append(true);
+  assert.deepEqual(container.children,[first,second,third]);
+  assert.equal(container.children[0],first);
+  assert.equal(container.children[1],second);
+  assert.equal((third.dataset as Record<string,string>).sequence,'3');
+  // A changed order replaces the displayed range; load-more must not leave stale rows.
+  scope.currentFlatRows = entries.slice().reverse();
+  scope.currentFlatVisibleLimit = 2;
+  append();
+  assert.deepEqual(container.children,[third,second]);
+  assert.equal((third.dataset as Record<string,string>).sequence,'1');
 });
 
 test('switching product tabs during a shared request shows feedback in both lists without fetching twice', async () => {

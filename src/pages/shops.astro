@@ -1,5 +1,6 @@
 ---
 import PlatformLabel from '../components/PlatformLabel.astro';
+import ListKindFilter from '../components/ListKindFilter.astro';
 import MultiSelectFilter from '../components/MultiSelectFilter.astro';
 import FilterSummary from '../components/FilterSummary.astro';
 import Icon from '../components/Icon.astro';
@@ -274,6 +275,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
           </div>
           <div class="data-workspace-search" data-shop-control="merchants" hidden><input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full" placeholder={t.shops.merchantSearchPlaceholder} aria-label={t.shops.merchantSearchPlaceholder} autocomplete="off" /></div>
           <div data-shop-control="products"><FilterPopover id="searchOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
+            <ListKindFilter />
             <MultiSelectFilter name="platform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter>
             <fieldset class="data-filter-group">
               <legend>{t.labels.price} <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button></legend>
@@ -292,11 +294,10 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
               <legend>{t.shops.displayOptions}</legend>
               <label><input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.showSoldOut}</span></label>
               <label><input id="onlyPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
-              <label><input id="onlyFavoritesFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label>
             </fieldset>
           </FilterPopover></div>
-          <div data-shop-control="merchants" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}><MultiSelectFilter name="merchantPlatform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
-              <label class="data-filter-switch"><input id="merchantFavoritesFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyFavorites}</span></label></FilterPopover></div>
+          <div data-shop-control="merchants" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}><ListKindFilter name="merchantKind" /><MultiSelectFilter name="merchantPlatform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
+</FilterPopover></div>
         </div>
         <div data-shop-control="products"><ShopPlanGroups initialSearchQuery={initialCategoryQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} /></div>
         <div data-shop-control="products" class="data-workspace-summary"><FilterSummary id="shopActiveFilters" clearLabel={t.shops.clearFilters} /></div>

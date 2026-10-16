@@ -1,53 +1,58 @@
+import { MAX_PINNED_ROWS_PER_SITE, MAX_PINNED_COMMERCIAL } from './list-ranking-policy.js';
+
 /** Shared pin allocation. Limits apply to pins; every remaining row keeps its input order. */
 export type PinKind = 'partner' | 'support' | 'favorite' | '';
 
-type PinLimits = {
-  rows?: number;
-  sites?: number;
-  rowsPerSite?: number;
-  adjacentBySite?: boolean;
-};
-
 type PinSite = { id?: string; sponsor?: boolean; supportPoints?: number };
 
-function selectPins<Row>(rows: Row[], site: (row: Row) => PinSite, limits: PinLimits): Row[] {
-  const siteKey = (row: Row) => site(row).id ?? row;
-  const counts = new Map<string | Row, number>();
-  const selected: Row[] = [];
-  for (const row of rows) {
-    if (selected.length >= (limits.rows ?? Infinity)) break;
-    const id = siteKey(row);
-    const count = counts.get(id) ?? 0;
-    if (count >= (limits.rowsPerSite ?? Infinity)) continue;
-    if (!counts.has(id) && counts.size >= (limits.sites ?? Infinity)) continue;
-    counts.set(id, count + 1);
-    selected.push(row);
-  }
-  if (limits.adjacentBySite) {
-    const order = new Map([...counts.keys()].map((id, index) => [id, index]));
-    selected.sort((a, b) => order.get(siteKey(a))! - order.get(siteKey(b))!);
-  }
-  return selected;
-}
-
 export function pinListRows<Row>(rows: Row[], options: {
-  enabled?: boolean;
+  manualSort?: boolean;
+  defaultOrder?: (a: Row, b: Row) => number;
   site: (row: Row) => PinSite;
-  partner: PinLimits;
-  support: PinLimits;
   favorites?: (remaining: Row[]) => Row[];
   onPin?: (row: Row, kind: PinKind) => void;
 }): Row[] {
-  if (options.enabled === false) {
-    rows.forEach(row => options.onPin?.(row, ''));
-    return rows;
+  type Merchant = { site: PinSite; best: Row; representatives: Row[] };
+  const merchants = new Map<string | Row, Merchant>();
+  for (const row of rows) {
+    const site = options.site(row);
+    if (!site.sponsor && !(Number(site.supportPoints) > 0)) continue;
+    const key = site.id ?? row;
+    const merchant = merchants.get(key);
+    if (!merchant) {
+      merchants.set(key, { site, best: row, representatives: [row] });
+    } else {
+      if ((options.defaultOrder?.(row, merchant.best) ?? 0) < 0) merchant.best = row;
+      if (merchant.representatives.length < MAX_PINNED_ROWS_PER_SITE) merchant.representatives.push(row);
+    }
   }
-  const byPoints = (a: Row, b: Row) => (options.site(b).supportPoints ?? 0) - (options.site(a).supportPoints ?? 0);
-  const partners = selectPins(rows.filter(row => options.site(row).sponsor).sort(byPoints), options.site, options.partner);
-  const supporters = selectPins(rows.filter(row => !options.site(row).sponsor && (options.site(row).supportPoints ?? 0) > 0).sort(byPoints), options.site, options.support);
-  const commercial = new Set([...partners, ...supporters]);
-  const remaining = rows.filter(row => !commercial.has(row));
-  const favorites = options.favorites?.(remaining) ?? [];
+  const rankedSites = [...merchants.values()].sort((a, b) => Number(Boolean(b.site.sponsor)) - Number(Boolean(a.site.sponsor))
+    || (b.site.supportPoints ?? 0) - (a.site.supportPoints ?? 0)
+    || (options.defaultOrder?.(a.best, b.best) ?? 0)).slice(0, MAX_PINNED_COMMERCIAL);
+  // Each round covers partners then supporters before any merchant receives its next row.
+  const selected = new Map<Row, PinSite>();
+  for (let round = 0; round < MAX_PINNED_ROWS_PER_SITE; round++) {
+    for (const merchant of rankedSites) {
+      if (selected.size >= MAX_PINNED_COMMERCIAL) break;
+      const row = merchant.representatives[round];
+      if (row !== undefined) selected.set(row, merchant.site);
+    }
+  }
+  const partners: Row[] = [];
+  const supporters: Row[] = [];
+  const remaining: Row[] = [];
+  for (const row of rows) {
+    const site = selected.get(row);
+    if (site) (site.sponsor ? partners : supporters).push(row);
+    else remaining.push(row);
+  }
+  if (!options.manualSort) {
+    const byPoints = (a: Row, b: Row) => (selected.get(b)?.supportPoints ?? 0) - (selected.get(a)?.supportPoints ?? 0)
+      || (options.defaultOrder?.(a, b) ?? 0);
+    partners.sort(byPoints);
+    supporters.sort(byPoints);
+  }
+  const favorites = options.manualSort ? [] : options.favorites?.(remaining) ?? [];
   const favoriteSet = new Set(favorites);
   const regular = remaining.filter(row => !favoriteSet.has(row));
   partners.forEach(row => options.onPin?.(row, 'partner'));

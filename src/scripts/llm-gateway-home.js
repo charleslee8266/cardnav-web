@@ -1,3 +1,4 @@
+import { matchesListKinds } from '../list-kind-filter.js';
 import { syncTableSortHeaders } from './table-sort-headers.js';
 import { createListLoading } from './list-loading.js';
 import { nextTableSort } from '../table-sort.js';
@@ -37,7 +38,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   const partnershipUrl = config.partnershipUrl || localizedFallbackPath('/partnership');
   const paymentMethodLabels = config.paymentMethodLabels || {};
   const siteSearchInput = gatewayHome.querySelector('[data-home-site-search]');
-  const filterGroups = Object.fromEntries(['family', 'payment', 'status'].map(name => [name, gatewayHome.querySelector(`[data-multi-filter="${name}"]`)]));
+  const filterGroups = Object.fromEntries(['kind', 'family', 'payment', 'status'].map(name => [name, gatewayHome.querySelector(`[data-multi-filter="${name}"]`)]));
   const modelFamilyGroup = gatewayHome.querySelector('[data-multi-filter="model-family"]');
   const modelProviderGroup = gatewayHome.querySelector('[data-multi-filter="model-provider"]');
   const modelProviders = () => [...modelProviderGroup.querySelectorAll('input:checked')].map(input => input.value);
@@ -53,7 +54,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       summary.textContent = selected.length ? `${summary.dataset.emptyLabel} · ${selected.length}` : summary.dataset.emptyLabel;
     }
   }
-  const siteFavoritesInput = gatewayHome.querySelector('[data-home-site-favorites]');
   const modelSearchInput = gatewayHome.querySelector('[data-home-model-search]');
   const SITE_PAGE_SIZE = Number(config.sitePageSize) || 50;
   const MODEL_PAGE_SIZE = Number(config.modelPageSize) || 100;
@@ -462,7 +462,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       entry.sort.favorite = favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') ? 1 : 0;
     });
     if (state.sort) entries.sort(compareEntries(state.sort));
-    return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 })), (row, kind) => { row.entry.pinKind = kind; }, !state.sort).map(row => row.entry);
+    return pinSiteRows(entries.map(entry => ({ entry, defaultIndex: entry.index, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 })), (row, kind) => { row.entry.pinKind = kind; }, Boolean(state.sort)).map(row => row.entry);
   }
 
   function loadMoreWrap(type) {
@@ -495,7 +495,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const tabCount = gatewayHome.querySelector(`[data-gateway-tab="${state.type}"] .tool-tab-badge`);
     if (tabCount) tabCount.textContent = String(totalCount);
     if (!wrap) return;
-    const hasRows = totalCount > 0;
+    const hasRows = totalCount >= 0;
     wrap.classList.toggle('hidden', !hasRows);
     if (summary instanceof HTMLElement) {
       summary.textContent = displaySummaryText(renderedCount, totalCount);
@@ -504,17 +504,24 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     button?.classList.toggle('hidden', !(hasMoreRenderedRows || canLoadDeferredRows));
   }
 
-  function renderGatewayList(state) {
+  function renderGatewayList(state, { reuseEntries = false } = {}) {
     const list = gatewayHome.querySelector(state.listSelector);
     if (!list) return;
-    const entries = currentEntries(state);
-    const rows = entries.slice(0, state.visibleLimit).map((entry, index) => {
+    const append = Boolean(reuseEntries && state.renderedEntries);
+    const entries = append ? state.renderedEntries : currentEntries(state);
+    state.renderedEntries = entries;
+    const start = append ? state.renderedCount : 0;
+    const limit = Math.min(state.visibleLimit, entries.length);
+    const rows = entries.slice(start, limit).map((entry, offset) => {
+      const index = start + offset;
       const row = ensureEntryRow(entry, state.type);
       row.dataset.pinKind = entry.pinKind || '';
       setTableRowSequence(row, index + 1);
       return row;
     });
-    list.replaceChildren(...rows);
+    if (append) list.append(...rows);
+    else list.replaceChildren(...rows);
+    state.renderedCount = limit;
     gatewayHome.querySelector(state.emptySelector)?.classList.toggle('hidden', state.filteredEntries.length > 0);
     updateLoadMoreButton(state);
     updateSortButtons(state);
@@ -524,15 +531,17 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const keyword = (siteSearchInput?.value || '').trim().toLowerCase();
     const selectedFamily = selectedValues('family');
     const selectedPayment = selectedValues('payment');
+    const selectedStatus = selectedValues('status');
+    const selectedKinds = selectedValues('kind');
     const state = gatewayLists.sites;
     state.filteredEntries = state.entries.filter(entry => {
       const matchesKeyword = !keyword || entry.search.includes(keyword);
       const matchesFamily = matchesAllSelections(selectedFamily, entry.families.split(','));
       const matchesPayment = matchesAllSelections(selectedPayment, entry.payments.split(','));
       const status = entry.priceCount > 0 ? 'hasPrice' : entry.sort.modelCount > 0 ? 'noPrice' : 'noData';
-      const matchesStatus = matchesAny(selectedValues('status'), [status]);
-      const matchesFavorite = !siteFavoritesInput?.checked || favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '');
-      return matchesKeyword && matchesFamily && matchesPayment && matchesStatus && matchesFavorite;
+      const matchesStatus = matchesAny(selectedStatus, [status]);
+      const matchesKind = matchesListKinds(selectedKinds, { sponsor: Number(entry.sort.sticky) > 0, supportPoints: Number(entry.sort.support) || 0, favorite: favorites.has(entry.item?.slug || entry.row?.dataset.gatewaySiteKey || '') });
+      return matchesKeyword && matchesFamily && matchesPayment && matchesStatus && matchesKind;
     });
     return { keyword, selectedFamily, selectedPayment, visibleCount: state.filteredEntries.length };
   }
@@ -549,7 +558,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   function applySiteFilters({ track = true } = {}) {
     const { keyword, selectedFamily, selectedPayment, visibleCount } = filterSiteEntries();
     renderGatewayList(gatewayLists.sites);
-    renderFilterSummary(gatewayHome.querySelector('[data-home-site-active-filters]'), [...Object.values(filterGroups).flatMap(group => [...group.querySelectorAll('[data-filter-value]')]), siteFavoritesInput].map(input => ({
+    renderFilterSummary(gatewayHome.querySelector('[data-home-site-active-filters]'), Object.values(filterGroups).flatMap(group => [...group.querySelectorAll('[data-filter-value]')]).map(input => ({
       input,
       label: () => input.closest('label').textContent.trim(),
     })), {
@@ -607,7 +616,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       const values = params.getAll(name).map(value => ['family', 'provider'].includes(name) ? gatewayProviderSlug(value) : value.trim());
       for (const input of group.querySelectorAll('input')) input.checked = values.includes(input.value);
     }
-    if (siteFavoritesInput) siteFavoritesInput.checked = params.get('favorites') === '1';
     modelFilterGroups.forEach(group => group.querySelectorAll('input').forEach(input => { input.checked = params.getAll(group.dataset.multiFilter).includes(input.value); }));
     if (siteSearchInput) siteSearchInput.value = params.get('q') || '';
     if (modelSearchInput) modelSearchInput.value = params.get('model-q') || '';
@@ -620,8 +628,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       url.searchParams.delete(name);
       for (const value of selectedValues(name)) url.searchParams.append(name, value);
     }
-    if (siteFavoritesInput?.checked) url.searchParams.set('favorites', '1');
-    else url.searchParams.delete('favorites');
     for (const group of modelFilterGroups) {
       url.searchParams.delete(group.dataset.multiFilter);
       group.querySelectorAll('input:checked').forEach(input => url.searchParams.append(group.dataset.multiFilter, input.value));
@@ -633,7 +639,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function hasActiveSiteFilters() {
-    return Boolean((siteSearchInput?.value || '').trim() || Object.keys(filterGroups).some(name => selectedValues(name).length) || siteFavoritesInput?.checked);
+    return Boolean((siteSearchInput?.value || '').trim() || Object.keys(filterGroups).some(name => selectedValues(name).length));
   }
 
   function hasActiveModelFilters() {
@@ -660,13 +666,13 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       const payload = await response.json();
       if (!Array.isArray(payload.items)) throw new Error('Invalid list response');
       const items = payload.items;
-      const offset = Number(payload.offset) || state.pageSize;
       const totalCount = Number(payload.totalCount);
-      if (Number.isFinite(totalCount) && totalCount > 0) state.totalCount = totalCount;
+      if (Number.isFinite(totalCount) && totalCount >= 0) state.totalCount = totalCount;
       const entries = type === 'sites'
-        ? items.map((site, index) => siteEntryFromItem(site, offset + index))
-        : items.map((model, index) => modelEntryFromItem(model, offset + index));
-      state.entries.push(...entries);
+        ? items.map((site, index) => siteEntryFromItem(site, index))
+        : items.map((model, index) => modelEntryFromItem(model, index));
+      state.entries = entries;
+      state.renderedEntries = null;
       state.loaded = true;
       return entries.length;
     }, { anchor }).catch(() => null).finally(() => {
@@ -719,10 +725,12 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   async function loadMore(type) {
     const state = gatewayLists[type];
     if (!state) return;
+    const alreadyLoaded = state.loaded;
     const loadedCount = await ensureGatewayDataLoaded(type, gatewayHome.querySelector(`[data-gateway-load-more="${type}"]`));
     if (loadedCount === null) return;
     state.visibleLimit += state.pageSize;
-    if (type === 'sites') applySiteFilters({ track: false });
+    if (alreadyLoaded) renderGatewayList(state, { reuseEntries: true });
+    else if (type === 'sites') applySiteFilters({ track: false });
     else applyModelFilters({ track: false });
     trackGatewayEvent('button-click', { scope: 'gateway', action: 'load-more', tab: type, loadedCount });
   }
@@ -774,7 +782,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     applySiteFilterChange();
   });
   Object.values(filterGroups).forEach(group => group.addEventListener('change', applySiteFilterChange));
-  siteFavoritesInput?.addEventListener('change', applySiteFilterChange);
   modelFilterGroups.forEach(group => group.addEventListener('change', applyModelFilterChange));
   bindProviderSelection('gateway-models', provider => {
     const input = [...modelProviderGroup.querySelectorAll('input')].find(input => input.value === provider);
@@ -791,7 +798,6 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   gatewayHome.querySelector('#gatewayModelFilters')?.addEventListener('filter-clear', () => { modelFilterGroups.forEach(group => group.querySelectorAll('input').forEach(input => { input.checked = false; })); applyModelFilterChange(); });
   gatewayHome.querySelector('#gatewaySiteFilters')?.addEventListener('filter-clear', () => {
     Object.values(filterGroups).forEach(group => group.querySelectorAll('input').forEach(input => { input.checked = false; }));
-    siteFavoritesInput.checked = false;
     applySiteFilterChange();
   });
   modelSearchInput?.addEventListener('input', () => {

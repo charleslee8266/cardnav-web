@@ -12,13 +12,9 @@ function defaultItems(payload) {
   return payload.items;
 }
 
-function defaultOffset(payload, state) {
-  return Number(payload?.offset) || state.entries.length;
-}
-
 function defaultTotalCount(payload, state) {
   const totalCount = Number(payload?.totalCount);
-  return Number.isFinite(totalCount) && totalCount > 0 ? totalCount : state.totalCount;
+  return Number.isFinite(totalCount) && totalCount >= 0 ? totalCount : state.totalCount;
 }
 
 function compareEntries(sort) {
@@ -52,18 +48,20 @@ export function createDeferredTableController(options) {
   const loading = createListLoading(table.closest('.data-table-frame') || table.parentElement);
   const summary = options.summary;
   const getItems = options.getItems || defaultItems;
-  const getOffset = options.getOffset || defaultOffset;
   const getTotalCount = options.getTotalCount || defaultTotalCount;
 
   function currentEntries() {
     const entries = options.filterEntry ? state.entries.filter(options.filterEntry) : state.entries.slice();
     if (state.sort) entries.sort(compareEntries(state.sort));
-    return pinSiteRows(entries.map(entry => ({ entry, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 })), (row, kind) => { row.entry.pinKind = kind; }, !state.sort).map(row => row.entry);
+    return pinSiteRows(entries.map(entry => ({ entry, defaultIndex: entry.index, sponsor: Number(entry.sort.sticky) > 0, supportTotalCents: 0, supportPoints: Number(entry.sort.support) || 0, favorite: Number(entry.sort.favorite) > 0 })), (row, kind) => { row.entry.pinKind = kind; }, Boolean(state.sort)).map(row => row.entry);
   }
 
-  function updateSummary() {
+  let renderedEntries = null;
+  let renderedCount = 0;
+
+  function updateSummary(entries = currentEntries()) {
     if (!(summary instanceof HTMLElement)) return;
-    const filteredCount = currentEntries().length;
+    const filteredCount = entries.length;
     const renderedCount = Math.min(state.visibleLimit, filteredCount);
     const totalCount = options.isFilterActive?.() ? filteredCount : Math.max(state.totalCount, state.entries.length);
     const template = options.summaryTemplate || 'Showing {rendered} / {total}';
@@ -72,19 +70,28 @@ export function createDeferredTableController(options) {
       .replace('{total}', String(totalCount));
   }
 
-  function updateButton() {
-    button?.classList.toggle('hidden', state.loaded && currentEntries().length <= state.visibleLimit);
+  function updateButton(entries = currentEntries()) {
+    button?.classList.toggle('hidden', state.loaded && entries.length <= state.visibleLimit);
   }
 
-  function renderRows() {
-    tbody.replaceChildren(...currentEntries().slice(0, state.visibleLimit).map((entry, index) => {
+  function renderRows({ reuseEntries = false } = {}) {
+    const append = Boolean(reuseEntries && renderedEntries);
+    const entries = append ? renderedEntries : currentEntries();
+    renderedEntries = entries;
+    const start = append ? renderedCount : 0;
+    const limit = Math.min(state.visibleLimit, entries.length);
+    const rows = entries.slice(start, limit).map((entry, offset) => {
+      const index = start + offset;
       const row = options.ensureRow(entry);
       row.dataset.pinKind = entry.pinKind || '';
       setTableRowSequence(row, index + 1);
       return row;
-    }));
-    updateSummary();
-    updateButton();
+    });
+    if (append) tbody.append(...rows);
+    else tbody.replaceChildren(...rows);
+    renderedCount = limit;
+    updateSummary(entries);
+    updateButton(entries);
     syncTableSortHeaders(table, state.sort);
     options.onRender?.(state);
   }
@@ -103,9 +110,9 @@ export function createDeferredTableController(options) {
       const payload = await response.json();
       const items = getItems(payload, state);
       if (!Array.isArray(items)) throw new Error('Invalid list response');
-      const offset = getOffset(payload, state);
       state.totalCount = getTotalCount(payload, state);
-      state.entries.push(...items.map((item, index) => options.entryFromItem(item, offset + index)));
+      state.entries = items.map((item, index) => options.entryFromItem(item, index));
+      renderedEntries = null;
       state.loaded = true;
       return items.length;
     }, { anchor });
@@ -127,14 +134,16 @@ export function createDeferredTableController(options) {
   async function loadMore() {
     await ensureLoaded(button);
     state.visibleLimit += state.pageSize;
-    renderRows();
+    renderRows({ reuseEntries: true });
   }
 
   function initialize() {
     state.entries = Array.from(tbody.querySelectorAll('tr')).map(options.entryFromRow);
     state.loaded = state.entries.length >= state.totalCount;
-    updateSummary();
-    updateButton();
+    renderedEntries = currentEntries();
+    renderedCount = state.entries.length;
+    updateSummary(renderedEntries);
+    updateButton(renderedEntries);
   }
 
   return {

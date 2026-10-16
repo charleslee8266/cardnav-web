@@ -17,14 +17,14 @@ test('合作和赞赏组按积分排序，普通组保留原评分顺序', () =>
   assert.deepEqual(pinSiteRows(rows).map(row => row.id), ['paid-partner', 'partner', 'high', 'low', 'favorite', 'ordinary']);
 });
 
-test('合作与赞赏各最多10个，超额记录回收藏或普通组且不丢失', () => {
+test('合作与赞赏合计最多10个，超额记录回收藏或普通组且不丢失', () => {
   const rows = Array.from({ length: 24 }, (_, id) => ({ id, sponsor: id % 2 === 0, supportTotalCents: 100, supportPoints: 1, favorite: id === 23 }));
   const kinds = new Map<number, string>();
   const sorted = pinSiteRows(rows, (item, kind) => kinds.set(item.id, kind));
-  assert.deepEqual(sorted.map(row => row.id), [0,2,4,6,8,10,12,14,16,18,1,3,5,7,9,11,13,15,17,19,23,20,21,22]);
+  assert.deepEqual(sorted.map(row => row.id), [0,2,4,6,8,10,12,14,16,18,23,1,3,5,7,9,11,13,15,17,19,20,21,22]);
   assert.equal(new Set(sorted).size, rows.length);
   assert.equal(kinds.get(18), 'partner');
-  assert.equal(kinds.get(19), 'support');
+  assert.equal(kinds.get(19), '');
   assert.equal(kinds.get(23), 'favorite');
   for (const id of [20, 21, 22]) assert.equal(kinds.get(id), '');
 });
@@ -51,4 +51,15 @@ test('合作站点积分相同时沿用站点评分顺序', () => {
     { id: 'higher-points', sponsor: true, supportTotalCents: 0, supportPoints: 30, favorite: false },
   ];
   assert.deepEqual(pinSiteRows(rows).map(row => row.id), ['higher-points', 'higher-score', 'lower-score']);
+});
+
+test('手动排序站点按原始顺位打破积分平局，入选站点按用户顺序展示', () => {
+  const rows = Array.from({ length: 12 }, (_, i) => ({
+    sponsor: false, supportTotalCents: 0, supportPoints: 1, favorite: true, defaultIndex: i,
+  }));
+  const kinds = new Map<typeof rows[number], string>();
+  const output = pinSiteRows(rows.slice().reverse(), (row, kind) => kinds.set(row, kind), true);
+  assert.deepEqual(output.map(row => row.defaultIndex), [9,8,7,6,5,4,3,2,1,0,11,10]);
+  assert.ok(output.slice(0,10).every(row => kinds.get(row) === 'support'));
+  assert.ok(output.slice(10).every(row => kinds.get(row) === ''));
 });

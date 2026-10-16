@@ -282,7 +282,8 @@ export const enMessages: Messages = {
     displayOptions: 'Display',
     platformHint: 'Platform merchants generally offer more recourse. If a transaction goes wrong, you can file a complaint with their platform. Carefully verify self-hosted stores before buying.',
     platform: 'Platform', selfHosted: 'Self-hosted', onlyPlatform: 'Platform merchants only',
-    onlyFavorites: 'Favorites only',
+    listKind: 'Merchant type',
+    listKindLabels: { partner: 'Partner', support: 'Supporter', favorite: 'Favorites', other: 'Other' },
     clearFilters: 'Clear filters',
     done: 'Done',
 
