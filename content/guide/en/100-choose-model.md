@@ -1,49 +1,53 @@
 ---
-title: "1. Choose the AI large model you want to use"
-description: "First judge whether you want top model capability, or a low barrier and low cost, then decide whether to continue with this guide."
+title: "1. Choose an AI model"
+description: "For leading general-purpose and coding capabilities, consider GPT, Claude and Gemini; for easier access and lower costs, start with Chinese models according to your tasks and budget."
 parent: start-here
 next: choose-usage-method
 ---
-# 1. Choose the AI large model you want to use
+# 1. Choose an AI model
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-There are many large models, but for most users, the first thing to decide is not "which model is strongest," but "whether you want top capability, or a low barrier and low cost." Different goals correspond to completely different preparation work.
+First decide what matters most: leading capabilities, or convenient, affordable help with everyday tasks. For the former, consider major international models such as GPT, Claude and Gemini. For the latter, start with Chinese models such as DeepSeek, Zhipu GLM and Qwen.
 
-## Top overseas large models
+## Leading international AI models
+<!-- badge="Top capabilities" icon="model" -->
 
-<!-- badge="Capability ceiling" icon="model"-->
+For leading general-purpose and coding capabilities, prioritize GPT, Claude and Gemini. They suit complex reasoning, large codebase analysis and advanced tools.
 
-If your goal is to pursue the industry's strongest general and programming capabilities, we first recommend mainstream overseas large models such as GPT, Claude, and Gemini.
+### Access requirements
 
-### 1. Usage barrier
-- **Network and verification**: You need a stable overseas IP and a real phone number for account registration.
-- **Payment risk control**: Official website subscriptions often encounter payment rejection, and you need to use overseas app store gift cards to complete payment.
-- **Capability comparison**: If you need to view the latest differences in model capabilities, you can first refer to the [large model capability leaderboard](https://cardnav.xyz/model-leaderboard).
+- **Network and registration**: Reliable international network access and IP address; an overseas phone number for verification when required
+- **Subscriptions and payment**: A supported payment method and subscription budget; app stores must support the intended plan
+- **Capability comparison**: Compare coding and reasoning performance in the [AI model leaderboard](https://cardnav.xyz/model-leaderboard)
 
-### 2. Who it suits
-- **More suitable for**: Users who seek cutting-edge programming development, general logical reasoning, and a mature ecosystem experience
-- **Not suitable for**: Users with a limited budget who do not want to spend time dealing with overseas networks and payment cards
-- **Main cost**: Access restrictions are stricter in specific regions, and the barriers for registration, payment, and daily login are all higher
+### Who they suit
 
-### 3. Suggested next step
-- **Reading guide**: If you confirm that you need to use top overseas models, please click to read [Choose an AI subscription usage method](./200-choose-usage-method.md).
+- **Best for**: Advanced coding, complex reasoning and general-purpose capabilities, with a willingness to pay for stronger models
+- **Less suitable for**: Simple questions, limited budgets, or users unwilling to prepare additional network and payment arrangements
+- **Main trade-off**: Higher access, registration and payment barriers in some regions; ongoing subscription and account security management
 
-## Chinese local large models
+### Next steps
 
-<!-- badge="Low cost / easy to start" icon="check" -->
+Once you decide to use international models, compare accounts, subscriptions and API access. An API lets programs call a model and is useful for connecting it to clients or development tools.
 
-Models such as DeepSeek, Zhipu GLM, and Tongyi Qianwen are also extremely excellent alternative choices today.
+## Chinese AI models
+<!-- badge="Affordable / Easy to start" icon="check" -->
 
-### 1. Advantages
-- **Worry-free registration**: Register directly with a Chinese phone number, without complicated overseas proxy configuration.
-- **Low price**: API prices are low, and all major platforms provide generous trial credits.
-- **Broad applicability**: They are good enough for regular office Q&A, daily translation, and assisted programming.
+For everyday office work, translation, writing and coding assistance, consider DeepSeek, Zhipu GLM and Qwen. They are easy to start using without overseas accounts or payment channels.
 
-### 2. Who it suits
-- **More suitable for**: Users who want out-of-the-box use with no barrier, have a lower budget, and use models daily for regular Q&A, translation, and light development
-- **Not suitable for**: Users who pursue absolutely top reasoning capability, or are strongly tied to a specific overseas ecosystem
-- **Main cost**: In extremely complex code generation and deep reasoning over very long text, there is still a gap from the very top models
+### Main advantages
 
-### 3. Suggested next step
-- **Direct trial**: You can register and use them directly on the official websites of major models, without continuing through the tedious steps in this guide.
+- **Convenient access and registration**: Usually accessible directly from China, with registration through common local accounts or phone numbers
+- **Lower entry costs**: Start free or at low cost, then purchase subscriptions or usage credits as needed
+- **Broad everyday uses**: Organizing information, editing text, explaining code and routine office work
+
+### Who they suit
+
+- **Best for**: Convenience and low costs, with a focus on everyday questions, translation and coding assistance
+- **Less suitable for**: Users who specifically depend on a particular international model or its coding tools
+- **Main trade-off**: Complex-task performance and supporting features differ; they cannot fully replace every specific model
+
+### Next steps
+
+Try the official website or client directly. If it meets everyday needs, no additional overseas account, network or payment setup is necessary. Consider international options when stronger capabilities or specific features are needed.

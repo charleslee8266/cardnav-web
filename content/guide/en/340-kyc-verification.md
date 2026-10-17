@@ -1,69 +1,56 @@
 ---
-title: "3.4 Understand KYC risk control"
-description: "Understand what KYC identity verification risk control is, why platforms represented by Claude easily trigger it, and how to respond when you do not have an overseas identity."
+title: "3.4 Understanding KYC checks"
+description: "Understand KYC barriers for overseas AI services, Claude and virtual cards, assess missing identity or address documents, choose an appropriate route before paying and limit losses when verification blocks access."
 parent: practical-prep
 next: daily-usage-risk
 ---
-# 3.4 Understand KYC risk control
+# 3.4 Understanding KYC checks
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-When subscribing to overseas large models, especially Claude, or topping up overseas virtual cards, you will often encounter a strong risk-control checkpoint: **KYC identity verification**. For ordinary users who lack overseas identity, this defense line is basically unsolvable.
+KYC identity checks can be a practical barrier when using overseas AI services, especially Claude, or opening a virtual card. Without personal identification or proof of address accepted by the provider, continued use can become difficult once verification is required. Consider whether you can pass before paying rather than spending more after access is restricted.
 
-First treat KYC as an identity compliance barrier, not an ordinary verification code. As long as you cannot provide real documents, face verification, and address proof, you should avoid high-risk paths in advance.
-
-## What is KYC
+## What is KYC?
 <!-- badge="Identity verification" icon="key" -->
 
-KYC means Know Your Customer, originally used by banks, digital finance, and payment gateways to verify customer identity. Now some AI platforms and payment chains also use it as anti-fraud risk control.
+KYC means Know Your Customer and verifies identity. Banks, payment services and some AI platforms require genuine documents; receiving a verification code alone is not enough.
 
-### Usual requirements
-- **Government documents**: Passport, overseas driver's license, or identity card
-- **Face verification**: Real-time liveness detection through a camera
-- **Address proof**: Some scenarios require overseas bills or bank statements
+### Common requirements
+- **Identity document**: An accepted passport, national ID or driving licence
+- **Face verification**: A photo or liveness check confirming that the document belongs to you
+- **Proof of address**: An accepted bill or bank document establishing your address
 
-### Trigger scenarios
-- Registration abuse, frequent node switching, abnormal environment during upgrade and card binding
-- The payment platform or model platform judges that the account needs stronger identity confirmation
+Not every service requires foreign identification. Requirements depend on accepted documents and supported regions.
 
-## Strict review represented by Claude
-<!-- badge="High-risk platform" icon="shield-alert" -->
+## Claude identity verification
+<!-- badge="Account eligibility" icon="shield-alert" -->
 
-Anthropic Claude is one of the stricter representatives among large model platforms for identity review. Once verification flows such as Persona are triggered, the account usually needs to upload documents and complete a face scan.
+If Claude requests identity verification, follow its official notice. Successful payment does not waive account checks. Without the required documents, normal access may not be restored.
 
-### Main risks
-- New account registration, daily login, or upgrading to Pro may all trigger review
-- The verification system checks document authenticity and face consistency
-- If real materials cannot be provided, the account is very likely to get stuck or lose the ability to continue use
+### Choosing a route
+- Before committing to a paid account, consider whether you can provide accepted, genuine documents
+- Keep separate copies of important data rather than relying on one difficult-to-recover account
 
-### Handling principles
-- Do not build a core long-term account on a path where identity verification cannot be completed
-- Important data and long-term subscriptions should first consider recoverable and appealable solutions
+If restricted, use [Claude account safety and appeals](./420-claude-account-safety.md) to identify the issue and contact official support.
 
-## Why this checkpoint is basically unsolvable
-<!-- badge="Do not force through" icon="shield-alert" -->
+## Why missing documents make verification difficult
+<!-- badge="Document requirements" icon="shield-alert" -->
 
-For users who lack a real overseas identity, once KYC is triggered, there are almost no legal means to pass it:
+Checks may verify document authenticity and consistency with your face and details. Changing networks, adding funds or hiring an intermediary cannot replace accepted identification or proof of address in your own name.
 
-### Core reasons
-- **Review is strict**: Document anti-counterfeiting, face liveness, and data consistency are all checked
-- **Identity isolation**: Without a real overseas identity or address proof, it is hard to provide compliant materials
-- **High risk of illegal proxy passing**: Fake documents, borrowed identities, or grey-market proxy passing may all lead to permanent bans and legal risks
+### Limiting losses
+- Do not add subscription payments or balance while mandatory verification remains unresolved
+- Ask official support about alternative documents or review; if you cannot continue, cancel renewal and request a refund under applicable rules
+- Do not borrow identities, forge documents or buy verification services; these risk data exposure and disputes over account ownership
 
-### Judgment advice
-- After mandatory KYC is triggered, do not continue investing more subscription fees or balance
-- If there are no key assets in the account, timely loss cutting is usually more realistic than forcing through
+## Alternatives and precautions
+<!-- badge="Choose before paying" icon="route" -->
 
-## Response and pitfall avoidance strategies
-<!-- badge="Avoid in advance" icon="route" -->
+If you lack the required documents, choose a route with requirements you can meet before paying.
 
-If you lack a real overseas identity, the most important thing is to avoid high-KYC-risk paths before payment and long-term use, instead of waiting until after triggering it to remedy the problem.
+### Available routes
+- **API gateways**: The provider handles upstream registration, payment and verification for model access; consider privacy, balance and support risks
+- **More accessible models**: For everyday questions and light development, consider services with simpler registration and payments, or local models
+- **App-store subscriptions**: Change the payment channel but do not remove the AI account's identity requirements
 
-### Optional paths
-- **App store in-app purchase**: Subscribe through App Store or Google Play to reduce the probability of directly triggering financial-level review by the model platform
-- **API gateway site**: Directly consume APIs, avoiding underlying account registration, payment, and identity verification
-- **Local models or low-barrier platforms**: If it is only daily Q&A and light development, you can first choose platforms where registration and payment are simpler
-
-### Still note
-- Alternative paths can only lower the barrier, not guarantee permanent stability
-- When long-term core materials are involved, first choose an account path you can control and recover
+For long-term use, choose access you can maintain and recover. See [Choosing how to use AI models](./200-choose-usage-method.md).

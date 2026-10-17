@@ -8,26 +8,26 @@ import './content.css';
 type Props = { section: 'getting-started' | 'articles'; currentSlug?: string };
 const { section, currentSlug = '' } = Astro.props;
 const t = Astro.locals.messages;
-const { guideNavItems } = getGuideCollection(Astro.locals.locale);
+const { guideNavItems, defaultGuideArticle } = getGuideCollection(Astro.locals.locale);
+const tutorialItems = guideNavItems.filter(item => item.article.slug !== defaultGuideArticle?.slug && item.article.slug !== 'articles');
 const linkTo = Astro.locals.localizePath;
-const articleItems = section === 'articles' ? await loadPublicArticleNavigation() : undefined;
+const articleItems = await loadPublicArticleNavigation();
 ---
 <aside class="reading-tree guide-sidebar">
   <details class="reading-tree-disclosure" open>
-    <summary class="reading-tree-summary"><span>{t.nav.guide}</span><span class="reading-tree-current">{section === 'articles' ? t.guide.articles : t.guide.gettingStarted}</span><span aria-hidden="true">⌄</span></summary>
+    <summary class="reading-tree-summary"><span>{t.nav.guide}</span><span class="reading-tree-current">{section === 'articles' ? t.guide.articles : t.guide.gettingStarted}</span><span class="reading-tree-indicator" aria-hidden="true"><span class="reading-tree-symbol"></span></span></summary>
     <nav class="reading-tree-nav" aria-label={t.guide.sectionNavigation}>
       <GuideSearch />
       <details class="guide-section-group" open={section === 'getting-started'}>
-        <summary><span class="reading-tree-chevron" aria-hidden="true">⌄</span><a class="guide-section-link" href={linkTo('/guide')} aria-current={section === 'getting-started' ? 'location' : undefined}>{t.guide.gettingStarted}</a></summary>
-        <GuideTree items={guideNavItems} currentSlug={section === 'getting-started' ? currentSlug : ''} sourcePage={Astro.locals.routePathname} />
+        <summary><span class="reading-tree-indicator" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="guide-section-link" href={linkTo(`/guide/${defaultGuideArticle?.slug || 'start-here'}`)} aria-current={section === 'getting-started' ? (currentSlug === defaultGuideArticle?.slug ? 'page' : 'location') : undefined}>{t.guide.gettingStarted}</a></summary>
+        <GuideTree items={tutorialItems} currentSlug={section === 'getting-started' ? currentSlug : ''} sourcePage={Astro.locals.routePathname} />
       </details>
-      <details class="guide-section-group" data-article-directory data-loaded={articleItems !== undefined ? 'true' : undefined} data-loading-label={t.guide.articleDirectoryLoading} data-error-label={t.guide.articleDirectoryError} data-empty-label={t.guide.articleDirectoryEmpty} open={section === 'articles'}>
-        <summary><span class="reading-tree-chevron" aria-hidden="true">⌄</span><a class="guide-section-link" href="/articles" aria-current={section === 'articles' ? 'location' : undefined}>{t.guide.articles}</a></summary>
+      <details class="guide-section-group" id="guide-articles" open={section === 'articles'}>
+        <summary><span class="reading-tree-indicator" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="guide-section-link" href="/guide/articles" aria-current={section === 'articles' ? (currentSlug === 'articles' ? 'page' : 'location') : undefined}>{t.guide.articles}</a></summary>
         <ul class="reading-tree-list" data-article-links>
-          {articleItems?.map(item => <li><a class="reading-tree-link" href={`/articles/${item.slug}`} aria-current={item.slug === currentSlug && section === 'articles' ? 'page' : undefined}>{item.title}</a></li>)}
+          {articleItems.map(item => <li><div class="reading-tree-row"><span class="reading-tree-indicator reading-tree-placeholder" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="reading-tree-link" href={`/guide/${item.slug}`} aria-current={item.slug === currentSlug && section === 'articles' ? 'page' : undefined}>{item.title}</a></div></li>)}
         </ul>
-        <p class="article-directory-status reading-tree-link" role="status" hidden={!articleItems || articleItems.length > 0}>{t.guide.articleDirectoryEmpty}</p>
-        <button type="button" class="reading-tree-link" data-article-retry hidden>{t.guide.search.retry}</button>
+        <p class="article-directory-status reading-tree-link" role="status" hidden={articleItems.length > 0}>{t.guide.articleDirectoryEmpty}</p>
       </details>
     </nav>
   </details>
@@ -39,41 +39,7 @@ const articleItems = section === 'articles' ? await loadPublicArticleNavigation(
 .guide-section-link:hover{background:var(--color-base-200)}
 .guide-section-link[aria-current]{background:var(--color-brand-soft);color:var(--color-primary)}
 .guide-section-group+.guide-section-group{margin-top:8px}
-.guide-section-group:not([open])>summary .reading-tree-chevron{transform:rotate(-90deg)}
 .article-directory-status{margin:6px 0 12px 24px}
 .guide-section-group :global(>.reading-tree-list){margin:6px 0 12px 16px;padding-left:8px;border-left:1px solid var(--color-base-300)}
 .guide-section-link:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px}
 </style>
-
-<script>
-for (const group of document.querySelectorAll<HTMLDetailsElement>('[data-article-directory]')) {
-  const list = group.querySelector<HTMLUListElement>('[data-article-links]')!;
-  const status = group.querySelector<HTMLElement>('[role="status"]')!;
-  const retry = group.querySelector<HTMLButtonElement>('[data-article-retry]')!;
-  let loading = false;
-  const load = async () => {
-    if (group.dataset.loaded || loading) return;
-    loading = true; status.hidden = false; retry.hidden = true;
-    status.textContent = group.dataset.loadingLabel!;
-    try {
-      const response = await fetch('/api/article-navigation.json', {signal: AbortSignal.timeout(15000)});
-      if (!response.ok) throw new Error('Directory unavailable');
-      const items: {slug: string; title: string}[] = await response.json();
-      list.replaceChildren();
-      for (const item of items) {
-        const li = document.createElement('li');
-        const link = document.createElement('a'); link.className = 'reading-tree-link';
-        link.href = `/articles/${item.slug}`; link.textContent = item.title;
-        li.append(link); list.append(li);
-      }
-      group.dataset.loaded = 'true';
-      status.hidden = items.length > 0; status.textContent = group.dataset.emptyLabel!;
-    } catch {
-      status.textContent = group.dataset.errorLabel!; retry.hidden = false;
-    } finally { loading = false; }
-  };
-  group.addEventListener('toggle', () => { if (group.open) void load(); });
-  retry.addEventListener('click', () => void load());
-  if (group.open) void load();
-}
-</script>

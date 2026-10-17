@@ -12,7 +12,7 @@ export async function loadArticleSearchIndex(): Promise<GuideSearchEntry[]> {
   if (building?.revision === revision) return building.promise;
   const promise = db.query(`SELECT slug,title,summary,content_markdown FROM articles WHERE status='published' ORDER BY sort_order ASC,published_at DESC,id`).then(result => {
     const entries: GuideSearchEntry[] = result.rows.map(row => ({
-      title: row.title, url: `/articles/${row.slug}`, description: row.summary,
+      title: row.title, url: `/guide/${row.slug}`, description: row.summary,
       text: searchTextFromMarkdown(row.content_markdown), kind: 'article',
     }));
     cached = {revision, entries};

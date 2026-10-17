@@ -1,53 +1,46 @@
 ---
-title: "Common account delivery format explanation"
-description: "First judge whether the merchant delivers account/password, four-part RT, or various JSON credentials, then decide whether you can log in directly or what tool you should import into."
+title: "Common account delivery formats"
+description: "Understand AI account delivery formats, including login details, four-part RT records, ChatGPT Session data and tool import files, along with access methods, verification and credential security."
 parent: merchant-overview
 ---
-# Common account delivery format explanation
+# Common account delivery formats
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-Although many merchants sell items all called "accounts," the actual delivered content is not the same. Some are account information that can be used directly for web login, while others are JSON configurations for gateway panels, import tools, or scripts. Confirming the delivery format before ordering helps reduce understanding gaps and usage risks.
+What a seller calls an “account” may be login details, a login token or a JSON file for a tool. Confirm the contents, access method and additional verification requirements before buying. Format only describes how data is organized; it does not establish ownership, subscription entitlements or validity.
 
-You can first make a basic distinction:
+For official-site or client access, confirm valid login details and who controls email and verification. For tool imports, check supported formats and required fields.
 
-- **Direct web and client login**: Prefer the "account/password" format that can directly log in on the official website, or the "four-part RT" direct login format with a password.
-- **Tool and gateway site import**: For formats delivered as session or various JSON configurations, they are usually more suitable for importing into third-party gateway software or management panels.
+## Login details
+<!-- badge="Login credentials" icon="key" -->
 
-## Account and password
-<!-- badge="Most direct" icon="key" -->
+These are an email address or username and password. Direct login depends on account status, sign-in method and additional verification.
 
-The merchant directly sends email and password, which can usually log in directly on the web page or client.
-
-- Suitable for people who want to directly log in to ChatGPT or the client
-- Not suitable for people who want to batch import into tools or do format conversion
-- Easy to confuse with other "account formats," so you still need to confirm whether direct login is supported
+- Whether the password is for the service or only its associated email account
+- Whether a verification code is required and who receives it
+- Whether password, email and recovery methods can be changed; login access is not full ownership
 
 ```txt
 example@example.com | abc***XYZ
 ```
 
 ## Four-part RT
-<!-- badge="Direct login / convertible" icon="key" -->
+<!-- badge="Account and tokens" icon="key" -->
 
-One line contains account, password, `client_id`, and `refresh_token` at the same time.
+A four-part RT record usually combines account, password, `client_id` and `refresh_token` on one line. The former identifies an application; the latter refreshes access tokens.
 
-- Suitable for people who want both direct login and possible later format conversion
-- Not suitable for people who cannot understand fields and only want brainless login
-- The name looks complex and can easily be mistaken as only importable into tools
+Sellers may define fields differently, and they may belong to an email service. Confirm their platform and purpose; the name “four-part RT” does not establish compatibility with ChatGPT login or conversion.
 
 ```txt
 example@example.com----abc***XYZ----cli***123----rt_abc***xyz
 ```
 
+Direct login requires valid credentials and any necessary verification. Tool use depends on the token's authorization, validity and supported format.
+
 ## ChatGPT Session
 <!-- badge="Session JSON" icon="api" -->
 
-Session information obtained from an already logged-in web page, not ordinary account and password.
-
-- Suitable for people who need session export and continued format conversion
-- Not suitable for people who want to directly enter account and password on the login page
-- Many people think it equals an account, but it actually cannot be used directly as account and password
+Session data describes a logged-in session. It can be exported as JSON for compatible tools but cannot be entered as a username and password in a login form.
 
 ```json
 {
@@ -62,14 +55,12 @@ Session information obtained from an already logged-in web page, not ordinary ac
 }
 ```
 
+This example shows only part of the structure, lacks complete credentials and cannot be imported directly. A plan name does not prove an active subscription; check the actual account.
+
 ## Codex / CPA / Sub2API / Cockpit
-<!-- badge="Tool import format" icon="toolbox" -->
+<!-- badge="Tool import formats" icon="toolbox" -->
 
-These are usually JSON files for importing into tools, panels, or gateway programs.
-
-- Suitable for local tool import, batch management, and continued format conversion
-- Not suitable for people who only want direct web login
-- When the product title says "account," this is the easiest format for beginners to buy by mistake
+These names appear in tool import instructions. Fields vary by tool, version and seller; they are not a universal format.
 
 ```json
 {
@@ -79,14 +70,19 @@ These are usually JSON files for importing into tools, panels, or gateway progra
 }
 ```
 
-## How to convert
+An `access_token` generally accesses an authorized service; a `refresh_token` obtains a new access token. Example values are placeholders and may omit fields required by a particular tool.
 
-If you receive `account/password` or `four-part RT`, usually first confirm whether direct login works, then decide whether to convert it into `Session` or another import format.
+Confirm the tool, version, import process and validity before buying. Successful import does not imply web login, profile editing or account recovery rights.
 
-If you receive JSON such as `Session`, `CPA`, `Sub2API`, or `Cockpit`, it is usually for tools or gateway programs. First read the merchant's instructions, then decide how to import it.
+## Conversion and credential storage
 
-## Order confirmation
+Conversion reorganizes existing data; it cannot supply missing passwords, authorization or subscription entitlements. Check the source format, target requirements and field meanings. A username and password alone cannot necessarily produce every token a tool needs.
 
-- **Direct login format check**: Carefully confirm whether the card code content belongs to a delivery format such as account and password that can directly log in on the web page.
-- **Tool format identification**: Identify whether what the merchant provides is JSON credentials for importing into clients such as Codex / CPA.
-- **Terms of service confirmation**: Check whether the product details clearly state the subscription period, secondary verification method, and risk-control warranty time.
+Protect login tokens and session credentials like passwords. Submitting them to third-party sites or untrusted tools may grant others account access. Remove passwords, tokens and other sensitive fields before sharing screenshots or asking for help.
+
+## Before ordering
+
+- **Access method**: Official website, official client or a specified third-party tool
+- **Complete data**: Required fields and any email codes or other verification
+- **Account rights**: Control of email, password and recovery; shared account or team seat status
+- **Validity and support**: Subscription and credential expiry, replacement and refund conditions

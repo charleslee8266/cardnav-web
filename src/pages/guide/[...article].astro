@@ -1,0 +1,30 @@
+---
+import GuideBrowser from '../../components/GuideBrowser.astro';
+import { findGuideArticle, getGuideArticleLocales, getGuideCollection } from '../../guide.js';
+import PublicPage from '../../layouts/PublicPage.astro';
+import {loadPublicArticle} from '../../articles.js';
+import {buildSeoContext} from '../../seo.js';
+import {publicSiteUrl} from '../../site.js';
+const slug = Astro.params.article || '';
+const tutorial = findGuideArticle(slug, Astro.locals.locale);
+const article = tutorial ? null : await loadPublicArticle(slug);
+Astro.response.headers.set('Cache-Control','no-store');
+if(!article && !tutorial) Astro.response.status=404;
+const seo=buildSeoContext({baseUrl:publicSiteUrl,pathname:`/guide/${Astro.params.article}`,title:tutorial?.title || article?.title || '文章不存在',description:tutorial?.description || article?.summary || '该文章尚未发布或已移除。',type:slug !== 'articles' && (article || tutorial) ? 'article':'webpage',imagePath:'/og-cardnav.webp',noindex:!article && !tutorial,datePublished:article?new Date(article.publishedAt).toISOString():undefined,dateModified:article?new Date(article.updatedAt).toISOString():undefined,locale:Astro.locals.locale,breadcrumbs:[{name:Astro.locals.messages.nav.guide,pathname:'/guide'},...((tutorial || article)?[{name:(tutorial || article)!.title,pathname:`/guide/${slug}`}]:[])]});
+const availableLocales = tutorial ? getGuideArticleLocales(slug) : [];
+seo.alternateUrls = seo.alternateUrls.filter(item => availableLocales.includes(item.locale));
+if (tutorial) seo.ogLocaleAlternates = seo.alternateUrls.filter(item => item.locale !== Astro.locals.locale).map(item => item.hreflang.replace('-', '_'));
+else seo.ogLocaleAlternates = [];
+if(article) {
+  const graph=seo.jsonLd as {'@graph'?:Record<string,unknown>[]};
+  const node=graph['@graph']?.find(x=>x['@type']==='Article');
+  if(node) {node.isBasedOn=article.sourceUrl;node.citation=article.sourceUrl;if(article.author)node.author={'@type':'Person',name:article.author};}
+}
+
+if (article && Astro.locals.hasLocalePrefix) return Astro.redirect(`/guide/${article.slug}`, 301);
+const guideCollection = getGuideCollection(Astro.locals.locale);
+const currentArticle = tutorial || (article ? {slug:article.slug,title:article.title,description:article.summary,html:article.contentHtml,nextLink:null} : null);
+---
+<PublicPage availableLocales={tutorial ? availableLocales : undefined} activeNav="guide" pageType="guide-detail" {...seo} xDefaultUrl={tutorial ? seo.xDefaultUrl : undefined}>
+  {currentArticle ? <GuideBrowser articles={guideCollection.guideArticles} navItems={guideCollection.guideNavItems} currentArticle={currentArticle} importedArticle={article || undefined} sourcePage={`/guide/${slug}`} pageType="guide-detail" /> : <section class="reading-content"><h1 class="reading-title">文章不存在</h1><p>该文章尚未发布或已移除。</p><a href="/guide">返回指南</a></section>}
+</PublicPage>

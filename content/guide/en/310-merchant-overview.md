@@ -1,42 +1,46 @@
 ---
-title: "3.1 Understand card shops and avoid purchase pitfalls"
-description: "Understand what a virtual goods card-shop platform is, and how to safely buy overseas large model accounts and services."
+title: "3.1 Digital goods sellers and purchase risks"
+description: "Understand stores selling AI accounts, subscriptions and redemption codes, distinguish product entitlements from automatic delivery and transaction protection, and check support terms and delivery formats."
 parent: practical-prep
 ---
-# 3.1 Understand card shops and avoid purchase pitfalls
+# 3.1 Digital goods sellers and purchase risks
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-When buying AI accounts, third-party top-ups, or various virtual goods, you will often encounter websites called "card shops" or "card-issuing shops."
+Digital goods stores, sometimes called card-code stores, sell redemption codes, accounts and similar products. When buying an AI account or top-up service, distinguish the site's transaction features, the actual seller and the purchased entitlements. A page name alone does not establish the service's origin.
 
-## What is a card shop
-<!-- badge="Understand the platform first" icon="cart" -->
+## What is a digital goods store?
+<!-- badge="Stores and products" icon="cart" -->
 
-A "card shop" is essentially a **third-party retail trading platform for virtual goods**, where independent merchants often sell the following types of services:
+These stores often deliver codes, account details or instructions automatically after payment. A site may belong to one seller or host several; transaction and support responsibilities depend on its terms.
 
-- **Redemption codes and activation codes**: Selling virtual goods card codes such as ChatGPT Plus activation keys.
-- **Account top-up channels**: Using foreign payment methods to activate official website subscriptions for your personal account.
-- **Ready-made account direct login**: Providing exclusive or shared accounts that already have subscriptions activated and can be used immediately after receiving the account.
-- **Virtual tool quota**: Providing auxiliary services such as temporary SMS phone numbers and overseas virtual prepaid cards.
+Common products include:
 
-## How to choose reliable merchants
-<!-- badge="Purchase pitfall avoidance" icon="support" -->
+- **Redemption codes**: Follow the seller's instructions and check the redemption site, expiry and entitlements. A seller-issued code is not necessarily an official credential.
+- **Account top-ups**: Activate or renew an existing account; check the payment source and failure policy.
+- **Ready-made accounts**: Accounts with login details, offered as exclusive access, shared access or team seats.
+- **Supporting services**: Phone verification, virtual payment cards or tool credits, each with its own conditions and validity.
 
-Products on the platform are provided by independent third parties. First judge whether a merchant is trustworthy from product richness, payment safety, contact methods, and community activity.
+## Choosing a reliable seller
+<!-- badge="Purchase checks" icon="support" -->
 
-### Core principle
-- **Do not only look at low prices**: Products far below official subscription prices are more likely to come with risks such as stolen cards, account bans, or disappearance
-- **Check the after-sales entry first**: Whether you can contact the merchant is often more important than saving a few yuan
+Consider product details, support responses, payment records and after-sales terms. Large catalogs, low prices and active communities do not independently establish a reliable account source.
+
+### Key considerations
+- **Clear entitlements**: Plan, duration, account control and delivery method
+- **Usable support**: Reachable support and clear replacement and refund conditions
+- **Traceable transaction**: Saved order number, recipient details and written agreement
 
 [Learn more](./311-choose-reliable-merchant.md)
 
-## Common account delivery format explanation
-<!-- badge="Confirm before ordering" icon="key" -->
+## Common account delivery formats
+<!-- badge="Before ordering" icon="key" -->
 
-Before ordering, first distinguish whether the merchant delivers account/password, four-part RT, or JSON credentials such as Session, CPA, Sub2API, and Cockpit, to avoid buying a format you do not know how to use.
+Login details, four-part RT records, Session data and tool files work differently. Confirm that the format fits your needs and whether extra verification or software is required.
 
-### Core principle
-- **Direct login format**: First confirm whether it can directly log in on the official website or client
-- **Tool format**: JSON credentials are usually more suitable for importing into tools, panels, or gateway programs
+### Key considerations
+- **Web login**: Valid login details and who controls email and additional verification
+- **Tool import**: Format and fields required by the target tool
+- **Credential security**: Login tokens may grant account access; protect them like passwords
 
 [Learn more](./312-common-delivery-formats.md)

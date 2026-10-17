@@ -1,94 +1,110 @@
 ---
-title: "3.3 International payments and price differences"
-description: "First look at regional price differences for subscriptions, then choose suitable international payment channels and anti-risk-control advice."
+title: "3.3 International payments and regional prices"
+description: "Compare regional AI subscription prices, bank cards, virtual cards, wallets and app-store payments, including eligibility, costs and renewal management."
 parent: practical-prep
 next: region-pricing-differences
 ---
-# 3.3 International payments and price differences
+# 3.3 International payments and regional prices
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-Payment failure is often not as simple as "you do not have Visa or MasterCard." In high-risk-control scenarios, many platforms look at the payment card's region, account region, IP region, and purchase channel at the same time. Any mismatch can trigger payment rejection.
+International payments depend on supported regions, account eligibility, billing details and payment channels. Visa or Mastercard identifies a card network; it does not guarantee that a service accepts the card.
 
-First look at regional prices, then choose the payment channel. When subscribing to large models daily, the more consistent the network IP, account registration country, app store region, and payment card issuing country are, the less likely payment risk control is triggered.
+Consider total costs, availability and ongoing subscription management. If payment fails, diagnose it using the error and transaction record rather than repeatedly trying again without knowing the cause.
 
-## Subscription price differences by region
-<!-- badge="Check price gap first" icon="globe" -->
+## Regional subscription prices
+<!-- badge="Cost comparison" icon="globe" -->
 
-The same subscription service may have very different pricing in different countries and regions. Low-price regions are not necessarily more worry-free, because they may come with stricter payment barriers, regional restrictions, or secondary verification.
+Region and purchase channel may affect price. Compare the same plan and period, including taxes, exchange rates and fees.
 
-### Key judgments
-- **Actual cost**: Whether it is truly cheaper after exchange rate conversion
-- **Activation barrier**: Whether a corresponding regional account, payment card, or billing address is required
-- **Risk-control cost**: Whether low-price regions are more likely to trigger payment rejection, subscription cancellation, or verification
+### Key considerations
+- **Actual cost**: Tax-inclusive price, currency conversion and payment fees
+- **Eligibility**: Account and billing details meet regional requirements
+- **Renewal**: Price after promotions and continued payment availability
 
 [Learn more](./331-region-pricing-differences.md)
 
-## 1. Directly bind an international credit card (Visa/Mastercard)
-<!-- badge="Official direct binding" icon="bank" -->
+## 1. International credit cards (Visa / Mastercard)
+<!-- badge="Website payment" icon="bank" -->
 
-Directly enter a foreign-currency credit card account on the OpenAI or Anthropic official website.
+Enter card and billing details on the official site. Acceptance depends on the platform, payment provider and issuing bank.
 
-### Limitations and risks
-- Official risk control is the strictest, and most Visa/Mastercard cards issued in China are easily rejected
-- Payment failure may also affect account status
+### Requirements
+- Supported card type with the required transaction features enabled
+- Genuine billing details, an active card and sufficient available credit
+- Account and payment method meet regional requirements
 
-### Suitable scenarios
-- Large model platforms where payment risk control is not strict
-- Having a real overseas credit card and a relatively consistent account environment
+### Common problems
+- Incorrect information, insufficient credit or bank restrictions may cause declines
+- Distinguish pending authorizations from posted charges to avoid duplicate payments
 
-## 2. Virtual credit card (VCC)
-<!-- badge="Bypass risk control" icon="card" -->
+## 2. Virtual credit cards (VCC)
+<!-- badge="Virtual cards" icon="card" -->
 
-Open a European or American virtual credit card through a third-party virtual card issuing platform and bind it.
+Virtual cards supply payment details such as a card number. Suitability depends on the issuer, card type and platform rules; approval is not necessarily easier than with a physical card.
 
-### Usage barrier
-- You need to register and top up on the card issuing platform, and bear card opening or fee costs
-- When binding and spending, maintain a stable proxy network and avoid switching IPs casually
-
-### Main risks
-- Some virtual card BIN ranges may be widely blacklisted by platforms
-- Stability depends on the card issuing platform, BIN quality, and usage environment
-
-## 3. Third-party payment platforms (PayPal / Apple Pay / Google Pay)
-<!-- badge="Wallet binding" icon="cash" -->
-
-Bind and pay directly through third-party wallets or payment gateway channels.
-
-### Usage barrier
-- Third-party payment platforms themselves also have account ownership and regional restrictions
-- During binding and spending, you need to keep network, account, and payment regions consistent
+### Requirements
+- Card eligibility, funding methods, regions and identity checks
+- Support for recurring payments and how refunds are returned
 
 ### Main risks
-- The payment platform applies risk control first, then the model platform applies risk control, making the source of problems harder to judge
-- Overseas wallets do not necessarily support China-region accounts or cards
+- Issuance, funding, transactions or maintenance may incur fees
+- The card may be rejected and its balance may not be immediately refundable
+- Issuer changes or closure may affect renewals and recovery of remaining funds
 
-## 4. App Store payment
-<!-- badge="Most recommended" icon="cart" -->
+## 3. Payment services (PayPal / Apple Pay / Google Pay)
+<!-- badge="Wallet payments" icon="cash" -->
 
-This is the most stable and most recommended mature path. Complete in-app subscription on iPhone, iPad, or Mac through an Apple ID in the corresponding region and App Store gift card balance.
+Checkout must offer the relevant option. Wallet region, linked cards and transaction limits still affect payment.
 
-### Core advantages
-- App Store hosts payment bills, reducing the risk of the model platform directly reviewing the underlying card
-- For Apple device users, it is easier to make work than direct card binding on the official website
+### Requirements
+- The service, purchase channel and region support the method
+- The wallet and linked payment instrument meet requirements
 
-### Usage barrier
-- You need to prepare a target-region Apple ID and gift card or usable payment method for that region
-- You still need to keep Apple ID region, network region, and top-up source consistent
+### Main risks
+- Wallet verification does not guarantee subscription payment
+- Refunds or disputes may involve several parties; keep complete records
+
+## 4. App Store payments
+<!-- badge="Apple devices" icon="cart" -->
+
+Subscribe within the official AI app through App Store without adding a card directly to the AI website. Plans, prices and payment methods follow the current purchase page.
+
+### Requirements
+- The Apple account region supports the app and required plan
+- An accepted regional payment method, with gift-card balance eligible for the subscription
+
+### Subscription management
+- Use Apple to view orders, manage renewals and request refunds under its rules
+- Account, region and payment requirements still apply; review or declines remain possible
 
 [Learn more](./332-payment-app-store.md)
 
-## 5. Google Play Store payment
-<!-- badge="Android alternative" icon="cart" -->
+## 5. Google Play Store payments
+<!-- badge="Android devices" icon="cart" -->
 
-If you do not have an Apple device, you can also complete in-app subscriptions through an Android phone and Google Play, but it usually depends more on account region and payment profile configuration than App Store does.
+Android users can subscribe within the official AI app using Google Play checkout. Confirm account region, plan and payment availability.
 
-### Core advantages
-- No need to directly bind a payment card on the model official website
-- Suitable for Android device users taking the official in-app purchase path
+### Requirements
+- The device can use Google Play and download the official app
+- Google account and payment details meet store requirements
 
-### Usage barrier
-- You need a target-region Google account, Google Play environment, and usable payment profile
-- You still need to avoid obvious mismatches between account region, network region, and payment profile
+### Subscription management
+- View orders and manage renewals through Google Play
+- Check existing subscriptions elsewhere to avoid duplicate charges
 
 [Learn more](./333-payment-google-play.md)
+
+## ChatGPT subscriptions and top-ups
+<!-- badge="Subscription issues" icon="check" -->
+
+Check the ChatGPT plan, Codex sign-in method and purchase channel, distinguishing subscription entitlements from API billing. Handle missing activation, duplicate subscriptions and unapplied top-ups through the order source.
+
+[View the subscription and payment guide](./334-chatgpt-subscription-payment.md)
+
+## Claude subscriptions and top-ups
+<!-- badge="Subscription issues" icon="check" -->
+
+Check Claude and Claude Code subscription entitlements, distinguish Console/API billing, and handle activation, renewals, duplicate charges and refunds through the purchase channel.
+
+[View the subscription and payment guide](./335-claude-subscription-payment.md)

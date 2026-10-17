@@ -1,61 +1,59 @@
 ---
-title: "3. Practical AI subscription preparation and purchase pitfall avoidance"
-description: "Complete network and cloud host configuration, prepare payment channels, understand subscription regional price differences, and learn about card shops and delivery formats."
+title: "3. Preparing for AI subscriptions and purchases"
+description: "Prepare for AI services such as ChatGPT and Claude: understand sellers, delivery formats, network access, payment channels and identity checks for your chosen approach."
 parent: start-here
 next: daily-usage-risk
 ---
-# 3. Practical AI subscription preparation and purchase pitfall avoidance
+# 3. Preparing for AI subscriptions and purchases
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-If you ultimately choose a path with a higher practical barrier, such as "registering and topping up yourself," "using third-party top-up," or "self-hosting a gateway site," then before starting you need to prepare the corresponding environment tools and payment channels, and master the skills for preventing risks and choosing merchants.
+Buying an AI account, using a top-up service, subscribing directly and hosting an API gateway require different preparations. For third-party purchases, focus on entitlements and support. Direct registration and subscriptions require supported regions, verification and payment methods. Self-hosting also requires a server and credential management.
 
-First complete preparation in four directions: transaction risk, network environment, payment path, and identity risk control. If any one of them is not thought through, registration, payment, or later login may become unstable.
+## 3.1 Digital goods sellers and purchase risks
+<!-- badge="Sellers and delivery" icon="cart" -->
 
-## 3.1 Understand card shops and avoid purchase pitfalls
-<!-- badge="Check merchants first" icon="cart" -->
+Confirm what you receive and how failures are handled. Automatic delivery, product counts and community size are only clues, not transaction guarantees.
 
-Third-party purchasing, top-ups, and ready-made accounts all require merchant judgment. First look at product type, after-sales rules, contact methods, restocking frequency, and delivery format, then decide whether to place an order.
-
-### Key judgments
-- **Merchant credibility**: Whether there are stable products, clear after-sales, and trackable contact methods
-- **Delivery format**: Whether formats such as account/password, RT, Session, and JSON can be used normally by you
-- **Payment risk**: Whether the low price comes from opaque payment, shared accounts, or short-validity credentials
+### Key considerations
+- **Entitlements**: Plan, validity, sharing arrangements and recovery rights
+- **Delivery format**: Login details, credentials or files for a specific tool
+- **Support coverage**: Missing delivery, login failures, reclaimed accounts or revoked subscriptions
 
 [Learn more](./310-merchant-overview.md)
 
-## 3.2 Network environment and host preparation
-<!-- badge="Stable entry" icon="vpn" -->
+## 3.2 Network access and hosting
+<!-- badge="Access and verification" icon="vpn" -->
 
-Registration, login, and payment for overseas models all depend on a stable network. You need to confirm whether the network exit, IP purity, phone number verification, and self-hosted server match your usage path.
+Confirm that the service supports your region and is accessible. Keep phone numbers available for later verification and account recovery; self-hosting also requires a server.
 
-### Key judgments
-- **Network exit**: Whether access to the target service is stable, and whether the region is consistent with the account and payment path
-- **IP risk**: Whether there are proxy, abuse, data center, or high-fraud records
-- **Long-term verification**: Whether you can still receive phone number secondary verification later
+### Key considerations
+- **Availability**: Supported region and reliable network access
+- **IP checks**: Help diagnose network issues but cannot guarantee account verification
+- **Ongoing verification**: Continued personal access to email and phone numbers
 
 [Learn more](./320-network-env-overview.md)
 
-## 3.3 International payments and price differences
-<!-- badge="Payment path" icon="cash" -->
+## 3.3 International payments and regional prices
+<!-- badge="Payment options" icon="cash" -->
 
-Official subscriptions often get stuck at the payment step. First compare regional prices, payment channels, and risk control barriers, then decide whether to bind a card on the official website, use a virtual card, wallet, or in-app purchase through an app store.
+Compare equivalent plans through the same purchase channel. Available payment methods are those shown at checkout.
 
-### Key judgments
-- **Regional price**: Whether a low-price region truly saves money, and whether later barriers are higher
-- **Payment method**: Whether the card, account, IP, and app store region are consistent
-- **Consequences of payment rejection**: Whether payment failure will also affect account status
+### Key considerations
+- **Actual cost**: Regional price, exchange rate, taxes and fees
+- **Eligibility**: Account region, billing details and payment method requirements
+- **Order management**: Where to renew, cancel or request a refund
 
 [Learn more](./330-payment-overview.md)
 
-## 3.4 Understand KYC risk control
-<!-- badge="Identity barrier" icon="shield-alert" -->
+## 3.4 Understanding KYC checks
+<!-- badge="Identity verification" icon="shield-alert" -->
 
-Some platforms trigger KYC identity verification during registration, login, or subscription upgrades. Without a real overseas identity, this is usually not a problem that can be bypassed by tricks.
+KYC verifies a user's identity. Follow official instructions for documents; do not submit identification to unknown sites or purchase another person's identity details.
 
-### Key judgments
-- **Trigger scenarios**: New account registration, card binding upgrade, frequent region switching, or abnormal login
-- **Verification requirements**: Whether documents, face scan, address proof, and other materials can genuinely be provided
-- **Alternative paths**: Whether you should switch to app store in-app purchase, API gateway, or another lower-barrier solution
+### Key considerations
+- **Notice source**: An official page or verifiable official notification
+- **Documents**: Whether you can provide accepted documents in your own name
+- **Resolution**: Official support or appeal options if verification fails
 
 [Learn more](./340-kyc-verification.md)

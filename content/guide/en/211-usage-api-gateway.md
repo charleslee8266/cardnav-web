@@ -1,73 +1,70 @@
 ---
-title: "2.1 AI large model API gateway site"
-description: "Quickly obtain large model calling capability through an API gateway site, suitable for low-barrier trials, multi-model access, and light development debugging."
+title: "2.1 API gateways"
+description: "Connect to multiple AI models through an API gateway, configure keys, endpoints and clients, and assess billing, privacy, model labels and prepaid balance risks."
 parent: choose-usage-method
 next: usage-ready-account
 ---
-# 2.1 AI large model API gateway site
+# 2.1 API gateways
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-API gateway sites suit users who want to quickly connect to large model capabilities but temporarily do not want to handle overseas account registration, phone number verification, credit card payment, and complex network environments. They are usually operated by service providers that host accounts and payment chains. You only need to top up and obtain an API Key, then enter it into a client or tool that supports OpenAI-compatible interfaces.
+An API gateway provides a model access endpoint operated by a service provider. After purchasing credits, enter the API Key (the calling credential) and Base URL (the endpoint address) into a compatible client or program. Check the provider’s documentation for OpenAI compatibility, available models and supported features.
 
-## Core advantages
+## Main advantages
 
-- **Low starting barrier**: Usually no overseas phone number or overseas bank card is required, and you can use it after registering and topping up.
-- **Pay as you go**: Top up and deduct as used, without bearing the cost of a full monthly subscription at once.
-- **Convenient multi-model access**: Many gateway sites put models such as GPT, Claude, Gemini, and DeepSeek behind the same interface.
-- **Suitable for tool calls**: Clients such as Chatbox, Cherry Studio, code plugins, and internal scripts can generally connect quickly.
+- **Lower entry requirements**: Overseas phone numbers or bank cards are usually unnecessary; register and add funds to begin.
+- **Several billing options**: Usage-based plans suit occasional calls without a full month’s subscription cost; some platforms instead offer subscriptions or quotas, so choose according to their billing rules.
+- **Convenient access to multiple models**: Many gateways offer GPT, Claude, Gemini and DeepSeek through one interface.
+- **Useful for tool integration**: Chatbox, Cherry Studio, coding extensions and internal scripts can often be connected quickly.
 
 ## Limitations and risks
 
-- **Weaker privacy boundary**: Request content passes through the gateway provider, so it is not suitable for transmitting confidential data, business secrets, or highly sensitive personal information.
-- **Model quality needs verification**: Some services may have unclear model labels, low-tier models pretending to be high-tier models, rate limits, or reduced context length.
-- **Service stability is not fully controllable**: Gateway sites may interrupt service because of quota, risk control, upstream changes, or operational problems.
-- **Balance risk**: Do not top up too much at once, especially before you have verified service quality and after-sales responsiveness.
+- **Weaker privacy boundaries**: Requests pass through the gateway provider. Avoid confidential data, trade secrets and highly sensitive personal information.
+- **Model quality needs verification**: Some services use unclear labels, substitute weaker models, impose rate limits or shorten context windows.
+- **Limited control over reliability**: Quotas, account restrictions, upstream changes or business problems may interrupt service.
+- **Prepaid balance risk**: Avoid large deposits before testing service quality and support responsiveness.
 
-## Suitable users
+## Who it suits
 
-- People who want to try multiple models at low cost
-- People mainly doing light non-confidential conversations, code debugging, translation, or tool integration
-- People who do not want to immediately handle overseas accounts, phone numbers, and payment chains
-- Small teams that want to validate a business prototype first but are not ready to self-host a gateway
+- Users comparing the quality and cost of multiple models
+- Non-sensitive conversations, code debugging, translation and tool integration
+- Users seeking less upstream account registration and payment work
+- Small teams validating a prototype before hosting their own service
 
-## Practical steps
+## Setup steps
 
-1. Choose a gateway platform with relatively stable reputation. You can start by learning about the gateway site entries below.
-2. After registering an account, top up a small amount first, and do not put too much balance in on first use.
-3. Generate an API Key in the backend, and confirm the Base URL, model names, and billing instructions provided by the platform.
-4. Enter the API Key and proxy URL in Chatbox, Cherry Studio, a code plugin, or your script.
-5. Use simple questions to test response speed, model quality, context length, and whether billing matches expectations.
-6. If you want to use it long term, then gradually increase the quota and keep backup platforms to avoid a single point of interruption.
-
-## Recommended gateway sites
+1. Choose a gateway that meets your integration needs. Check models, prices, refund terms and contact details.
+2. Register and make a small initial deposit.
+3. Generate an API Key in the dashboard and confirm the Base URL, model names and billing rules.
+4. Enter the API Key and proxy URL in Chatbox, Cherry Studio, a coding extension or your script.
+5. Test speed, features and billing with representative tasks. Simple questions cannot establish the identity of the upstream model.
+6. For continued use, add credits according to actual demand and keep a backup provider to avoid a single point of failure.
 
 ## GeniusCoder
 <!-- badge="OpenAI SDK compatible" icon="api" imageAspect="3/1" -->
 
 ![GeniusCoder sponsor logo](/media/sponsors/geniuscoder.webp)
 
-Stable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and small teams.
+An OpenAI SDK-compatible GPT API for individuals and small teams integrating AI coding tools.
 
-[Register](https://api.geniuscoder.net/register?aff=JACMJSU7N7PX)
+[Sign up](https://api.geniuscoder.net/register?aff=JACMJSU7N7PX)
 
-## PackyAPI established AI API gateway site
-<!-- badge="Multi-model access" icon="api" imageAspect="3/1" -->
+## PackyAPI
+<!-- badge="Multiple models" icon="api" imageAspect="3/1" -->
 
-![PackyAPI AI API aggregation platform sponsor logo](/media/sponsors/packyapi-logo.svg)
+![PackyAPI AI API platform sponsor logo](/media/sponsors/packyapi-logo.svg)
 
-One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with invoice support, suitable for users who need relatively complete service and settlement capability.
+Access Claude, GPT, Gemini and other major AI services, with invoices available. Suitable for multiple-model calls and team trials.
 
-### Suitable scenarios
-- Multi-model API calls and team trials
-- Scenarios that need invoices or clearer settlement records
+[Sign up](https://www.packyapi.com/register?aff=Nulo)
 
-### Notes
-- A small top-up is still recommended before formal use
-- Focus on testing model quality, rate limits, context, and billing
+## More AI API gateways
+<!-- badge="Full directory" icon="route" -->
 
-[Register](https://www.packyapi.com/register?aff=Nulo)
+Compare other gateways by model coverage, prices and site information.
 
-## Usage advice
+[Browse more gateways](https://cardnav.xyz/llm-gateway)
 
-API gateway sites are more suitable for "quick availability" and "low-cost trial and error." They are not suitable as the only entry for highly sensitive data or long-term core business. Whenever customer data, internal code, finance, legal matters, medical information, or identity information is involved, you should first consider more controllable official accounts, self-hosted gateways, or enterprise solutions.
+## Recommendations
+
+API gateways suit model trials and tool integration. For customer records, internal code or sensitive personal information, check both the provider’s and upstream service’s data retention, training and access policies. Hosting your own gateway does not remove upstream data processing risks. Critical workloads also need a failure plan and portable connection settings.

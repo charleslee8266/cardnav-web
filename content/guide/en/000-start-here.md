@@ -1,54 +1,48 @@
 ---
 title: "Start here"
-description: "Start from Start here, first decide on the model, then choose the usage method, then complete the preparation items such as tools and payment."
+description: "Choose AI models and prepare accounts, network access, phone verification and payments for ChatGPT, Claude, Gemini and other products, with attention to regional restrictions and price differences."
 next: choose-model
 ---
 # Start here
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-If you are preparing to use AI products such as ChatGPT, Claude, Gemini, Grok, Cursor, and more, especially from some restricted countries and regions, you will often run into many questions while registering an account or starting a subscription, such as accounts, networks, phone numbers, payment methods, and prices.
+Using AI products such as ChatGPT, Claude, Gemini, Grok and Cursor often involves network access, phone verification, payment methods and regional pricing when registering or subscribing. These issues are particularly relevant in countries and regions with restrictions and can affect which approach suits you.
 
-There is plenty of information online, but it is often scattered across forums, group chats, fragmented blogs, merchant pages, and price pages. The details can be messy, and different sources do not always say the same thing.
+Information is scattered across forums, group chats, blogs and seller pages, with inconsistent advice. Each approach has different fees, preparation costs, reliability and risks. Decide which model and access method you need before preparing an account, network connection and payment method, rather than starting with registration or top-up tutorials.
 
-**The goal of this guide page set is to organize experience that was originally scattered across forums, group chats, and fragmented blogs into one clear path.**
+## Step 1: Choose an AI model
+<!-- badge="Define your needs" icon="target" -->
 
-This guide set aims to help you clarify the key questions in one pass: which model to use, which usage method to choose, what the price and preparation cost roughly look like, and where uncertainty may appear. Different choices have different costs, stability, and risks. Choosing the path first is more important than searching for tutorials first.
+Choose leading international models such as GPT, Claude and Gemini, or accessible, lower-cost Chinese alternatives.
 
-We recommend starting with the following four steps:
-
-## Step 1: Choose the AI large model you want to use
-<!-- badge="Set the goal first" icon="target" -->
-
-First judge whether you truly need top overseas models such as GPT, Claude, and Gemini, or alternatives with lower barriers and lower costs.
-
-- **Core question**: Do you want to pursue the upper limit of capability, or first complete daily tasks steadily?
+- **Key question**: Do you need the highest capabilities, or primarily to complete everyday tasks?
 
 [Learn more](./100-choose-model.md)
 
-## Step 2: Evaluate the large model usage method that suits you best
-<!-- badge="Then choose a path" icon="route" -->
+## Step 2: Choose how to use AI models
+<!-- badge="Choose an approach" icon="route" -->
 
-Between official website subscriptions, ready-made accounts, API gateways, third-party top-ups, and self-hosted gateways, choose the path that matches your budget, technical ability, and risk tolerance.
+Choose an official subscription, ready-made account, API gateway, third-party top-up, self-hosted gateway or self-deployed model based on budget, technical skills and risk tolerance.
 
-- **Core question**: Do you care more about a low barrier, stability, privacy, or controllability?
+- **Key question**: Is ease of access, reliability, privacy or control most important?
 
 [Learn more](./200-choose-usage-method.md)
 
-## Step 3: Prepare the network and payment environment, and choose merchants while avoiding pitfalls
-<!-- badge="Complete preparation" icon="toolbox" -->
+## Step 3: Prepare network access and payments, and assess sellers
+<!-- badge="Get prepared" icon="toolbox" -->
 
-Before placing an order or registering, first complete the network environment, payment method, account delivery format, and merchant judgment to reduce the chance of later triggering risk control or stepping into pitfalls.
+Before registering or purchasing, prepare network access and payment methods, understand delivery formats and assess sellers to reduce transaction and usage problems.
 
-- **Core question**: Are your network, payment, and merchant sources reliable enough?
+- **Key question**: Are the network, payment method and seller reliable?
 
 [Learn more](./300-practical-prep.md)
 
-## Step 4: Risk control and daily pitfall avoidance during AI subscription use
+## Step 4: Manage account risks during everyday use
 <!-- badge="Long-term use" icon="shield-alert" -->
 
-After the subscription succeeds, you still need to keep paying attention to daily risks such as the login environment, shared accounts, abnormal prompts, refund disputes, and service failure.
+After subscribing, watch for login issues, account sharing, unusual alerts, refund disputes and service failures.
 
-- **Core question**: How can you keep the account and service as stable as possible?
+- **Key question**: How can you keep the account and service as reliable as possible?
 
 [Learn more](./400-daily-usage-risk.md)

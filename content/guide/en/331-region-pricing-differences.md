@@ -1,23 +1,29 @@
 ---
-title: "Subscription price differences by region"
-description: "The same subscription plan may have very different pricing in different countries and regions. Compare actual costs and payment barriers across regions."
+title: "Regional subscription prices"
+description: "Compare regional prices for ChatGPT, Claude, Gemini and other AI subscriptions, checking plans, taxes, exchange rates, eligibility and the costs of renewal and ongoing management."
 parent: payment-overview
 next: payment-app-store
 ---
-# Subscription price differences by region
+# Regional subscription prices
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-The same subscription plan may have very different pricing in different countries and regions, so many people first look for the "cheapest region." There is nothing wrong with this itself, but looking only at price usually leads to pitfalls, because low-price regions often also come with stricter risk control, more regional restrictions, or more complex payment requirements later.
+The same AI subscription may have different prices across countries, regions and purchase channels. Compare entitlements, billing periods, taxes and payment eligibility. A lower converted price is useful only if you qualify to purchase it.
 
-When judging regional prices, we recommend looking at three things at the same time:
+## Compare the total cost of equivalent plans
 
-- **Nominal price comparison**: Compare whether the real fiat cost after exchange rate conversion has an obvious advantage.
-- **Activation barrier level**: Evaluate the target low-price region's risk-control requirements for overseas bank cards, billing addresses, and network.
-- **Risk-control traceability strength**: Understand whether that region has recently seen large-scale subscription cancellations, payment rejection bans, or tightening of secondary verification.
+When using the [official subscription price comparison](https://cardnav.xyz/official-price), compare the same plan, billing period and purchase channel. Website subscriptions and app-store purchases may differ in price or available plans.
 
-In practice, a region being "very cheap before" does not mean it is still worth choosing now. Prices adjust, and risk control also upgrades, so this kind of information is naturally time-sensitive.
+Your total may include taxes, the issuing bank's currency-conversion fees and payment fees. CNY conversions help comparison, but the checkout and payment statement determine the actual charge.
 
-If your goal is peace of mind rather than extreme savings, it is usually more worthwhile to prioritize regions where the payment chain is more mature and risk control is relatively easier to handle, instead of blindly chasing the lowest price.
+## Check regional and payment requirements
 
-To get the latest regional price comparison, you can view this site's data: [Official subscription price comparison](https://cardnav.xyz/official-price)
+Eligibility may depend on the service's supported regions, account or app-store region, billing details and payment method. Check current requirements and whether you can provide valid information and complete payment.
+
+A lower-priced region does not necessarily have stricter checks or a higher risk of bans. Changing your network exit location or purchasing a regional gift card does not establish purchasing eligibility.
+
+## Consider renewals and continued use
+
+Beyond the first month, check renewal prices, whether your payment method remains usable, and where to cancel or request refunds. Promotions, historic prices and other users' purchases may not apply to your account.
+
+Choose an eligible channel you can continue to manage to reduce duplicate purchases, unused balances and renewal failures. Recheck current prices and terms rather than choosing a region solely from an old tutorial.

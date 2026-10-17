@@ -1,63 +1,71 @@
 ---
-title: "2.3 Third-party top-up for your own AI large model account"
-description: "Keep your own AI large model account, and have a third-party merchant activate or renew the official subscription for you, suitable for users who already have an account but cannot pay by themselves."
+title: "2.3 Third-party top-ups"
+description: "Understand third-party AI subscription activation, renewals and credits, including ChatGPT and Codex purchases, and check account security, payment sources, delivery and support terms."
 parent: choose-usage-method
 next: usage-self-register
 ---
-# 2.3 Third-party top-up for your own AI large model account
+# 2.3 Third-party top-ups
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-Third-party top-up means: the account is still held by you, and the merchant uses its own payment channel to help you activate or renew the official subscription. Compared with buying a ready-made account, it better preserves personal history and account assets, but it also depends more on the merchant's payment source, operation method, and after-sales credibility.
+A third-party seller helps activate or renew a subscription, or purchase credits, for your account. This preserves your history and settings, but payment sources, operational permissions and support arrangements still require verification.
 
-## Core advantages
+## Main advantages
 
-- **Keep the original account**: Your historical conversations, custom GPTs, project records, and account habits can continue.
-- **Solve the payment barrier**: Suitable for people who cannot bind an overseas card, cannot pay through the official website, or always have payments rejected.
-- **Low migration cost**: You do not need to adapt to a new account, or move materials into an unfamiliar ready-made account.
+- **Keep your account**: Continue using existing conversations, projects and personal settings.
+- **Resolve some payment barriers**: Useful when an account works normally but its owner temporarily cannot pay through supported official channels.
+- **Less data migration**: No need to change accounts just to subscribe.
 
 ## Limitations and risks
 
-- **Payment source is invisible**: If the merchant uses stolen cards, abnormal gift cards, or high-risk payment methods, it may cause subscription cancellation, chargebacks, or even account bans.
-- **The operation process may expose the account**: Some top-ups require a temporary password, payment link, or remote assistance, and you must first confirm the risk boundary.
-- **After-sales depends on the merchant**: Once the subscription rolls back or payment becomes abnormal, whether you can recover losses depends heavily on the merchant's response.
-- **The login environment still needs to be stable**: Even if the subscription is official, abnormal login behavior may still trigger platform risk control.
+- **Payments may be reversed**: Unauthorized payments or later chargebacks may revoke the subscription or restrict the account.
+- **Excessive access**: Passwords, verification codes, session credentials and remote control can give others access to your account or data.
+- **Dependence on seller support**: A third-party order and the official bill are separate transactions; refunds and compensation generally follow the seller’s terms.
 
-## Suitable users
+## Who it suits
 
-- People who already have an old personal account and do not want to change accounts
-- People whose account contains history, workflows, or personal configurations
-- People who cannot complete official payment themselves, but do not want to purchase an unfamiliar ready-made account
+- Existing account owners who want to keep their history and settings
+- Users temporarily unable to pay directly who can verify the seller’s procedure and support terms
 
-## Confirm before top-up
+## What you are buying
 
-## Account security
-<!-- badge="Confirm before top-up" icon="shield-alert" -->
+Require the seller to specify the account, product, plan or credit name, quantity, start and end dates, and treatment of any existing subscription.
 
-- Confirm that the email, secondary verification, and recovery methods are all in your own hands
-- If you must provide a temporary password, change the password immediately after completion and check security settings
+| Purchase | Benefits to confirm |
+| --- | --- |
+| ChatGPT subscription | Plan and duration for the specified account; API balance is not automatically shared |
+| Extra Codex credits | Purchase eligibility, scope, quantity and expiry for the current account |
+| Official API or gateway credits | Platform holding the balance, calling endpoint, billing rules and expiry |
+| Claude Code products | Subscription login or API access, and the corresponding usage allowance |
 
-## Operation method
-<!-- badge="Confirm before top-up" icon="route" -->
+## Account control
+<!-- badge="Before purchasing" icon="shield-alert" -->
 
-- Ask clearly whether a temporary password, payment link, remote assistance, or verification code cooperation is required
-- Try to choose merchants with clear boundaries, transparent processes, and explicit after-sales rules
+Control your own email, two-factor authentication and recovery methods so you can sign in and recover the account independently. Do not leave recovery codes with the seller.
 
-## Payment source
-<!-- badge="Confirm before top-up" icon="cash" -->
+## Operational permissions
+<!-- badge="Before purchasing" icon="route" -->
 
-- Low-priced top-ups most need attention to the payment source
-- Stolen cards, abnormal gift cards, or high-risk payment methods may cause subscription cancellation, chargebacks, or even account bans
+Confirm whether passwords, payment links, verification codes or remote assistance are needed, and what information can be accessed. Do not submit Session credentials, cookies, recovery codes or API keys to unfamiliar forms.
 
-## Practical steps
+After sharing a temporary password, change it promptly, sign out other sessions and revoke unused access. Changing the password alone may not invalidate every credential.
 
-1. First confirm that your account itself can log in normally, and that the email, secondary verification, and recovery methods are all in your own hands.
-2. Filter shops that provide top-up services on the [CardNav homepage](https://cardnav.xyz/) or merchant list.
-3. Before purchasing, confirm the top-up method: whether a temporary password is required, whether a payment link is required, whether it is operated remotely, how long after-sales lasts, and how failure is handled.
-4. Prioritize merchants with clear explanations, stable contact methods, active communities, and explicit after-sales rules.
-5. After the top-up is completed, immediately check the subscription status, expiration time, and billing records.
-6. If you provided a temporary password, change the password promptly after completion and check account security settings.
+## Payment and support
+<!-- badge="Before purchasing" icon="cash" -->
 
-## Usage advice
+Verify the payment channel and how activation failures, missing credits, revoked benefits and duplicate charges are handled. Keep written commitments and contact details. Low prices do not prove payment misuse or replace checks of payment sources and support.
 
-The key to top-up is not "whether it can be activated," but whether the payment source and after-sales are reliable. If your account is very important, think through the risks before top-up: it is better to spend a little more money on a stable merchant than to put an old account at risk of chargeback or ban for an extremely low price.
+## Purchase and verification steps
+
+1. Confirm that you can sign in normally and control account recovery.
+2. Compare services on the [CardNav homepage](https://cardnav.xyz/) or seller directory, checking benefits, procedures and refunds.
+3. Save the order’s account, plan, duration, amount and seller commitments, then pay through the agreed process.
+4. Check the plan, renewal date and billing in your own account; check credits in the console of the service where they will be used.
+5. Verify the email and workspace, and confirm that the delivered benefits match the order. A seller’s screenshot cannot replace your own delivery record.
+6. Review account security settings and revoke unneeded access.
+
+## Missing benefits and support
+
+If payment succeeds but benefits do not change, check the order account, workspace and payment status. Save the order and before-and-after records, then contact the seller. Avoid duplicate purchases that may cause further charges. Redact passwords, verification codes, tokens and full payment details from screenshots.
+
+Charges collected directly by the official provider go through official support; third-party seller charges follow the order’s verification and refund terms. For important accounts, consider credential exposure and payment reversal risks rather than comparing prices alone.

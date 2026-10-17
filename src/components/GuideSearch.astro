@@ -1,24 +1,23 @@
 ---
+import Dialog from './Dialog.astro';
+import Icon from './Icon.astro';
 const t = Astro.locals.messages.guide.search;
 ---
 <div class="guide-search" data-guide-search data-locale={Astro.locals.locale} data-labels={JSON.stringify(t)}>
-  <button type="button" class="guide-search-trigger" data-search-open>{t.open}<span aria-hidden="true">⌕</span></button>
-  <dialog class="guide-search-dialog" aria-labelledby="guide-search-title">
-    <div class="guide-search-heading"><h2 id="guide-search-title">{t.title}</h2><button type="button" class="btn btn-sm btn-ghost" data-search-close aria-label={t.close}>×</button></div>
+  <button type="button" class="guide-search-trigger" data-search-open>{t.open}<Icon name="search" class="guide-search-icon" /></button>
+  <Dialog id="guideSearchDialog" title={t.title} closeLabel={t.close} size="wide">
     <label class="guide-search-label" for="guide-search-input">{t.label}</label>
     <input id="guide-search-input" type="search" class="input input-bordered w-full" placeholder={t.placeholder} autocomplete="off" maxlength="200" />
     <p class="guide-search-status" role="status" aria-live="polite"></p>
     <button type="button" class="btn btn-sm btn-outline" data-search-retry hidden>{t.retry}</button>
     <ul class="guide-search-results"></ul>
-  </dialog>
+  </Dialog>
 </div>
 <script>import '../scripts/guide-search.js';</script>
 <style>
 .guide-search-trigger{display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 10px;margin-bottom:14px;border:1px solid var(--color-base-300);border-radius:8px;color:var(--color-muted);background:var(--color-base-100);font-size:13px;cursor:pointer}
+.guide-search-trigger :global(.guide-search-icon){width:20px;height:20px;flex-shrink:0}
 .guide-search-trigger:hover{border-color:var(--color-primary)}
-.guide-search-dialog{position:fixed;inset:0;width:min(680px,calc(100vw - 24px));max-height:80dvh;margin:auto;padding:22px;border:1px solid var(--color-base-300);border-radius:14px;background:var(--color-base-100);color:var(--color-base-content);box-shadow:var(--shadow-2);overflow-y:auto}
-.guide-search-dialog::backdrop{background:rgb(0 0 0 / .4)}
-.guide-search-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-size:18px;font-weight:650}
 .guide-search-label{display:block;margin-bottom:8px;font-size:13px}
 .guide-search-status{margin:12px 0;font-size:13px;color:var(--color-muted)}
 .guide-search-results{list-style:none;padding:0;margin:0}

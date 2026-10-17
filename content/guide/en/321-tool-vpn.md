@@ -1,47 +1,51 @@
 ---
-title: "VPN and proxy access"
-description: "Solve regional access restrictions, and try to ensure stable matching of region and IP during later registration, login, and subscription."
+title: "VPNs and Network Access"
+description: "Compare VPN and proxy options for AI websites, clients, and APIs, including subscription services and self-hosted cloud nodes, routing quality, device compatibility, costs, and maintenance."
 parent: network-env-overview
 ---
-# VPN and proxy access
+# VPNs and Network Access
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-If the target model restricts direct access from your region, then VPN or other proxy methods are basically the unavoidable first step. The problem many people encounter is not "whether there is a ladder," but "whether the current IP is stable, clean enough, and matches the later registration region."
+Choose network tools for AI websites, clients, and APIs based on connection quality, device compatibility, and maintenance costs. A VPN or proxy can change the connection route, but access also depends on the platform’s supported regions and account requirements.
 
-The advantage of ordinary shared nodes is that they are convenient, cheap, and ready to use; the disadvantage is that the same exit IP may be used by many people at the same time, and once one of them triggers risk control, others may also be affected.
+## Choosing a Network Setup
 
-- **Ordinary light use**: For users without long-term high-frequency stability needs, you can first consider using mature proxy services.
-- **Advanced stability requirements**: Users who need stable large model sessions or want to prevent account bans are advised to buy an independent overseas VPS node themselves.
+| Option | Suitable when | Costs and trade-offs |
+| --- | --- | --- |
+| Proxy subscription | You want ready-made nodes with less setup and maintenance | Subscription fees and uncertainty from routing changes and shared exits |
+| Self-hosted cloud node | You can manage servers and want control over configuration | Server fees, deployment, maintenance, security updates, and troubleshooting |
 
-The following recommended entries can first be tried with small amounts. After confirming node stability, client compatibility, and access to the target service, decide whether to subscribe long term.
+Shared nodes depend on routing and load; self-hosted nodes also depend on the data center, carrier, and server configuration. Neither a dedicated IP nor your own VPS guarantees account safety.
+
+During a trial, check websites, clients, and APIs using your usual devices and network. Watch for latency, interruptions, and traffic limits during normal usage hours. Before paying, confirm validity, renewal prices, device limits, and support terms.
 
 ## SSRDOG
 <!-- badge="Proxy service" icon="vpn" -->
 
-SSRDOG is a mainstream proxy service with a relatively long operating time. Its advantage is good overall stability, and its disadvantage is a relatively higher price. When using it, it is recommended to use its official client or the latest recommended client version.
+An established provider with good overall stability and relatively higher prices. Suitable for dependable everyday AI access; use the officially recommended client.
 
-[Register](https://st2.hosbb.com/#/register?code=5xRWMG6f)
+[Sign up](https://st2.hosbb.com/#/register?code=5xRWMG6f)
 
-## Dog Accelerator
-<!-- badge="Recommended" icon="vpn" -->
+## Gougou Accelerator
+<!-- badge="Proxy service" icon="vpn" -->
 
-High-performance overseas proxy service, a first choice for stability, with cluster load balancing design and high-speed dedicated lines. It is the first globally to support Hysteria1/2 protocol, based on the latest UDP QUIC technology, with extremely low latency, unaffected by evening peak hours, and 4K opening in seconds. It is very worry-free when used with clients such as Clash/V2ray.
+Focuses on high-speed routes for responsive AI conversations and file transfers. Works with clients such as Clash and V2Ray when the version supports the chosen protocol; actual speeds depend on route load.
 
-[Register](https://down.dginv.click/#/register?code=O1LnSIXG)
+[Sign up](https://down.dginv.click/#/register?code=O1LnSIXG)
 
 ## iKuu
-<!-- badge="Low cost" icon="vpn" -->
+<!-- badge="Proxy service" icon="vpn" -->
 
-iKuu is also a mature proxy service that has operated for many years. Its advantage is very low price, acceptable stability, and free trial quota for newly registered users, making it suitable for light experience.
+Low prices suit light AI use and short-term trials. New users can check for a free trial allowance on the registration page. Best for budget-conscious users who can accept fluctuations in connection quality.
 
-[Register](https://ikuuu.win/auth/register?code=1QoH)
+[Sign up](https://ikuuu.win/auth/register?code=1QoH)
 
-## Self-hosted node on cloud host
-<!-- badge="Advanced self-hosting" icon="vps" -->
+## Self-Hosted Cloud Nodes
+<!-- badge="Self-managed" icon="vps" -->
 
-Regular shared VPN nodes usually have poor IP purity because there are many users. If someone on the same node is banned for violations, it may also affect your account by association.
+A dedicated exit with control over the data center and configuration suits users who want to manage their own AI access environment. The trade-off is server costs and technical work: deployment, updates, and troubleshooting.
 
-If you have higher stability requirements, it is recommended to buy a cloud host yourself to build an exclusive node. Currently, vless + reality protocol is recommended. For the specific setup method, after purchasing and configuring the cloud host and logging in via SSH, you can directly ask ChatGPT or Claude for step-by-step setup commands.
+Check installation commands, ports, and permissions against the software documentation, including AI-generated commands, to avoid exposing the server or credentials through misconfiguration. Self-hosting does not guarantee an unrestricted account.
 
-[Learn more](./322-tool-vps.md)
+[Compare cloud servers](./322-tool-vps.md)

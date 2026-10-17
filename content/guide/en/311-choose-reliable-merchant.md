@@ -1,90 +1,113 @@
 ---
-title: "How to choose a reliable merchant"
-description: "When buying AI accounts or virtual goods, judge merchant trustworthiness from dimensions such as product quantity, popular coverage, platform attributes, payment channels, and community activity."
+title: "Choosing a reliable seller"
+description: "Assess AI account and digital-goods sellers by operating history, catalog size, popular products, platform protection, payment methods, contact channels, community and social-media operations, and prices."
 parent: merchant-overview
 ---
-# How to choose a reliable merchant
+# Choosing a reliable seller
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-When buying AI accounts, subscription accounts, or other virtual goods, the scariest thing is not paying a little more, but paying and then being unable to find anyone, having no one handle problems, or seeing the merchant quickly disappear. To judge whether a merchant is reliable, you can focus on the following points.
+When buying AI accounts, subscriptions or other digital goods, consider ongoing operations and support as well as price. The following points can help you assess a seller.
 
-## 1. Whether the product quantity is rich
-<!-- badge="Indicator 1" icon="cart" -->
+## 1. Has the seller operated long enough?
+<!-- badge="Indicator 1" icon="toolbox" -->
 
-A large number of products usually means the merchant has operated longer, has more stable supply, and looks more like a long-term business. If a merchant only has one or two products, the risk is usually higher:
-- **Weak risk resistance**: Small merchants have limited capital strength and weaker ability to withstand official risk control and refund disputes.
-- **Low cost to disappear**: Because the upfront investment is extremely low, once account bans occur, it is very easy to shut down the site directly and completely lose contact.
+Long-established sellers that remain active usually offer more history to assess. Compare these dates:
 
-Many products do not mean absolutely reliable, but at least it shows that the merchant does not look like someone who temporarily set up a site and started selling casually.
+- **Platform join date**: When the seller opened a store on that platform.
+- **Domain registration date**: A clue to site history; sellers that changed domains need other supporting records.
+- **CardNav listing date**: When CardNav added the seller, not when the business was founded.
 
-## 2. Whether it covers popular demand
-<!-- badge="Indicator 2" icon="model" -->
+## 2. Is the catalog extensive?
+<!-- badge="Indicator 2" icon="cart" -->
 
-If a merchant covers large model products that users truly search for and buy often, it shows that the merchant is continuously tracking mainstream demand and updating more frequently, rather than filling pages with a few unpopular low-quality products.
+A broad catalog can indicate an established business and more consistent supply. For small sellers offering only one or two products, consider:
 
-Conversely, if a merchant has many products but they are all repeated junk content, the reference value will be much lower.
+- **Capacity to absorb problems**: Limited funds may make account bans and refund disputes harder to handle.
+- **Cost of leaving**: A temporary store with little investment can more easily close and disappear when problems arise.
 
-## 3. Whether it is a platform merchant
-<!-- badge="Indicator 3" icon="support" -->
+Product count is not a guarantee, but it can help assess continuity alongside the seller's history.
 
-Platform-hosted merchants are usually more reliable, for very practical reasons:
-- **Constrained by rules**: Platform merchants' transaction behavior is constrained by the card-issuing platform's rules and quality supervision.
-- **Standard delivery mechanism**: They have a unified automatic card-issuing system, making credential acquisition more standardized and convenient.
-- **Appeal and refund support**: When transaction disputes occur, you can apply for appeal and arbitration through the card-issuing platform to get a refund.
+## 3. Does the catalog cover popular demand?
+<!-- badge="Indicator 3" icon="model" -->
 
-This does not mean there will absolutely be no problems, but overall, it is safer than direct private transactions with independent small merchants.
+Consistently offering popular AI products suggests the seller follows demand and maintains supply. Numerous duplicate or low-quality listings offer little evidence of operating capability.
 
-## 4. Payment channel safety
-<!-- badge="Indicator 4" icon="cash" -->
+## 4. Is the seller part of a platform?
+<!-- badge="Indicator 4" icon="support" -->
 
-The payment method itself can also reflect part of the risk.
-- **Low-risk channels**: Support real-name fiat direct payment, making it easier to defend rights and trace responsibility if problems occur later.
-- **High-risk channels**: Only anonymous cryptocurrency payment is supported, and once disappearance or fraud occurs, funds are extremely difficult to recover.
+Where a platform provides buyer protection or an appeals process, its sellers usually offer more safeguards than private transactions:
 
-So if a merchant only accepts cryptocurrency and has no other obvious trust signals, you need to be extremely cautious.
+- **Platform rules**: Transactions are subject to platform rules and oversight.
+- **Consistent delivery**: A shared automatic delivery system makes goods and receipts easier to obtain.
+- **Disputes and refunds**: Buyers can request intervention, appeal or seek a refund through the platform's process.
 
-## 5. Whether there are stable contact methods
-<!-- badge="Indicator 5" icon="phone" -->
+## 5. Payment-channel safety
+<!-- badge="Indicator 5" icon="cash" -->
 
-If the merchant has a public customer service group, Telegram channel, or stable ticket contact method, it usually feels more reassuring. This means:
-- **After-sales is easier to connect with**: A customer service group or online ticket system makes it convenient to directly report and solve problems when failures occur.
-- **Higher public supervision**: Group communication makes problems transparent and effectively reduces the possibility of being quietly blocked by the merchant.
+Payment methods also reveal some transaction risks:
 
-If a merchant has no public communication method, after a problem occurs you may not even be able to contact anyone.
+- **Identity-verified fiat payments**: Recipient details and payment records help with claims and accountability.
+- **Anonymous cryptocurrency payments**: Funds are usually difficult to recover if the seller disappears or commits fraud.
 
-## 6. Community (Telegram) activity
-<!-- badge="Indicator 6" icon="globe" -->
+Be cautious with sellers accepting only cryptocurrency and offering no other credible operating history.
 
-It is not only about "whether there is a group"; whether the group is active is also crucial. A trustworthy group usually has these characteristics:
-- **Real user speech**: Real users often communicate in the group, instead of it being a long-dead group or purely advertising.
-- **Actual problem discussion**: Users publicly discuss actual usage problems such as purchasing, restocking, and after-sales.
-- **Public after-sales replies**: Merchants or customer service reply publicly and continuously in the group, so you can see specific after-sales handling processes.
+## 6. Are contact channels stable?
+<!-- badge="Indicator 6" icon="phone" -->
 
-## 7. Stock restocking and update frequency
-<!-- badge="Indicator 7" icon="gift" -->
+Public support groups, Telegram channels or established ticket systems help maintain contact:
 
-A reliable merchant can usually maintain stable stock replenishment, instead of "listing product pages but being out of stock for a long time":
-- **Sufficient supply maintained**: Popular products are often in stock, showing that upstream channels are relatively stable.
-- **Descriptions keep up with risk control**: Product descriptions can update promptly with official risk control adjustments, showing that the merchant is actively maintaining them.
+- **Access to support**: There is a clear channel for reporting and resolving failures.
+- **Public accountability**: Group discussions reveal issues and progress, reducing the risk of a seller simply cutting off contact.
 
-Merchants with many products out of stock for a long time or expired without maintenance have mostly stopped maintaining them.
+Without public contact details, it may be difficult to reach anyone after a purchase.
 
-## 8. Comprehensive judgment advice
+## 7. Community and official social-media activity
+<!-- badge="Indicator 7" icon="globe" -->
+
+Use community discussions and official-account updates to assess ongoing operations:
+
+- **Real user messages**: Ongoing conversations rather than inactivity or advertising alone.
+- **Practical discussions**: Users openly discuss purchases, restocking and support.
+- **Public support replies**: Staff respond regularly, with visible resolution processes.
+- **Official-account activity**: Regular product, campaign and promotional updates on X, Telegram channels and similar accounts indicate continued investment in the business.
+
+Be cautious when updates have stopped for a long time and nobody responds.
+
+## 8. Sales, stock and restocking
+<!-- badge="Indicator 8" icon="gift" -->
+
+Public sales figures, stock changes and restocking records help assess trading activity:
+
+- **Sales and stock changes**: Seller-reported sales can be useful. CardNav shows daily and 30-day stock decreases, which may include manual adjustments and should not be treated as actual sales.
+- **Consistent supply**: Popular products remaining available and being replenished after sales can indicate reliable supply.
+- **Current information**: Updated product descriptions and seller announcements show ongoing maintenance.
+
+Many products remaining unavailable with outdated descriptions may indicate an abandoned store.
+
+## 9. Are prices reasonable?
+<!-- badge="Indicator 9" icon="cash" -->
+
+Compare the same plan, duration and account type. Unusually high or low prices generally deserve caution. High prices may carry a substantial markup; low prices may involve reduced benefits, unclear origins or limited support. Do not choose solely by the lowest price.
+
+## 10. Overall assessment
 <!-- badge="Summary" icon="check" -->
 
-More reliable merchants usually satisfy several of the following at the same time:
-- **Wide category coverage**: Rich product quantity and comprehensive follow-up on current mainstream large model subscription services.
-- **Real-name channel payment**: Support mainstream payment tools such as Alipay and WeChat with underlying real-name characteristics.
-- **Open community interaction**: Have an active Telegram customer service group and publicly accept and handle after-sales issues.
-- **Stable and timely supply**: After core subscription products go out of stock, they can quickly replenish and update inventory.
+Prefer sellers combining these characteristics:
 
-Cheap prices are certainly important, but do not only look at cheapness. Many times, what truly determines the experience is after-sales. When sudden risk control such as account bans occurs, being able to contact the merchant for resolution or compensation is the biggest protection.
+- **Ongoing operating history**: An established business with recent product updates, stock changes and restocking.
+- **Broad coverage**: A substantial catalog that keeps up with mainstream AI subscriptions.
+- **Traceable payments**: Alipay, WeChat Pay or other methods with useful records and recipient information.
+- **Ongoing public operations**: Active communities and official accounts, continued promotion and publicly handled support issues.
+- **Timely supply**: Core products are restocked promptly.
+- **Reasonable prices**: Comparable offers are sensibly priced, with benefits and support to match.
 
-## Fast screening method: come to CardNav to see merchants and products
+Price alone is insufficient. When an account is banned or another unexpected problem occurs, reaching the seller for an agreed replacement or compensation often matters more.
 
-If you do not want to browse sites one by one, you can directly view merchants and products already organized for you on [CardNav](https://cardnav.xyz/). Our sorting rules and feedback handling methods are as follows:
+## A faster way to compare: browse sellers and products on CardNav
 
-- **Dynamic information sorting**: The algorithm dynamically ranks products according to indicators such as stock, stability, and popularity, trying to show relatively better and more worry-free choices first.
-- **Community joint supervision**: Because all merchants are independent third parties, we cannot directly manage their transactions. If you encounter after-sales problems, you are welcome to give feedback in the official [Telegram discussion group](https://t.me/cardnav_xyz_group).
-- **Problem merchants removed**: Although transaction safety needs to be evaluated and borne by everyone themselves, for merchants repeatedly reported by users with solid evidence, we will firmly remove them and never include them again.
+Compare sellers and products on [CardNav](https://cardnav.xyz/). Seller pages show the platform join date or domain registration date, the CardNav listing date, 30-day stock changes and seller announcements:
+
+- **Dynamic ordering**: Compare sellers and products in one place to identify suitable options.
+- **Community oversight**: Sellers are independent third parties; CardNav does not directly manage transactions. Report support issues in the official [Telegram community](https://t.me/cardnav_xyz_group).
+- **Removal of problem sellers**: Assess transactions yourself before buying. Sellers repeatedly reported with conclusive evidence will be removed and not listed again.

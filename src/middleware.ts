@@ -88,7 +88,7 @@ function applyPublicResponseHeaders(url: URL, response: Response, method: string
       url,
       headers.get('content-type'),
     );
-    if (cacheControl) {
+    if (cacheControl && !headers.get('Cache-Control')?.includes('no-store')) {
       headers.set('Cache-Control', cacheControl);
       if (!isDevRuntime() && cacheControl.includes('public')) {
         headers.set('Vary', 'Accept-Encoding');
@@ -109,8 +109,6 @@ function resolvePublicResponseCacheControl(url: URL, contentType: string | null)
   if (!isPublicHtmlResponse(pathname, contentType)) {
     return null;
   }
-  const route = publicRoutePathname(pathname);
-  if (route === '/articles' || route.startsWith('/articles/')) return 'no-store';
   if (isDevRuntime()) {
     return publicDevHtmlCacheControl;
   }
@@ -174,9 +172,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect(url.pathname + url.search, 301);
   }
 
-  if (localePathInfo.hasLocalePrefix && (localePathInfo.routePathname === '/articles' || localePathInfo.routePathname.startsWith('/articles/'))) {
-    return context.redirect(localePathInfo.routePathname + url.search, 301);
-  }
 
   if (context.isPrerendered) {
     applyLocaleLocals(context, localePathInfo);

@@ -1,23 +1,30 @@
 ---
-title: "IP purity check"
-description: "Before registration, login, and payment, first roughly filter out obviously high-risk exit IPs."
+title: "IP Reputation Checks"
+description: "Understand how IP location, network type, and risk records can help troubleshoot AI registration, login, and payment. Check your current exit IP and distinguish detection scores from platform account reviews."
 parent: network-env-overview
 ---
-# IP purity check
+# IP Reputation Checks
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-Many users mistakenly treat "the proxy can connect" as "this IP can safely register and be used." In reality, platform risk control usually considers IP history, abuse records, proxy traces, and regional credibility together, so checking the IP before key operations can at least help you exclude some exits with obvious problems.
+“IP reputation” generally refers to a tool’s combined presentation of IP location, network type, and risk records. It can help identify your current network exit, but tools use different data sources and scoring methods. Their results are not an AI platform’s account review conclusions.
 
-An IP check cannot guarantee absolute safety, because no one knows the platform's complete risk control logic. But it still has two practical values:
+## Using the Results
 
-- **Screen high-risk exits**: Before registration, use detection tools to exclude exit IPs marked as spam, malicious, or with serious abuse history.
-- **Rough comparison between nodes**: Compare purity among multiple network nodes you have, and choose the one with relatively the lowest risk-control value.
+| Information | Useful for | Limitations |
+| --- | --- | --- |
+| IP location | Identifying the exit region used by the current request | Data may lag behind changes and does not establish account or payment eligibility |
+| Network type | Identifying whether the exit is classified as a data center, residential, or proxy network | No type necessarily means restriction or safety |
+| Risk records and scores | Checking abuse or unusual activity recorded by the data source | Records may concern other users of the IP; scores cannot directly explain an account ban |
 
-Suitable times to do an IP check:
+Use the same tool when comparing nodes, and consider actual latency, connection success, and service requirements. Choosing only the lowest score cannot guarantee registration, login, or payment success.
 
-- **Before registering a new account**: Checking the network before creating an official account can greatly reduce the initial ban probability of "new account immediately permanently banned."
-- **When login anomalies appear**: When frequent human verification or even login errors occur, you should promptly check whether the current IP is polluted.
-- **Before payment subscription operations**: Before binding a bank card for payment, make sure the IP region highly matches the card's issuing location and has no high-fraud score.
+## When to Check
 
-Use the detection tool directly: [IP purity check](https://cardnav.xyz/tools/ip-purity)
+- **Before registration or first use**: Confirm the actual exit matches your configuration and check the service’s supported regions.
+- **After login failures or repeated verification**: Record the IP, error, and time, then investigate alongside service status and account notices.
+- **After payment problems**: Check network location and payment-page requirements, as well as billing details and the payment channel. A failed payment cannot be attributed solely to the IP.
+
+Use the same connection as the target application when checking. Browser and client proxy settings may differ, so the exit detected in your browser may not be the one used by the client.
+
+[Check IP reputation](https://cardnav.xyz/tools/ip-purity)

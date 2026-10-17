@@ -424,11 +424,16 @@ function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<s
     const extractedImage = extractLeadingMarkdownImage(card.markdown);
     const extractedActionLink = extractTrailingCardActionLink(extractedImage.markdown);
     const href = resolveGuideCardHref(extractedActionLink.href, slugByFileName);
-    const tagName = href ? 'a' : 'article';
+    const bodyHtml = addGuideLinkTrackingToRenderedHtml(
+      renderMarkdownFragment(extractedActionLink.markdown, slugByFileName),
+      sourcePage,
+    );
+    const wholeCardLink = Boolean(href) && !/<a\b/iu.test(bodyHtml);
+    const tagName = wholeCardLink ? 'a' : 'article';
     const hrefAttr = href ? ` href="${escapeHtml(href)}"` : '';
     const externalAttrs = extractedActionLink.href ? guideLinkTargetAttributes(extractedActionLink.href) : '';
     const trackingAttrs = href ? ` ${buildGuideLinkTrackingAttributes(href, sourcePage)}` : '';
-    const cardClassName = href ? 'guide-card guide-card-clickable' : 'guide-card';
+    const cardClassName = wholeCardLink ? 'guide-card guide-card-clickable' : 'guide-card';
     const iconHtml = renderGuideCardIcon(card.icon);
     const badgeHtml = card.badge
       ? `<span class="guide-badge">${escapeHtml(card.badge)}</span>`
@@ -441,13 +446,11 @@ function renderInlineCardGrid(cards: InlineMarkdownCard[], slugByFileName: Map<s
       ? `<span class="guide-card-image-frame"${imageFrameStyle}><img src="${escapeHtml(cardImage)}" alt="${escapeHtml(cardImageAlt)}" loading="lazy" class="guide-card-image" /></span>`
       : '';
 
-    const bodyHtml = addGuideLinkTrackingToRenderedHtml(
-      renderMarkdownFragment(extractedActionLink.markdown, slugByFileName),
-      sourcePage,
-    );
-    const actionHtml = renderGuideCardAction(extractedActionLink.label);
+    const actionHtml = href && !wholeCardLink
+      ? `<a class="guide-card-action"${hrefAttr}${externalAttrs}${trackingAttrs}><span>${escapeHtml(extractedActionLink.label || card.title)}</span><span aria-hidden="true">→</span></a>`
+      : renderGuideCardAction(extractedActionLink.label);
     return [
-      `<${tagName} class="${cardClassName}"${hrefAttr}${externalAttrs}${trackingAttrs}>`,
+      `<${tagName} class="${cardClassName}"${wholeCardLink ? `${hrefAttr}${externalAttrs}${trackingAttrs}` : ''}>`,
       `<div class="guide-card-top">${badgeHtml}${iconHtml}</div>`,
       imageHtml,
       `<h3 class="guide-card-title">${escapeHtml(card.title)}</h3>`,
@@ -695,21 +698,6 @@ for (const item of rawGuideDocuments) {
   guideDocumentsByLocale.set(item.locale, existingDocuments);
 }
 
-function mergeGuideDocumentsWithDefault(localeDocuments: ParsedGuideDocument[]) {
-  const defaultDocuments = guideDocumentsByLocale.get(defaultLocale) ?? [];
-  const localeDocumentBySlug = new Map(localeDocuments.map(item => [item.slug, item]));
-  const defaultSlugSet = new Set(defaultDocuments.map(item => item.slug));
-  return [
-    ...defaultDocuments.map(item => localeDocumentBySlug.get(item.slug) ?? item),
-    ...localeDocuments.filter(item => !defaultSlugSet.has(item.slug)),
-  ].sort((left, right) => {
-    if (left.order !== right.order) {
-      return left.order - right.order;
-    }
-    return left.stem.localeCompare(right.stem, 'zh-Hans-CN');
-  });
-}
-
 const defaultGuideCollection = buildGuideCollection(guideDocumentsByLocale.get(defaultLocale) ?? []);
 const guideCollectionsByLocale = new Map<Locale, GuideCollection>([[defaultLocale, defaultGuideCollection]]);
 
@@ -717,7 +705,7 @@ for (const [locale, localeDocuments] of guideDocumentsByLocale) {
   if (locale === defaultLocale) {
     continue;
   }
-  guideCollectionsByLocale.set(locale, buildGuideCollection(mergeGuideDocumentsWithDefault(localeDocuments)));
+  guideCollectionsByLocale.set(locale, buildGuideCollection(localeDocuments));
 }
 
 export const renderedGuideArticles = defaultGuideCollection.renderedGuideArticles;
@@ -732,8 +720,11 @@ export function getGuideCollection(locale: Locale) {
 export function findGuideArticle(slug: string, locale: Locale = defaultLocale) {
   const localeCollection = getGuideCollection(locale);
   return localeCollection.renderedGuideArticles.find(item => item.slug === slug)
-    ?? defaultGuideCollection.renderedGuideArticles.find(item => item.slug === slug)
     ?? null;
+}
+
+export function getGuideArticleLocales(slug: string): Locale[] {
+  return supportedLocales.filter(locale => findGuideArticle(slug, locale) !== null);
 }
 
 export function getGuideStaticPaths() {

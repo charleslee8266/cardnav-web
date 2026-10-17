@@ -1,103 +1,107 @@
 ---
-title: "2. Choose an AI subscription usage method"
-description: "Compare the barriers, risks, and suitable users of five large model usage methods: gateway sites, ready-made accounts, top-ups, self top-ups, and self-hosting."
+title: "2. Choose how to use AI models"
+description: "Compare six approaches—API gateways, ready-made accounts, third-party top-ups, official subscriptions, self-hosted gateways and self-deployed models—by budget, skills and account control."
 parent: start-here
 next: practical-prep
 ---
-# 2. Choose an AI subscription usage method
+# 2. Choose how to use AI models
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-Common paths for using top foreign large models can roughly be divided into five categories. There is no absolute good or bad among them. The key is what you care about more: convenience, saving money, stability, privacy, or long-term controllability.
+For quick trials, consider gateways or ready-made accounts. If you already have an account but cannot pay, consider third-party payment assistance. For long-term intensive use, prioritize an official subscription. With the necessary technical skills, a self-hosted gateway centralizes calls, while deploying models yourself gives you control over the computing resources.
 
-First judge the route by usage barrier and risk boundary: if you only want a quick trial, first look at gateway sites or ready-made accounts; if you already have an account but are stuck at payment, focus on third-party top-ups; if you are preparing for long-term heavy use, then consider official subscription top-up or a self-hosted gateway.
+## 2.1 API gateways
+<!-- badge="Fast access" icon="api" -->
 
-## 2.1 AI large model API gateway site
-<!-- badge="Fastest to start" icon="api" -->
+Purchase usage credits, obtain an API Key (a credential for API calls), and connect a client or program.
 
-The service provider hosts account registration and payment, and you directly obtain an API Key to connect to third-party clients.
-
-### Core advantages
-- No overseas phone number verification, and no need to deal with complex proxies
-- Pay as you go, suitable for small trial amounts first
+### Main advantages
+- Less registration and payment preparation; try multiple models with a small purchase
 
 ### Main risks
-- Conversation content will pass through the gateway provider
-- You need to guard against fake high-tier models, diluted service quality, and service providers disappearing
+- Requests pass through the provider; verify model authenticity, billing and service continuity
 
-### Suitable users
-- Individual users and developers who debug code, have light non-confidential conversations, and want to quickly try multi-model APIs
+### Best suited to
+- Trying multiple models, non-sensitive tasks and development testing
 
 [Learn more](./211-usage-api-gateway.md)
 
-## 2.2 AI large model ready-made account purchase and login
-<!-- badge="Out of the box" icon="model" -->
+## 2.2 Ready-made accounts
+<!-- badge="Ready to use" icon="model" -->
 
-Purchase a ready-made account for which the merchant has already activated a subscription, and directly log in on the web page or official client.
+Buy an account or seat prepared by a seller and sign in as agreed.
 
-### Core advantages
-- Skip the registration and payment process
-- After receiving the account, you can quickly experience native web and client features
+### Main advantages
+- Skip registration and activation; quickly try official websites and clients
 
 ### Main risks
-- Account source, after-sales period, and credential format may not be stable
-- A stable network environment is still required during use
+- The seller may retain recovery access; confirm account type, validity and support
 
-### Suitable users
-- Users who urgently need native web interaction, short-term experience, or do not bind core long-term data
+### Best suited to
+- Short-term trials where limited account control is acceptable
 
 [Learn more](./212-usage-ready-account.md)
 
-## 2.3 Third-party top-up for your own AI large model account
-<!-- badge="Keep original account" icon="cash" -->
+## 2.3 Third-party top-ups
+<!-- badge="Keep your account" icon="cash" -->
 
-You provide your already registered account, and the merchant uses its payment channel to top up and activate the official subscription for you.
+Use your own account while a seller activates or renews the subscription.
 
-### Core advantages
-- Keep your personal account, history, GPTs, and other settings
-- Suitable for people who already have an account but cannot complete payment themselves
+### Main advantages
+- Keep your account, history and settings while reducing payment barriers
 
 ### Main risks
-- If the merchant's payment source is opaque, it may bring risks such as chargebacks, subscription cancellation, or linked account bans
-- During the operation, you need to confirm whether account passwords, payment links, or remote control permissions are exposed
+- Payment reversals may remove benefits; assisted operations may expose credentials
 
-### Suitable users
-- Users who already have an old personal account, do not want to change accounts, but temporarily cannot complete official payment themselves
+### Best suited to
+- Existing personal accounts whose owners temporarily cannot pay directly
 
 [Learn more](./213-usage-third-party-top-up.md)
 
-## 2.4 AI large model official subscription top-up
-<!-- badge="Long-term controllable" icon="key" -->
+## 2.4 Official subscriptions
+<!-- badge="Long-term control" icon="key" -->
 
-Prepare your own overseas network, phone number, and payment channel, independently register a personal account, and top up the subscription.
+Register yourself and subscribe through an officially supported channel.
 
-### Core advantages
-- The account and payment chain are both controlled by you
-- Long-term stability and fund safety are relatively better
+### Main advantages
+- Manage your account, recovery methods and bills with less reliance on sellers
 
 ### Main risks
-- The upfront barrier is the highest
-- You need to handle network, phone number, payment, and regional consistency issues at the same time
+- Regional, verification and payment requirements, plus subscription fees
 
-### Suitable users
-- Users who use models heavily for the long term, need to bind work or research materials, and cannot easily accept account loss
+### Best suited to
+- Long-term, intensive use with independent management of data and renewals
 
 [Learn more](./214-usage-self-register.md)
 
-## 2.5 Self-hosted AI large model gateway site
-<!-- badge="Technical sharing" icon="vps" -->
+## 2.5 Self-hosted API gateways
+<!-- badge="Shared infrastructure" icon="vps" -->
 
-Purchase official quota and use a reverse proxy program to self-host a gateway interface, making it convenient for a team or friends to share quota usage.
+Deploy a unified interface connected to existing upstream model services.
 
-### Core advantages
-- You can centrally manage quota and control usage costs
-- You can connect internal applications according to team needs
+### Main advantages
+- Distribute team keys and credits centrally; manage calls from multiple tools
 
 ### Main risks
-- Continuous operations and maintenance are required
-- When multiple accounts or users share the same gateway entry, it can easily trigger official anti-abuse risk control
+- Server and key maintenance, upstream fees and authorization limits
 
-### Suitable users
-- Small teams or geeks with technical foundations who want to build an internal dedicated large model gateway
+### Best suited to
+- Teams with operational skills that need centralized model access
 
 [Learn more](./215-usage-self-hosted-gateway.md)
+
+## 2.6 Deploy models yourself
+<!-- badge="Control your resources" icon="model" -->
+
+Rent cloud GPU capacity or run models on existing or newly purchased equipment.
+
+### Main advantages
+- Choose deployable models, allocate computing capacity and control data storage
+
+### Main risks
+- High technical and cost requirements: hardware or computing fees and ongoing maintenance
+
+### Best suited to
+- Users with deployment skills who value data privacy or need custom model settings
+
+[Learn more](./216-usage-self-deploy-model.md)

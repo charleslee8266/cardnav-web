@@ -18,8 +18,6 @@ export const pageTypes = [
   'tool-detail',
   'guide',
   'guide-detail',
-  'articles',
-  'article-detail',
   'about',
   'partnership',
   'supporters',

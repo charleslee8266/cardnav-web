@@ -1,34 +1,44 @@
 ---
-title: "Cloud server recommendations"
-description: "Prepare a more controllable overseas host environment for self-hosted nodes or self-hosted gateway sites."
+title: "Cloud Server Recommendations"
+description: "Choose 4 GB of RAM for general cloud server use, or 2 GB for a lightweight personal AI API gateway. Prioritize routes optimized for China’s three major carriers and compare BandwagonHost with RackNerd."
 parent: network-env-overview
 ---
-# Cloud server recommendations
+# Cloud Server Recommendations
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-If you plan to self-host a node, run a reverse proxy program, or want a more controllable network environment, you usually need your own cloud server. For personal or small-scale use by a few people, `1C1G` is often already enough.
+Think of a VPS as a rented remote computer with a continuous internet connection, used to host a network node or AI API gateway.
 
-When choosing a VPS, mainly look at these things:
-- **Route quality and latency**: Choose data center location and China-optimized routes to ensure smooth network when connecting to large models.
-- **IP purity check**: The IP used for a self-hosted node should avoid being widely blacklisted or marked high-risk by official services.
-- **Price and subscription period**: Compare annual or monthly procurement budgets comprehensively, and choose the most cost-effective configuration tier.
-- **Reliable and stable provider**: Prioritize established providers that have operated stably for many years, and avoid shutdowns and loss of contact.
+## Choosing Specifications
 
-In general, the advantage of established providers is not necessarily the lowest price, but greater stability and easier troubleshooting. Cheap plans are not unusable, but you need to accept higher uncertainty in network quality and IP performance.
+**4 GB of RAM** generally suffices; a lightweight personal AI API gateway can use **2 GB of RAM**. It only forwards requests rather than running a large model, so no GPU is needed.
+
+## Prioritize Routes Optimized for All Three Carriers
+
+**Three-carrier optimization** means optimizing cross-border routes for China Telecom, China Unicom, and China Mobile to reduce detours, peak-hour congestion, and packet loss. Prioritize it when mainland China connectivity matters.
+
+**CN2 GIA** is China Telecom’s premium international network, often included in three-carrier optimized plans; confirm whether the particular data center covers all three. **SoftBank** is a Japanese carrier and another common network option for VPS hosting in Japan.
 
 ## BandwagonHost
-<!-- badge="High-end quality routes" icon="vps" -->
+<!-- badge="Mainland China routing" icon="vps" -->
 
-BandwagonHost is an established cloud host provider that has run stably for many years. Its advantage is complete service and CN2-GIA routes. These routes have extremely low latency and the fastest speed to China, with relatively high IP purity, suitable for ultra-fast self-hosted nodes and users pursuing absolutely stable access.
-- **Tokyo CN2-GIA plan**: Provides extremely low latency and excellent bandwidth. Refer to [Tokyo plan order](https://bandwagonhost.com/aff.php?aff=82503&a=add&pid=87&billingcycle=quarterly&configoption[17]=159).
-- **Osaka Softbank plan**: Optimized for China Unicom routes with fast access speed. Refer to [Osaka plan order](https://bandwagonhost.com/aff.php?aff=82503&a=add&pid=87&billingcycle=quarterly&configoption[17]=53).
-- **Other quality route plans**: Supports self-selection of configurations. Look for CN2 GIA and Softbank keywords. For details, refer to [BandwagonHost official overview](https://bandwagonhost.com/aff.php?aff=82503).
+An established provider whose strength is premium mainland China routing, at relatively higher prices. Compare three-carrier optimized plans first for low-latency AI access and peak-hour stability.
+
+- **Tokyo CN2 GIA**: For low latency and a larger budget. [View Tokyo plan](https://bandwagonhost.com/aff.php?aff=82503&a=add&pid=87&billingcycle=quarterly&configoption[17]=159)
+- **Osaka SoftBank**: Balance a Japanese location with budget. [View Osaka plan](https://bandwagonhost.com/aff.php?aff=82503&a=add&pid=87&billingcycle=quarterly&configoption[17]=53)
+- **Los Angeles and other locations**: Optimized routes usually cost less if higher latency is acceptable. [View all plans](https://bandwagonhost.com/aff.php?aff=82503)
 
 ## RackNerd
-<!-- badge="Very cost-effective" icon="vps" -->
+<!-- badge="Low-cost hosting" icon="vps" -->
 
-RackNerd's advantage is cheapness. It is currently a very cost-effective merchant in the U.S. cloud host market. The cheapest 1C1G plan costs only $21.99 per year, although it is not an optimized route, but it is very economical for building a backup node or deploying a small Sub2API gateway program.
-- **Entry-level cost-effective plan**: Only $21.99/year, configured as 1 core 1G. Refer to [1C1G plan order](https://my.racknerd.com/aff.php?aff=20079&pid=952).
-- **Mid-tier upgrade plan**: Only $35.99/year, configured as 2 cores 2G. Refer to [2C2G plan order](https://my.racknerd.com/aff.php?aff=20079&pid=953).
-- **High-configuration multi-core plan**: Can be used to run advanced programs such as gateways. Refer to [3C4G to 7C8G plan overview](https://my.racknerd.com/aff.php?aff=20079&pid=954).
+Inexpensive annual plans suit backup nodes for AI access or lightweight gateways such as Sub2API. Standard low-cost plans do not specialize in mainland China routing. Calls from applications outside mainland China make better use of the price advantage, with a trade-off in peak-hour access from the mainland.
+
+- **1C1G (1 core / 1 GB RAM)**: Lightweight proxies for AI access and backup nodes. [View plan](https://my.racknerd.com/aff.php?aff=20079&pid=952)
+- **2C2G (2 cores / 2 GB RAM)**: A lightweight personal gateway. [View plan](https://my.racknerd.com/aff.php?aff=20079&pid=953)
+- **3C4G to 7C8G (3–7 cores / 4–8 GB RAM)**: Multiple services; upgrade as needed. [View more configurations](https://my.racknerd.com/aff.php?aff=20079&pid=954)
+
+Before buying, check specifications, availability, promotional prices, and renewal prices.
+
+## Purchasing and Maintenance
+
+Start with a monthly plan before considering annual billing. Check renewal prices, traffic limits, and refund terms. Self-hosting requires system updates, key management, and configuration backups.

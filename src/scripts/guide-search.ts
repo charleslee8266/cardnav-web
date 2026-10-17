@@ -51,8 +51,6 @@ for (const root of document.querySelectorAll<HTMLElement>('[data-guide-search]')
   root.querySelector('[data-search-open]')!.addEventListener('click', () => {
     dialog.showModal(); input.focus(); void load();
   });
-  root.querySelector('[data-search-close]')!.addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => { if (event.target === dialog) { const box=dialog.getBoundingClientRect(); if(event.clientX<box.left || event.clientX>box.right || event.clientY<box.top || event.clientY>box.bottom) dialog.close(); } });
   input.addEventListener('input', render);
   retry.addEventListener('click', () => void load());
 }

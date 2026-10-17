@@ -19,8 +19,8 @@ const attrs = (slug: string) => {
 <ul class="reading-tree-list">
   {groups.map(({ article, children }) => <li>
     {children.length ? <details class="reading-tree-group" open={article.slug === currentSlug || children.some(item => item.article.slug === currentSlug)}>
-      <summary><span class="reading-tree-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" /></svg></span><a class="reading-tree-link" {...attrs(article.slug)}>{article.title}</a></summary>
+      <summary><span class="reading-tree-indicator" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="reading-tree-link" {...attrs(article.slug)}>{article.title}</a></summary>
       <Astro.self items={children} currentSlug={currentSlug} sourcePage={sourcePage} />
-    </details> : <a class="reading-tree-link" {...attrs(article.slug)}>{article.title}</a>}
+    </details> : <div class="reading-tree-row"><span class="reading-tree-indicator reading-tree-placeholder" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="reading-tree-link" {...attrs(article.slug)}>{article.title}</a></div>}
   </li>)}
 </ul>

@@ -4,11 +4,11 @@ import { searchGuides, type GuideSearchEntry } from '../src/guide-search.js';
 import { searchTextFromMarkdown } from '../src/search-text.js';
 const entries: GuideSearchEntry[] = [
   {title:'支付准备', description:'订阅指南', text:'本文解释 Codex 充值与银行卡拒付的处理方式。',url:'/guide/payments',kind:'getting-started'},
-  {title:'Codex 充值方法',description:'购买说明',text:'使用应用商店付款。',url:'/articles/codex',kind:'article'},
+  {title:'Codex 充值方法',description:'购买说明',text:'使用应用商店付款。',url:'/guide/codex',kind:'article'},
 ];
 test('全文搜索支持正文命中、中文、多个关键词与标题优先', () => {
   assert.equal(searchGuides(entries,'银行卡')[0]?.entry.url,'/guide/payments');
-  assert.deepEqual(searchGuides(entries,'ｃｏｄｅｘ 充值').map(x=>x.entry.url),['/articles/codex','/guide/payments']);
+  assert.deepEqual(searchGuides(entries,'ｃｏｄｅｘ 充值').map(x=>x.entry.url),['/guide/codex','/guide/payments']);
   assert.equal(searchGuides(entries,'Codex 银行卡').length,1);
   assert.equal(searchGuides(entries,'不存在').length,0);
   assert.equal(searchGuides(entries,' ').length,0);

@@ -24,6 +24,7 @@ import type { PageType } from '../page-types.js';
 
 type Props = {
   activeNav?: string;
+  availableLocales?: readonly Locale[];
   pageTitle: string;
   description: string;
   canonicalUrl: string;
@@ -46,6 +47,7 @@ type Props = {
 
 const {
   activeNav = '',
+  availableLocales = supportedLocales,
   pageTitle,
   description,
   canonicalUrl,
@@ -93,7 +95,7 @@ const footerLinks = [
   { href: '/disclaimer', label: t.nav.disclaimer },
   { href: '/privacy', label: t.nav.privacy },
 ];
-const languageItems = supportedLocales.map(itemLocale => ({
+const languageItems = availableLocales.map(itemLocale => ({
   locale: itemLocale,
   label: localeLabels[itemLocale].nativeLabel,
   flag: localeLabels[itemLocale].flag,

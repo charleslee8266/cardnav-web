@@ -8,20 +8,23 @@ import GuideSidebar from './GuideSidebar.astro';
 import ArticleToc from './ArticleToc.astro';
 import './content.css';
 import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
+import { articleDate, type PublicArticle } from '../articles.js';
 import type { PageType } from '../page-types.js';
 
 type Props = {
   articles: GuideArticle[];
   navItems: GuideNavItem[];
-  currentArticle: RenderedGuideArticle;
+  currentArticle: Pick<RenderedGuideArticle, 'slug' | 'title' | 'description' | 'html' | 'nextLink'>;
   sourcePage: string;
   pageType: Extract<PageType, 'guide' | 'guide-detail'>;
+  importedArticle?: PublicArticle;
 };
 
 const {
   currentArticle,
   sourcePage,
   pageType,
+  importedArticle,
 } = Astro.props;
 
 const t = Astro.locals.messages;
@@ -46,15 +49,19 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 ---
 
 <section class="reading-guide" data-reading-layout>
-  <GuideSidebar section="getting-started" currentSlug={currentArticle.slug} />
+  <GuideSidebar section={importedArticle || currentArticle.slug === 'articles' ? 'articles' : 'getting-started'} currentSlug={currentArticle.slug} />
 
   <section class="reading-content">
     <section data-telemetry-block={telemetryBlocks.guide.content} class="reading-article">
       <div class="guide-hero">
         <h1 class="reading-title">{currentArticle.title}</h1>
-        <p class="reading-description">{(t.guide.heroDescriptions as Record<string, string>)[currentArticle.slug] || currentArticle.description}</p>
+        <p class="reading-description">{currentArticle.description}</p>
       </div>
+      {importedArticle && <div class="reading-description guide-source">
+        <p>来源：<a href={importedArticle.sourceUrl} target="_blank" rel="noopener noreferrer">{importedArticle.sourceName || importedArticle.sourceTitle}</a>{importedArticle.author && ` · ${importedArticle.author}`}{importedArticle.sourcePublishedAt && ` · ${articleDate(importedArticle.sourcePublishedAt)}`}</p>
+      </div>}
       <div id="guide-article" class="guide-article reading-prose" set:html={localizedArticleHtml} />
+      {importedArticle && <footer class="reading-description guide-source">本文转载自 <a href={importedArticle.sourceUrl} target="_blank" rel="noopener noreferrer">{importedArticle.sourceTitle}</a>，版权归原作者所有。</footer>}
     </section>
 
     {currentArticle.nextLink && (

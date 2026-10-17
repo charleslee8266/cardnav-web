@@ -10,7 +10,7 @@ export const GET: APIRoute = () => {
     getGuideCollection(locale).renderedGuideArticles.map(article => ({
       title: article.title, description: article.description,
       url: localizePath(`/guide/${article.slug}`, locale), locale,
-      kind: 'getting-started' as const, text: searchTextFromHtml(article.html),
+      kind: article.slug === 'articles' ? 'article' as const : 'getting-started' as const, text: searchTextFromHtml(article.html),
     })),
   );
   return Response.json(entries);

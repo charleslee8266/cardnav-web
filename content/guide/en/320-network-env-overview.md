@@ -1,73 +1,71 @@
 ---
-title: "3.2 Network environment and host preparation"
-description: "Sort out network configuration, IP risk control, and overseas host rental processes for independent registration, login, and payment."
+title: "3.2 Network and Server Preparation"
+description: "Prepare network access, IP checks, cloud servers, and phone verification for AI products. Choose tools based on regional requirements, intended use, and long-term maintenance costs."
 parent: practical-prep
 ---
-# 3.2 Network environment and host preparation
+# 3.2 Network and Server Preparation
 
 > This article is provided by **CardNav [cardnav.xyz](https://cardnav.xyz)**.
 
-When practically registering for overseas AI services such as ChatGPT and Claude, or binding foreign payment cards, the network environment and IP purity often determine your success rate. If your IP history is polluted or widely and frequently risk-controlled, you can easily face the awkward situation of "registration immediately leads to account ban" or "payment is rejected."
+When registering, signing in, or subscribing to AI services, check network access, regional eligibility, and account verification separately. Opening a website does not necessarily mean you meet its registration or payment requirements. Everyday use generally requires a suitable connection; running your own services also involves cloud servers and maintenance costs.
 
-Therefore, before entering specific registration and subscription steps, first check the network exit, cloud host, IP risk, and phone number verification separately. Being able to access is only the first layer; long-term stability is the more important goal.
+## VPNs and Network Access
+<!-- badge="Network access" icon="vpn" -->
 
-## VPN and proxy access
-<!-- badge="Access entry" icon="vpn" -->
+VPNs and proxies provide connectivity. Compare service accessibility, routing, device support, and costs, and check supported regions.
 
-VPN or proxy solves the problem of "whether you can access," but what you truly need to focus on is regional stability, clean routes, device consistency, and long-term availability.
+### Suitable for
+- Accessing AI websites, clients, and APIs
+- Troubleshooting connection failures, latency, or interruptions
 
-### Suitable scenarios
-- Registering, logging in, and daily use of overseas model official websites
-- Needing to keep the account region, login region, and payment region as consistent as possible
+### Considerations
+- Try your usual devices and network before a long-term subscription
+- Connectivity does not establish account or regional eligibility
 
-### Notes
-- Do not frequently switch countries and nodes
-- Use fewer public exits that are shared by many people and have obvious abuse records
+[Compare network tools](./321-tool-vpn.md)
 
-[Learn more](./321-tool-vpn.md)
+## Renting a Cloud Server
+<!-- badge="Self-hosting" icon="vps" -->
 
-## Overseas cloud server rental
-<!-- badge="Self-hosting base" icon="vps" -->
+A VPS provides an always-on host for your own nodes and API gateways. Configuration is flexible, but updates, security, and troubleshooting are your responsibility.
 
-If you plan to self-host nodes, deploy gateway programs, or want a more controllable network environment, an overseas VPS is more suitable for long-term maintenance than ordinary shared proxies.
+### Suitable for
+- Hosting your own node or internal gateway
+- Managing configuration, permissions, and resources
 
-### Suitable scenarios
-- Self-hosted proxy nodes or internal gateway services
-- Small teams needing stable, independent, controllable network exits
+### Considerations
+- Choose specifications for the software, not just the price
+- Account for routing, traffic allowances, renewal costs, and maintenance skills
 
-### Notes
-- A cheap VPS does not equal a clean IP
-- Route, region, service provider reputation, and renewal cost all need to be considered together
+[Compare cloud servers](./322-tool-vps.md)
 
-[Learn more](./322-tool-vps.md)
+## IP Reputation Checks
+<!-- badge="Troubleshooting" icon="shield-alert" -->
 
-## IP purity check
-<!-- badge="Risk screening" icon="shield-alert" -->
+Check exit location, network type, and risk records to help investigate problems. A detection score is not the platform’s account review result.
 
-IP checks cannot guarantee absolute safety, but before registration, login, and payment, they can filter out clearly high-risk exits and reduce the chance of triggering risk control right away.
+### Suitable for
+- Identifying the current network exit
+- Investigating login failures or repeated verification
+- Checking network location during payment
 
-### Suitable scenarios
-- Screening nodes before registering a new account
-- Checking the current exit when login anomalies or frequent verification occur
-- Confirming region and risk signals before binding a payment method
+### Considerations
+- Results may differ between data sources
+- A low risk score does not guarantee registration, login, or payment success
 
-### Notes
-- Check results are only auxiliary judgment
-- You still need to consider account region, payment region, and usage behavior together
+[Learn about IP checks](./323-tool-ip-check.md)
 
-[Learn more](./323-tool-ip-check.md)
+## Overseas Phone Verification
+<!-- badge="Account verification" icon="phone" -->
 
-## Overseas phone number verification
-<!-- badge="Verification preparation" icon="phone" -->
+Use a number from a region and type accepted by the platform. Long-term accounts also need continued code reception and recovery options.
 
-A phone number is not only used once to receive a verification code during registration. It may also be required again during later login, password changes, device changes, or risk-control review.
+### Suitable for
+- Platforms that explicitly require SMS verification
+- Ongoing verification and recovery for long-term accounts
 
-### Suitable scenarios
-- Registering official model accounts
-- Preparing a recoverable verification method for long-term personal accounts
+### Considerations
+- Temporary SMS services may not let you reuse the same number
+- Check accepted uses, SMS availability, and retention costs for long-term numbers
 
-### Notes
-- One-time SMS receiving is suitable for short-term verification, not for core long-term accounts
-- Long-term number retention is more troublesome, but it can reduce account lock-up during secondary verification
-
-[Learn more](./324-tool-phone-verification.md)
+[Learn about phone verification](./324-tool-phone-verification.md)
