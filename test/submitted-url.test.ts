@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import pg from 'pg';
-import { submitSiteUrl } from '../src/store.js';
+import { submitSiteUrl, submitGatewaySite } from '../src/store.js';
 import { validatePublicSubmittedUrl } from '../src/submitted-url.js';
 
 test('public submitted URL validation rejects temporary URLs', () => {
@@ -263,6 +263,7 @@ test('public shop submission rejects example domains and injection probes withou
     'http://foo.127.0.0.1.nip.io',
     'https://8-8-8-8.sslip.io',
     'https://google.com',
+    'https://docs.qq.com',
   ]) {
     const validation = validatePublicSubmittedUrl(input);
     assert.equal(validation.ok, false, input);
@@ -299,4 +300,26 @@ test('Google search homepages are not storefront submissions', () => {
   for (const url of ['https://google.com.merchant.shop', 'https://mygoogle.com', 'https://merchant.shop/?next=https://google.com']) {
     assert.deepEqual(validatePublicSubmittedUrl(url), { ok: true, url });
   }
+});
+
+
+test('Tencent Docs homepage is not a storefront, with exact host and path boundaries', () => {
+  for (const url of ['https://docs.qq.com', 'https://docs.qq.com/?from=share', 'http://DOCS.QQ.COM.:8080/#top']) {
+    const result = validatePublicSubmittedUrl(url);
+    assert.equal(result.ok, false, url);
+    if (!result.ok) assert.equal(result.reason, 'platformHomeUrl');
+  }
+  for (const url of ['https://docs.qq.com.merchant.shop', 'https://mydocs.qq.com', 'https://docs.qq.com/doc/merchant', 'https://merchant.shop/?next=https://docs.qq.com']) {
+    assert.deepEqual(validatePublicSubmittedUrl(url), { ok: true, url });
+  }
+});
+
+
+test('gateway submission rejects the Tencent Docs homepage without touching the database', async (context) => {
+  const query = context.mock.method(pg.Pool.prototype, 'query', () => {
+    throw new Error('Rejected submissions must not reach the database');
+  });
+  const result = await submitGatewaySite({ url: 'https://docs.qq.com', name: 'Submitted site', summary: '', paymentMethods: [] });
+  assert.equal(result.ok, false);
+  assert.equal(query.mock.callCount(), 0);
 });

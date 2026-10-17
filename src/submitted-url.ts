@@ -65,7 +65,7 @@ export function validatePublicSubmittedUrl(input: string, changes?: PublicSubmit
   if (incompleteDomainUrlPattern.test(normalized)) return { ok: false, reason: 'invalidDomainUrl', url: normalized };
   if (temporaryUrlPattern.test(normalized)) return { ok: false, reason: 'temporaryUrl', url: normalized };
   if (productItemUrlPattern.test(normalized)) return { ok: false, reason: 'productItemUrl', url: normalized };
-  if (platformHomeUrlPattern.test(normalized) || (/^(?:www\.)?google\.com$/i.test(url.hostname) && url.pathname === '/')) return { ok: false, reason: 'platformHomeUrl', url: normalized };
+  if (platformHomeUrlPattern.test(normalized) || (/^(?:(?:www\.)?google\.com|docs\.qq\.com)$/i.test(url.hostname) && url.pathname === '/')) return { ok: false, reason: 'platformHomeUrl', url: normalized };
   if (reservedHostnamePattern.test(url.hostname)) return { ok: false, reason: 'reservedHostUrl', url: normalized };
   if (probeUrlPattern.test(normalized) || hasInjectionProbe(url.pathname + url.search)) return { ok: false, reason: 'probeUrl', url: normalized };
 
