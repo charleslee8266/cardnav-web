@@ -2,14 +2,14 @@
 import RefreshTime from './RefreshTime.astro';
 import HeroMetric from './HeroMetric.astro';
 import PageHero from './PageHero.astro';
-import { officialPriceBaseline, officialPriceDifference } from '../official-price.js';
+import { buildOfficialPriceProductGroups, officialPriceBaseline, officialPriceDifference } from '../official-price.js';
 import OfficialPriceComparison from './OfficialPriceComparison.astro';
 import './official-price.css';
 import Sponsors from './Sponsors.astro';
 import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
-import { productForOfficialPrice, defaultOfficialPricePlan } from '../models/product-catalog.js';
+import { productForOfficialPrice } from '../models/product-catalog.js';
 import { productIconPath } from '../models/product-icons.js';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
 import { telemetryBlocks } from '../telemetry-blocks.js';
@@ -18,12 +18,7 @@ type Props = { stats: import('../store.js').PublicOfficialPriceStats; groups: Lo
 const { groups, updatedAt, stats } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const brands = Array.from(new Set(groups.map(group => group.appSlug)), appSlug => {
-  const plans = groups.filter(group => group.appSlug === appSlug);
-  const product = productForOfficialPrice(appSlug, plans[0].urlSlug);
-  const defaultPlan = defaultOfficialPricePlan(plans)!;
-  return { name: plans[0].appName, product, pathname: defaultPlan.pathname };
-});
+const brands = buildOfficialPriceProductGroups(groups);
 const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 65)).join('') : '';
 ---
 <PageHero title={t.officialPrice.title} description={t.officialPrice.heroDescription}>
@@ -33,7 +28,7 @@ const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => S
 <section class="official-overview card data-workspace" data-telemetry-block={telemetryBlocks.officialPrices.table}>
   <div class="data-workspace-controls"><nav class="official-overview-brands" aria-label={t.officialPrice.navLabel}>
     <a class="plan-option plan-product" href={linkTo('/official-price')} aria-current="page">{t.shops.allPlans}</a>
-    {brands.map(brand => <a class="plan-option plan-product" href={linkTo(brand.pathname)}>
+    {brands.map(brand => <a class="plan-option plan-product" href={linkTo(brand.defaultPath)}>
       {brand.product?.icon && <img src={productIconPath(brand.product.icon)} width="18" height="18" alt="" class:list={['plan-brand-icon', brand.product.monochrome && 'plan-icon-mono']} />}
       {brand.product?.label || brand.name}
     </a>)}

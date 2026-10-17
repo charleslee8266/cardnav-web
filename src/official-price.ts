@@ -1,4 +1,5 @@
 import { officialPricePathname } from './models/routes.js';
+import { defaultOfficialPricePlan, productForOfficialPrice, quickPlanProducts } from './models/product-catalog.js';
 /**
  * 文件说明: 根据数据库里的官方订阅价格元数据构建公开页分组和 URL 解析。
  */
@@ -17,6 +18,18 @@ export type OfficialPriceGroup<Row extends PublicOfficialPriceRow = PublicOffici
   displayOrder: number;
   prices: Row[];
 };
+
+export function buildOfficialPriceProductGroups<Group extends OfficialPriceGroup>(groups: Group[]) {
+  const productOrder = (id: string) => {
+    const index = quickPlanProducts.findIndex(product => product.id === id);
+    return index < 0 ? quickPlanProducts.length : index;
+  };
+  return Array.from(new Set(groups.map(group => group.appSlug)), app => {
+    const plans = groups.filter(group => group.appSlug === app);
+    const product = productForOfficialPrice(app, plans[0].urlSlug);
+    return { id: app, name: product?.label ?? plans[0].appName, product, plans, defaultPath: defaultOfficialPricePlan(plans)!.pathname };
+  }).sort((a, b) => productOrder(a.product?.id ?? a.id) - productOrder(b.product?.id ?? b.id));
+}
 
 
 

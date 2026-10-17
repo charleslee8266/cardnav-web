@@ -9,14 +9,14 @@ import HeroMetric from './HeroMetric.astro';
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import './data-workspace.css';
 import PageHero from './PageHero.astro';
-import { officialPriceBaseline, officialPriceDifference } from '../official-price.js';
+import { buildOfficialPriceProductGroups, officialPriceBaseline, officialPriceDifference } from '../official-price.js';
 import OfficialPriceComparison from './OfficialPriceComparison.astro';
 import './official-price.css';
 import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
-import { defaultOfficialPricePlan, productForOfficialPrice, quickPlanProducts, quickPlanShortLabel, quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../models/product-catalog.js';
+import { quickPlanShortLabel, quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../models/product-catalog.js';
 import { productIconPath } from '../models/product-icons.js';
 import Sponsors from './Sponsors.astro';
 import type { PageType } from '../page-types.js';
@@ -37,14 +37,7 @@ const relatedGatewayPath = relatedShopSearchTerm ? quickPlanGatewayPath(relatedS
 const relatedGatewayTipPath = relatedGatewayPath ? linkTo(relatedGatewayPath) : '';
 const relatedGatewayFamilyName = relatedShopSearchTerm ? quickPlanGatewayFamilyName(relatedShopSearchTerm) : '';
 
-const productGroups = Array.from(new Set(groups.map(group => group.appSlug)), app => {
-  const plans = groups.filter(group => group.appSlug === app);
-  const product = productForOfficialPrice(app, plans[0].urlSlug);
-  return { id: app, name: product?.label ?? plans[0].appName, product, plans, defaultPath: defaultOfficialPricePlan(plans)!.pathname };
-}).sort((a, b) => {
-  const order = (id: string) => { const i = quickPlanProducts.findIndex(p => p.id === id); return i < 0 ? 999 : i; };
-  return order(a.product?.id ?? a.id) - order(b.product?.id ?? b.id);
-});
+const productGroups = buildOfficialPriceProductGroups(groups);
 
 const baseline = officialPriceBaseline(currentGroup?.prices ?? []);
 const maximumPrice = Math.max(1, ...(currentGroup?.prices ?? []).map(price => price.cnyPrice));
