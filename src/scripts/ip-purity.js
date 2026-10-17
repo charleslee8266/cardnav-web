@@ -244,19 +244,21 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   async function runCheck(ip) {
     clearError();
     setLoading(true);
+    let failureMessage = dict.status?.failed || 'Check failed. Please try again later.';
     try {
       const response = await fetch(`/api/ip-purity/check?ip=${encodeURIComponent(ip)}`, {
         headers: { Accept: 'application/json' },
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.ok) {
-        throw new Error(renderError(payload?.messageKey) || dict.status?.failed || 'Check failed.');
+        failureMessage = renderError(payload?.messageKey) || failureMessage;
+        throw new Error(failureMessage);
       }
       renderReport(payload);
       ui.status.textContent = formatTemplate(dict.status?.checkCompleted || 'Check completed: {ip}', { ip: payload.ip });
-    } catch (error) {
-      setEmptyState(dict.status?.failed || 'Check failed.');
-      showError(error instanceof Error ? error.message : dict.status?.failed || 'Check failed.');
+    } catch {
+      if (!latestPayload) setEmptyState(dict.status?.failed || 'Check failed.');
+      showError(failureMessage);
       ui.status.textContent = dict.status?.failed || 'Check failed.';
     } finally {
       setLoading(false);
@@ -268,21 +270,29 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
     setLoading(true);
     try {
       ui.status.textContent = dict.status?.identifyingCurrentIp || 'Detecting current IP...';
-      const response = await fetch('https://api4.ipify.org?format=json', {
-        headers: { Accept: 'application/json' },
-      });
-      const payload = await response.json().catch(() => null);
-      const ip = String(payload?.ip || '').trim();
-      const validationMessage = validateIpv4(ip);
-      if (validationMessage) {
-        throw new Error(validationMessage);
+      let ip = '';
+      for (const url of ['https://api4.ipify.org?format=json', 'https://api.ipapi.is/']) {
+        try {
+          const response = await fetch(url, {
+            headers: { Accept: 'application/json' },
+            signal: AbortSignal.timeout(4000),
+          });
+          if (!response.ok) continue;
+          const payload = await response.json();
+          const candidate = String(payload?.ip || '').trim();
+          if (!candidate || validateIpv4(candidate)) continue;
+          ip = candidate;
+          break;
+        } catch {
+          // A source may be unreachable on the current network; try the next one.
+        }
+      }
+      if (!ip) {
+        ui.status.textContent = dict.status?.currentIpUnavailable || 'Could not detect your current IP. This may be related to your network connection. Enter an IPv4 address manually, or check your connection and try again.';
+        return;
       }
       ui.input.value = ip;
       await runCheck(ip);
-    } catch (error) {
-      setEmptyState(dict.status?.failed || 'Check failed.');
-      showError(error instanceof Error ? error.message : dict.status?.failed || 'Check failed.');
-      ui.status.textContent = dict.status?.failed || 'Check failed.';
     } finally {
       setLoading(false);
     }

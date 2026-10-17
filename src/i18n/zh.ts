@@ -14,6 +14,7 @@ const ipPurityRuntime = {
     checkCompleted: '检测完成：{ip}',
     failed: '检测失败，请稍后重试。',
     identifyingCurrentIp: '正在识别当前 IP...',
+    currentIpUnavailable: '暂时无法识别当前 IP，可能与当前网络连接有关。可手动输入 IPv4 地址，或检查网络后重试。',
     validationFailed: '输入校验失败。',
     enterValidIp: '请输入有效 IP。',
     cleared: '已清空输入。',

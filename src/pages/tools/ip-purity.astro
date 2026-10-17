@@ -57,7 +57,7 @@ const seo = buildSeoContext({
             <button id="ipPurityDetectCurrent" class="btn btn-sm btn-outline btn-primary" type="button">{t.ipPurity.detectCurrent}</button>
             <button id="ipPurityClear" class="btn btn-sm btn-outline" type="button">{t.ipPurity.clear}</button>
           </div>
-          <p id="ipPurityStatus" class="tool-status-line text-sm text-base-content/75">{t.ipPurity.initialStatus}</p>
+          <p id="ipPurityStatus" role="status" class="tool-status-line text-sm text-base-content/75">{t.ipPurity.initialStatus}</p>
         </form>
 
         <div id="ipPurityError" class="alert alert-error shadow-sm text-sm hidden"></div>

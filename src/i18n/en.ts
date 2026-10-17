@@ -15,6 +15,7 @@ const ipPurityRuntime = {
     checkCompleted: 'Check completed: {ip}',
     failed: 'Check failed. Please try again later.',
     identifyingCurrentIp: 'Detecting your current IP...',
+    currentIpUnavailable: 'Could not detect your current IP. This may be related to your network connection. Enter an IPv4 address manually, or check your connection and try again.',
     validationFailed: 'Input validation failed.',
     enterValidIp: 'Please enter a valid IP address.',
     cleared: 'Input cleared.',
