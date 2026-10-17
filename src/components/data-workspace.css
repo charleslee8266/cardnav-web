@@ -1,3 +1,4 @@
+.data-section-title { font-size:14px; font-weight:600; line-height:1.5; }
 /* V3 explorer controls: 36px inputs on one toolbar; secondary choices below. */
 .data-workspace { min-width: 0; overflow: visible; }
 .data-workspace-control-stack { display: flex; flex-direction: column; gap: 10px; }

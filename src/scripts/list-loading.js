@@ -21,10 +21,13 @@ export function createListLoading(root) {
       if (pending++ === 0) {
         failed = false;
         const hasRows = Boolean(root.querySelector('tbody tr:not(.hidden), [data-filter-visible="1"]:not(.hidden)'));
+        const footer = root.querySelector('.data-table-footer');
         status.dataset.empty = String(!hasRows);
-        if (!hasRows) anchor = null;
-        status.dataset.placement = anchor ? 'bottom' : 'list';
-        if (anchor) anchor.before(status);
+        if (!hasRows && !footer) anchor = null;
+        status.dataset.placement = footer || anchor ? 'bottom' : 'list';
+        status.classList.toggle('data-table-footer', Boolean(footer));
+        if (footer) footer.before(status);
+        else if (anchor) anchor.before(status);
         else if (!hasRows && root.querySelector('table')) root.querySelector('table').after(status);
         else root.prepend(status);
         status.hidden = hasRows && !anchor;

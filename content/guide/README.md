@@ -111,7 +111,7 @@ type GuideCardAttrs = {
 
 链接打开规则：
 
-- 站内链接本页打开，包括 `/guide/...`、`/shops`、`#anchor` 和 `https://cardnav.xyz/...`
+- 站内链接本页打开，包括 `/guide/...`、`/market`、`#anchor` 和 `https://cardnav.xyz/...`
 - 完整 URL 且不是 `cardnav.xyz` 的链接新页面打开，并自动添加 `target="_blank"` 和 `rel="noopener noreferrer"`
 - 卡片段落最后一行跳转链接和正文 Markdown 链接遵守同一套规则
 

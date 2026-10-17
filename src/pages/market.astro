@@ -1,0 +1,121 @@
+---
+import ShopExplorer from '../components/ShopExplorer.astro';
+
+import Icon from '../components/Icon.astro';
+/*
+文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
+*/
+import { telemetryBlocks } from '../telemetry-blocks.js';
+import OpenShopLink from '../components/OpenShopLink.astro';
+import PageHero from '../components/PageHero.astro';
+import RefreshTime from '../components/RefreshTime.astro';
+import HeroMetric from '../components/HeroMetric.astro';
+import PublicPage from '../layouts/PublicPage.astro';
+import { buildSeoContext } from '../seo.js';
+import { quickPlanHeroName, quickPlanDisplayName, quickPlanSearchSeoPath, type QuickPlanSearchTerm } from '../models/product-catalog.js';
+import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
+import { publicSiteUrl } from '../site.js';
+import Sponsors from '../components/Sponsors.astro';
+import type { PageType } from '../page-types.js';
+import { loadShopProductsData } from '../store.js';
+
+type Props = {
+  seoSearchTerm?: QuickPlanSearchTerm | null;
+  pageType?: PageType;
+};
+
+const initialProductLimitValue = 100;
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
+const requestUrl = new URL(Astro.request.url);
+const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
+const pageType = Astro.props.pageType ?? (seoSearchTerm ? 'shop-keyword' : 'shops');
+const seoSearchPageMeta = seoSearchTerm
+  ? buildShopSearchPageMeta(quickPlanDisplayName(seoSearchTerm), {
+      searchResultsTitle: t.shops.searchResultsTitle,
+      searchResultsDescription: t.shops.searchResultsDescription,
+    }, quickPlanHeroName(seoSearchTerm))
+  : null;
+const pageTitle = seoSearchPageMeta?.pageTitle ?? t.shops.seoTitle;
+const pageDescription = seoSearchPageMeta?.pageDescription ?? t.shops.seoDescription;
+const heroTitle = seoSearchPageMeta?.heroTitle ?? t.shops.title;
+const heroDescription = seoSearchTerm ? t.shops.searchResultsHeroDescription.replace('{term}', quickPlanHeroName(seoSearchTerm)) : t.shops.heroDescription;
+const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/market';
+const hasNonCanonicalQuery = requestUrl.search.length > 0;
+const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true, autoCategory: seoSearchTerm?.slug });
+const renderedProducts = data.products.map(product => ({
+  id: product.id,
+  categoryName: product.categoryName,
+  name: product.name,
+  priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
+  priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
+  productUrl: product.productUrl,
+  stock: product.stock,
+  inStock: product.inStock,
+  refreshedAt: product.refreshedAt || null,
+  refreshTime: product.refreshTime || '',
+  siteId: product.siteId || '',
+  siteName: product.siteName || '',
+  siteUrl: product.siteUrl || '',
+  siteProductRefreshSuccessAt: product.siteProductRefreshSuccessAt || null,
+  siteProductRefreshSuccessTime: product.siteProductRefreshSuccessTime || '',
+  siteScore: product.siteScore || 0,
+  score: product.score || 0,
+}));
+const shopBreadcrumbs = seoSearchTerm
+  ? [
+      { name: t.shops.title, pathname: '/market' },
+      { name: seoSearchTerm.label, pathname: seoPathname },
+    ]
+  : [{ name: t.shops.title, pathname: '/market' }];
+const shopListItems = renderedProducts.slice(0, 20).map((product, index) => ({
+  name: `${product.categoryName} - ${product.name}`,
+  url: product.productUrl,
+  position: index + 1,
+}));
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl,
+  pathname: seoPathname,
+  title: pageTitle,
+  description: pageDescription,
+  imagePath: '/og-cardnav.webp',
+  type: 'webpage',
+  noindex: hasNonCanonicalQuery,
+  breadcrumbs: shopBreadcrumbs,
+  listItems: shopListItems,
+  locale: Astro.locals.locale,
+});
+
+---
+
+<PublicPage activeNav="shops" pageType={pageType} {...seo}>
+  <PageHero
+    title={heroTitle}
+    description={heroDescription}
+    titleId="shopPageHeroTitle"
+    descriptionId="shopPageHeroDescription"
+  >
+    <div slot="meta" class="hero-metrics">
+      <HeroMetric label={t.shops.listedMerchants} value={data.totalSiteCount.toLocaleString(Astro.locals.locale)} />
+      <HeroMetric label={t.shops.listedProducts} value={data.totalProductCount.toLocaleString(Astro.locals.locale)} />
+      <HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={data.latestRefreshedAt} fallback={t.labels.notRecorded} /></HeroMetric>
+    </div>
+    <div slot="aside" class="data-page-actions">
+      <button data-open-dialog="shop-submit" type="button" class="btn submit-button btn-sm"
+        data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops" data-umami-event-name={t.shops.submitMerchant}>
+        {t.shops.submitMerchant}
+      </button>
+      <a href="?dialog=support" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-sm"><span aria-hidden="true">♥</span> {t.support.button}</a>
+      <OpenShopLink class="btn open-shop-button btn-sm" />
+    </div>
+  </PageHero>
+
+  <Sponsors placement="after-hero" pageType={pageType} />
+
+  <aside class="data-workspace-guide" data-telemetry-block={telemetryBlocks.shops.guide}>
+    <a class="purchase-guide-link" href={linkTo('/guide/choose-reliable-merchant')}><Icon name="circle-alert" class="purchase-guide-icon" /><strong>{t.shops.guideTitle}</strong><span aria-hidden="true">→</span></a>
+    <span class="purchase-guide-description">{t.shops.guideDescription}</span>
+  </aside>
+
+<ShopExplorer data={data} seoSearchTerm={seoSearchTerm} />
+</PublicPage>

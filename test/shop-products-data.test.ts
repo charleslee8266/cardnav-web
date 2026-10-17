@@ -16,6 +16,7 @@ import {
   shopProducts,
   shopProductsTotalInStockProductCount,
   shopSiteName,
+  shopSiteSlug,
   shopSiteSponsor,
   shopSiteSupportTotalCents,
   shopSites,
@@ -25,6 +26,7 @@ import type { PublicShopProductsData } from '../src/shop-products-data.js';
 const fixture: PublicShopProductsData = {
   sites: [{
     id: 'merchant-a',
+    slug: 'example.com',
     name: '商家 A',
     url: 'https://example.com',
     lastProductRefreshSuccessAt: '2026-07-31T12:00:00.000Z',
@@ -37,6 +39,7 @@ const fixture: PublicShopProductsData = {
     {
       id: '11111111111111111111111111111111',
       siteId: 'merchant-a',
+      siteSlug: 'example.com',
       siteName: '商家 A',
       siteUrl: 'https://example.com',
       siteProductRefreshSuccessAt: '2026-07-31T12:00:00.000Z',
@@ -60,6 +63,7 @@ const fixture: PublicShopProductsData = {
     {
       id: '22222222222222222222222222222222',
       siteId: 'merchant-a',
+      siteSlug: 'example.com',
       siteName: '商家 A',
       siteUrl: 'https://example.com',
       siteProductRefreshSuccessAt: '2026-07-31T12:00:00.000Z',
@@ -107,6 +111,7 @@ test('packed shop products accessors read page fields without unpacking long obj
   const [first, second] = shopProducts(packed);
 
   assert.equal(shopSiteName(shopProductSite(packed, first)), '商家 A');
+  assert.equal(shopSiteSlug(shopProductSite(packed, first)), 'example.com');
   assert.equal(shopSiteSponsor(shopProductSite(packed, first)), true);
   assert.equal(shopSiteSupportTotalCents(shopProductSite(packed, first)), 12000);
   assert.equal(shopProductCategoryName(packed, first), 'ChatGPT');

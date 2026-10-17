@@ -30,8 +30,8 @@ import DataTableHeader from '../../components/DataTableHeader.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 import { loadGatewayDetail } from '../../store.js';
+import SiteSupportSummary from '../../components/SiteSupportSummary.astro';
 import MerchantBadge from '../../components/MerchantBadge.astro';
-import Sponsors from '../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -134,33 +134,34 @@ function gatewayModelClickAttrs(modelId: string) {
     <div slot="title" class="flex flex-wrap items-center gap-2">
       <h1 class="page-hero-title mt-0">{site.name}</h1>
       {site.sponsor ? <MerchantBadge label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} /> : null}
-      {(site.supportPoints || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.amountLinkLabel} /> : null}
+      {(site.supportTotalCents || 0) > 0 ? <MerchantBadge kind="support" label={Astro.locals.messages.support.badgeLabel} description={Astro.locals.messages.support.badgeDescription} href={Astro.locals.localizePath('/supporters')} linkLabel={Astro.locals.messages.support.amountLinkLabel} /> : null}
     </div>
+    <SiteSupportSummary slot="note" partner={site.sponsor} totalCents={site.supportTotalCents} points={site.supportPoints || 0} />
   </PageHero>
-  <Sponsors placement="after-hero" pageType="gateway-detail" />
 
   <div class="gateway-detail-grid">
   <aside class="gateway-detail-sidebar card border border-base-300 bg-base-100">
     <section>
-      <h2>{t.llmGateway.profileLabel}</h2>
+      <h2 class="data-section-title">{t.llmGateway.profileLabel}</h2>
       {site.summary && <p class="gateway-detail-description">{site.summary}</p>}
       <a href={site.outboundUrl} target="_blank" rel="noopener noreferrer sponsored" class="btn btn-primary btn-sm mt-3" {...gatewaySiteOpenAttrs()}>{t.actions.open} ↗</a>
     </section>
-    <section><h2>{t.llmGateway.basicInfo}</h2><dl>
+    <section><h2 class="data-section-title">{t.llmGateway.basicInfo}</h2><dl>
       <div><dt>{t.labels.score} <button type="button" class="inline-help-button" aria-label={t.llmGateway.gatewayScoreHelpLabel} data-inline-help data-tip={t.llmGateway.gatewayScoreTip}>i</button></dt><dd><ScoreDisplay value={site.siteScore} /></dd></div>
       <div><dt>{t.llmGateway.submitUrl}</dt><dd>{site.url}</dd></div>
       {distinctApiEndpoint && <div><dt>{t.llmGateway.publicApiUrl}</dt><dd>{distinctApiEndpoint}</dd></div>}
-      <div><dt>{t.llmGateway.siteType}</dt><dd>{site.displayFamily || '—'}</dd></div>
+      <div><dt>{t.shops.detailTechnology}</dt><dd>{site.displayFamily || t.shops.detailTechnologyOther}</dd></div>
       <div><dt>{t.llmGateway.modelCount} <button type="button" class="inline-help-button" aria-label={t.llmGateway.modelCount} data-inline-help data-tip={t.llmGateway.publicModelSourceHint}>i</button></dt><dd>{site.modelCount}</dd></div>
       <div><dt>{t.llmGateway.priceCount} <button type="button" class="inline-help-button" aria-label={t.llmGateway.priceCount} data-inline-help><template data-tip-content><ol class="inline-help-list">{t.llmGateway.publicPriceSourceHint.map((item: string) => <li>{item}</li>)}</ol></template>i</button></dt><dd>{site.priceCount}</dd></div>
       <div><dt>{t.llmGateway.availability} <button type="button" class="inline-help-button" aria-label={t.llmGateway.availabilityHelpLabel} data-inline-help data-tip={t.llmGateway.availabilityTip}>i</button></dt><dd>{formatAvailabilityPercent(site.availabilityPercent)}</dd></div>
       <div><dt>{t.llmGateway.averageLatency}</dt><dd>{formatLatencySeconds(site.avgSuccessLatencyMs)}</dd></div>
-      <div><dt>{t.llmGateway.createdAt}</dt><dd>{site.createdTime || t.labels.notRecorded}</dd></div>
+      <div><dt>{t.shops.detailCollectedAt}</dt><dd><RefreshTime timestamp={site.createdAt} fallback={t.labels.notRecorded} /></dd></div>
+      <div><dt>{t.shops.detailDomainRegisteredAt} <button type="button" class="inline-help-button" aria-label={t.shops.detailDomainRegisteredAt} data-inline-help data-tip={t.shops.detailDomainDateHint}>i</button></dt><dd><RefreshTime timestamp={site.domainRegisteredAt} fallback={t.shops.detailUnknown} /></dd></div>
       <div><dt>{t.labels.latestRefresh}</dt><dd><RefreshTime timestamp={site.latestGatewayRefreshAt} fallback={t.labels.notRecorded} /></dd></div>
     </dl></section>
-    <section><h2>{t.llmGateway.paymentMethods}</h2><div class="gateway-payment-list">{site.paymentMethods.length ? site.paymentMethods.map(method => { const icon = paymentIcon(method); const label = t.llmGateway.paymentMethodLabels[method as keyof typeof t.llmGateway.paymentMethodLabels] || method; return <span class="gateway-payment-label"><span class="payment-icon" aria-hidden="true">{icon.src ? <img src={icon.src} alt="" width="19" height="14" /> : icon.fallback}</span>{label}</span>; }) : '—'}</div></section>
-    <section><h2>{t.llmGateway.modelProvider}</h2><div class="flex flex-wrap gap-2">{site.displayModelProviders.map(provider => <ProviderLabel name={provider} />)}</div></section>
-    <section><h2>{t.llmGateway.supportedFamilies}</h2><div class="flex flex-wrap gap-2">{site.displayModelFamilies.map(family => <ModelFamilyLabel name={family} href={Astro.locals.localizePath(gatewayFamilyPath(family))} />)}</div></section>
+    <section><h2 class="data-section-title">{t.llmGateway.paymentMethods}</h2><div class="gateway-payment-list">{site.paymentMethods.length ? site.paymentMethods.map(method => { const icon = paymentIcon(method); const label = t.llmGateway.paymentMethodLabels[method as keyof typeof t.llmGateway.paymentMethodLabels] || method; return <span class="gateway-payment-label"><span class="payment-icon" aria-hidden="true">{icon.src ? <img src={icon.src} alt="" width="19" height="14" /> : icon.fallback}</span>{label}</span>; }) : '—'}</div></section>
+    <section><h2 class="data-section-title">{t.llmGateway.modelProvider}</h2><div class="flex flex-wrap gap-2">{site.displayModelProviders.map(provider => <ProviderLabel name={provider} />)}</div></section>
+    <section><h2 class="data-section-title">{t.llmGateway.supportedFamilies}</h2><div class="flex flex-wrap gap-2">{site.displayModelFamilies.map(family => <ModelFamilyLabel name={family} href={Astro.locals.localizePath(gatewayFamilyPath(family))} />)}</div></section>
     <section><a href={linkTo('/llm-gateway')} class="text-primary text-sm">← {t.llmGateway.backToList}</a></section>
   </aside>
 
@@ -168,7 +169,7 @@ function gatewayModelClickAttrs(modelId: string) {
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden data-workspace" data-gateway-deferred-table="prices" data-telemetry-block={telemetryBlocks.gateways.prices}>
     <div class="data-workspace-controls">
       <DataWorkspaceToolbar>
-        <h2 class="text-lg font-semibold data-workspace-heading">{t.llmGateway.priceSummaryTitle}</h2>
+        <h2 class="data-section-title data-workspace-heading">{t.llmGateway.priceSummaryTitle}</h2>
         <label class="data-workspace-search"><input type="search" data-gateway-detail-search value={initialModel} class="input input-bordered w-full" placeholder={t.llmGateway.modelSearchPlaceholder} aria-label={t.llmGateway.modelSearchPlaceholder} /></label>
         <FilterPopover id="gatewayQuoteFilters" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
           <label class="data-filter-group"><span class="data-filter-title">{t.llmGateway.group}</span>
@@ -253,7 +254,7 @@ function gatewayModelClickAttrs(modelId: string) {
   .gateway-detail-sidebar { min-width: 0; overflow: hidden; }
   .gateway-detail-sidebar section { padding: 16px; border-bottom: 1px solid var(--color-base-300); }
   .gateway-detail-sidebar section:last-child { border: 0; }
-  .gateway-detail-sidebar h2 { font-size: 13px; font-weight: 650; margin-bottom: 12px; }
+  .gateway-detail-sidebar h2 { margin-bottom: 12px; }
   .gateway-detail-sidebar dl { display: grid; gap: 12px; font-size: 12px; }
   .gateway-detail-sidebar dl > div { display: flex; justify-content: space-between; gap: 14px; }
   .gateway-detail-sidebar dt { display: inline-flex; align-items: center; gap: 4px; color: var(--color-muted); flex-shrink: 0; }

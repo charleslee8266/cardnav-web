@@ -1,12 +1,13 @@
 /**
- * 文件说明: 运行时读取商家刷新时间，生成卡网商品主列表页 sitemap。
+ * 文件说明: 运行时读取商家刷新时间，生成卡网商品列表、关键词和商家详情 sitemap。
  */
 import type { APIRoute } from 'astro';
 import { supportedLocales } from '../i18n/config.js';
 import { publicSitemapCacheControl } from '../public-data-cache.js';
-import { buildQuickPlanSearchSeoRoutes, buildShopSeoRoutes, buildSitemapXml, normalizePublicSeoRoutes } from '../seo-routes.js';
+import { buildQuickPlanSearchSeoRoutes, buildShopDetailSeoRoutes, buildShopSeoRoutes, buildSitemapXml, normalizePublicSeoRoutes } from '../seo-routes.js';
 import { publicSiteUrl } from '../site.js';
 import { loadShopProductsData } from '../store.js';
+import { loadPublicShops } from '../public-shops.js';
 
 function toSitemapLastmod(value: string | null | undefined) {
   if (!value) return undefined;
@@ -16,11 +17,15 @@ function toSitemapLastmod(value: string | null | undefined) {
 }
 
 export const GET: APIRoute = async () => {
-  const shopProductsData = await loadShopProductsData({ productLimit: 1 });
+  const [shopProductsData, shops] = await Promise.all([
+    loadShopProductsData({ productLimit: 1 }),
+    loadPublicShops(),
+  ]);
   const lastmod = toSitemapLastmod(shopProductsData.latestRefreshedAt);
   const routes = normalizePublicSeoRoutes(supportedLocales.flatMap(locale => [
     ...buildShopSeoRoutes(lastmod, locale),
     ...buildQuickPlanSearchSeoRoutes(locale),
+    ...buildShopDetailSeoRoutes(shops, locale),
   ]));
 
   return new Response(buildSitemapXml(publicSiteUrl, routes), {

@@ -74,7 +74,7 @@ const guideSourcePage = '/';
 
 const pathCards = [
   { title: t.home.gatewayPathTitle, feature: t.nav.llmGateway, description: t.home.gatewayPathShortDescription, href: '/llm-gateway', icon: 'server' },
-  { title: t.home.shopPathTitle, feature: t.nav.shops, description: t.home.shopPathShortDescription, href: '/shops', icon: 'store' },
+  { title: t.home.shopPathTitle, feature: t.nav.shops, description: t.home.shopPathShortDescription, href: '/market', icon: 'store' },
   { title: t.home.officialPathTitle, feature: t.nav.officialPrice, description: t.home.officialPathShortDescription, href: '/official-price', icon: 'tag' },
   { title: t.home.leaderboardPathTitle, feature: t.nav.modelLeaderboard, description: t.home.leaderboardPathShortDescription, href: '/model-leaderboard', icon: 'trophy' },
   { title: t.home.guidePathTitle, feature: t.nav.guide, description: t.home.guidePathShortDescription, href: '/guide', icon: 'book' },
@@ -150,7 +150,7 @@ const productHighlights = shopProductsData.products.slice(0, 5).map(product => (
   value: typeof product.priceNumber === 'number' && product.priceUnit
     ? `${product.priceUnit}${String(product.priceNumber)}`
     : product.price,
-  href: `/shops?q=${encodeURIComponent(product.name)}`,
+  href: `/market?q=${encodeURIComponent(product.name)}`,
 }));
 
 function guideUrlClickAttrs(targetPage: string) {
@@ -181,15 +181,15 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
   <section class="home-hero" data-telemetry-block={telemetryBlocks.shared.hero}>
     <h1><span class="home-brand"><img src="/favicon.webp" alt="" width="56" height="56" /><span class="home-brand-name">{t.site.name}</span><span class="home-brand-domain">cardnav.xyz</span></span><span class="home-tagline">{t.site.tagline}</span></h1>
     <p class="home-lead">{Astro.locals.locale === 'zh' ? t.site.heroDescription.split(/(?=还有)/).map((line: string, index: number) => <>{index > 0 && <br />}{line}</>) : t.site.heroDescription}</p>
-    <form action={linkTo('/shops')} method="get" class="home-search" data-home-search-form data-telemetry-block={telemetryBlocks.home.search}>
+    <form action={linkTo('/market')} method="get" class="home-search" data-home-search-form data-telemetry-block={telemetryBlocks.home.search}>
       <Icon name="search" />
       <input name="q" type="search" placeholder={t.home.searchPlaceholder} aria-label={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
       <button type="submit" class="btn btn-primary">{t.actions.search}</button>
     </form>
     <div class="home-hot-terms"><ShopPlanGroups mode="navigate" productLimit={8} initialSearchQuery="" officialPriceUrlSlugs={new Set<string>()} /></div>
     <div class="home-stat-line">
-      <a href={linkTo('/shops?tab=merchants')}>{t.labels.collectedSites}<b>{shopProductsData.totalSiteCount.toLocaleString(Astro.locals.locale)}</b></a>
-      <a href={linkTo('/shops')}>{t.labels.products}<b>{shopProductsData.totalProductCount.toLocaleString(Astro.locals.locale)}</b></a>
+      <a href={linkTo('/market?tab=shops')}>{t.labels.collectedSites}<b>{shopProductsData.totalSiteCount.toLocaleString(Astro.locals.locale)}</b></a>
+      <a href={linkTo('/market')}>{t.labels.products}<b>{shopProductsData.totalProductCount.toLocaleString(Astro.locals.locale)}</b></a>
       <a href={linkTo('/llm-gateway')}>{t.nav.mobileLlmGateway}<b>{gatewayData.totalSiteCount.toLocaleString(Astro.locals.locale)}</b></a>
       <a href={linkTo('/official-price')}>{t.home.subscriptionPlans}<b>{officialPriceStats.productCount.toLocaleString(Astro.locals.locale)}</b></a>
       <a href={linkTo('/model-leaderboard')}>{t.home.modelLeaderboard}<b>{leaderboardStats.modelCount.toLocaleString(Astro.locals.locale)}</b></a>
@@ -206,7 +206,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
     <h2 id="home-highlights-title">{t.home.highlightsTitle}</h2>
     <div class="home-highlight-grid">
       <article class="home-panel" data-telemetry-block={telemetryBlocks.home.shops}>
-        <header class="home-panel-header"><h3>{t.home.productHighlightsTitle}</h3><a class="home-more" href={linkTo('/shops')} {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}<Icon name="right" /></a></header>
+        <header class="home-panel-header"><h3>{t.home.productHighlightsTitle}</h3><a class="home-more" href={linkTo('/market')} {...homeCtaClickAttrs('/market', t.actions.openShops)}>{t.actions.openShops}<Icon name="right" /></a></header>
         <ul class="home-highlight-list">{productHighlights.map(item => <li><a href={linkTo(item.href)} {...homeCtaClickAttrs(item.href, item.title)}><span class="home-row-title">{item.title}<small>{item.meta}</small></span><span class="home-row-price">{item.value}</span></a></li>)}</ul>
         {!productHighlights.length && <p class="home-empty">{t.shops.script.noData}</p>}
       </article>
@@ -242,7 +242,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
       </section>
     </div>
   </section>
-  <script is:inline slot="scripts" type="application/json" id="home-search-config" set:html={JSON.stringify({ shopsPath: linkTo('/shops') })}></script>
+  <script is:inline slot="scripts" type="application/json" id="home-search-config" set:html={JSON.stringify({ shopsPath: linkTo('/market') })}></script>
   <script>import '../scripts/page-widgets.js';</script>
 </PublicPage>
 <script>

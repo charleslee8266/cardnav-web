@@ -10,7 +10,7 @@ import type { Messages } from '../i18n/zh.js';
 import type { Locale } from '../i18n/config.js';
 
 export type SupportKind = 'person' | 'shop' | 'gateway';
-const returnPaths = { shops: '/shops', gateways: '/llm-gateway', supporters: '/supporters' } as const;
+const returnPaths = { shops: '/market', gateways: '/llm-gateway', supporters: '/supporters' } as const;
 export function supportReturnPath(page: SupportReturnPage, token: string, locale: Locale) {
   return localizePath(`${returnPaths[page]}?dialog=support&support-order=${token}`, locale);
 }

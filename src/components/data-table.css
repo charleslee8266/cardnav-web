@@ -57,6 +57,8 @@
 @keyframes list-loading-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .data-list-feedback[data-placement="list"][data-empty="false"][data-state="loading"] .data-list-feedback-message::before { animation: none; } }
 .data-table-empty-state, .data-list-feedback[data-empty="true"] { padding: 48px 16px; text-align: center; color: color-mix(in srgb, var(--color-base-content) 60%, transparent); font-size: 13px; }
+.data-list-feedback.data-table-footer { padding: 12px 16px; text-align: left; }
+.data-list-feedback[data-state="loading"]:not([hidden]) ~ .data-table-footer { display: none; }
 .data-table-shop-products { table-layout: fixed; min-width: 880px; }
 .data-table-shop-products th[data-column-key="productName"] { width: auto; }
 .data-table-shop-products th[data-column-key="platformName"] { width: 100px; }

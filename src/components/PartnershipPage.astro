@@ -13,7 +13,7 @@ import { telemetryBlocks } from '../telemetry-blocks.js';
 const locale = Astro.locals.locale;
 const c = locale === 'en' ? partnershipContent.en : locale === 'ru' ? partnershipContent.ru : partnershipContent.zh;
 const link = Astro.locals.localizePath;
-const ruleParts = (text: string) => text.split(/(\{gateway\}|\{shops\}|\{supporters\}|\{telegram\})/g).map(text => ({ text: text === '{gateway}' ? c.pageLinks[0] : text === '{shops}' ? c.pageLinks[1] : text === '{supporters}' ? c.actions[3] : text === '{telegram}' ? c.telegramGroupLabel : text, href: text === '{gateway}' ? link('/llm-gateway') : text === '{shops}' ? link('/shops') : text === '{supporters}' ? link('/supporters') : text === '{telegram}' ? telegramGroupUrl : null }));
+const ruleParts = (text: string) => text.split(/(\{gateway\}|\{shops\}|\{supporters\}|\{telegram\})/g).map(text => ({ text: text === '{gateway}' ? c.pageLinks[0] : text === '{shops}' ? c.pageLinks[1] : text === '{supporters}' ? c.actions[3] : text === '{telegram}' ? c.telegramGroupLabel : text, href: text === '{gateway}' ? link('/llm-gateway') : text === '{shops}' ? link('/market') : text === '{supporters}' ? link('/supporters') : text === '{telegram}' ? telegramGroupUrl : null }));
 const exampleSponsors: Sponsor[] = [1,2].map(number => ({
   id: `example-partner-${number}`, template: 'default', title: `${c.demoName}${number}`,
   description: c.demoIntro, url: '', links: [],

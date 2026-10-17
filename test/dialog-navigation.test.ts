@@ -64,7 +64,7 @@ for (const kind of kinds) {
 test('clicks switch dialogs in place and queued close events cannot erase the new state', () => {
   const page = browser();
   for (const kind of [...kinds, 'shop-submit']) {
-    assert.equal(page.click(`/shops?dialog=${kind}&support-kind=gateway`), true);
+    assert.equal(page.click(`/market?dialog=${kind}&support-kind=gateway`), true);
     page.flush();
     assert.equal(page.location().pathname, '/about');
     assert.equal(page.location().searchParams.get('q'), 'model');

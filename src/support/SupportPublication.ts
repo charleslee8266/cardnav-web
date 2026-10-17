@@ -26,7 +26,7 @@ export class SupportPublication {
 
   private prefixes(kind: SupportKind) {
     const paths = ['/supporters'];
-    if (kind === 'shop') paths.push('/shops');
+    if (kind === 'shop') paths.push('/market');
     if (kind === 'gateway') paths.push('/llm-gateway');
     const prefixes = supportedLocales.flatMap(locale => paths.map(path => `${this.origin.host}${localizePath(path, locale)}`));
     if (kind === 'shop') prefixes.push(`${this.origin.host}/api/shop-products.json`);

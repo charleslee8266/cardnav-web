@@ -9,6 +9,7 @@ import sharp from 'sharp';
 import {
   buildGatewayModelSeoRoutes,
   buildQuickPlanSearchSeoRoutes,
+  buildShopDetailSeoRoutes,
   buildLlmsTxt,
   buildRobotsTxt,
   buildSitemapIndexXml,
@@ -24,6 +25,7 @@ import {
 import { matchOfficialPriceCatalogEntries } from '../src/official-price.js';
 import { buildSeoContext } from '../src/seo.js';
 import { indexNowKey } from '../src/site.js';
+import { supportedLocales } from '../src/i18n/config.js';
 import { localizePath, switchLocalePath } from '../src/i18n/paths.js';
 import { quickPlanGatewayPath, quickPlanSearchPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug, quickPlanSearchTermForSlug, quickPlanSearchTerms } from '../src/models/product-catalog.js';
 
@@ -56,8 +58,8 @@ test('cardnav-web sitemap, text sitemap and llms include every public SEO route'
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/ru\/privacy<\/loc>/);
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/llm-gateway<\/loc>/);
   assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/en\/llm-gateway<\/loc>/);
-  assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/shops<\/loc>/);
-  assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/en\/shops<\/loc>/);
+  assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/market<\/loc>/);
+  assert.match(sitemapXml, /<loc>https:\/\/cardnav\.xyz\/en\/market<\/loc>/);
   assert.doesNotMatch(sitemapXml, /relay/);
   assert.doesNotMatch(sitemapTxt, /relay/);
   assert.doesNotMatch(llmsTxt, /relay/);
@@ -256,7 +258,7 @@ test('cardnav-web serves its own Open Graph image assets', async () => {
 test('seo context keeps the configured Open Graph image format', () => {
   const seo = buildSeoContext({
     baseUrl: 'https://cardnav.xyz',
-    pathname: '/shops',
+    pathname: '/market',
     title: '卡网商品',
     description: '商品页。',
     imagePath: '/og-cardnav.png',
@@ -322,7 +324,7 @@ test('homepage official price matcher keeps preferred plan order', () => {
 test('shops list schema avoids Product nodes that require real reviews', () => {
   const seo = buildSeoContext({
     baseUrl: 'https://cardnav.xyz',
-    pathname: '/shops',
+    pathname: '/market',
     title: '卡网商品',
     description: '商品页。',
     imagePath: '/og-cardnav.png',
@@ -399,20 +401,20 @@ test('homepage website schema includes SearchAction', () => {
   const websiteNode = graph.find(node => node['@type'] === 'WebSite');
   assert.ok(websiteNode);
   assert.equal((websiteNode.potentialAction as { '@type': string })['@type'], 'SearchAction');
-  assert.match(String((websiteNode.potentialAction as { target: { urlTemplate: string } }).target.urlTemplate), /\/shops\?q=\{search_term_string\}$/);
+  assert.match(String((websiteNode.potentialAction as { target: { urlTemplate: string } }).target.urlTemplate), /\/market\?q=\{search_term_string\}$/);
 });
 
 test('detail pages can include breadcrumb structured data', () => {
   const seo = buildSeoContext({
     baseUrl: 'https://cardnav.xyz',
-    pathname: '/shops/gpt-plus',
+    pathname: '/market/category/gpt-plus',
     title: 'GPT Plus 相关商品搜索结果',
     description: '相关搜索结果。',
     imagePath: '/og-cardnav.png',
     type: 'webpage',
     breadcrumbs: [
-      { name: '卡网商品', pathname: '/shops' },
-      { name: 'GPT Plus', pathname: '/shops/gpt-plus' },
+      { name: '卡网商品', pathname: '/market' },
+      { name: 'GPT Plus', pathname: '/market/category/gpt-plus' },
     ],
   });
 
@@ -422,10 +424,10 @@ test('detail pages can include breadcrumb structured data', () => {
   assert.equal((breadcrumbNode.itemListElement as Array<{ position: number }>)[1].position, 2);
 });
 
-test('shops query pages should use noindex while keeping canonical /shops', () => {
+test('shops query pages should use noindex while keeping canonical /market', () => {
   const seo = buildSeoContext({
     baseUrl: 'https://cardnav.xyz',
-    pathname: '/shops',
+    pathname: '/market',
     title: '卡网商品',
     description: '商品搜索结果。',
     imagePath: '/og-cardnav.png',
@@ -434,7 +436,7 @@ test('shops query pages should use noindex while keeping canonical /shops', () =
   });
 
   assert.equal(seo.robots, 'noindex,follow');
-  assert.equal(seo.canonicalUrl, 'https://cardnav.xyz/shops');
+  assert.equal(seo.canonicalUrl, 'https://cardnav.xyz/market');
   assert.equal(seo.ogLocale, 'zh_CN');
   assert.equal(seo.ogImageWidth, 1200);
   assert.equal(seo.ogImageHeight, 630);
@@ -502,8 +504,22 @@ test('product-wide quick filters have their own canonical SEO route', () => {
     assert.ok(term);
     assert.equal(term.slug, slug);
     assert.equal(term.query, `autocat: ${slug}`);
-    assert.equal(quickPlanSearchSeoPath(term), `/shops/${slug}`);
-    assert.ok(buildQuickPlanSearchSeoRoutes().some(route => route.pathname === `/shops/${slug}`));
-    assert.ok(buildQuickPlanSearchSeoRoutes('en').some(route => route.pathname === `/en/shops/${slug}`));
+    assert.equal(quickPlanSearchSeoPath(term), `/market/category/${slug}`);
+    assert.ok(buildQuickPlanSearchSeoRoutes().some(route => route.pathname === `/market/category/${slug}`));
+    assert.ok(buildQuickPlanSearchSeoRoutes('en').some(route => route.pathname === `/en/market/category/${slug}`));
   }
+});
+
+test('merchant sitemap URLs preserve domain slugs and language alternates', () => {
+  const shops = [{
+    id: 'merchant', slug: 'example.com', name: 'Example', url: 'https://example.com',
+    lastProductRefreshSuccessAt: '2026-10-17T00:00:00.000Z', lastProductRefreshSuccessTime: '',
+    score: 1, sponsor: false, supportTotalCents: 0,
+  }];
+  const routes = supportedLocales.flatMap(locale => buildShopDetailSeoRoutes(shops, locale));
+  assert.deepEqual(routes.map(route => route.pathname), ['/market/shop/example.com', '/en/market/shop/example.com', '/ru/market/shop/example.com']);
+  const xml = buildSitemapXml('https://cardnav.xyz', routes);
+  assert.match(xml, /<loc>https:\/\/cardnav\.xyz\/market\/shop\/example\.com<\/loc>/);
+  assert.match(xml, /hreflang="en" href="https:\/\/cardnav\.xyz\/en\/market\/shop\/example\.com"/);
+  assert.equal(buildShopDetailSeoRoutes([{ ...shops[0], slug: '' }]).length, 0);
 });

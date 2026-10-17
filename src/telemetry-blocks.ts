@@ -23,7 +23,7 @@ export const telemetryBlocks = {
     guide: 'guide-highlights', // 使用向导推荐
     tools: 'tool-highlights', // 实用工具推荐
   },
-  // 商家页 /shops 及关键词页面
+  // 商家页 /market 及关键词页面
   shops: {
     products: 'shop-product-table', // 商品表格，包含对应筛选、排序、收藏和加载更多
     merchants: 'shop-merchant-table', // 商家表格，包含对应筛选、排序、收藏和加载更多

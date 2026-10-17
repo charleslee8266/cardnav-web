@@ -1,64 +1,47 @@
 ---
+
+import ShopProductInitialRow from './ShopProductInitialRow.astro';
 import PlatformLabel from '../components/PlatformLabel.astro';
 import ListKindFilter from '../components/ListKindFilter.astro';
 import MultiSelectFilter from '../components/MultiSelectFilter.astro';
 import FilterSummary from '../components/FilterSummary.astro';
-import Icon from '../components/Icon.astro';
 import RelatedLink from '../components/RelatedLink.astro';
 /*
 文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import ShopPlanGroups from '../components/ShopPlanGroups.astro';
-import OpenShopLink from '../components/OpenShopLink.astro';
 import FilterPopover from '../components/FilterPopover.astro';
-import PageHero from '../components/PageHero.astro';
-import RefreshTime from '../components/RefreshTime.astro';
-import HeroMetric from '../components/HeroMetric.astro';
-import PublicPage from '../layouts/PublicPage.astro';
 import DataTable from '../components/DataTable.astro';
 import DataTableHeaderControl from '../components/DataTableHeaderControl.astro';
 import DataTableHeader from '../components/DataTableHeader.astro';
 import { leaderboardFamilyPath, officialPricePathname } from '../models/routes.js';
 import { buildSeoContext } from '../seo.js';
-import { quickPlanHeroName, quickPlanDisplayName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, type QuickPlanSearchTerm } from '../models/product-catalog.js';
-import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
+import { quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, type QuickPlanSearchTerm } from '../models/product-catalog.js';
 import { publicSiteUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
-import Sponsors from '../components/Sponsors.astro';
-import type { PageType } from '../page-types.js';
 import { packShopProductsData } from '../shop-products-data.js';
 import { loadOfficialPriceCatalog, loadShopProductsData, loadShopPlatformOptions } from '../store.js';
 
 type Props = {
+  data: Awaited<ReturnType<typeof loadShopProductsData>>;
   seoSearchTerm?: QuickPlanSearchTerm | null;
-  pageType?: PageType;
+  siteId?: string;
+  pathname?: string;
+  pinMerchants?: boolean;
 };
-
-const initialProductLimitValue = 100;
+const { data, siteId = '', pathname = '/market', pinMerchants = true } = Astro.props;
+const initialProductLimitValue = siteId ? 20 : 100;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const requestUrl = new URL(Astro.request.url);
 const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
-const pageType = Astro.props.pageType ?? (seoSearchTerm ? 'shop-keyword' : 'shops');
 const initialSearchQuery = requestUrl.searchParams.get('q')?.trim() ?? '';
 const initialCategoryQuery = seoSearchTerm?.query ?? (requestUrl.searchParams.get('category') ? `autocat: ${requestUrl.searchParams.get('category')}` : '');
 const initialFuzzySearch = requestUrl.searchParams.get('fuzzy') === '1';
-const seoSearchPageMeta = seoSearchTerm
-  ? buildShopSearchPageMeta(quickPlanDisplayName(seoSearchTerm), {
-      searchResultsTitle: t.shops.searchResultsTitle,
-      searchResultsDescription: t.shops.searchResultsDescription,
-    }, quickPlanHeroName(seoSearchTerm))
-  : null;
-const pageTitle = seoSearchPageMeta?.pageTitle ?? t.shops.seoTitle;
-const pageDescription = seoSearchPageMeta?.pageDescription ?? t.shops.seoDescription;
-const heroTitle = seoSearchPageMeta?.heroTitle ?? t.shops.title;
-const heroDescription = seoSearchTerm ? t.shops.searchResultsHeroDescription.replace('{term}', quickPlanHeroName(seoSearchTerm)) : t.shops.heroDescription;
-const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
-const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
-const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true, autoCategory: seoSearchTerm?.slug });
 const officialPriceCatalog = await loadOfficialPriceCatalog();
-const platformOptions = await loadShopPlatformOptions();
+const platformOptions = siteId ? [] : await loadShopPlatformOptions();
+const originalCategoryOptions = siteId ? [...new Set(data.products.map(product => product.categoryName).filter(Boolean))].sort((a, b) => a.localeCompare(b, Astro.locals.locale)) : [];
 const officialPriceUrlSlugs = new Set(officialPriceCatalog.map(entry => entry.urlSlug.trim()).filter(Boolean));
 const initialOfficialPricePath = seoSearchTerm?.officialPriceSlug && officialPriceUrlSlugs.has(seoSearchTerm.officialPriceSlug)
   ? linkTo(officialPricePathname(seoSearchTerm.officialPriceSlug))
@@ -74,51 +57,9 @@ const initialGatewayTipLabel = initialGatewayTipPath
 const initialLeaderboardTipPath = seoSearchTerm?.gatewayFamily ? linkTo(leaderboardFamilyPath(seoSearchTerm.gatewayFamily)) : '';
 const initialLeaderboardTipLabel = seoSearchTerm ? t.shops.leaderboardTip.replace('{term}', quickPlanGatewayFamilyName(seoSearchTerm)) : '';
 const hasInitialQuickPlanTip = Boolean(initialOfficialPricePath || initialGatewayTipPath || initialLeaderboardTipPath);
-const renderedProducts = data.products.map(product => ({
-  id: product.id,
-  categoryName: product.categoryName,
-  name: product.name,
-  priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
-  priceUnit: typeof product.priceUnit === 'string' ? product.priceUnit : null,
-  productUrl: product.productUrl,
-  stock: product.stock,
-  inStock: product.inStock,
-  refreshedAt: product.refreshedAt || null,
-  refreshTime: product.refreshTime || '',
-  siteId: product.siteId || '',
-  siteName: product.siteName || '',
-  siteUrl: product.siteUrl || '',
-  siteProductRefreshSuccessAt: product.siteProductRefreshSuccessAt || null,
-  siteProductRefreshSuccessTime: product.siteProductRefreshSuccessTime || '',
-  siteScore: product.siteScore || 0,
-  score: product.score || 0,
-}));
-const shopBreadcrumbs = seoSearchTerm
-  ? [
-      { name: t.shops.title, pathname: '/shops' },
-      { name: seoSearchTerm.label, pathname: seoPathname },
-    ]
-  : [{ name: t.shops.title, pathname: '/shops' }];
-const shopListItems = renderedProducts.slice(0, 20).map((product, index) => ({
-  name: `${product.categoryName} - ${product.name}`,
-  url: product.productUrl,
-  position: index + 1,
-}));
-const seo = buildSeoContext({
-  baseUrl: publicSiteUrl,
-  pathname: seoPathname,
-  title: pageTitle,
-  description: pageDescription,
-  imagePath: '/og-cardnav.webp',
-  type: 'webpage',
-  noindex: hasNonCanonicalQuery,
-  breadcrumbs: shopBreadcrumbs,
-  listItems: shopListItems,
-  locale: Astro.locals.locale,
-});
 const normalSeo = buildSeoContext({
   baseUrl: publicSiteUrl,
-  pathname: '/shops',
+  pathname: '/market',
   title: t.shops.seoTitle,
   description: t.shops.seoDescription,
   imagePath: '/og-cardnav.webp',
@@ -166,7 +107,10 @@ const shopsScriptMessages = {
   defaultPageTitle: normalSeo.pageTitle,
   defaultHeroTitle: t.shops.title,
   defaultHeroDescription: t.shops.heroDescription,
-  shopsPath: linkTo('/shops'),
+  shopsPath: linkTo(pathname),
+  siteId,
+  pinMerchants,
+  productsApiPath: siteId ? `/api/shop-products.json?${new URLSearchParams({ siteId })}` : '/api/shop-products.json',
   seoSearchQuery: seoSearchTerm?.query ?? '',
   seoSearchPath: seoSearchTerm ? linkTo(quickPlanSearchSeoPath(seoSearchTerm)) : '',
   searchPlaceholder: t.shops.searchPlaceholder,
@@ -203,7 +147,7 @@ const flatSortColumns: SortColumn[] = [
   platformSortColumn,
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'productRefreshedAt', type: 'number', label: t.labels.latestRefresh },
-] satisfies SortColumn[];
+].filter(column => !siteId || !['platformName', 'siteName'].includes(column.key)) as SortColumn[];
 const rightAlignedProductColumns = new Set(['priceValue', 'stockValue']);
 const merchantTabLabel = t.labels.merchant;
 const merchantSortColumns: SortColumn[] = [
@@ -226,57 +170,28 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
   '\u2029': '\\u2029',
 })[character] || character);
 ---
-
-<PublicPage activeNav="shops" pageType={pageType} {...seo}>
-  <PageHero
-    title={heroTitle}
-    description={heroDescription}
-    titleId="shopPageHeroTitle"
-    descriptionId="shopPageHeroDescription"
-  >
-    <div slot="meta" class="hero-metrics">
-      <HeroMetric label={t.shops.listedMerchants} value={data.totalSiteCount.toLocaleString(Astro.locals.locale)} />
-      <HeroMetric label={t.shops.listedProducts} value={data.totalProductCount.toLocaleString(Astro.locals.locale)} />
-      <HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={data.latestRefreshedAt} fallback={t.labels.notRecorded} /></HeroMetric>
-    </div>
-    <div slot="aside" class="data-page-actions">
-      <button data-open-dialog="shop-submit" type="button" class="btn submit-button btn-sm"
-        data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops" data-umami-event-name={t.shops.submitMerchant}>
-        {t.shops.submitMerchant}
-      </button>
-      <a href="?dialog=support" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-sm"><span aria-hidden="true">♥</span> {t.support.button}</a>
-      <OpenShopLink class="btn open-shop-button btn-sm" />
-    </div>
-  </PageHero>
-
-  <Sponsors placement="after-hero" pageType={pageType} />
-
-  <aside class="data-workspace-guide" data-telemetry-block={telemetryBlocks.shops.guide}>
-    <a class="purchase-guide-link" href={linkTo('/guide/choose-reliable-merchant')}><Icon name="circle-alert" class="purchase-guide-icon" /><strong>{t.shops.guideTitle}</strong><span aria-hidden="true">→</span></a>
-    <span class="purchase-guide-description">{t.shops.guideDescription}</span>
-  </aside>
-
   <section id="shopsExplorer" class="card bg-base-100 border border-base-300 shadow-sm data-workspace" data-shop-tabs>
-      <form id="filters" class="data-workspace-controls" method="get" action={linkTo('/shops')}>
+      <form id="filters" class="data-workspace-controls" method="get" action={linkTo(pathname)}>
         <div class="data-workspace-toolbar">
-        <div class="data-segmented" role="tablist" aria-label={t.shops.title}>
+        {siteId ? <h2 class="data-section-title data-workspace-heading whitespace-nowrap">{t.shops.detailProducts}</h2> : <div class="data-segmented" role="tablist" aria-label={t.shops.title}>
           <button type="button" class="tab tab-active" role="tab" aria-selected="true" aria-controls="flatProductView" id="shopProductsTab" data-shop-tab="products">
             {t.labels.products}
             <span class="tool-tab-badge">{data.totalProductCount}</span>
           </button>
-          <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="merchantGroupedView" id="shopMerchantsTab" data-shop-tab="merchants">
+          <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="merchantGroupedView" id="shopMerchantsTab" data-shop-tab="shops">
             {merchantTabLabel}
             <span class="tool-tab-badge">{data.totalSiteCount}</span>
           </button>
-        </div>
+        </div>}
           <div class="relative data-workspace-search" data-shop-control="products">
             <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} aria-label={t.shops.searchPlaceholder} autocomplete="off" />
             <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip-wide data-tip={t.shops.advancedSearchTip}>i</button>
           </div>
-          <div class="data-workspace-search" data-shop-control="merchants" hidden><input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full" placeholder={t.shops.merchantSearchPlaceholder} aria-label={t.shops.merchantSearchPlaceholder} autocomplete="off" /></div>
+          <div class="data-workspace-search" data-shop-control="shops" hidden><input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full" placeholder={t.shops.merchantSearchPlaceholder} aria-label={t.shops.merchantSearchPlaceholder} autocomplete="off" /></div>
           <div data-shop-control="products"><FilterPopover id="searchOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}>
-            <ListKindFilter />
-            <MultiSelectFilter name="platform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter>
+            {!siteId && <ListKindFilter />}
+            {siteId && <MultiSelectFilter name="originalCategory" label={t.shops.originalCategory} allLabel={t.shops.originalCategory} options={originalCategoryOptions.map(value => ({ value, label: value }))} />}
+            {!siteId && <MultiSelectFilter name="platform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter>}
             <fieldset class="data-filter-group">
               <legend>{t.labels.price} <button id="priceFilterHelp" type="button" class="inline-help-button" aria-label={t.shops.priceFilterHint} data-inline-help data-tip={t.shops.priceFilterHint}>i</button></legend>
               <div class="data-filter-price">
@@ -292,11 +207,12 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             </fieldset>
             <fieldset class="data-filter-group">
               <legend>{t.shops.displayOptions}</legend>
+              {siteId && <div data-multi-filter="kind"><label><input type="checkbox" value="favorite" data-filter-value class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.productFavorite}</span></label></div>}
               <label><input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.showSoldOut}</span></label>
-              <label><input id="onlyPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
+              {!siteId && <label><input id="onlyPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>}
             </fieldset>
           </FilterPopover></div>
-          <div data-shop-control="merchants" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}><ListKindFilter name="merchantKind" /><MultiSelectFilter name="merchantPlatform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
+          <div data-shop-control="shops" hidden><FilterPopover id="merchantOptions" label={t.shops.filterOptions} doneLabel={t.shops.done} clearLabel={t.shops.clearFilters}><ListKindFilter name="merchantKind" /><MultiSelectFilter name="merchantPlatform" label={t.shops.platform} allLabel={t.shops.platform} options={platformOptions.map(name => ({ value: name || 'self-hosted', label: name || t.shops.selfHosted }))}>{platformOptions.map(name => <PlatformLabel slot={name || 'self-hosted'} name={name} selfHostedLabel={t.shops.selfHosted} />)}</MultiSelectFilter><label><input id="merchantPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>
 </FilterPopover></div>
         </div>
         <div data-shop-control="products"><ShopPlanGroups initialSearchQuery={initialCategoryQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} /></div>
@@ -306,15 +222,16 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
           <RelatedLink id="officialPriceTip" href={initialOfficialPricePath || '#'} label={initialOfficialPriceTipLabel} labelAttrs={{ 'data-official-price-tip-label': '' }} target="_blank" class={initialOfficialPricePath ? '' : 'hidden'} data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-official-price-tip" data-umami-event-url={initialOfficialPricePath || undefined} />
           <RelatedLink id="leaderboardTip" href={initialLeaderboardTipPath || '#'} label={initialLeaderboardTipLabel} target="_blank" class={initialLeaderboardTipPath ? '' : 'hidden'} data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-leaderboard-tip" data-umami-event-url={initialLeaderboardTipPath || undefined} />
         </div>
-        <div data-shop-control="merchants" class="data-workspace-summary" hidden><FilterSummary id="merchantActiveFilters" clearLabel={t.shops.clearFilters} /></div>
+        <div data-shop-control="shops" class="data-workspace-summary" hidden><FilterSummary id="merchantActiveFilters" clearLabel={t.shops.clearFilters} /></div>
       </form>
-    <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products" data-telemetry-block={telemetryBlocks.shops.products}>
+    <div id="flatProductView" role={siteId ? undefined : "tabpanel"} aria-labelledby={siteId ? undefined : "shopProductsTab"} data-shop-panel="products" data-telemetry-block={telemetryBlocks.shops.products}>
 
       <DataTable
         variant="shopProducts"
         tbodyId="flatProductRows"
         emptyId="productEmptyState"
         emptyText={t.shops.productEmptyState}
+        emptyHidden={data.products.some(product => product.inStock)}
         loadMoreId="flatProductProgressiveLoad"
         summaryId="flatProductLoadSummary"
         summaryText={t.shops.script.displaySummary}
@@ -341,10 +258,11 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             />
           ))}
         </Fragment>
+        {data.products.filter(product => product.inStock).slice(0, initialProductLimitValue).map((product, index) => <ShopProductInitialRow product={product} index={index} scoped={Boolean(siteId)} />)}
       </DataTable>
     </div>
 
-    <div id="merchantGroupedView" role="tabpanel" aria-labelledby="shopMerchantsTab" data-shop-panel="merchants" data-telemetry-block={telemetryBlocks.shops.merchants} hidden>
+    <div id="merchantGroupedView" role="tabpanel" aria-labelledby="shopMerchantsTab" data-shop-panel="shops" data-telemetry-block={telemetryBlocks.shops.merchants} hidden>
 
       <div class="product-table-scroll merchant-table-scroll">
         <div class="merchant-table">
@@ -358,7 +276,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
                   label={column.label}
                   sortKey={column.key}
                   sortType={column.type}
-                  sortScope="merchants"
+                  sortScope="shops"
                   title={`${column.label}${t.shops.sortTitleSuffix}`}
                   statusText={t.shops.clickSort}
                   helpTip={column.tip}
@@ -398,4 +316,3 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
   <script>
     import '../scripts/index.js';
   </script>
-</PublicPage>

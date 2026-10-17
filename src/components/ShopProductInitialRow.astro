@@ -1,0 +1,39 @@
+---
+/** Initial product content in the shared table; the explorer adds filtering and favorites. */
+import type { PublicProductRow } from '../store.js';
+import { shopDetailPath } from '../shop-routes.js';
+import PlatformLabel from './PlatformLabel.astro';
+import ScoreDisplay from './ScoreDisplay.astro';
+import RefreshTime from './RefreshTime.astro';
+import MerchantBadge from './MerchantBadge.astro';
+type Props = { product: PublicProductRow; index: number; scoped: boolean };
+const { product, index, scoped } = Astro.props;
+const t = Astro.locals.messages;
+const linkTo = Astro.locals.localizePath;
+const commercial = product.siteSponsor || product.siteSupportTotalCents > 0;
+const price = typeof product.priceNumber === 'number' && Number.isFinite(product.priceNumber)
+  ? `${product.priceUnit || ''}${product.priceNumber}` : '';
+const stock = typeof product.stock === 'number' && product.stock > 0
+  ? String(product.stock) : product.inStock ? t.labels.inStock : t.labels.soldOut;
+---
+<tr class="flat-product-row">
+  <th scope="row" class="flat-row-index data-table-sequence-cell" data-label={t.labels.sequence}>{index + 1}</th>
+  <td class="flat-product-cell" data-label={t.labels.product}>
+    <div class="merchant-header"><div class="merchant-header-content">
+      <div class="merchant-title-row">
+        {product.productUrl ? <a href={product.productUrl} class="product-link" target="_blank" rel={commercial ? 'noopener noreferrer sponsored' : 'noopener noreferrer'} data-row-primary data-product-click-id={product.id} data-umami-event="external-link-click" data-umami-event-link-type="product" data-umami-event-name={product.name} data-umami-event-url={product.productUrl}>{product.name}</a> : <span class="product-text">{product.name}</span>}
+        {product.siteSponsor && <MerchantBadge kind="sponsor" label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} />}
+        {product.siteSupportTotalCents > 0 && <MerchantBadge kind="support" label={t.support.badgeLabel} description={t.support.badgeDescription} href={linkTo('/supporters')} linkLabel={t.support.amountLinkLabel} />}
+      </div>
+      {product.categoryName && <div class="flat-category-line"><span class="flat-category-label" title={t.labels.category}>{product.categoryName}</span></div>}
+    </div></div>
+  </td>
+  <td class="flat-price-cell data-table-cell-align-right" data-label={t.labels.price}>{price}</td>
+  <td class="flat-status-cell data-table-cell-align-right" data-label={t.labels.stock}><span class={product.inStock ? 'stock-badge-in-stock' : 'stock-badge-sold-out'}>{stock}</span></td>
+  <td class="data-table-product-score-cell data-table-cell-align-right" data-label={t.labels.productScore}><ScoreDisplay value={product.score} /></td>
+  {!scoped && <>
+    <td class="flat-platform-cell" data-label={t.shops.platform}><PlatformLabel name={product.sitePlatformName || ''} selfHostedLabel={t.shops.selfHosted} /></td>
+    <td class="flat-merchant-cell" data-label={t.labels.merchant}>{product.siteSlug ? <a class="merchant-link merchant-text" href={linkTo(shopDetailPath(product.siteSlug))}>{product.siteName}</a> : <span class="merchant-text">{product.siteName}</span>}</td>
+  </>}
+  <td class="flat-refresh-cell" data-label={t.labels.latestRefresh}><RefreshTime timestamp={product.refreshedAt} /></td>
+</tr>

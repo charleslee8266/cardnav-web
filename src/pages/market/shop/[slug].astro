@@ -1,0 +1,107 @@
+---
+/** Canonical merchant detail page. */
+import ShopExplorer from '../../../components/ShopExplorer.astro';
+import PublicPage from '../../../layouts/PublicPage.astro';
+import PageHero from '../../../components/PageHero.astro';
+import HeroMetric from '../../../components/HeroMetric.astro';
+import RefreshTime from '../../../components/RefreshTime.astro';
+import PlatformLabel from '../../../components/PlatformLabel.astro';
+import SiteSupportSummary from '../../../components/SiteSupportSummary.astro';
+import MerchantBadge from '../../../components/MerchantBadge.astro';
+import ScoreDisplay from '../../../components/ScoreDisplay.astro';
+import ShopStockHistory from '../../../components/ShopStockHistory.astro';
+import '../../../components/data-workspace.css';
+import { loadPublicShopDetail } from '../../../public-shops.js';
+import { shopDetailPath } from '../../../shop-routes.js';
+import { buildSeoContext } from '../../../seo.js';
+import { publicSiteUrl } from '../../../site.js';
+
+const slug = Astro.params.slug || '';
+const linkTo = Astro.locals.localizePath;
+const t = Astro.locals.messages;
+const detail = await loadPublicShopDetail(slug);
+if (!detail) return new Response(t.shops.detailNotFound, { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+const { site, products } = detail;
+const pathname = shopDetailPath(site.slug);
+const seo = buildSeoContext({
+  baseUrl: publicSiteUrl, pathname, imagePath: '/og-cardnav.webp',
+  title: t.shops.detailSeoTitle.replace('{name}', site.name),
+  description: t.shops.detailSeoDescription.replace('{name}', site.name),
+  type: 'webpage', locale: Astro.locals.locale, noindex: Astro.url.search.length > 0,
+  breadcrumbs: [{ name: t.shops.title, pathname: '/market' }, { name: site.name, pathname }],
+  listItems: products.slice(0, 20).filter(product => product.productUrl).map((product, index) => ({
+    name: product.name, url: product.productUrl!, position: index + 1,
+  })),
+});
+const dateLabel = (value: string | null) => value
+  ? new Date(value).toLocaleDateString(Astro.locals.locale === 'zh' ? 'zh-CN' : Astro.locals.locale, { timeZone: 'Asia/Shanghai' })
+  : t.shops.detailUnknown;
+const outboundRel = site.sponsor || (site.supportPoints || 0) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';
+---
+<PublicPage activeNav="shops" pageType="shop-detail" {...seo}>
+  <PageHero title={site.name} backHref="/market?tab=shops" backLabel={t.shops.detailBack}>
+    <div slot="title" class="flex flex-wrap items-center gap-2">
+      <h1 class="page-hero-title">{site.name}</h1>
+      {site.sponsor && <MerchantBadge kind="sponsor" label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} />}
+      {(site.supportTotalCents || 0) > 0 && <MerchantBadge kind="support" label={t.support.badgeLabel} description={t.support.badgeDescription} href={linkTo('/supporters')} linkLabel={t.support.amountLinkLabel} />}
+    </div>
+    <div slot="actions" class="shop-detail-actions">
+      <a href={site.url} target="_blank" rel={outboundRel} class="btn btn-primary btn-sm" data-umami-event="external-link-click" data-umami-event-link-type="merchant" data-umami-event-name={site.name} data-umami-event-url={site.url}>{t.shops.detailOpen} ↗</a>
+      <PlatformLabel name={site.platformName || ''} selfHostedLabel={t.shops.selfHosted} />
+      <span class="text-sm text-base-content/65 break-all">{site.url}</span>
+    </div>
+    <div slot="aside" class="hero-metrics">
+      <HeroMetric label={t.labels.productCount} value={products.length} />
+      <HeroMetric label={t.labels.inStock} value={products.filter(product => product.inStock).length} />
+    </div>
+    <SiteSupportSummary slot="footer" partner={site.sponsor} totalCents={site.supportTotalCents} points={site.supportPoints || 0} />
+  </PageHero>
+  <div class="shop-detail-overview">
+  <section class="card border border-base-300 bg-base-100 shop-detail-profile">
+    <div class="card-header"><h2 class="data-section-title">{t.shops.detailBasicInfo}</h2></div>
+    <div class="card-body"><dl class="shop-detail-facts">
+      <div><dt>{t.labels.merchantScore} <button type="button" class="inline-help-button" aria-label={t.shops.merchantScoreHelpLabel} data-inline-help data-tip={t.shops.merchantScoreTip}>i</button></dt><dd><ScoreDisplay value={site.score} /></dd></div>
+      <div><dt>{t.shops.detailTechnology}</dt><dd>{detail.software || site.platformName || t.shops.detailTechnologyOther}</dd></div>
+      {site.platformName ? <div><dt>{t.shops.detailOpenedAt} <button type="button" class="inline-help-button" aria-label={t.shops.detailOpenedAt} data-inline-help data-tip={t.shops.detailOpenedAtHint}>i</button></dt><dd>{detail.openedAt ? <RefreshTime timestamp={detail.openedAt} fallback={t.shops.detailUnknown} /> : detail.platformJoinedMonths !== null && detail.platformTenureCheckedAt ? t.shops.detailPlatformTenure.replace('{months}', String(detail.platformJoinedMonths)).replace('{date}', dateLabel(detail.platformTenureCheckedAt)) : t.shops.detailUnknown}</dd></div> : <>
+        <div><dt>{t.shops.detailDomainRegisteredAt} <button type="button" class="inline-help-button" aria-label={t.shops.detailDomainRegisteredAt} data-inline-help data-tip={t.shops.detailDomainDateHint}>i</button></dt><dd><RefreshTime timestamp={detail.domainRegisteredAt} fallback={t.shops.detailUnknown} /></dd></div>
+      </>}
+      <div><dt>{t.shops.detailCollectedAt}</dt><dd><RefreshTime timestamp={detail.listedAt} fallback={t.shops.detailUnknown} /></dd></div>
+      <div><dt>{t.labels.latestRefresh}</dt><dd><RefreshTime timestamp={site.lastProductRefreshSuccessAt} fallback={t.shops.detailUnknown} /></dd></div>
+    </dl>
+    {detail.description && <section class="shop-detail-introduction">
+      <h3 class="data-section-title mb-2">{t.shops.detailDescription}</h3>
+      <p id="shop-description" class="shop-detail-description" data-description>{detail.description}</p>
+      <button type="button" class="link text-xs mt-2" data-description-toggle aria-controls="shop-description" aria-expanded="false" data-expand={t.shops.moreQuickPlans} data-collapse={t.shops.lessQuickPlans} hidden>{t.shops.moreQuickPlans}</button>
+    </section>}
+    </div>
+  </section>
+  <ShopStockHistory days={detail.stockDecreaseDaily} total={detail.stockDecrease30d} />
+  </div>
+  <ShopExplorer data={detail.catalogData} siteId={site.id} pathname={pathname} pinMerchants={false} />
+</PublicPage>
+<script>
+  const description = document.querySelector<HTMLElement>('[data-description]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-description-toggle]');
+  if (description && toggle) {
+    toggle.hidden = description.scrollHeight <= description.clientHeight;
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+      toggle.setAttribute('aria-expanded', String(expanded));
+      description.classList.toggle('is-expanded', expanded);
+      toggle.textContent = (expanded ? toggle.dataset.collapse : toggle.dataset.expand) || '';
+    });
+  }
+</script>
+<style>
+  .shop-detail-overview { display:grid; grid-template-columns:minmax(280px,1fr) minmax(0,2fr); gap:16px; min-width:0; align-items:stretch; }
+  .shop-detail-profile { min-width:0; }
+  .shop-detail-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:12px; }
+  .shop-detail-profile .card-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 24px; border-bottom:1px solid var(--color-base-300); }
+  .shop-detail-introduction { border-top:1px solid var(--color-base-300); padding-top:16px; margin-top:8px; }
+  .shop-detail-description { font-size:14px; line-height:1.8; white-space:pre-wrap; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
+  .shop-detail-description.is-expanded { display:block; }
+  .shop-detail-facts { display:flex; flex-direction:column; gap:16px; font-size:13px; }
+  .shop-detail-facts > div { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .shop-detail-facts dt { color:var(--color-muted); }
+  @media(max-width:720px) { .shop-detail-overview { grid-template-columns:minmax(0,1fr); } }
+</style>

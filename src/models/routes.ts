@@ -16,7 +16,7 @@ export function gatewayModelIdFromPathname(pathname: string, suffix = ''): strin
   try { return decodeURIComponent(encoded); } catch { return null; }
 }
 
-export function shopCategoryPath(slug: string) { return `/shops/${encodeURIComponent(slug)}`; }
+export function shopCategoryPath(slug: string) { return `/market/category/${encodeURIComponent(slug)}`; }
 export function officialPricePathname(slug: string) { return `/official-price/${encodeURIComponent(slug)}`; }
 
 export function leaderboardFamilyPath(family: string, pathname = '/model-leaderboard') {

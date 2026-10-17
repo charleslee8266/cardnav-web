@@ -26,7 +26,7 @@ function localizedFallbackPath(pathname) {
 
 function initHomeSearch() {
   const config = parseJsonScript('home-search-config');
-  const shopsPath = config.shopsPath || localizedFallbackPath('/shops');
+  const shopsPath = config.shopsPath || localizedFallbackPath('/market');
   const homeSearchForm = document.querySelector('[data-home-search-form]');
   homeSearchForm?.addEventListener('submit', () => {
     window.CardNavTelemetry?.track('form-submit', { form: 'home-search', 'target-page': shopsPath, url: shopsPath }, homeSearchForm);

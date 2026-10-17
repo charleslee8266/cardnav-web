@@ -13,7 +13,7 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
   try {
     await db.query('BEGIN');
     await db.query(`CREATE TEMP TABLE shop_sites (
-      id text, name text, family text, url text, score numeric, sponsor boolean,
+      id text, slug text DEFAULT '', name text, family text, url text, score numeric, sponsor boolean,
       support_total_cents integer DEFAULT 0, support_points numeric, status text DEFAULT 'online', type text DEFAULT 'cardShop',
       last_product_refresh_success_at timestamptz, product_count integer DEFAULT 3, in_stock_product_count integer DEFAULT 3
     ) ON COMMIT DROP;
@@ -105,6 +105,16 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
       ('b','tie-high','Alpha',6,true,'2026-10-16')`);
     const tied = await loadShopProductsData({queryClient:db});
     assert.deepEqual(tied.products.map(p=>p.id),['a','b','c']);
+    await db.query("UPDATE shop_sites SET slug = id || '.test'");
+    const scoped = await loadShopProductsData({ queryClient: db, siteId: 'tie-high' });
+    const scopedPartial = await loadShopProductsData({ queryClient: db, siteId: 'tie-high', productLimit: 1 });
+    assert.equal(scoped.totalSiteCount, 1);
+    assert.deepEqual(scoped.sites.map(site => site.id), ['tie-high']);
+    assert.ok(scoped.products.every(product => product.siteId === 'tie-high' && product.siteSlug === 'tie-high.test'));
+    assert.deepEqual(scopedPartial.products, scoped.products.slice(0, 1));
+    const missing = await loadShopProductsData({ queryClient: db, siteId: 'missing' });
+    assert.equal(missing.totalSiteCount, 0);
+    assert.deepEqual(missing.products, []);
 
     // Category filtering must happen before both the page limit and partner allocation.
     await db.query('TRUNCATE shop_products');

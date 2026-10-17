@@ -35,11 +35,13 @@ const publicDynamicHtmlPathnames = new Set([
   '/llm-gateway',
   '/model-leaderboard',
   '/official-price',
-  '/shops',
+  '/market',
 ]);
 
 function looksLikePublicPagePath(pathname: string) {
   if (pathname.startsWith('/api/') || pathname.startsWith('/_astro/')) return false;
+  // 商家标识允许使用完整 hostname，点号属于 HTML 路由的一部分。
+  if (/^\/market\/shop\/[^/]+\/?$/.test(getLocalePathInfo(pathname).routePathname)) return true;
   if (/\.[a-z0-9]+$/i.test(pathname)) return false;
   return true;
 }
@@ -75,7 +77,7 @@ function isPublicDynamicHtmlPath(pathname: string) {
     || routePathname.startsWith('/llm-gateway/')
     || routePathname.startsWith('/model-leaderboard/')
     || routePathname.startsWith('/official-price/')
-    || routePathname.startsWith('/shops/')
+    || routePathname.startsWith('/market/')
   );
 }
 

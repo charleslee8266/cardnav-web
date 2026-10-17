@@ -2,6 +2,7 @@ import { gatewayModelPath } from './models/routes.js';
 /**
  * 文件说明: 维护公开站点可索引页面清单，并生成 sitemap、robots 和 llms.txt 内容。
  */
+import { shopDetailPath } from './shop-routes.js';
 import type { GuideArticle } from './guide.js';
 import { defaultLocale, localeLabels, supportedLocales, type Locale } from './i18n/config.js';
 import { getMessages } from './i18n/messages.js';
@@ -12,7 +13,7 @@ import type { OfficialPriceGroup } from './official-price.js';
 import { loadPageContent } from './page-content.js';
 import { quickPlanSearchSeoPath, quickPlanSearchTerms } from './models/product-catalog.js';
 import { buildShopSearchPageMeta } from './shop-search-page-meta.js';
-import type { PublicGatewayModelRow, PublicGatewaySiteRow } from './store.js';
+import type { PublicGatewayModelRow, PublicGatewaySiteRow, PublicSiteRow } from './store.js';
 
 export type PublicSeoRoute = {
   pathname: string;
@@ -182,12 +183,23 @@ export function buildModelLeaderboardSeoRoutes(groups: ModelLeaderboardGroup[], 
 export function buildShopSeoRoutes(lastmod?: string, locale: Locale = defaultLocale): PublicSeoRoute[] {
   const messages = getMessages(locale);
   return [{
-    pathname: routePath('/shops', locale),
+    pathname: routePath('/market', locale),
     title: messages.shops.seoTitle,
     description: messages.shops.seoDescription,
     changefreq: 'daily' as const,
     lastmod,
   }];
+}
+
+export function buildShopDetailSeoRoutes(shops: PublicSiteRow[], locale: Locale = defaultLocale): PublicSeoRoute[] {
+  const messages = getMessages(locale);
+  return shops.filter(shop => shop.slug).map(shop => ({
+    pathname: routePath(shopDetailPath(shop.slug), locale),
+    title: messages.shops.detailSeoTitle.replace('{name}', shop.name),
+    description: messages.shops.detailSeoDescription.replace('{name}', shop.name),
+    changefreq: 'daily' as const,
+    lastmod: shop.lastProductRefreshSuccessAt ?? undefined,
+  }));
 }
 
 export function buildQuickPlanSearchSeoRoutes(locale: Locale = defaultLocale): PublicSeoRoute[] {

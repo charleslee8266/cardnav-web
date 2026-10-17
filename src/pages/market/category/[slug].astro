@@ -1,0 +1,11 @@
+---
+/** 商品关键词入口，复用综合页并按 slug 初始化搜索。 */
+import MarketPage from '../../market.astro';
+import { quickPlanSearchTermForSlug, quickPlanSearchSeoPath } from '../../../models/product-catalog.js';
+
+const term = quickPlanSearchTermForSlug(Astro.params.slug);
+if (!term) return new Response(Astro.locals.messages.shops.detailNotFound, { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+if (Astro.params.slug !== term.slug) return Astro.redirect(Astro.locals.localizePath(quickPlanSearchSeoPath(term)) + Astro.url.search, 301);
+---
+
+<MarketPage seoSearchTerm={term} pageType="shop-keyword" />

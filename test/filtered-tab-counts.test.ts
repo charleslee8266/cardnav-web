@@ -35,7 +35,7 @@ class Node {
   };
 }
 
-for (const kind of ['products', 'merchants'] as const) {
+for (const kind of ['products', 'shops'] as const) {
   test(`${kind} tab reports complete matching results, including zero, independently of page size`, () => {
     const badge = new Node();
     const summary = new Node();
@@ -94,10 +94,10 @@ test('product filters leave merchant listings independent, including merchants w
   const scope: Record<string, any> = {
     searchFilter: { value: '' }, merchantSearchFilter: { value: '' }, priceMin: { value: '' }, priceMax: { value: '' },
     showSoldOutFilter: { checked: false }, matchCategoryFilter: { checked: false }, fuzzySearchFilter: { checked: false },
-    selectedProductKinds: () => [], selectedMerchantKinds: () => [], matchesListKinds,
+    selectedOriginalCategories: () => [], selectedProductKinds: () => [], selectedMerchantKinds: () => [], matchesListKinds,
     shopSiteSponsor: () => false, shopSiteSupportPoints: () => 0,
     favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(),
-    currentFlatSort: null,
+    currentFlatSort: null, scopedShopId: '',
     platformOnly: () => false, merchantPlatformOnly: () => false, selectedPlatforms: () => [], selectedMerchantPlatforms: () => [],
     currentQuickPlanQuery: '', selectedQuickCategoryId: () => scope.currentQuickPlanQuery, matchesShopCategory,
     flatRows: [product(sites[0], 'gpt-plus', 20), product(sites[0], 'gpt-plus', 30), product(sites[1], 'claude-pro', 40), product(sites[1], 'gpt-plus', 50, 0)],
@@ -229,7 +229,7 @@ test('product fetch failure ends loading, keeps existing rows and permits a succ
   const existingRow = { product: 'existing' };
   let attempts = 0;
   const scope = {
-    shopProductsDataIsPartial: () => true,
+    shopsMessages: {}, shopProductsDataIsPartial: () => true,
     shopProductsDataLoadPromise: null,
     currentShopTab: 'products',
     shopListLoading: { products: { run: (task: () => Promise<boolean>) => task() } },
@@ -386,23 +386,23 @@ test('switching product tabs during a shared request shows feedback in both list
   let resolve!: (value: unknown) => void;
   const response = new Promise(yes => { resolve = yes; });
   let fetches = 0;
-  const pending = { products: 0, merchants: 0 };
-  const feedback = (kind: 'products' | 'merchants') => ({ run: async (task: () => Promise<unknown>) => {
+  const pending = { products: 0, shops: 0 };
+  const feedback = (kind: 'products' | 'shops') => ({ run: async (task: () => Promise<unknown>) => {
     pending[kind]++;
     try { return await task(); } finally { pending[kind]--; }
   } });
   const scope = {
-    shopProductsDataIsPartial: () => true, shopProductsDataLoadPromise: null, currentShopTab: 'products',
-    shopListLoading: { products: feedback('products'), merchants: feedback('merchants') },
+    shopsMessages: {}, shopProductsDataIsPartial: () => true, shopProductsDataLoadPromise: null, currentShopTab: 'products',
+    shopListLoading: { products: feedback('products'), shops: feedback('shops') },
     fetch: async () => { fetches++; return response; }, replaceShopProductsData: async () => {},
   };
   const load = renderer('src/scripts/index.js', 'loadShopProductsDataFromApi', scope) as unknown as () => Promise<boolean>;
   const products = load();
-  scope.currentShopTab = 'merchants';
+  scope.currentShopTab = 'shops';
   const merchants = load();
-  assert.deepEqual(pending, { products: 1, merchants: 1 });
+  assert.deepEqual(pending, { products: 1, shops: 1 });
   assert.equal(fetches, 1);
   resolve({ ok: true, json: async () => ({ p: [], s: [] }) });
   assert.deepEqual(await Promise.all([products, merchants]), [true, true]);
-  assert.deepEqual(pending, { products: 0, merchants: 0 });
+  assert.deepEqual(pending, { products: 0, shops: 0 });
 });

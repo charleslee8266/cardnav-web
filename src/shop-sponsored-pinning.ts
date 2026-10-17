@@ -29,19 +29,21 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   favorites: ShopPinFavorites,
   onPin?: (row: Row, kind: 'partner' | 'support' | 'favorite' | '') => void,
   manualSort = false,
+  options: { pinMerchants?: boolean } = {},
 ) {
+  const pinMerchants = options.pinMerchants !== false;
   return pinListRows(rowEntries, {
     manualSort,
     defaultOrder: compareShopProductRows,
-    site: row => ({ id: row.siteFavoriteKey, sponsor: row.sponsor, supportPoints: row.supportPoints }),
+    site: row => ({ id: row.siteFavoriteKey, sponsor: pinMerchants && row.sponsor, supportPoints: pinMerchants ? row.supportPoints : 0 }),
     onPin,
     favorites: ordinaryRows => {
       if (!favorites.favoriteSiteKeys.size && !favorites.favoriteProductKeys.size) return [];
       const selectedCountBySite = new Map<string, number>();
-      return ordinaryRows.filter(row => favorites.favoriteSiteKeys.has(row.siteFavoriteKey)
+      return ordinaryRows.filter(row => (pinMerchants && favorites.favoriteSiteKeys.has(row.siteFavoriteKey))
         || favorites.favoriteProductKeys.has(row.productFavoriteKey)).sort(compareShopProductRows).filter(row => {
         let merchantSelected = false;
-        if (favorites.favoriteSiteKeys.has(row.siteFavoriteKey)) {
+        if (pinMerchants && favorites.favoriteSiteKeys.has(row.siteFavoriteKey)) {
           const count = selectedCountBySite.get(row.siteFavoriteKey) ?? 0;
           merchantSelected = count < MAX_PINNED_FAVORITE_PRODUCTS_PER_SITE;
           if (merchantSelected) selectedCountBySite.set(row.siteFavoriteKey, count + 1);

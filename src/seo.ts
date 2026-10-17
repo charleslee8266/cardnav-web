@@ -116,7 +116,7 @@ export function buildSeoContext(input: SeoInput) {
       description: input.description,
     };
     if (input.enableSiteSearch || input.pathname === '/') {
-      const shopsPath = localizePath('/shops', locale);
+      const shopsPath = localizePath('/market', locale);
       websiteNode.potentialAction = {
         '@type': 'SearchAction',
         target: {

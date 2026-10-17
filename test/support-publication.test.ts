@@ -19,9 +19,9 @@ test('shop publication purges affected pages and API including query variants', 
     assert.equal(String(url), `https://api.cloudflare.com/client/v4/zones/${'a'.repeat(32)}/purge_cache`);
     const body = JSON.parse(String(options?.body));
     if (calls === 1) assert.deepEqual(body.prefixes, [
-      'cardnav.example.test/supporters', 'cardnav.example.test/shops',
-      'cardnav.example.test/en/supporters', 'cardnav.example.test/en/shops',
-      'cardnav.example.test/ru/supporters', 'cardnav.example.test/ru/shops',
+      'cardnav.example.test/supporters', 'cardnav.example.test/market',
+      'cardnav.example.test/en/supporters', 'cardnav.example.test/en/market',
+      'cardnav.example.test/ru/supporters', 'cardnav.example.test/ru/market',
       'cardnav.example.test/api/shop-products.json',
     ]);
     else assert.deepEqual(body.files, ['https://cardnav.example.test/', 'https://cardnav.example.test/en', 'https://cardnav.example.test/en/', 'https://cardnav.example.test/ru', 'https://cardnav.example.test/ru/']);

@@ -6,6 +6,7 @@ export const pageTypes = [
   'home',
   'shops',
   'shop-keyword',
+  'shop-detail',
   'gateway',
   'gateway-detail',
   'gateway-model-detail',

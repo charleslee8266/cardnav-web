@@ -136,7 +136,7 @@ test('internal navigation reports destination and category exactly once', async 
   const calls: Array<{ name: string; data: Record<string, string> }> = [];
   (context.window as { umami: { track: (name: string, data: Record<string, string>) => void } }).umami.track = (name, data) => calls.push({ name, data });
   const anchor = createAnchor(context, {
-    href: 'https://cardnav.xyz/shops',
+    href: 'https://cardnav.xyz/market',
     dataset: { umamiEvent: 'internal-link-click', umamiEventLinkType: 'nav', umamiEventName: 'Shops' },
   });
 
@@ -150,8 +150,8 @@ test('internal navigation reports destination and category exactly once', async 
       'source-block': telemetryBlocks.shared.page,
       'link-type': 'nav',
       name: 'Shops',
-      url: '/shops',
-      'target-page': '/shops',
+      url: '/market',
+      'target-page': '/market',
     },
   }]);
 });
@@ -205,10 +205,10 @@ test('source follows the current pathname after in-page navigation without query
   const { context, telemetryClick } = await loadTelemetry();
   const calls: Array<{ name: string; data: Record<string, string> }> = [];
   context.window.umami = { track: (name: string, data: Record<string, string>) => calls.push({ name, data }) };
-  vm.runInContext("window.location = new URL('https://cardnav.xyz/en/shops?q=private-input#list')", context);
+  vm.runInContext("window.location = new URL('https://cardnav.xyz/en/market?q=private-input#list')", context);
   telemetryClick({ target: createAnchor(context) });
-  vm.runInContext("window.location = new URL('https://cardnav.xyz/en/shops/claude'); window.CardNavTelemetry.track('filter-change')", context);
-  assert.deepEqual(calls.map(call => call.data['source-page']), ['/en/shops', '/en/shops/claude']);
+  vm.runInContext("window.location = new URL('https://cardnav.xyz/en/market/category/claude'); window.CardNavTelemetry.track('filter-change')", context);
+  assert.deepEqual(calls.map(call => call.data['source-page']), ['/en/market', '/en/market/category/claude']);
 });
 
 test('missing, throwing and rejecting trackers do not interrupt clicks or manual actions', async () => {
@@ -240,7 +240,7 @@ test('support entry links defer to the support-open event instead of emitting na
   const calls: Array<{ name: string; data: Record<string, string> }> = [];
   context.window.umami = { track: (name: string, data: Record<string, string>) => calls.push({ name, data }) };
   const anchor = createAnchor(context, {
-    href: 'https://cardnav.xyz/shops?dialog=support',
+    href: 'https://cardnav.xyz/market?dialog=support',
     dataset: { openSupport: '' },
   });
   const fallbackClosest = anchor.closest;

@@ -11,7 +11,7 @@ export function createFamilyNavigation(gatewayFamilies: string[], shopCategories
     return {
       gatewayPath: id && gateways.has(id) ? gatewayFamilyPath(id) : null,
       shopPath: id && shops.has(id)
-        ? quickPlanSearchTermForSlug(id) ? shopCategoryPath(id) : `/shops?${new URLSearchParams({ q: `autocat: ${id}` })}`
+        ? quickPlanSearchTermForSlug(id) ? shopCategoryPath(id) : `/market?${new URLSearchParams({ q: `autocat: ${id}` })}`
         : null,
     };
   };
@@ -27,7 +27,7 @@ export function familyRelatedPaths(family: string | null) {
   return {
     name: product?.gateway?.name ?? category?.label ?? family ?? '',
     gatewayPath: id ? gatewayFamilyPath(id) : null,
-    shopPath: defaultPlan ? shopCategoryPath(defaultPlan.slug) : category ? `/shops?${new URLSearchParams({ q: `autocat: ${id}` })}` : null,
+    shopPath: defaultPlan ? shopCategoryPath(defaultPlan.slug) : category ? `/market?${new URLSearchParams({ q: `autocat: ${id}` })}` : null,
     officialPath: officialSlug ? officialPricePathname(officialSlug) : null,
     leaderboardPath: id ? leaderboardFamilyPath(id) : null,
   };

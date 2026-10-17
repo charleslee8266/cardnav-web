@@ -10,6 +10,7 @@ import { MAX_PINNED_COMMERCIAL, MAX_PINNED_ROWS_PER_SITE } from './list-ranking-
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
 export type PublicSiteRow = {
+  slug: string;
   platformName?: string;
   id: string;
   name: string;
@@ -32,6 +33,7 @@ export type PublicGatewaySiteRow = {
   host: string;
   family: string;
   displayFamily: string;
+  domainRegisteredAt?: string | null;
   createdAt: string | null;
   createdTime: string;
   lastProductRefreshCompleteAt: string | null;
@@ -103,6 +105,7 @@ export type PublicGatewayModelDetail = {
 };
 
 export type PublicProductRow = {
+  siteSlug: string;
   sitePlatformName?: string;
   id: string;
   categoryName: string;
@@ -234,7 +237,7 @@ function displayGatewayFamily(family: string) {
     anyRouter: 'AnyRouter',
     metapi: 'MetAPI',
   };
-  return labels[family] ?? family;
+  return labels[family] ?? '';
 }
 
 function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
@@ -256,6 +259,7 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     host: row.host ? String(row.host) : hostFromUrl(url),
     family,
     displayFamily: displayGatewayFamily(family),
+    domainRegisteredAt: isoTimestamp(row.domain_registered_at),
     createdAt,
     createdTime: formatBeijingRefreshTime(createdAt),
     lastProductRefreshCompleteAt: null,
@@ -307,20 +311,22 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
   };
 }
 
-export async function loadShopProductsData(options: { productLimit?: number; inStockOnly?: boolean; autoCategory?: string; queryClient?: pg.PoolClient } = {}) {
+export async function loadShopProductsData(options: { productLimit?: number; inStockOnly?: boolean; autoCategory?: string; queryClient?: pg.PoolClient; siteId?: string } = {}) {
   const db = options.queryClient ?? getPool();
   const safeProductLimit = typeof options.productLimit === 'number' && Number.isFinite(options.productLimit)
     ? Math.max(1, Math.floor(options.productLimit))
     : null;
   const categoryIds = options.autoCategory ? autoCategoryIdsForFilter(options.autoCategory) : null;
-  const categoryParameter = safeProductLimit ? '$2' : '$1';
   const productParams: unknown[] = safeProductLimit ? [safeProductLimit] : [];
+  if (options.siteId) productParams.push(options.siteId);
+  const categoryParameter = `$${productParams.length + 1}`;
   if (categoryIds) productParams.push(categoryIds);
   const sitesResult = safeProductLimit === null
     ? await db.query(`
       WITH ranked_sites AS (
       SELECT
         id,
+        slug,
         name,
         family,
         url,
@@ -337,6 +343,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       FROM shop_sites
       WHERE status = 'online'
         AND type = 'cardShop'
+        ${options.siteId ? 'AND id = $1' : ''}
       )
       SELECT * FROM ranked_sites
       ORDER BY
@@ -349,13 +356,14 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
             OR NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_COMMERCIAL}
           THEN support_points END DESC NULLS LAST,
         score DESC, product_count DESC, in_stock_product_count DESC, last_product_refresh_success_at DESC NULLS LAST, id ASC
-    `)
+    `, options.siteId ? [options.siteId] : [])
     : null;
   const productsResult = await db.query(`
     WITH base_products AS (
       SELECT
         shop_products.id AS product_row_id,
         shop_products.site_id,
+        shop_sites.slug AS site_slug,
         shop_sites.name AS site_name,
         shop_sites.family AS site_family,
         shop_sites.url AS site_url,
@@ -380,6 +388,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       WHERE shop_sites.status = 'online'
         AND shop_sites.type = 'cardShop'
         AND shop_products.active = true
+        ${options.siteId ? `AND shop_sites.id = $${safeProductLimit ? 2 : 1}` : ''}
         ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
         ${categoryIds ? `AND shop_products.auto_category = ANY(${categoryParameter}::text[])` : ''}
     ), site_pin_candidates AS (
@@ -412,7 +421,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       CASE WHEN pinned.pin_position <= ${MAX_PINNED_COMMERCIAL} THEN pinned.site_support_points END AS display_points
     FROM base_products
     LEFT JOIN pin_candidates AS pinned ON pinned.product_row_id = base_products.product_row_id
-    ORDER BY display_group, display_points DESC NULLS LAST,
+    ORDER BY ${options.siteId ? '' : 'display_group, display_points DESC NULLS LAST,'}
       base_products.score DESC, base_products.product_row_id ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, productParams);
@@ -434,6 +443,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       refreshedAt,
       refreshTime: formatBeijingRefreshTime(refreshedAt),
       siteId: String(row.site_id),
+      siteSlug: String(row.site_slug || ''),
       siteName: String(row.site_name),
       sitePlatformName: shopPlatformName(row.site_family),
       siteUrl: String(row.site_url),
@@ -450,6 +460,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
   const sites: PublicSiteRow[] = sitesResult
     ? sitesResult.rows.map(row => ({
       id: String(row.id),
+      slug: String(row.slug || ''),
       name: String(row.name),
       platformName: shopPlatformName(row.family),
       url: String(row.url),
@@ -468,6 +479,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         const lastProductRefreshSuccessAt = isoTimestamp(row.site_product_refresh_success_at);
         siteById.set(siteId, {
           id: siteId,
+          slug: String(row.site_slug || ''),
           name: String(row.site_name),
           platformName: shopPlatformName(row.site_family),
           url: String(row.site_url),
@@ -487,7 +499,8 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       COALESCE(SUM(in_stock_product_count), 0)::INTEGER AS total_in_stock_product_count,
       MAX(last_product_refresh_success_at) AS latest_refreshed_at
     FROM shop_sites WHERE status = 'online' AND type = 'cardShop'
-  `);
+      ${options.siteId ? 'AND id = $1' : ''}
+  `, options.siteId ? [options.siteId] : []);
   const summaryRow = summaryResult.rows[0] ?? {};
   const totalSiteCount = Number(summaryRow.total_site_count) || 0;
   const allProductCount = Number(summaryRow.total_product_count) || 0;
@@ -634,6 +647,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
       gateway_sites.availability_percent,
       gateway_sites.avg_success_latency_ms,
       gateway_sites.created_at,
+      gateway_sites.domain_registered_at,
       gateway_sites.slug,
       gateway_sites.host,
       gateway_sites.summary,

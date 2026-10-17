@@ -84,16 +84,16 @@ test('shared routes encode model identities and shared brands keep the same mark
 test('family links require published destinations and shop links cover the whole family', async () => {
   const { createFamilyNavigation } = await import('../src/models/family-navigation.js');
   const link = createFamilyNavigation(['GPT', 'Claude', 'Qwen'], ['gpt-plus', 'claude-pro', 'kimi']);
-  assert.deepEqual(link('GPT'), { gatewayPath: '/llm-gateway?family=gpt', shopPath: '/shops/gpt' });
+  assert.deepEqual(link('GPT'), { gatewayPath: '/llm-gateway?family=gpt', shopPath: '/market/category/gpt' });
   assert.deepEqual(link('Qwen'), { gatewayPath: '/llm-gateway?family=qwen', shopPath: null });
-  assert.deepEqual(link('Kimi'), { gatewayPath: null, shopPath: '/shops?q=autocat%3A+kimi' });
+  assert.deepEqual(link('Kimi'), { gatewayPath: null, shopPath: '/market?q=autocat%3A+kimi' });
   assert.deepEqual(link(null), { gatewayPath: null, shopPath: null });
 });
 
 test('family cross-links use default subscriptions and omit unavailable destinations', async () => {
   const { familyRelatedPaths } = await import('../src/models/family-navigation.js');
   assert.equal(familyRelatedPaths('GPT').officialPath, '/official-price/gpt-plus');
-  assert.equal(familyRelatedPaths('GPT').shopPath, '/shops/gpt-plus');
+  assert.equal(familyRelatedPaths('GPT').shopPath, '/market/category/gpt-plus');
   assert.equal(familyRelatedPaths('Claude').officialPath, '/official-price/claude-pro');
   assert.equal(familyRelatedPaths('DeepSeek').officialPath, null);
   assert.match(familyRelatedPaths('DeepSeek').shopPath ?? '', /deepseek/);

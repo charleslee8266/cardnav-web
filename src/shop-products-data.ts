@@ -29,6 +29,7 @@ export type PackedShopSiteRow = [
   supportTotalCents?: number,
   supportPoints?: number,
   platformName?: string,
+  slug?: string,
 ];
 
 export type PackedShopProductRow = [
@@ -126,6 +127,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
       Number(site.supportTotalCents) || 0,
       Number(site.supportPoints) || 0,
       site.platformName || '',
+      site.slug || '',
     ];
   });
   const categories: string[] = [];
@@ -145,6 +147,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
         Number(product.siteSupportTotalCents) || 0,
         Number(product.siteSupportPoints) || 0,
         product.sitePlatformName || '',
+        product.siteSlug || '',
       ]);
     }
     return [
@@ -296,3 +299,5 @@ export function shopProductAutoCategory(product: PackedShopProductRow) {
 }
 
 export function shopSitePlatformName(site: PackedShopSiteRow | null | undefined) { return site?.[8] || ""; }
+
+export function shopSiteSlug(site: PackedShopSiteRow | null | undefined) { return site?.[9] || ""; }

@@ -12,6 +12,8 @@ class Element {
   textContent = '';
   hasRows = true;
   workspace: Element | null = null;
+  footer: Element | null = null;
+  classList = { toggle() {} };
   closest() { return this.workspace; }
   setAttribute(key: string, value: string) { this.attributes[key] = value; }
   removeAttribute(key: string) { delete this.attributes[key]; }
@@ -30,7 +32,10 @@ class Element {
   detach() {
     if (this.parent) this.parent.children.splice(this.parent.children.indexOf(this), 1);
   }
-  querySelector(selector: string) { return selector === 'table' ? null : (this.hasRows ? this.children.at(-1) : null); }
+  querySelector(selector: string) {
+    if (selector === '.data-table-footer') return this.footer;
+    return selector === 'table' ? null : (this.hasRows ? this.children.at(-1) : null);
+  }
 }
 function setup(hasRows = true) {
   const timers = new Map<number, () => void>();
@@ -112,6 +117,24 @@ test('overlapping requests retain busy until all finish, report failure and allo
   assert.equal(status.dataset.state, 'error');
   assert.ok(root.children.includes(rows));
   await loading.run(async () => {});
+  assert.equal(status.hidden, true);
+});
+
+test('an empty merchant grid reports loading after its rows at the load-more footer', async () => {
+  const { root, rows, loading } = setup(false);
+  const footer = new Element();
+  footer.hidden = true;
+  root.footer = footer;
+  root.append(footer);
+  const request = deferred();
+  const run = loading.run(() => request.promise);
+  const status = root.children[1];
+  assert.equal(root.children[0], rows);
+  assert.equal(root.children[2], footer);
+  assert.equal(status.dataset.placement, 'bottom');
+  assert.equal(status.hidden, false);
+  request.resolve();
+  await run;
   assert.equal(status.hidden, true);
 });
 

@@ -14,6 +14,10 @@ test('page placements resolve to the configured list identity', () => {
     assert.equal(getSponsorListId({ placement: 'after-hero', pageType }), 'model-leaderboard');
   }
   assert.equal(getSponsorListId({ placement: 'page-bottom', pageType: 'about' }), 'full');
+  for (const pageType of ['shop-detail', 'gateway-detail'] as const) {
+    assert.equal(getSponsorListId({ placement: 'page-bottom', pageType }), 'full');
+    assert.equal(getSponsorListId({ placement: 'after-hero', pageType }), null);
+  }
   assert.equal(getSponsorListId({ placement: 'page-bottom', pageType: 'guide' }), null);
   assert.equal(getSponsorListId({ placement: 'content-bottom', pageType: 'guide' }), 'full');
 });

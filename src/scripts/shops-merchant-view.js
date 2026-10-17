@@ -72,14 +72,16 @@ function priceValueForSort(priceNumber, priceUnit) {
   return priceNumber;
 }
 
-function createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, options = {}) {
-  const link = createTrackedLink(siteUrl, 'merchant-link merchant-text', siteName, siteName, {
-    umamiEvent: 'external-link-click',
-    umamiEventLinkType: 'merchant',
-    productClick: false,
-    sponsor: options.sponsor === true,
-  });
+function createTrackedMerchantLink(href, siteName) {
+  const link = document.createElement('a');
+  link.href = href;
+  link.className = 'merchant-link merchant-text';
+  link.textContent = siteName;
   link.dataset.rowPrimary = '';
+  link.dataset.umamiEvent = 'internal-link-click';
+  link.dataset.umamiEventLinkType = 'merchant-detail';
+  link.dataset.umamiEventUrl = href;
+  link.dataset.umamiEventName = siteName;
   return link;
 }
 
@@ -201,8 +203,8 @@ export function renderMerchantRows({
     merchantContent.className = 'merchant-header-content';
     const merchantTitle = document.createElement('div');
     merchantTitle.className = 'merchant-title-row';
-    if (siteUrl) {
-      merchantTitle.appendChild(createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, { sponsor: siteSponsor || accessors.shopSiteSupportTotalCents(site) > 0 }));
+    if (accessors.shopSiteSlug(site)) {
+      merchantTitle.appendChild(createTrackedMerchantLink(localizedFallbackPath(accessors.shopDetailPath(accessors.shopSiteSlug(site))), siteName));
     } else {
       appendTextElement(merchantTitle, 'span', 'merchant-primary-text', siteName);
     }
@@ -219,7 +221,7 @@ export function renderMerchantRows({
     const platformCell = appendTextElement(row, 'div', 'merchant-table-cell merchant-table-cell-platform', '');
     platformCell.dataset.label = shopsMessages.tableLabels?.platform || 'Platform';
     appendTextElement(platformCell, 'span', 'merchant-table-mobile-label', shopsMessages.tableLabels?.platform || 'Platform');
-    platformCell.appendChild(createPlatformSelection(accessors.shopSitePlatformName(site), 'merchants'));
+    platformCell.appendChild(createPlatformSelection(accessors.shopSitePlatformName(site), 'shops'));
 
     const productsCell = document.createElement('div');
     productsCell.className = 'merchant-table-cell merchant-table-cell-value data-table-cell-align-right';

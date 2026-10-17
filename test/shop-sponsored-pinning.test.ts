@@ -8,6 +8,19 @@ function row(key: string, sponsor = false, supportPoints = 0): ShopPinnedRow {
   return { id: key, productFavoriteKey: key, siteFavoriteKey: key, score: 0, sponsor, supportPoints };
 }
 
+test('merchant detail disables merchant pins but preserves individual favorites and partner metadata', () => {
+  const rows = Array.from({ length: 5 }, (_, index) => ({
+    ...row(`product-${index}`, true, 100), siteFavoriteKey: 'merchant', score: 100 - index,
+  }));
+  const favorites = { favoriteProductKeys: new Set(['product-4']), favoriteSiteKeys: new Set(['merchant']) };
+  const kinds = new Map<string, string>();
+  const output = prioritizeShopProductRows(rows, favorites, (item, kind) => kinds.set(item.id, kind), false, { pinMerchants: false });
+  assert.deepEqual(output.map(item => item.id), ['product-4', 'product-0', 'product-1', 'product-2', 'product-3']);
+  assert.deepEqual(output.map(item => kinds.get(item.id)), ['favorite', '', '', '', '']);
+  assert.ok(output.every(item => item.sponsor && item.supportPoints === 100));
+  assert.deepEqual(prioritizeShopProductRows(rows, favorites, undefined, true, { pinMerchants: false }), rows);
+});
+
 test('高积分商家在原评分顺序末尾也能获得两件置顶，余下商品回到原位置', () => {
   const ordinary = row('ordinary');
   const low = Array.from({ length: 3 }, (_, index) => ({ ...row(`low-${index}`, true, 0), siteFavoriteKey: 'low' }));

@@ -139,7 +139,7 @@ export function quickPlanSearchPath(term: QuickPlanSearchTerm) {
   const params = new URLSearchParams();
   params.set('q', term.query);
   params.set('sort', 'price-asc');
-  return `/shops?${params.toString()}`;
+  return `/market?${params.toString()}`;
 }
 
 export function quickPlanSearchSeoPath(term: QuickPlanSearchTerm) {
