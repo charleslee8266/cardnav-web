@@ -1,0 +1,40 @@
+---
+import GuideSidebar from '../../components/GuideSidebar.astro';
+import PublicPage from '../../layouts/PublicPage.astro';
+import ArticleToc from '../../components/ArticleToc.astro';
+import '../../components/content.css';
+import {loadPublicArticle,articleDate} from '../../articles.js';
+import {buildSeoContext} from '../../seo.js';
+import {publicSiteUrl} from '../../site.js';
+const article=await loadPublicArticle(Astro.params.slug || '');
+Astro.response.headers.set('Cache-Control','no-store');
+if(!article) Astro.response.status=404;
+const seo=buildSeoContext({baseUrl:publicSiteUrl,pathname:`/articles/${Astro.params.slug}`,title:article?.title || '文章不存在',description:article?.summary || '该文章尚未发布或已移除。',type:article?'article':'webpage',imagePath:'/og-cardnav.webp',noindex:!article,datePublished:article?new Date(article.publishedAt).toISOString():undefined,dateModified:article?new Date(article.updatedAt).toISOString():undefined,breadcrumbs:[{name:'文章',pathname:'/articles'},...(article?[{name:article.title,pathname:`/articles/${article.slug}`}]:[])]});
+seo.alternateUrls=[];
+if(article) {
+  const graph=seo.jsonLd as {'@graph'?:Record<string,unknown>[]};
+  const node=graph['@graph']?.find(x=>x['@type']==='Article');
+  if(node) {node.isBasedOn=article.sourceUrl;node.citation=article.sourceUrl;if(article.author)node.author={'@type':'Person',name:article.author};}
+}
+---
+<PublicPage activeNav="guide" pageType="article-detail" {...seo} xDefaultUrl={undefined}>
+  {article?<section class="reading-guide imported-reading-layout" data-reading-layout>
+    <GuideSidebar section="articles" currentSlug={article.slug} />
+    <article class="reading-content min-w-0 space-y-6">
+      <a href="/articles" class="link text-sm">返回文章</a>
+      <header class="space-y-4"><h1 class="text-3xl font-semibold leading-snug">{article.title}</h1><div class="space-y-2 rounded-xl border border-base-300 bg-base-200/50 p-4 text-sm leading-relaxed"><p>转载来源：{article.sourceName}{article.author && ` · 原作者：${article.author}`}</p><p>原文：<a class="link break-words" href={article.sourceUrl} target="_blank" rel="noopener noreferrer">{article.sourceTitle}</a></p><p class="text-base-content/65">{article.sourcePublishedAt && `原文发布：${articleDate(article.sourcePublishedAt)} · `}收录发布：{articleDate(article.publishedAt)}</p></div></header>
+      <div id="selected-article" class="reading-prose content-page imported-article" set:html={article.contentHtml}/>
+      <footer class="border-t border-base-300 pt-5 text-sm leading-relaxed text-base-content/70">本文转载自 <a class="link" href={article.sourceUrl} target="_blank" rel="noopener noreferrer">{article.sourceName || '原文来源'}</a>，版权归原作者所有。内容反映原文发布时的信息，实际价格与服务条件以当前提供方说明为准。</footer>
+      <nav class="flex flex-wrap gap-4 text-sm" aria-label="相关入口"><a class="link" href="/shops">卡网商品比价</a><a class="link" href="/official-price">官方订阅价格</a><a class="link" href="/guide">使用指南</a></nav>
+    </article><ArticleToc target="selected-article"/>
+  </section>:<section class="mx-auto max-w-3xl space-y-5 py-12"><h1 class="text-2xl font-semibold">文章不存在</h1><p>该文章尚未发布或已移除。</p><a class="link" href="/articles">返回文章</a></section>}
+</PublicPage>
+<style>.imported-article{overflow-wrap:anywhere}.imported-article :global(img){max-width:100%;height:auto}.imported-article :global(pre),.imported-article :global(table){display:block;max-width:100%;overflow-x:auto}
+.imported-article :global(blockquote){margin:18px 0;border-left:3px solid var(--color-base-300);padding:2px 16px;color:var(--color-base-content)}
+.imported-article :global(th),.imported-article :global(td){border:1px solid var(--color-base-300);padding:8px 12px;text-align:left}
+.imported-article :global(table){border-collapse:collapse;margin:18px 0;font-size:14px}
+.imported-article :global(th){background:var(--color-base-200)}
+.imported-article :global(h4),.imported-article :global(h5),.imported-article :global(h6){margin:20px 0 8px;font-weight:650}
+@media(max-width:1023px){.imported-reading-layout > :global(.reading-toc){display:none}}
+</style>
+<script>import '../../scripts/page-widgets.js';</script>

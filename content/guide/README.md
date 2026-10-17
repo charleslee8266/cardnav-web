@@ -1,10 +1,10 @@
-# CardNav 向导 Markdown 渲染说明
+# CardNav 指南 Markdown 渲染说明
 
-本文说明 `content/guide/` 下的向导 Markdown 如何渲染，方便后续新增或维护 Guide 文章。
+本文说明 `content/guide/` 下的指南 Markdown 如何渲染，方便后续新增或维护 Guide 文章。
 
 ## 文件位置
 
-向导文章统一放在（其中 `<LANG>` 代表语言的缩写，例如 `zh`）：
+指南文章统一放在（其中 `<LANG>` 代表语言的缩写，例如 `zh`）：
 
 ```text
 content/guide/<LANG>/

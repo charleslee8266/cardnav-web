@@ -109,6 +109,8 @@ function resolvePublicResponseCacheControl(url: URL, contentType: string | null)
   if (!isPublicHtmlResponse(pathname, contentType)) {
     return null;
   }
+  const route = publicRoutePathname(pathname);
+  if (route === '/articles' || route.startsWith('/articles/')) return 'no-store';
   if (isDevRuntime()) {
     return publicDevHtmlCacheControl;
   }
@@ -170,6 +172,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (!context.isPrerendered && localePathInfo.hasLocalePrefix && localePathInfo.locale === defaultLocale) {
     url.pathname = localePathInfo.routePathname;
     return context.redirect(url.pathname + url.search, 301);
+  }
+
+  if (localePathInfo.hasLocalePrefix && (localePathInfo.routePathname === '/articles' || localePathInfo.routePathname.startsWith('/articles/'))) {
+    return context.redirect(localePathInfo.routePathname + url.search, 301);
   }
 
   if (context.isPrerendered) {

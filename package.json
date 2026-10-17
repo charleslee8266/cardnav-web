@@ -23,6 +23,7 @@
     "maplibre-gl": "^6.9.0",
     "markdown-it": "^15.0.0",
     "pg": "^8.21.0",
+    "sanitize-html": "^2.18.1",
     "vite": "8.2.0"
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.8.0",
     "@types/pg": "^8.20.0",
+    "@types/sanitize-html": "^2.16.2",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.1",
     "typescript": "^6.0.3"

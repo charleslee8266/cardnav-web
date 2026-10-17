@@ -679,6 +679,13 @@ export const ruMessages: Messages = {
     runtime: ipPurityRuntime,
   },
   guide: {
+    articleDirectoryLoading: 'Загрузка статей…',
+    articleDirectoryError: 'Не удалось загрузить список статей.',
+    articleDirectoryEmpty: 'Опубликованных статей пока нет.',
+    search: {"open": "Поиск по руководствам и статьям", "title": "Поиск по руководствам и статьям", "label": "Поиск по всему тексту", "placeholder": "Подписки, оплата, аккаунты…", "close": "Закрыть поиск", "retry": "Повторить", "loading": "Загрузка поиска…", "error": "Не удалось загрузить поиск. Повторите попытку.", "hint": "Введите запрос для поиска по всему тексту.", "empty": "Ничего не найдено. Попробуйте другой запрос.", "results": "Найдено: {count}. Показано не более 40.", "article": "Статья", "gettingStarted": "Начало работы"},
+    gettingStarted: 'Начало работы',
+    articles: 'Статьи',
+    sectionNavigation: 'Разделы руководства',
     heroDescriptions: {
       "start-here": "Пройдите путь от выбора модели до оплаты.",
       "choose-model": "Выберите модель под задачу, возможности и бюджет.",
@@ -706,7 +713,7 @@ export const ruMessages: Messages = {
 },
     onThisPage: 'На этой странице',
     seoDescription: 'Практичные способы оценки перед покупкой AI-аккаунтов, выбором продавцов и заказом виртуальных товаров.',
-    allDocs: 'Содержание руководства',
+    allDocs: 'Содержание вводного руководства',
     docListLabel: 'Список документов гайда',
     eyebrow: 'Гайд',
     nextStep: 'Следующий шаг',

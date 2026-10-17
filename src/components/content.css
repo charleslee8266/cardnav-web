@@ -1,4 +1,4 @@
-/* 文档、向导与合作内容的唯一排版真源。 */
+/* 文档、指南与合作内容的唯一排版真源。 */
 .reading-guide { display: grid; grid-template-columns: 220px minmax(0,1fr) 168px; gap: 48px; justify-content: center; align-items: start; padding: 12px 0 32px; }
 .reading-tree,.reading-toc { position: sticky; top: var(--reading-top-offset, 16px); max-height: calc(100dvh - var(--reading-top-offset, 16px) - 24px); overflow-y: auto; scrollbar-width: thin; padding-right: 4px; }
 .reading-tree-summary { display: flex; align-items: center; gap: 10px; padding: 0 8px 10px; font-size: 12px; font-weight: 600; color: var(--color-muted); list-style: none; }

@@ -1,10 +1,10 @@
 ---
 /*
-文件说明: 渲染向导文档树、文章与本页目录，并在窄屏提供可展开的文档导航。
+文件说明: 渲染指南文档树、文章与本页目录，并在窄屏提供可展开的文档导航。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import Sponsors from './Sponsors.astro';
-import GuideTree from './GuideTree.astro';
+import GuideSidebar from './GuideSidebar.astro';
 import ArticleToc from './ArticleToc.astro';
 import './content.css';
 import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
@@ -19,7 +19,6 @@ type Props = {
 };
 
 const {
-  navItems,
   currentArticle,
   sourcePage,
   pageType,
@@ -47,14 +46,7 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 ---
 
 <section class="reading-guide" data-reading-layout>
-  <aside class="reading-tree">
-    <details class="reading-tree-disclosure" open>
-      <summary class="reading-tree-summary"><span>{t.guide.allDocs}</span><span class="reading-tree-current">{currentArticle.title}</span><span aria-hidden="true">⌄</span></summary>
-    <nav data-telemetry-block={telemetryBlocks.guide.navigation} aria-label={t.guide.docListLabel} class="reading-tree-nav">
-      <GuideTree items={navItems} currentSlug={currentArticle.slug} sourcePage={sourcePage} />
-    </nav>
-    </details>
-  </aside>
+  <GuideSidebar section="getting-started" currentSlug={currentArticle.slug} />
 
   <section class="reading-content">
     <section data-telemetry-block={telemetryBlocks.guide.content} class="reading-article">

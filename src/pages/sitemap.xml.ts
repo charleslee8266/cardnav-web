@@ -12,6 +12,7 @@ export const GET: APIRoute = () => {
   return new Response(buildSitemapIndexXml(publicSiteUrl, [
     { pathname: '/sitemap-static.xml' },
     { pathname: '/sitemap-guide.xml' },
+    { pathname: '/sitemap-articles.xml' },
     { pathname: '/sitemap-official-price.xml' },
     { pathname: '/sitemap-leaderboard.xml' },
     { pathname: '/sitemap-gateway-sites.xml' },

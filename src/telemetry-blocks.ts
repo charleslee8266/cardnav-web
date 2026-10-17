@@ -20,7 +20,7 @@ export const telemetryBlocks = {
     gateways: 'gateway-highlights', // 中转站与模型推荐
     officialPrices: 'official-price-highlights', // 官方订阅比价推荐
     models: 'model-highlights', // 模型排行推荐
-    guide: 'guide-highlights', // 使用向导推荐
+    guide: 'guide-highlights', // 使用指南推荐
     tools: 'tool-highlights', // 实用工具推荐
   },
   // 商家页 /market 及关键词页面
@@ -45,7 +45,7 @@ export const telemetryBlocks = {
   modelLeaderboard: {
     table: 'model-leaderboard-table', // 任务导航与模型排行表
   },
-  // 向导 /guide 及文章页
+  // 指南 /guide 及文章页
   guide: {
     navigation: 'guide-navigation', // 文章目录
     content: 'guide-content', // 文章正文及卡片

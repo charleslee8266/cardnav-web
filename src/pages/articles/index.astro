@@ -1,0 +1,26 @@
+---
+import GuideSidebar from '../../components/GuideSidebar.astro';
+import PublicPage from '../../layouts/PublicPage.astro';
+import {loadPublicArticles,articleDate} from '../../articles.js';
+import {buildSeoContext} from '../../seo.js';
+import {publicSiteUrl} from '../../site.js';
+const raw=Astro.url.searchParams.get('page') || '1';
+const page=/^[1-9]\d{0,5}$/.test(raw)?Number(raw):1;
+const data=await loadPublicArticles(page);
+if(page>1 && !data.articles.length) Astro.response.status=404;
+Astro.response.headers.set('Cache-Control','no-store');
+const seo=buildSeoContext({baseUrl:publicSiteUrl,pathname:'/articles',title:'文章：AI 订阅、充值与购买经验',description:'阅读 AI 订阅、充值、价格与购买相关的精选文章，保留原作者和原文来源，帮助你了解方案与使用经验。',type:'webpage',imagePath:'/og-cardnav.webp',noindex:page>1});
+seo.alternateUrls=[];
+---
+<PublicPage activeNav="guide" pageType="articles" {...seo} xDefaultUrl={undefined}>
+  <section class="reading-guide articles-guide" data-reading-layout>
+  <GuideSidebar section="articles" />
+  <section class="reading-content space-y-6">
+    <header class="space-y-3"><h1 class="text-3xl font-semibold">文章</h1><p class="text-base-content/70">AI 订阅、充值与购买相关的经验文章。转载内容保留原作者与原文链接，价格、支付方式和套餐权益请结合当前官方信息核对。</p></header>
+    {data.articles.length ? <div class="divide-y divide-base-300">{data.articles.map(article=><article class="space-y-3 py-6"><h2 class="text-xl font-semibold"><a class="hover:underline" href={`/articles/${article.slug}`}>{article.title}</a></h2><p class="text-sm text-base-content/65">{[...new Set([article.author, article.sourceName].filter(Boolean))].join(' · ')}{article.sourcePublishedAt && ` · 原文 ${articleDate(article.sourcePublishedAt)}`}</p><p class="leading-relaxed text-base-content/80">{article.summary}</p><a href={`/articles/${article.slug}`} class="link text-sm">阅读全文</a></article>)}</div>:<p class="rounded-xl border border-base-300 p-8 text-base-content/60">{page>1?'此页没有文章。':'暂时还没有发布的文章。'}</p>}
+    <nav class="flex items-center justify-between" aria-label="文章分页">{page>1?<a class="btn btn-sm btn-outline" href={page===2?'/articles':`/articles?page=${page-1}`}>上一页</a>:<span/>}<span class="text-sm text-base-content/60">共 {data.total} 篇 · 第 {page} 页</span>{page*data.pageSize<data.total?<a class="btn btn-sm btn-outline" href={`/articles?page=${page+1}`}>下一页</a>:<span/>}</nav>
+  </section>
+  </section>
+</PublicPage>
+<style>.articles-guide{grid-template-columns:220px minmax(0,1fr);max-width:1100px;margin-inline:auto}@media(max-width:1024px){.articles-guide{display:block}}</style>
+<script>import '../../scripts/page-widgets.js';</script>
