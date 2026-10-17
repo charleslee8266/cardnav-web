@@ -1,0 +1,16 @@
+---
+import type { buildOfficialPriceProductGroups } from '../official-price.js';
+import { productIconPath } from '../models/product-icons.js';
+
+type Props = {
+  brands: ReturnType<typeof buildOfficialPriceProductGroups>;
+  currentProductId?: string;
+};
+const { brands, currentProductId } = Astro.props;
+const linkTo = Astro.locals.localizePath;
+---
+<a href={linkTo('/official-price')} class="plan-option plan-product" aria-current={currentProductId ? undefined : 'page'}>{Astro.locals.messages.shops.allPlans}</a>
+{brands.map(brand => <a href={linkTo(brand.defaultPath)} class="plan-option plan-product" aria-current={currentProductId === brand.id ? 'true' : undefined}>
+  {brand.product?.icon ? <img src={productIconPath(brand.product.icon)} alt="" width="18" height="18" class:list={['plan-brand-icon', brand.product.monochrome && 'plan-icon-mono']} /> : <span class="plan-letter" aria-hidden="true">{brand.product?.symbol || brand.name.slice(0, 1)}</span>}
+  {brand.name}
+</a>)}

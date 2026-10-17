@@ -11,13 +11,13 @@ import './data-workspace.css';
 import PageHero from './PageHero.astro';
 import { buildOfficialPriceProductGroups, officialPriceBaseline, officialPriceDifference } from '../official-price.js';
 import OfficialPriceComparison from './OfficialPriceComparison.astro';
+import OfficialPriceBrandLinks from './OfficialPriceBrandLinks.astro';
 import './official-price.css';
 import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
 import { quickPlanShortLabel, quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../models/product-catalog.js';
-import { productIconPath } from '../models/product-icons.js';
 import Sponsors from './Sponsors.astro';
 import type { PageType } from '../page-types.js';
 
@@ -82,11 +82,7 @@ function countryFlag(countryCode: string): CountryFlag {
           {groups.length > 0 && (
             <nav class="official-plan-groups" aria-label={t.officialPrice.navLabel}>
               <div class="official-brand-row">
-                <a href={linkTo('/official-price')} class="plan-option plan-product">{t.shops.allPlans}</a>
-                {productGroups.map(product => <a href={linkTo(product.defaultPath)} class="plan-option plan-product" aria-current={currentProduct?.id === product.id ? 'true' : undefined}>
-                  {product.product?.icon ? <img src={productIconPath(product.product.icon)} alt="" width="18" height="18" class:list={['plan-brand-icon', product.product.monochrome && 'plan-icon-mono']} /> : <span class="plan-letter" aria-hidden="true">{product.product?.symbol || product.name.slice(0, 1)}</span>}
-                  {product.name}
-                </a>)}
+                <OfficialPriceBrandLinks brands={productGroups} currentProductId={currentProduct?.id} />
               </div>
               {currentProduct && <div class="plan-group-options">
                 <span class="plan-panel-label">{t.shops.productPlans.replace('{product}', currentProduct.name)}</span>

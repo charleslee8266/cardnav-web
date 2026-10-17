@@ -4,6 +4,7 @@ import HeroMetric from './HeroMetric.astro';
 import PageHero from './PageHero.astro';
 import { buildOfficialPriceProductGroups, officialPriceBaseline, officialPriceDifference } from '../official-price.js';
 import OfficialPriceComparison from './OfficialPriceComparison.astro';
+import OfficialPriceBrandLinks from './OfficialPriceBrandLinks.astro';
 import './official-price.css';
 import Sponsors from './Sponsors.astro';
 import DataTable from './DataTable.astro';
@@ -27,11 +28,7 @@ const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => S
 <Sponsors placement="after-hero" pageType="official-price" />
 <section class="official-overview card data-workspace" data-telemetry-block={telemetryBlocks.officialPrices.table}>
   <div class="data-workspace-controls"><nav class="official-overview-brands" aria-label={t.officialPrice.navLabel}>
-    <a class="plan-option plan-product" href={linkTo('/official-price')} aria-current="page">{t.shops.allPlans}</a>
-    {brands.map(brand => <a class="plan-option plan-product" href={linkTo(brand.defaultPath)}>
-      {brand.product?.icon && <img src={productIconPath(brand.product.icon)} width="18" height="18" alt="" class:list={['plan-brand-icon', brand.product.monochrome && 'plan-icon-mono']} />}
-      {brand.product?.label || brand.name}
-    </a>)}
+    <OfficialPriceBrandLinks brands={brands} />
   </nav></div>
   {groups.length > 0 && <div class="official-overview-table">
     <DataTable variant="compact" >
