@@ -1,4 +1,6 @@
 /** 浏览器中的全文匹配；JSON 索引只包含公开内容。 */
+import { type Locale } from './i18n/config.js';
+import { localizePath } from './i18n/paths.js';
 export interface GuideSearchEntry {
   title: string;
   url: string;
@@ -8,6 +10,10 @@ export interface GuideSearchEntry {
   locale?: string;
 }
 export interface GuideSearchResult { entry: GuideSearchEntry; snippet: string; score: number; }
+export function localizeGuideSearchEntries(entries: GuideSearchEntry[], locale: Locale) {
+  return entries.filter(entry => !entry.locale || entry.locale === locale)
+    .map(entry => ({...entry, url: localizePath(entry.url, locale)}));
+}
 const normalize = (text: string) => text.normalize('NFKC').toLocaleLowerCase();
 export function searchGuides(entries: GuideSearchEntry[], query: string): GuideSearchResult[] {
   const terms = normalize(query.trim()).split(/\s+/u).filter(Boolean);

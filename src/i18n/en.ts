@@ -679,6 +679,9 @@ export const enMessages: Messages = {
     runtime: ipPurityRuntime,
   },
   guide: {
+    articleSource: 'Source: ',
+    articleReprintPrefix: 'Republished from ',
+    articleReprintSuffix: '. Copyright belongs to the original author.',
     articleDirectoryEmpty: 'No published articles yet.',
     search: {"open": "Search guides and articles", "title": "Search guides and articles", "label": "Search all content", "placeholder": "Subscriptions, payments, accounts…", "close": "Close search", "retry": "Retry", "loading": "Loading search content…", "error": "Search content could not be loaded. Please retry.", "hint": "Search the full text of guides and articles.", "empty": "No results. Try another keyword.", "results": "{count} results. Showing up to 40.", "article": "Article", "gettingStarted": "Getting Started"},
     gettingStarted: 'Getting Started',

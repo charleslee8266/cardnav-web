@@ -23,9 +23,9 @@ const articleItems = await loadPublicArticleNavigation();
         <GuideTree items={tutorialItems} currentSlug={section === 'getting-started' ? currentSlug : ''} sourcePage={Astro.locals.routePathname} />
       </details>
       <details class="guide-section-group" id="guide-articles" open={section === 'articles'}>
-        <summary><span class="reading-tree-indicator" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="guide-section-link" href="/guide/articles" aria-current={section === 'articles' ? (currentSlug === 'articles' ? 'page' : 'location') : undefined}>{t.guide.articles}</a></summary>
+        <summary><span class="reading-tree-indicator" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="guide-section-link" href={linkTo('/guide/articles')} aria-current={section === 'articles' ? (currentSlug === 'articles' ? 'page' : 'location') : undefined}>{t.guide.articles}</a></summary>
         <ul class="reading-tree-list" data-article-links>
-          {articleItems.map(item => <li><div class="reading-tree-row"><span class="reading-tree-indicator reading-tree-placeholder" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="reading-tree-link" href={`/guide/${item.slug}`} aria-current={item.slug === currentSlug && section === 'articles' ? 'page' : undefined}>{item.title}</a></div></li>)}
+          {articleItems.map(item => <li><div class="reading-tree-row"><span class="reading-tree-indicator reading-tree-placeholder" aria-hidden="true"><span class="reading-tree-symbol"></span></span><a class="reading-tree-link" href={linkTo(`/guide/${item.slug}`)} aria-current={item.slug === currentSlug && section === 'articles' ? 'page' : undefined}>{item.title}</a></div></li>)}
         </ul>
         <p class="article-directory-status reading-tree-link" role="status" hidden={articleItems.length > 0}>{t.guide.articleDirectoryEmpty}</p>
       </details>

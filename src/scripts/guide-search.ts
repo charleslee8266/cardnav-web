@@ -1,4 +1,5 @@
-import { searchGuides, type GuideSearchEntry } from '../guide-search.js';
+import { localizeGuideSearchEntries, searchGuides, type GuideSearchEntry } from '../guide-search.js';
+import { defaultLocale, isLocale } from '../i18n/config.js';
 for (const root of document.querySelectorAll<HTMLElement>('[data-guide-search]')) {
   const dialog = root.querySelector<HTMLDialogElement>('dialog')!;
   const input = root.querySelector<HTMLInputElement>('input')!;
@@ -6,6 +7,8 @@ for (const root of document.querySelectorAll<HTMLElement>('[data-guide-search]')
   const results = root.querySelector<HTMLUListElement>('ul')!;
   const retry = root.querySelector<HTMLButtonElement>('[data-search-retry]')!;
   const labels: Record<string, string> = JSON.parse(root.dataset.labels!);
+  const requestedLocale = root.dataset.locale;
+  const locale = requestedLocale && isLocale(requestedLocale) ? requestedLocale : defaultLocale;
   let entries: GuideSearchEntry[] | undefined;
   let tutorials: GuideSearchEntry[] | undefined;
   let loading = false;
@@ -42,7 +45,7 @@ for (const root of document.querySelectorAll<HTMLElement>('[data-guide-search]')
       ]);
       if (currentRequest !== requestId) return;
       tutorials = guideEntries;
-      entries = [...guideEntries.filter(entry => entry.locale === root.dataset.locale), ...articleEntries];
+      entries = localizeGuideSearchEntries([...guideEntries, ...articleEntries], locale);
       render();
     } catch {
       status.textContent = labels.error; retry.hidden = false;

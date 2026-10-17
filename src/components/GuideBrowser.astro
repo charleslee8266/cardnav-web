@@ -53,15 +53,15 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 
   <section class="reading-content">
     <section data-telemetry-block={telemetryBlocks.guide.content} class="reading-article">
-      <div class="guide-hero">
+      <div class="guide-hero" lang={importedArticle ? 'zh-CN' : undefined}>
         <h1 class="reading-title">{currentArticle.title}</h1>
         <p class="reading-description">{currentArticle.description}</p>
       </div>
       {importedArticle && <div class="reading-description guide-source">
-        <p>来源：<a href={importedArticle.sourceUrl} target="_blank" rel="noopener noreferrer">{importedArticle.sourceName || importedArticle.sourceTitle}</a>{importedArticle.author && ` · ${importedArticle.author}`}{importedArticle.sourcePublishedAt && ` · ${articleDate(importedArticle.sourcePublishedAt)}`}</p>
+        <p>{t.guide.articleSource}<a href={importedArticle.sourceUrl} target="_blank" rel="noopener noreferrer">{importedArticle.sourceName || importedArticle.sourceTitle}</a>{importedArticle.author && ` · ${importedArticle.author}`}{importedArticle.sourcePublishedAt && ` · ${articleDate(importedArticle.sourcePublishedAt)}`}</p>
       </div>}
-      <div id="guide-article" class="guide-article reading-prose" set:html={localizedArticleHtml} />
-      {importedArticle && <footer class="reading-description guide-source">本文转载自 <a href={importedArticle.sourceUrl} target="_blank" rel="noopener noreferrer">{importedArticle.sourceTitle}</a>，版权归原作者所有。</footer>}
+      <div id="guide-article" lang={importedArticle ? 'zh-CN' : undefined} class="guide-article reading-prose" set:html={localizedArticleHtml} />
+      {importedArticle && <footer class="reading-description guide-source">{t.guide.articleReprintPrefix}<a href={importedArticle.sourceUrl} target="_blank" rel="noopener noreferrer">{importedArticle.sourceTitle}</a>{t.guide.articleReprintSuffix}</footer>}
     </section>
 
     {currentArticle.nextLink && (

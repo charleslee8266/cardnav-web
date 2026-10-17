@@ -1,11 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { searchGuides, type GuideSearchEntry } from '../src/guide-search.js';
+import { localizeGuideSearchEntries, searchGuides, type GuideSearchEntry } from '../src/guide-search.js';
 import { searchTextFromMarkdown } from '../src/search-text.js';
 const entries: GuideSearchEntry[] = [
   {title:'支付准备', description:'订阅指南', text:'本文解释 Codex 充值与银行卡拒付的处理方式。',url:'/guide/payments',kind:'getting-started'},
   {title:'Codex 充值方法',description:'购买说明',text:'使用应用商店付款。',url:'/guide/codex',kind:'article'},
 ];
+test('共享文章搜索结果保留界面语言，译文向导只使用当前语言索引', () => {
+  const content: GuideSearchEntry[] = [entries[1], {...entries[0], locale:'zh'}, {...entries[0], locale:'en', url:'/en/guide/payments'}, {...entries[0], locale:'ru', url:'/ru/guide/payments'}];
+  for (const locale of ['en','ru'] as const) {
+    const results = localizeGuideSearchEntries(content,locale);
+    assert.deepEqual(results.map(entry=>entry.url),[`/${locale}/guide/codex`,`/${locale}/guide/payments`]);
+    assert.equal(results[0].text,entries[1].text);
+  }
+  assert.equal(content[0].url,'/guide/codex');
+});
 test('全文搜索支持正文命中、中文、多个关键词与标题优先', () => {
   assert.equal(searchGuides(entries,'银行卡')[0]?.entry.url,'/guide/payments');
   assert.deepEqual(searchGuides(entries,'ｃｏｄｅｘ 充值').map(x=>x.entry.url),['/guide/codex','/guide/payments']);

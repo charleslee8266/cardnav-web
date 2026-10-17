@@ -678,6 +678,9 @@ export const zhMessages = {
     runtime: ipPurityRuntime,
   },
   guide: {
+    articleSource: '来源：',
+    articleReprintPrefix: '本文转载自 ',
+    articleReprintSuffix: '，版权归原作者所有。',
     articleDirectoryEmpty: '暂无已发布文章。',
     search: {"open": "搜索指南与文章", "title": "搜索指南与文章", "label": "搜索全部正文", "placeholder": "搜索订阅、充值、账号、模型…", "close": "关闭搜索", "retry": "重新加载", "loading": "正在加载搜索内容…", "error": "搜索内容加载失败，请重新加载。", "hint": "输入关键词，搜索向导与文章的全部正文。", "empty": "没有找到相关内容，试试其他关键词。", "results": "找到 {count} 条结果，最多显示前 40 条。", "article": "文章", "gettingStarted": "向导"},
     gettingStarted: '向导',

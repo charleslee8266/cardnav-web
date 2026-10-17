@@ -679,6 +679,9 @@ export const ruMessages: Messages = {
     runtime: ipPurityRuntime,
   },
   guide: {
+    articleSource: 'Источник: ',
+    articleReprintPrefix: 'Перепечатано из ',
+    articleReprintSuffix: '. Авторские права принадлежат автору оригинала.',
     articleDirectoryEmpty: 'Опубликованных статей пока нет.',
     search: {"open": "Поиск по руководствам и статьям", "title": "Поиск по руководствам и статьям", "label": "Поиск по всему тексту", "placeholder": "Подписки, оплата, аккаунты…", "close": "Закрыть поиск", "retry": "Повторить", "loading": "Загрузка поиска…", "error": "Не удалось загрузить поиск. Повторите попытку.", "hint": "Введите запрос для поиска по всему тексту.", "empty": "Ничего не найдено. Попробуйте другой запрос.", "results": "Найдено: {count}. Показано не более 40.", "article": "Статья", "gettingStarted": "Начало работы"},
     gettingStarted: 'Начало работы',
