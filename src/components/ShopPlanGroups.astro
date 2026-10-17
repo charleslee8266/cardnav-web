@@ -11,7 +11,6 @@ const visibleProducts = quickPlanProducts.filter(product => !product.hiddenFromQ
 const groups = mode === 'filter' ? visibleProducts.filter(product => product.terms.length > 1) : [];
 const initialProduct = quickPlanProducts.find(product => (product.terms.some(term => term.query === initialSearchQuery) || quickProductSearchQuery(product.id) === initialSearchQuery));
 function navigationProps(term: QuickPlanSearchTerm) {
-  if (mode !== 'navigate') return {};
   const href = linkTo(quickPlanSearchSeoPath(term));
   return { href, 'data-umami-event': 'internal-link-click', 'data-umami-event-link-type': 'home-quick-filter', 'data-umami-event-name': term.label, 'data-umami-event-target-page': href, 'data-umami-event-url': href };
 }
@@ -40,7 +39,7 @@ function buttonProps(term: QuickPlanSearchTerm) {
     {visibleProducts.map(product => {
       const singleton = product.terms.length === 1;
       const ProductTag = mode === 'navigate' ? 'a' : 'button';
-      return <ProductTag type={ProductTag === 'button' ? 'button' : undefined} {...navigationProps(quickProductDefaultPlan(product))} class="plan-option plan-product" data-product-id={product.id}
+      return <ProductTag type={ProductTag === 'button' ? 'button' : undefined} {...(mode === 'navigate' ? navigationProps(quickProductSearchTerm(product)) : {})} class="plan-option plan-product" data-product-id={product.id}
         {...{ ...buttonProps(quickProductDefaultPlan(product)),
           'aria-controls': mode === 'navigate' || singleton ? undefined : `plan-options-${product.id}`,
           'aria-pressed': initialProduct?.id === product.id && Boolean(initialSearchQuery) }}>
@@ -52,8 +51,8 @@ function buttonProps(term: QuickPlanSearchTerm) {
   {groups.map(group => <div id={`plan-options-${group.id}`} class="plan-group-options" data-product-options={group.id} hidden={initialProduct?.id !== group.id} aria-label={group.label}>
     <span class="plan-panel-label">{Astro.locals.messages.shops.productPlans.replace('{product}', group.label)}</span>
     <div class="plan-package-scroll">
-    <button type="button" class="plan-option" {...{ ...buttonProps(quickProductSearchTerm(group)), 'aria-label': `${group.label} ${Astro.locals.messages.shops.allPlans}` }}>{Astro.locals.messages.shops.allPlans}</button>
-    {group.terms.map(term => <button type="button" class="plan-option" {...buttonProps(term)}>{quickPlanShortLabel(term, group.id)}</button>)}
+    <a role="button" class="plan-option" {...navigationProps(quickProductSearchTerm(group))} {...{ ...buttonProps(quickProductSearchTerm(group)), 'aria-label': `${group.label} ${Astro.locals.messages.shops.allPlans}` }}>{Astro.locals.messages.shops.allPlans}</a>
+    {group.terms.map(term => <a role="button" class="plan-option" {...navigationProps(term)} {...buttonProps(term)}>{quickPlanShortLabel(term, group.id)}</a>)}
     </div>
   </div>)}
   </div>
@@ -62,6 +61,13 @@ function buttonProps(term: QuickPlanSearchTerm) {
   const picker = document.querySelector<HTMLElement>('#quickPlanRow');
   const groups = picker?.querySelector<HTMLElement>('.plan-groups');
   if (picker && groups) {
+    picker.addEventListener('keydown', event => {
+      if (event.key !== ' ') return;
+      const target = event.target;
+      if (!(target instanceof HTMLAnchorElement) || target.getAttribute('role') !== 'button') return;
+      event.preventDefault();
+      target.click();
+    });
     const brands = Array.from(groups.querySelectorAll<HTMLButtonElement>('[data-product-id]'));
     const panels = Array.from(picker.querySelectorAll<HTMLElement>('[data-product-options]'));
     const showProduct = (id: string) => {

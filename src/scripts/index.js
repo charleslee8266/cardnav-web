@@ -1414,6 +1414,7 @@ quickPlanRow?.addEventListener('click', event => {
   const previousCategoryId = selectedQuickCategoryId();
   const button = event.target.closest('[data-quick-plan-query]');
   if (!(button instanceof HTMLElement)) return;
+  if (button instanceof HTMLAnchorElement && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)) return;
   event.preventDefault();
   const sourceButton = button;
   if (button.getAttribute('aria-pressed') === 'true') return;

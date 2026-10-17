@@ -1,6 +1,6 @@
 import { shopPlatformName } from './shop-platform.js';
 import { createFamilyNavigation } from './models/family-navigation.js';
-import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice } from './models/product-catalog.js';
+import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter } from './models/product-catalog.js';
 /**
  * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
  */
@@ -307,11 +307,15 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
   };
 }
 
-export async function loadShopProductsData(options: { productLimit?: number; inStockOnly?: boolean; queryClient?: pg.PoolClient } = {}) {
+export async function loadShopProductsData(options: { productLimit?: number; inStockOnly?: boolean; autoCategory?: string; queryClient?: pg.PoolClient } = {}) {
   const db = options.queryClient ?? getPool();
   const safeProductLimit = typeof options.productLimit === 'number' && Number.isFinite(options.productLimit)
     ? Math.max(1, Math.floor(options.productLimit))
     : null;
+  const categoryIds = options.autoCategory ? autoCategoryIdsForFilter(options.autoCategory) : null;
+  const categoryParameter = safeProductLimit ? '$2' : '$1';
+  const productParams: unknown[] = safeProductLimit ? [safeProductLimit] : [];
+  if (categoryIds) productParams.push(categoryIds);
   const sitesResult = safeProductLimit === null
     ? await db.query(`
       WITH ranked_sites AS (
@@ -377,6 +381,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         AND shop_sites.type = 'cardShop'
         AND shop_products.active = true
         ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
+        ${categoryIds ? `AND shop_products.auto_category = ANY(${categoryParameter}::text[])` : ''}
     ), site_pin_candidates AS (
       SELECT candidate.id AS product_row_id, candidate.*,
         site.support_points AS site_support_points, CASE WHEN site.sponsor THEN 0 ELSE 1 END AS pin_group
@@ -387,6 +392,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         FROM shop_products
         WHERE site_id = site.id AND active = TRUE
           ${options.inStockOnly ? 'AND in_stock = TRUE' : ''}
+          ${categoryIds ? `AND auto_category = ANY(${categoryParameter}::text[])` : ''}
         ORDER BY score DESC, id ASC
         LIMIT ${MAX_PINNED_ROWS_PER_SITE}
       ) candidate
@@ -409,7 +415,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     ORDER BY display_group, display_points DESC NULLS LAST,
       base_products.score DESC, base_products.product_row_id ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
-  `, safeProductLimit ? [safeProductLimit] : []);
+  `, productParams);
 
   const products: PublicProductRow[] = productsResult.rows.map(row => {
     const refreshedAt = isoTimestamp(row.refreshed_at);

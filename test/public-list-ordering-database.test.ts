@@ -105,6 +105,21 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
       ('b','tie-high','Alpha',6,true,'2026-10-16')`);
     const tied = await loadShopProductsData({queryClient:db});
     assert.deepEqual(tied.products.map(p=>p.id),['a','b','c']);
+
+    // Category filtering must happen before both the page limit and partner allocation.
+    await db.query('TRUNCATE shop_products');
+    await db.query(`INSERT INTO shop_products(id,site_id,name,score,auto_category,in_stock) VALUES
+      ('unrelated','partner','Claude',100,'claude-pro',true),
+      ('partner-plus','partner','GPT Plus',10,'gpt-plus',true),
+      ('partner-pro','partner','GPT Pro',9,'gpt-pro-100',true),
+      ('regular-plus','tie-high','GPT Plus',90,'gpt-plus',true),
+      ('sold-out','tie-high','GPT Plus',99,'gpt-plus',false)`);
+    const gpt = await loadShopProductsData({queryClient:db,autoCategory:'gpt',productLimit:2,inStockOnly:true});
+    assert.deepEqual(gpt.products.map(p=>p.id),['partner-plus','partner-pro']);
+    const plus = await loadShopProductsData({queryClient:db,autoCategory:'gpt-plus',productLimit:2,inStockOnly:true});
+    assert.deepEqual(plus.products.map(p=>p.id),['partner-plus','regular-plus']);
+    const allPlus = await loadShopProductsData({queryClient:db,autoCategory:'gpt-plus'});
+    assert.deepEqual(new Set(allPlus.products.map(p=>p.id)),new Set(['partner-plus','regular-plus','sold-out']));
   } finally {
     await db.query('ROLLBACK');
     db.release();

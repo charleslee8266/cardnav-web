@@ -56,7 +56,7 @@ const heroTitle = seoSearchPageMeta?.heroTitle ?? t.shops.title;
 const heroDescription = seoSearchTerm ? t.shops.searchResultsHeroDescription.replace('{term}', quickPlanHeroName(seoSearchTerm)) : t.shops.heroDescription;
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
 const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
-const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true });
+const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true, autoCategory: seoSearchTerm?.slug });
 const officialPriceCatalog = await loadOfficialPriceCatalog();
 const platformOptions = await loadShopPlatformOptions();
 const officialPriceUrlSlugs = new Set(officialPriceCatalog.map(entry => entry.urlSlug.trim()).filter(Boolean));
@@ -381,6 +381,16 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
         <button id="merchantLoadMoreButton" type="button" class="btn btn-outline btn-sm hidden">{t.labels.loadMore}</button>
       </section>
     </div>
+  </section>
+
+  <section class="card bg-base-100 border border-base-300 p-5 gap-3" aria-labelledby="shopBuyingHelpTitle">
+    <h2 id="shopBuyingHelpTitle" class="text-lg font-semibold">{t.shops.buyingHelpTitle.replace('{term}', seoSearchTerm?.label ?? t.shops.buyingHelpDefaultTerm)}</h2>
+    <p class="text-sm leading-relaxed text-base-content/75">{t.shops.buyingHelpDescription}</p>
+    <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+      <li><a class="link" href={linkTo('/guide/choose-usage-method')}>{t.shops.buyingHelpMethods}</a></li>
+      <li><a class="link" href={linkTo('/guide/usage-ready-account')}>{t.shops.buyingHelpAccounts}</a></li>
+      <li><a class="link" href={linkTo('/guide/choose-reliable-merchant')}>{t.shops.guideTitle}</a></li>
+    </ul>
   </section>
 
   <script is:inline type="application/json" id="shop-products-data" set:html={shopProductsJsonValue}></script>

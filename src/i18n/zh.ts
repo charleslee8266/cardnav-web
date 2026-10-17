@@ -209,7 +209,7 @@ export const zhMessages = {
     modelLeaderboard: '模型排行榜',
     seoTitle: '卡网大全 - 一站式 AI 大模型账号购买导航',
     seoDescription:
-      '聚合 AI 中转站、卡网、官方订阅比价，还有模型排行、使用指南、实用工具，帮你少踩坑，少花钱。GPT，Claude，Gemini，Cursor，Grok 应有尽有。',
+      '卡网大全提供 AI 账号购买导航与卡网商品比价，汇集 ChatGPT、Claude、Gemini 等相关商品、API 中转站、官方订阅价格、模型排行和使用指南，帮助你比较方案与购买渠道。',
     guideTitle: '不知道如何开始？点击进入向导',
     guideDescription: '从模型选择、使用方式到实践，先把思路理清楚。',
     guideSteps: [
@@ -275,7 +275,7 @@ export const zhMessages = {
   },
   shops: {
     leaderboardTip: '查看{term}模型排行',
-    heroDescription: "按价格、库存和商家筛选 AI 商品，实际价格以各平台为准。",
+    heroDescription: "比较 AI 账号、成品号与代充商品的价格和库存，按分类、商家筛选购买渠道。",
     searchResultsHeroDescription: "查看 {term} 的价格、库存与商家，实际价格以各平台为准。",
 
     searchScope: '搜索范围',
@@ -287,10 +287,15 @@ export const zhMessages = {
     clearFilters: '清除筛选',
     done: '完成',
 
-    seoTitle: '卡网商品',
-    seoDescription: '搜集全网第三方卡网商家与商品，支持按关键词、分类、价格、库存、商家和刷新时间进行筛选与排序。',
-    searchResultsTitle: '{term} 相关商品搜索结果',
-    searchResultsDescription: '查看卡网商品中与 {term} 相关的搜索结果，可继续按价格、库存、商家和分类筛选。结果来自商品标题、分类和商家信息匹配，购买前请核对商品详情。',
+    seoTitle: '卡网比价 - AI 账号、成品号与代充商品',
+    seoDescription: '比较 ChatGPT、Claude、Gemini 等 AI 账号、成品号、代充和订阅相关商品，按价格、库存、分类与商家筛选购买渠道。商品价格与交付内容以商家页面为准。',
+    buyingHelpDefaultTerm: 'AI 账号与卡网商品',
+    buyingHelpTitle: '{term}：购买前如何比较',
+    buyingHelpDescription: '购买 GPT 等 AI 账号时，成品号、共享号、代充和 API 服务的交付内容不同。比较同一套餐与使用期限，核对账号归属、登录方式和售后约定；价格低并不代表提供相同的服务。',
+    buyingHelpMethods: '比较成品号、代充与 API 的使用方式',
+    buyingHelpAccounts: '了解成品账号的购买与登录',
+    searchResultsTitle: '{term} 商品比价与购买导航',
+    searchResultsDescription: '比较 {term} 相关商品的价格、库存与购买渠道，按商家和分类筛选。下单前核对套餐、使用期限、交付方式及售后约定。',
     title: 'AI 卡网商品',
     description: '搜集全网第三方 AI 卡网商家与商品，支持按价格、库存、商家和刷新时间继续筛选，快速找到更合适的购买入口。',
     submitMerchant: '提交卡网站点',
