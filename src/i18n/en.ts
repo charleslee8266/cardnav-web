@@ -227,7 +227,7 @@ export const enMessages: Messages = {
     lowPriceRegions: 'Lower-price regions',
     hotProductsTitle: 'Popular third-party AI products',
     hotProductsDescription: 'Search third-party AI merchants and products across the web',
-    searchPlaceholder: 'Search products or merchant keywords',
+    searchPlaceholder: 'Search product keywords',
     pathEyebrow: 'Choose your access path',
     pathTitle: 'Start with how you want to use AI',
     pathDescription: 'Official subscriptions, API gateways, and third-party AI shops are different paths. If you are still unsure, check the model leaderboard or the guide first.',

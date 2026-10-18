@@ -226,7 +226,7 @@ export const zhMessages = {
     lowPriceRegions: '低价地区',
     hotProductsTitle: '热门 AI 卡网商品',
     hotProductsDescription: '全网第三方 AI 卡网商家与商品搜索',
-    searchPlaceholder: '搜索商品、商家关键词',
+    searchPlaceholder: '搜索商品关键词',
     pathEyebrow: '卡网大全',
     pathTitle: 'AI 订阅、账号和 API 入口导航',
     pathDescription: '把官方订阅价格、API 中转站、第三方卡网商品、模型排行榜和购买指南放在一起，帮你少开几个页面，先把选择看清楚。',

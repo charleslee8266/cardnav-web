@@ -227,7 +227,7 @@ export const ruMessages: Messages = {
     lowPriceRegions: 'Дешевые регионы',
     hotProductsTitle: 'Популярные сторонние AI-товары',
     hotProductsDescription: 'Поиск сторонних AI-продавцов и товаров по всему вебу',
-    searchPlaceholder: 'Искать товары или продавцов',
+    searchPlaceholder: 'Поиск товаров по ключевым словам',
     pathEyebrow: 'Выберите путь доступа',
     pathTitle: 'Сначала решите, как вы хотите пользоваться AI',
     pathDescription: 'Официальные подписки, API gateway и сторонние AI-магазины — разные пути. Если вы еще не уверены, начните с рейтинга моделей или гайда.',
