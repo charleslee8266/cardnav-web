@@ -275,7 +275,7 @@ export const zhMessages = {
   },
   shops: {
     detailPlatformTenure: "已入驻 {months} 个月（截至 {date}）",
-    detailSeoTitle: "{name}靠谱吗？商品价格、库存与商家信息",
+    detailSeoTitle: "{name} - 商品价格、库存与商家信息",
     detailSeoDescription: "查看{name}的商品价格、库存变化、本站收录与更新时间，为判断店铺是否靠谱提供参考。购买前请核实商品交付和售后条款。",
     detailBack: "返回列表页",
     detailProducts: "商家商品",
@@ -476,7 +476,7 @@ export const zhMessages = {
     viewDetail: '详情',
     filterEmpty: '没有符合筛选条件的中转站。',
     backToList: '返回列表',
-    detailSeoTitle: "{name}靠谱吗？API 中转站模型与价格",
+    detailSeoTitle: "{name} - API 中转站模型与价格",
     detailSeoDescription: "查看 {name} API 中转站的 {modelCount} 个模型、{priceCount} 条价格及可用性记录，结合域名注册、收录和更新时间判断可靠性。公开记录不代表服务或资金安全保障。",
     priceSummaryTitle: '价格详情',
     priceSummaryDescription: '这里展示当前可参考的价格记录；同一模型可能存在多个版本和计费单元。',

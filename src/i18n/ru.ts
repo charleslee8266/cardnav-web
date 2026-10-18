@@ -276,7 +276,7 @@ export const ruMessages: Messages = {
   },
   shops: {
     detailPlatformTenure: "На платформе {months} мес. (на {date})",
-    detailSeoTitle: "Надёжен ли {name}? Магазин, товары, цены и наличие",
+    detailSeoTitle: "{name} - Магазин, товары, цены и наличие",
     detailSeoDescription: "Оцените надёжность магазина {name} по ценам, изменениям наличия, дате добавления и обновлениям. Перед покупкой уточните условия доставки и поддержки.",
     detailBack: "Вернуться к списку",
     detailProducts: "Товары продавца",
@@ -477,7 +477,7 @@ export const ruMessages: Messages = {
     viewDetail: 'Подробнее',
     filterEmpty: 'Нет gateway для выбранных фильтров.',
     backToList: 'К списку',
-    detailSeoTitle: "Надёжен ли {name}? Модели и цены API-gateway",
+    detailSeoTitle: "{name} - Модели и цены API-gateway",
     detailSeoDescription: "Данные API-gateway {name}: {modelCount} моделей, {priceCount} цен, доступность, регистрация домена и обновления для оценки надёжности. Записи не гарантируют безопасность сервиса или средств.",
     priceSummaryTitle: 'Детали цен',
     priceSummaryDescription: 'В таблице показаны доступные справочные записи цен. У одной модели могут быть разные версии и единицы тарификации.',

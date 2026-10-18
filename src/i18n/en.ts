@@ -276,7 +276,7 @@ export const enMessages: Messages = {
   },
   shops: {
     detailPlatformTenure: "{months} months on platform (as of {date})",
-    detailSeoTitle: "Is {name} reliable? Shop information, products and prices",
+    detailSeoTitle: "{name} - Shop information, products and prices",
     detailSeoDescription: "Review products, prices, stock changes, listing dates and updates for {name} when assessing shop reliability. Verify delivery and after-sales terms before buying.",
     detailBack: "Back to list",
     detailProducts: "Merchant products",
@@ -477,7 +477,7 @@ export const enMessages: Messages = {
     viewDetail: 'Details',
     filterEmpty: 'No gateway matches the current filters.',
     backToList: 'Back to list',
-    detailSeoTitle: "Is {name} reliable? API gateway models and prices",
+    detailSeoTitle: "{name} - API gateway models and prices",
     detailSeoDescription: "Assess the {name} API gateway using records for {modelCount} models, {priceCount} prices, availability, domain registration and updates. Public records do not guarantee service or fund safety.",
     priceSummaryTitle: 'Price details',
     priceSummaryDescription: 'The table shows currently available reference price records. The same model may have multiple versions and billing units.',
