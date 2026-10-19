@@ -60,8 +60,9 @@ function initGatewaySubmit() {
       if (!validation.ok) { fail(messages.gatewayInvalidUrl, fields.url); return; }
       let endpoint = fields.apiEndpoint.value.trim();
       if (endpoint) {
-        try { const parsed = new URL(endpoint); if (!['http:', 'https:'].includes(parsed.protocol)) throw Error('protocol'); parsed.hash = ''; endpoint = parsed.toString().replace(/\/$/, ''); }
-        catch { fail(messages.gatewayInvalidApiEndpoint, fields.apiEndpoint); return; }
+        const endpointValidation = validatePublicSubmittedUrl(endpoint);
+        if (!endpointValidation.ok) { fail(messages.gatewayInvalidApiEndpoint, fields.apiEndpoint); return; }
+        endpoint = endpointValidation.url;
       }
       confirmed = { locale: config.locale, url: validation.url, apiEndpoint: endpoint, name: fields.name.value.trim(), summary: fields.summary.value.trim(), paymentMethods: payments.filter(input => input.checked).map(input => input.value) };
       dialog.querySelectorAll('[data-gateway-review]').forEach(output => {

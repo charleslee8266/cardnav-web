@@ -903,14 +903,11 @@ export async function submitGatewaySite(input: { url: string; apiEndpoint?: stri
   const apiEndpointInput = input.apiEndpoint?.trim() ?? '';
   let apiEndpoint = '';
   if (apiEndpointInput) {
-    try {
-      const parsedApiEndpoint = new URL(apiEndpointInput);
-      if (parsedApiEndpoint.protocol !== 'http:' && parsedApiEndpoint.protocol !== 'https:') throw new Error('unsupported protocol');
-      parsedApiEndpoint.hash = '';
-      apiEndpoint = parsedApiEndpoint.toString().replace(/\/$/, '');
-    } catch {
+    const endpointValidation = validatePublicSubmittedUrl(apiEndpointInput);
+    if (!endpointValidation.ok) {
       return { ok: false as const, errorKey: 'gatewayInvalidApiEndpoint' satisfies SubmitSiteUrlErrorKey };
     }
+    apiEndpoint = endpointValidation.url;
   }
   const name = input.name.trim();
   const summary = input.summary.trim();

@@ -323,3 +323,89 @@ test('gateway submission rejects the Tencent Docs homepage without touching the 
   assert.equal(result.ok, false);
   assert.equal(query.mock.callCount(), 0);
 });
+
+test('submission review rejects OAST, local DNS and obfuscated injection probes', () => {
+  const inputs = [
+    'https://merchant.shop/a%20union/**/select%201',
+    'https://merchant.shop/?x=1%27%20OR%20%271%27=%271',
+    "https://merchant.shop/a'NOR'1'='1",
+    'https://merchant.shop/x%20or/**/1=1',
+    'https://merchant.shop/?x=or1=1',
+    'https://merchant.shop/%00',
+    'https://merchant.shop/%2500',
+    'https://merchant.shop/path\u0000',
+    'https://merchant.shop/%3C$svg%20onload=alert(1)%3E',
+    'https://scanner.oast.online/submission-check',
+    'https://OAST.ONLINE.:8443/store',
+    'http://localtest.me/store',
+    'http://shop.lvh.me/store',
+    'http://shop.vcap.me/store',
+    'https://scanner.oast.live/store',
+    'https://scanner.canarytokens.com/store',
+    'http://127.0.0.1.traefik.me/store',
+  ];
+  for (const input of inputs) assert.equal(validatePublicSubmittedUrl(input).ok, false, input);
+});
+
+test('probe service boundaries and normal storefront expressions remain valid', () => {
+  for (const input of [
+    'https://oast.online.merchant.shop/store',
+    'https://myoast.online/store',
+    'https://lvh.me.merchant.shop/store',
+    'https://mylocaltest.me/store',
+    'https://merchant.shop/store?next=https://oast.online',
+    'https://merchant.shop/orange?floor1=1&color=union&select=all',
+    'https://merchant.shop/store?math=1=1&name=O%27Reilly',
+  ]) assert.deepEqual(validatePublicSubmittedUrl(input), { ok: true, url: input }, input);
+});
+
+
+test('review probe submissions cannot write either shop or gateway queue', async (context) => {
+  const query = context.mock.method(pg.Pool.prototype, 'query', () => {
+    throw new Error('Rejected submissions must not reach the database');
+  });
+  for (const input of [
+    'https://merchant.shop/a%20union/**/select%201',
+    'https://merchant.shop/?x=1%27%20OR%20%271%27=%271',
+    "https://merchant.shop/a'NOR'1'='1",
+    'https://merchant.shop/x%20or/**/1=1',
+    'https://merchant.shop/%00',
+    'https://scanner.oast.online',
+    'http://shop.localtest.me',
+    'http://shop.lvh.me',
+    'http://shop.vcap.me',
+    'http://127.0.0.1.traefik.me',
+    'https://httpbin.org/status/418',
+    'https://www.google.com/url?q=http://169.254.169.254',
+    'https://bit.ly',
+  ]) {
+    assert.equal((await submitSiteUrl(input)).ok, false, input);
+    assert.equal((await submitGatewaySite({ url: input, name: 'Submitted site', summary: '', paymentMethods: [] })).ok, false, input);
+  }
+  assert.equal(query.mock.callCount(), 0);
+});
+
+
+test('diagnostic services, Google redirect URLs and shortener homepages are not merchant submissions', () => {
+  for (const input of [
+    'https://httpbin.org/delay/10',
+    'https://httpbin.org/status/418',
+    'https://httpbin.org/redirect-to?url=http://169.254.169.254',
+    'https://sub.httpbin.org/store',
+    'http://HTTPBIN.ORG.:8443/',
+    'https://www.google.com/url?q=http://169.254.169.254',
+    'https://google.com/url?url=https://merchant.shop',
+    'https://t.co',
+    'https://bit.ly/?source=home',
+    'https://www.bit.ly',
+  ]) assert.equal(validatePublicSubmittedUrl(input).ok, false, input);
+  for (const input of [
+    'https://httpbin.org.merchant.shop/store',
+    'https://myhttpbin.org/store',
+    'https://google.com.merchant.shop/url?q=products',
+    'https://merchant.shop/url?q=https://merchant.shop',
+    'https://merchant.shop/?redirect-to=https://merchant.shop',
+    'https://bit.ly.merchant.shop',
+    'https://mybit.ly',
+  ]) assert.deepEqual(validatePublicSubmittedUrl(input), { ok: true, url: input }, input);
+});

@@ -17,7 +17,7 @@ class SubmitElementMock extends EventTarget {
   focus() {}
 }
 
-test('shop dialog blocks IP-mapping DNS and search homepages before confirmation or network requests', (context) => {
+test('shop dialog blocks probe URLs before confirmation or network requests', (context) => {
   const fetch = context.mock.method(globalThis, 'fetch', async () => {
     throw new Error('Rejected submissions must not send requests');
   });
@@ -31,7 +31,7 @@ test('shop dialog blocks IP-mapping DNS and search homepages before confirmation
       return elements.get(selector);
     },
   });
-  initShopSubmitFlow(dialog, { temporaryUrl: 'Temporary address rejected', platformHomeUrl: 'Homepage rejected' });
+  initShopSubmitFlow(dialog, { temporaryUrl: 'Temporary address rejected', platformHomeUrl: 'Homepage rejected', probeUrl: 'Probe rejected' });
   const input = elements.get('#urlInput')!;
   const error = elements.get('#clientError')!;
   for (const [url, message] of [
@@ -41,6 +41,15 @@ test('shop dialog blocks IP-mapping DNS and search homepages before confirmation
     ['https://shop.127.0.0.1.xip.io', 'Temporary address rejected'],
     ['https://google.com', 'Homepage rejected'],
     ['https://docs.qq.com', 'Homepage rejected'],
+    ['http://shop.localtest.me', 'Temporary address rejected'],
+    ['https://scanner.oast.online', 'Probe rejected'],
+    ['https://httpbin.org/redirect-to?url=http://169.254.169.254', 'Probe rejected'],
+    ['https://www.google.com/url?q=http://169.254.169.254', 'Probe rejected'],
+    ['https://t.co', 'Homepage rejected'],
+    ['https://bit.ly', 'Homepage rejected'],
+    ['https://merchant.shop/a%20union/**/select%201', 'Probe rejected'],
+    ['https://merchant.shop/?x=1%27%20OR%20%271%27=%271', 'Probe rejected'],
+    ['https://merchant.shop/%00', 'Probe rejected'],
   ]) {
     input.value = url;
     elements.get('#submitForm')!.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -51,7 +60,7 @@ test('shop dialog blocks IP-mapping DNS and search homepages before confirmation
   assert.equal(fetch.mock.callCount(), 0);
 });
 
-test('gateway dialog rejects the Tencent Docs homepage before confirmation or network requests', async (context) => {
+test('gateway dialog blocks probe URLs before confirmation or network requests', async (context) => {
   const fetch = context.mock.method(globalThis, 'fetch', async () => {
     throw new Error('Rejected submissions must not send requests');
   });
@@ -81,9 +90,12 @@ test('gateway dialog rejects the Tencent Docs homepage before confirmation or ne
   } });
   try {
     await import(new URL('../src/scripts/submission-dialogs.js', import.meta.url).href);
-    form.dispatchEvent(new Event('submit', { cancelable: true }));
-    assert.equal(fields.get('url')!.attributes.get('aria-invalid'), 'true');
-    assert.equal(error.textContent, 'Invalid gateway address');
+    for (const url of ['https://docs.qq.com', 'http://shop.lvh.me', 'https://httpbin.org/delay/10', 'https://www.google.com/url?q=http://169.254.169.254', 'https://t.co', 'https://scanner.oast.online', 'https://merchant.shop/x%20or/**/1=1', 'https://merchant.shop/%00']) {
+      fields.get('url')!.value = url;
+      form.dispatchEvent(new Event('submit', { cancelable: true }));
+      assert.equal(fields.get('url')!.attributes.get('aria-invalid'), 'true', url);
+      assert.equal(error.textContent, 'Invalid gateway address', url);
+    }
     assert.equal(fetch.mock.callCount(), 0);
   } finally {
     if (original) Object.defineProperty(globalThis, 'document', original);
