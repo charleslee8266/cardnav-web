@@ -226,10 +226,10 @@ export function formatBeijingRefreshTime(input: string | null | undefined): stri
 }
 
 function displayGatewayFamily(family: string) {
-  if (!family || family === 'unknown' || family === 'custom' || family.startsWith('custom-')) return '';
   const labels: Record<string, string> = {
     newApi: 'New API',
     sub2Api: 'Sub2API',
+    'custom-codekey': 'Sub2API',
     oneApi: 'One API',
     rixApi: 'Rix API',
     voApi: 'VoAPI',
