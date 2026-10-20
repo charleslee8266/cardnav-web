@@ -39,39 +39,36 @@ for (const [partnerCount, supportCount, expectedPartners, expectedSupporters] of
   [6, 0, [5,5,4,4,3,3,2,2,1,0], []],
   [12, 12, [11,10,9,8,7,6,5,4,3,2], []],
 ] as const) {
-  test(`默认及手动排序合作${partnerCount}家赞赏${supportCount}家优先分两轮名额，每家最多两行且整体十行`, () => {
+  test(`手动排序合作${partnerCount}家赞赏${supportCount}家优先分两轮名额，每家最多两行且整体十行`, () => {
     const rows = Array.from({ length: partnerCount + supportCount }, (_, i) => [0, 1, 2].map(variant => ({
       id: String(i), variant, sponsor: i < partnerCount, supportPoints: i + 1,
       defaultIndex: i * 3 + variant, price: i * 10 + variant,
     }))).flat();
-    for (const manualSort of [false, true]) {
-      for (const direction of [1, -1]) {
-        const input = rows.slice().sort((a, b) => manualSort ? direction * (a.price - b.price) : a.defaultIndex-b.defaultIndex);
-        const kinds = new Map<typeof rows[number], PinKind>();
-        const byDefault = (a: typeof rows[number], b: typeof rows[number]) => a.defaultIndex-b.defaultIndex;
-        const output = pinListRows(input, {
-          site: row => row,
-          manualSort, defaultOrder: (a,b) => a.defaultIndex-b.defaultIndex,
-          onPin: (row, kind) => kinds.set(row, kind),
-        });
-        const pins = output.filter(row => kinds.get(row));
-        const partners = pins.filter(row => kinds.get(row) === 'partner');
-        const supporters = pins.filter(row => kinds.get(row) === 'support');
-        const ids = (group: typeof rows) => group.map(row => Number(row.id)).sort((a,b) => b-a);
-        assert.deepEqual(ids(partners), expectedPartners);
-        assert.deepEqual(ids(supporters), expectedSupporters);
-        assert.equal(pins.length, 10);
-        assert.equal(new Set(pins.map(row => row.id)).size, Math.min(10,partnerCount+supportCount));
-        for (const id of new Set(pins.map(row => row.id))) {
-          const selected = pins.filter(row => row.id === id);
-          assert.deepEqual(selected, input.filter(row => row.id === id).slice(0,selected.length));
-          assert.ok(selected.length <= 2);
-        }
-        for (const group of [partners, supporters]) assert.deepEqual(group, (manualSort ? input : input.slice().sort((a,b) => b.supportPoints-a.supportPoints || byDefault(a,b))).filter(row => group.includes(row)));
-        assert.deepEqual(output.slice(10), input.filter(row => !pins.includes(row)));
-        assert.equal(output.length, input.length);
-        assert.equal(new Set(output).size, input.length);
+    for (const direction of [1, -1]) {
+      const input = rows.slice().sort((a, b) => direction * (a.price - b.price));
+      const kinds = new Map<typeof rows[number], PinKind>();
+      const output = pinListRows(input, {
+        site: row => row,
+        manualSort: true, defaultOrder: (a,b) => a.defaultIndex-b.defaultIndex,
+        onPin: (row, kind) => kinds.set(row, kind),
+      });
+      const pins = output.filter(row => kinds.get(row));
+      const partners = pins.filter(row => kinds.get(row) === 'partner');
+      const supporters = pins.filter(row => kinds.get(row) === 'support');
+      const ids = (group: typeof rows) => group.map(row => Number(row.id)).sort((a,b) => b-a);
+      assert.deepEqual(ids(partners), expectedPartners);
+      assert.deepEqual(ids(supporters), expectedSupporters);
+      assert.equal(pins.length, 10);
+      assert.equal(new Set(pins.map(row => row.id)).size, Math.min(10,partnerCount+supportCount));
+      for (const id of new Set(pins.map(row => row.id))) {
+        const selected = pins.filter(row => row.id === id);
+        assert.deepEqual(selected, input.filter(row => row.id === id).slice(0,selected.length));
+        assert.ok(selected.length <= 2);
       }
+      for (const group of [partners, supporters]) assert.deepEqual(group, input.filter(row => group.includes(row)));
+      assert.deepEqual(output.slice(10), input.filter(row => !pins.includes(row)));
+      assert.equal(output.length, input.length);
+      assert.equal(new Set(output).size, input.length);
     }
   });
 }
@@ -103,4 +100,45 @@ test('积分相同用后端顺序选商家，筛选后重选并清理超额行�
   const filtered = input.filter(row => row.defaultIndex >= 8);
   assert.deepEqual(pinListRows(filtered, options), filtered);
   assert.ok(filtered.every(row => kinds.get(row) === 'support'));
+});
+
+for (const [partners, supporters, partnerPins, supportPins] of [
+  [0, 10, 0, 20], [0, 11, 0, 11], [3, 9, 6, 9], [4, 14, 6, 14],
+  [4, 15, 5, 15], [4, 16, 4, 16], [4, 17, 4, 16], [21, 0, 20, 0],
+]) {
+  test(`默认排序合作${partners}家赞赏${supporters}家，先覆盖商家再按资格补第二行`, () => {
+    const rows = Array.from({ length: partners + supporters }, (_, index) =>
+      [0, 1, 2].map(variant => ({ id: String(index), variant, sponsor: index < partners, supportPoints: index + 1 }))
+    ).flat();
+    const kinds = new Map<typeof rows[number], PinKind>();
+    const output = pinListRows(rows, { site: row => row, onPin: (row, kind) => kinds.set(row, kind) });
+    const pins = output.filter(row => kinds.get(row));
+    assert.equal(pins.filter(row => kinds.get(row) === 'partner').length, partnerPins);
+    assert.equal(pins.filter(row => kinds.get(row) === 'support').length, supportPins);
+    assert.equal(new Set(pins.map(row => row.id)).size, Math.min(20, partners + supporters));
+    assert.equal(new Set(output).size, rows.length);
+    assert.deepEqual(output.slice(pins.length), rows.filter(row => !pins.includes(row)));
+    for (const row of pins) assert.ok(row.variant < (row.sponsor || partners + supporters <= 10 ? 2 : 1));
+  });
+}
+
+test('分类筛选重新计算商家数，切换手动排序收紧额度并取消收藏置顶', () => {
+  const rows = Array.from({ length: 11 }, (_, index) => [0, 1].map(variant => ({
+    id: String(index), variant, supportPoints: 1, category: index < 10 ? 'selected' : 'other',
+  }))).flat();
+  const favorite = { id: 'favorite', variant: 0, supportPoints: 0, category: 'selected' };
+  const kinds = new Map<typeof rows[number], PinKind>();
+  const options = { site: (row: typeof rows[number]) => row,
+    onPin: (row: typeof rows[number], kind: PinKind) => kinds.set(row, kind),
+    favorites: (remaining: typeof rows) => remaining.filter(row => row === favorite) };
+  pinListRows([...rows, favorite], options);
+  assert.equal([...kinds.values()].filter(kind => kind === 'support').length, 11);
+  const filtered = [...rows, favorite].filter(row => row.category === 'selected');
+  const output = pinListRows(filtered, options);
+  assert.equal(output.slice(0, 20).filter(row => kinds.get(row) === 'support').length, 20);
+  assert.equal(kinds.get(favorite), 'favorite');
+  const manual = pinListRows(filtered, { ...options, manualSort: true });
+  assert.equal(manual.filter(row => kinds.get(row) === 'support').length, 10);
+  assert.equal(kinds.get(favorite), '');
+  assert.deepEqual(pinListRows(filtered, options), output);
 });

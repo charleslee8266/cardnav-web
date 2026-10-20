@@ -6,7 +6,7 @@ import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice
  */
 import 'dotenv/config';
 import pg from 'pg';
-import { MAX_PINNED_COMMERCIAL, MAX_PINNED_ROWS_PER_SITE } from './list-ranking-policy.js';
+import { MAX_PINNED_COMMERCIAL, MAX_PINNED_ROWS_PER_SITE, MAX_SUPPORT_SITES_FOR_SECOND_PIN } from './list-ranking-policy.js';
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
 export type PublicSiteRow = {
@@ -420,6 +420,8 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         ROW_NUMBER() OVER (ORDER BY candidate.site_position, candidate.pin_group, ranked.site_rank) AS pin_position
       FROM site_pin_candidates candidate
       INNER JOIN ranked_pin_sites ranked ON ranked.site_id = candidate.site_id
+      WHERE candidate.site_position = 1 OR candidate.pin_group = 0
+        OR (SELECT COUNT(*) FROM ranked_pin_sites) <= ${MAX_SUPPORT_SITES_FOR_SECOND_PIN}
     ), selected_pin_slots AS (
       SELECT *, ROW_NUMBER() OVER (PARTITION BY site_id ORDER BY score DESC, product_row_id ASC) AS slot_position
       FROM pin_candidates WHERE pin_position <= ${MAX_PINNED_COMMERCIAL}

@@ -12,24 +12,28 @@ function site(id: string, prices: PublicGatewayPriceRow[], sponsor = false, supp
     supportPoints, supportTotalCents: 0, siteScore: 0, pricesForModel: prices } as PublicGatewayModelSiteRow;
 }
 
-test('默认报价共享十行，两轮覆盖合作和赞赏站点且每站最多两个分组，其余报价完整保留', () => {
+test('默认报价共用二十行，超过十站仅合作站可补第二个分组，其余报价完整保留', () => {
   const sites = [site('ordinary', [price('a', 0)])];
   for (let i = 0; i < 6; i++) {
     sites.push(site(`partner${i}`, [price('a', 30+i), price('b', 50+i), price('c', 70+i)], true, i));
-    sites.push(site(`support${i}`, [price('a', 10+i)], false, i+1));
+    sites.push(site(`support${i}`, [price('a', 10+i), price('b', 20+i)], false, i+1));
   }
   const quotes = selectModelSiteQuotes(sites);
-  assert.deepEqual(quotes.slice(0, 10).map(q => [q.site.id,q.price.groupId]), [
-    ['partner5','a'],['partner4','a'],['partner3','a'],['partner2','a'],['partner1','a'],['partner0','a'],
-    ['support5','a'],['support4','a'],['support3','a'],['support2','a'],
-  ]);
-  assert.ok(quotes.slice(0,6).every(q => q.pinKind === 'partner'));
-  assert.ok(quotes.slice(6,10).every(q => q.pinKind === 'support'));
-  assert.ok(quotes.slice(10).every(q => q.pinKind === ''));
-  assert.equal(quotes.length, 25);
-  const selected = new Set(quotes.slice(0,10).map(q => `${q.site.id}:${q.price.groupId}`));
-  assert.deepEqual(quotes.slice(10).map(q => `${q.site.id}:${q.price.groupId}`), sites.flatMap(s => s.pricesForModel.map(p => `${s.id}:${p.groupId}`)).filter(key => !selected.has(key)));
+  const expected = [
+    ...[5,4,3,2,1,0].flatMap(i => [['partner'+i, 'a'], ['partner'+i, 'b']]),
+    ...[5,4,3,2,1,0].map(i => ['support'+i, 'a']),
+  ];
+  assert.deepEqual(quotes.slice(0, 18).map(q => [q.site.id,q.price.groupId]), expected);
+  assert.ok(quotes.slice(0,12).every(q => q.pinKind === 'partner'));
+  assert.ok(quotes.slice(12,18).every(q => q.pinKind === 'support'));
+  assert.ok(quotes.slice(18).every(q => q.pinKind === ''));
+  assert.equal(quotes.length, 31);
+  const selected = new Set(expected.map(([id, group]) => `${id}:${group}`));
+  assert.deepEqual(quotes.slice(18).map(q => `${q.site.id}:${q.price.groupId}`), sites.flatMap(s => s.pricesForModel.map(p => `${s.id}:${p.groupId}`)).filter(key => !selected.has(key)));
   assert.deepEqual(selectModelSiteQuotes(sites, {query:'partner0.test'}).map(q => q.pinKind), ['partner', 'partner', '']);
+  const manual = selectModelSiteQuotes(sites, { compare: (a,b) => (a.price.inputPrice ?? 0) - (b.price.inputPrice ?? 0) });
+  assert.equal(manual.filter(q => q.pinKind).length, 10);
+  assert.equal(new Set(manual.filter(q => q.pinKind).map(q => q.site.id)).size, 10);
 });
 
 test('筛选后按原始顺序每组取一条报价，普通站保留全部分组', () => {

@@ -1,4 +1,4 @@
-import { MAX_PINNED_ROWS_PER_SITE, MAX_PINNED_COMMERCIAL } from './list-ranking-policy.js';
+import { MAX_PINNED_ROWS_PER_SITE, MAX_PINNED_COMMERCIAL, MAX_PINNED_COMMERCIAL_MANUAL_SORT, MAX_SUPPORT_SITES_FOR_SECOND_PIN } from './list-ranking-policy.js';
 
 /** Shared pin allocation. Limits apply to pins; every remaining row keeps its input order. */
 export type PinKind = 'partner' | 'support' | 'favorite' | '';
@@ -31,14 +31,17 @@ export function pinListRows<Row>(rows: Row[], options: {
       } else if (merchant.representatives.length < MAX_PINNED_ROWS_PER_SITE) merchant.representatives.push(row);
     }
   }
+  const pinLimit = options.manualSort ? MAX_PINNED_COMMERCIAL_MANUAL_SORT : MAX_PINNED_COMMERCIAL;
+  const allowSupportSecondPin = options.manualSort || merchants.size <= MAX_SUPPORT_SITES_FOR_SECOND_PIN;
   const rankedSites = [...merchants.values()].sort((a, b) => Number(Boolean(b.site.sponsor)) - Number(Boolean(a.site.sponsor))
     || (b.site.supportPoints ?? 0) - (a.site.supportPoints ?? 0)
-    || (options.defaultOrder?.(a.best, b.best) ?? 0)).slice(0, MAX_PINNED_COMMERCIAL);
+    || (options.defaultOrder?.(a.best, b.best) ?? 0)).slice(0, pinLimit);
   // Each round covers partners then supporters before any merchant receives its next row.
   const selected = new Map<Row, PinSite>();
   for (let round = 0; round < MAX_PINNED_ROWS_PER_SITE; round++) {
     for (const merchant of rankedSites) {
-      if (selected.size >= MAX_PINNED_COMMERCIAL) break;
+      if (selected.size >= pinLimit) break;
+      if (round > 0 && !merchant.site.sponsor && !allowSupportSecondPin) continue;
       const row = merchant.representatives[round];
       if (row !== undefined) selected.set(row, merchant.site);
     }

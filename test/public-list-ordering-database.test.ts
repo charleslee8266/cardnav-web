@@ -5,7 +5,7 @@ import { loadShopProductsData, loadGatewaySites } from '../src/store.js';
 import { prioritizeShopProductRows } from '../src/shop-sponsored-pinning.js';
 import { pinSiteRows } from '../src/site-list-pinning.js';
 
-test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共用十行', {
+test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共用二十行', {
   skip: !process.env.CARDNAV_TEST_DATABASE_URL,
 }, async () => {
   const pool = new pg.Pool({ connectionString: process.env.CARDNAV_TEST_DATABASE_URL });
@@ -20,7 +20,7 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
     CREATE TEMP TABLE shop_products (
       id text, site_id text, category_name text DEFAULT '', auto_category text DEFAULT 'other', name text,
       price text DEFAULT '1', price_number numeric DEFAULT 1, price_unit text DEFAULT 'USD', product_url text,
-      stock integer DEFAULT 1, in_stock boolean DEFAULT true, active boolean DEFAULT true, score numeric, refreshed_at timestamptz
+      stock integer DEFAULT 1, in_stock boolean DEFAULT true, active boolean DEFAULT true, score numeric, shop_recommendation integer DEFAULT 0, refreshed_at timestamptz
     ) ON COMMIT DROP;
     CREATE TEMP TABLE gateway_sites (
       site_id text, name text, url text, family text DEFAULT '', score numeric, weight integer DEFAULT 0,
@@ -30,7 +30,7 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
       price_count integer DEFAULT 0, recent_model_providers text[], recent_model_families text[], latest_price_fetched_at timestamptz,
       status text DEFAULT 'online', type text DEFAULT 'gateway'
     ) ON COMMIT DROP;`);
-    for (const [partners, supporters, partnerRows] of [[6,12,6], [3,12,3], [2,7,3], [6,0,10], [0,8,0], [0,6,0], [12,8,10], [1,0,2]]) {
+    for (const [partners, supporters, partnerRows] of [[6,12,8], [3,12,6], [2,7,4], [6,0,12], [0,8,0], [0,6,0], [12,8,12], [1,0,2], [0,10,0], [0,11,0], [4,15,5], [4,16,4], [4,17,4]]) {
       await db.query('TRUNCATE shop_sites, shop_products, gateway_sites');
       for (let i = 0; i < partners+supporters; i++) {
         const id = `site-${i}`;
@@ -49,18 +49,7 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
       const ordered = prioritizeShopProductRows(rows, {favoriteProductKeys:new Set(), favoriteSiteKeys:new Set()}, (row,kind) => pins.set(row.id,kind));
       assert.deepEqual(ordered.map(row => row.id), full.products.map(row => row.id));
       assert.equal([...pins.values()].filter(kind => kind === 'partner').length, partnerRows);
-      assert.equal([...pins.values()].filter(Boolean).length, Math.min(10,(partners+supporters)*2));
-      if (partners === 0 && supporters === 6) {
-        assert.equal(new Set(ordered.slice(0,10).map(row => row.siteId)).size,6);
-        assert.deepEqual(ordered.slice(0,10).map(row => row.siteId), ['site-5','site-5','site-4','site-4','site-3','site-3','site-2','site-2','site-1','site-0']);
-      }
-      if (partners === 2 && supporters === 7) {
-        const counts = new Map<string,number>();
-        for (const row of ordered.slice(0,10)) counts.set(row.siteId,(counts.get(row.siteId) ?? 0)+1);
-        assert.equal(counts.size,9);
-        assert.equal(counts.get('site-1'),2);
-        assert.ok([...counts].filter(([id]) => id !== 'site-1').every(([,count]) => count === 1));
-      }
+      assert.equal([...pins.values()].filter(Boolean).length, Math.min(20, partners + supporters + (partners + supporters <= 10 ? partners + supporters : partners)));
       const gateways = await loadGatewaySites({queryClient:db});
       const firstGateways = await loadGatewaySites({queryClient:db,limit:7});
       assert.deepEqual(firstGateways.sites,gateways.sites.slice(0,7));

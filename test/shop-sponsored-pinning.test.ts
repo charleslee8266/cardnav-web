@@ -42,10 +42,10 @@ test('合作组积分相同时沿用商品评分顺序', () => {
   assert.deepEqual(sorted.map(item => item.productFavoriteKey), ['higher-points', 'higher-score', 'lower-score']);
 });
 test('partner pins precede support and favorites while overflow keeps its place', () => {
-  const partners = Array.from({ length: 12 }, (_, i) => row(`partner-${i}`, true));
+  const partners = Array.from({ length: 22 }, (_, i) => row(`partner-${i}`, true));
   const rows = [row('ordinary'), row('low', false, 100), row('favorite'), row('high', false, 50000), ...partners];
   const sorted = prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(['favorite']), favoriteSiteKeys: new Set() });
-  assert.deepEqual(sorted.map(item => item.productFavoriteKey), ['partner-0', 'partner-1', 'partner-10', 'partner-11', 'partner-2', 'partner-3', 'partner-4', 'partner-5', 'partner-6', 'partner-7', 'favorite', 'ordinary', 'low', 'high', 'partner-8', 'partner-9']);
+  assert.deepEqual(sorted.map(item => item.productFavoriteKey), [...partners.slice().sort((a, b) => a.id < b.id ? -1 : 1).slice(0,20).map(item => item.id), 'favorite', 'ordinary', 'low', 'high', 'partner-8', 'partner-9']);
   assert.equal(new Set(sorted).size, rows.length);
 });
 test('partners and supported merchants sort by support points and preserve ties', () => {
@@ -75,7 +75,7 @@ test('收藏商家总数不限，逐件收藏商品与商家入选商品同分�
 });
 
 for (const [kind, siteLimit] of [['partner', 2], ['support', 2]] as const) {
-  test(`${kind} pins allow ${siteLimit} products per merchant and ten per group without dropping overflow`, () => {
+  test(`${kind} pins allow ${siteLimit} products per merchant within the default quota without dropping overflow`, () => {
     const merchants = Array.from({ length: 6 }, (_, siteIndex) =>
       Array.from({ length: 4 }, (_, productIndex) => ({
         ...row(`${kind}-${siteIndex}-${productIndex}`, kind === 'partner', kind === 'support' ? 100 : 0),
@@ -88,17 +88,17 @@ for (const [kind, siteLimit] of [['partner', 2], ['support', 2]] as const) {
       favoriteProductKeys: new Set([`${kind}-0-3`]),
       favoriteSiteKeys: new Set(),
     }, (item, kind) => kinds.set(item, kind));
-    const expectedPins = merchants.filter((_, index) => index % 4 === 0 || (index % 4 === 1 && index < 16));
-    assert.deepEqual(sorted.slice(0, 10), expectedPins);
+    const expectedPins = merchants.filter((_, index) => index % 4 === 0 || index % 4 === 1);
+    assert.deepEqual(sorted.slice(0, 12), expectedPins);
     for (const item of expectedPins) assert.equal(kinds.get(item), kind);
     assert.equal(kinds.get(merchants[3]), 'favorite');
     assert.equal(kinds.get(merchants[2]), '');
-    assert.equal(kinds.get(merchants[21]), '');
-    assert.equal(sorted[10].productFavoriteKey, `${kind}-0-3`);
-    assert.equal(sorted[11].productFavoriteKey, 'normal');
+    assert.equal(kinds.get(merchants[22]), '');
+    assert.equal(sorted[12].productFavoriteKey, `${kind}-0-3`);
+    assert.equal(sorted[13].productFavoriteKey, 'normal');
     assert.equal(new Set(sorted).size, rows.length);
     const pins = new Set([...expectedPins, merchants[3]]);
-    assert.deepEqual(sorted.slice(12), merchants.filter(item => !pins.has(item)));
+    assert.deepEqual(sorted.slice(14), merchants.filter(item => !pins.has(item)));
   });
 }
 
@@ -151,10 +151,10 @@ test('商家推荐度只影响默认商业选品及同商家置顶顺序，筛�
 });
 
 test('推荐度不改变同积分商家的名额竞争顺序', () => {
-  const rows = Array.from({ length: 11 }, (_, index) => ({ ...row(`row-${index}`, false, 10), score: 100 - index,
-    ...(index === 10 ? { shopRecommendation: 1000 } : {}) }));
+  const rows = Array.from({ length: 21 }, (_, index) => ({ ...row(`row-${index}`, false, 10), score: 100 - index,
+    ...(index === 20 ? { shopRecommendation: 1000 } : {}) }));
   const kinds = new Map<string, string>();
   prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set() }, (item, kind) => kinds.set(item.id, kind));
-  assert.equal(kinds.get('row-10'), '');
-  assert.ok(rows.slice(0, 10).every(item => kinds.get(item.id) === 'support'));
+  assert.equal(kinds.get('row-20'), '');
+  assert.ok(rows.slice(0, 20).every(item => kinds.get(item.id) === 'support'));
 });

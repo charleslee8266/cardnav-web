@@ -17,23 +17,23 @@ test('合作和赞赏组按积分排序，普通组保留原评分顺序', () =>
   assert.deepEqual(pinSiteRows(rows).map(row => row.id), ['paid-partner', 'partner', 'high', 'low', 'favorite', 'ordinary']);
 });
 
-test('合作与赞赏合计最多10个，超额记录回收藏或普通组且不丢失', () => {
+test('合作与赞赏合计最多20个，超额记录回收藏或普通组且不丢失', () => {
   const rows = Array.from({ length: 24 }, (_, id) => ({ id, sponsor: id % 2 === 0, supportTotalCents: 100, supportPoints: 1, favorite: id === 23 }));
   const kinds = new Map<number, string>();
   const sorted = pinSiteRows(rows, (item, kind) => kinds.set(item.id, kind));
-  assert.deepEqual(sorted.map(row => row.id), [0,2,4,6,8,10,12,14,16,18,23,1,3,5,7,9,11,13,15,17,19,20,21,22]);
+  assert.deepEqual(sorted.map(row => row.id), [0,2,4,6,8,10,12,14,16,18,20,22,1,3,5,7,9,11,13,15,23,17,19,21]);
   assert.equal(new Set(sorted).size, rows.length);
   assert.equal(kinds.get(18), 'partner');
   assert.equal(kinds.get(19), '');
   assert.equal(kinds.get(23), 'favorite');
-  for (const id of [20, 21, 22]) assert.equal(kinds.get(id), '');
+  for (const id of [17, 19, 21]) assert.equal(kinds.get(id), '');
 });
 
 test('高积分商家即使在原评分顺序末尾也能置顶，超额商家回到原位置', () => {
-  const rows = Array.from({ length: 12 }, (_, id) => ({ id, sponsor: true, supportTotalCents: 0, supportPoints: id === 11 ? 100 : 0, favorite: false }));
+  const rows = Array.from({ length: 22 }, (_, id) => ({ id, sponsor: true, supportTotalCents: 0, supportPoints: id === 21 ? 100 : 0, favorite: false }));
   const sorted = pinSiteRows(rows);
-  assert.deepEqual(sorted.slice(0, 10).map(row => row.id), [11, 0, 1, 2, 3, 4, 5, 6, 7, 8]);
-  assert.deepEqual(sorted.slice(10).map(row => row.id), [9, 10]);
+  assert.deepEqual(sorted.slice(0, 20).map(row => row.id), [21, ...Array.from({ length: 19 }, (_, i) => i)]);
+  assert.deepEqual(sorted.slice(20).map(row => row.id), [19, 20]);
 });
 
 test('累计赞赏不代替已归零的赞赏积分', () => {

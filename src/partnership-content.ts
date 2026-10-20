@@ -146,7 +146,8 @@ export const partnershipContent = {
     "demoTableTitle": "表格展示示例与细则",
     "demoRules": [
       "默认顺序：合作 → 赞赏 → 收藏 → 普通；合作、赞赏组内按积分降序或按用户操作排序。",
-      "合作与赞赏置顶区合计最多M条，每家最多N条，具体数值按实际情况调整。"
+      "合作与赞赏共用置顶名额，总名额及每家商家的展示名额根据具体页面和用户选择的排序方式调整。",
+      "商家如需在置顶名额中优先展示特定商品，可联系客服设置。"
     ],
     "demoDescriptions": [
       "同时具有合作和赞赏身份，归入合作区。",
@@ -307,7 +308,8 @@ export const partnershipContent = {
     "demoTableTitle": "Table display examples and detailed rules",
     "demoRules": [
       "Default order: Partners → Supporters → Favorites → Regular. Within partner and supporter groups, entries follow points in descending order or the user-selected sort.",
-      "Partner and supporter pinned areas share a limit of M entries, with up to N per merchant. Limits may be adjusted as needed."
+      "Partners and supporters share pinned placements. The total number of placements and the limit per merchant vary by page and the user-selected sort order.",
+      "Contact support to prioritize specific products within your merchant’s pinned placements."
     ],
     "demoDescriptions": [
       "Both a partner and a supporter; placed in the partner area.",
@@ -468,7 +470,8 @@ export const partnershipContent = {
     "demoTableTitle": "Примеры отображения в таблице и подробные правила",
     "demoRules": [
       "Порядок по умолчанию: партнёры → поддержавшие → избранное → остальные. В первых двух группах — по убыванию баллов или по выбранной пользователем сортировке.",
-      "В блоках партнёров и поддержки суммарно не более M закреплённых позиций, до N на продавца. Лимиты могут меняться по ситуации."
+      "Партнёры и поддержавшие продавцы используют общий лимит закреплённых позиций. Общий лимит и число позиций на продавца зависят от страницы и выбранной пользователем сортировки.",
+      "Чтобы приоритетно показывать определённые товары в пределах выделенных продавцу закреплённых позиций, обратитесь в службу поддержки."
     ],
     "demoDescriptions": [
       "Партнёр и участник поддержки; размещается в блоке партнёров.",
