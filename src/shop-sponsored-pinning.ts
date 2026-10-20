@@ -9,6 +9,7 @@ export type ShopPinnedRow = {
   id: string;
   productFavoriteKey: string;
   score: number;
+  shopRecommendation?: number;
   siteFavoriteKey: string;
   sponsor?: boolean;
   supportTotalCents?: number;
@@ -35,6 +36,7 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   return pinListRows(rowEntries, {
     manualSort,
     defaultOrder: compareShopProductRows,
+    representativeOrder: (a, b) => (b.shopRecommendation ?? 0) - (a.shopRecommendation ?? 0) || compareShopProductRows(a, b),
     site: row => ({ id: row.siteFavoriteKey, sponsor: pinMerchants && row.sponsor, supportPoints: pinMerchants ? row.supportPoints : 0 }),
     onPin,
     favorites: ordinaryRows => {

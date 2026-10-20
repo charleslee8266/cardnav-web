@@ -8,6 +8,7 @@ type PinSite = { id?: string; sponsor?: boolean; supportPoints?: number };
 export function pinListRows<Row>(rows: Row[], options: {
   manualSort?: boolean;
   defaultOrder?: (a: Row, b: Row) => number;
+  representativeOrder?: (a: Row, b: Row) => number;
   site: (row: Row) => PinSite;
   favorites?: (remaining: Row[]) => Row[];
   onPin?: (row: Row, kind: PinKind) => void;
@@ -23,7 +24,11 @@ export function pinListRows<Row>(rows: Row[], options: {
       merchants.set(key, { site, best: row, representatives: [row] });
     } else {
       if ((options.defaultOrder?.(row, merchant.best) ?? 0) < 0) merchant.best = row;
-      if (merchant.representatives.length < MAX_PINNED_ROWS_PER_SITE) merchant.representatives.push(row);
+      if (!options.manualSort && options.representativeOrder) {
+        merchant.representatives.push(row);
+        merchant.representatives.sort(options.representativeOrder);
+        merchant.representatives.length = Math.min(merchant.representatives.length, MAX_PINNED_ROWS_PER_SITE);
+      } else if (merchant.representatives.length < MAX_PINNED_ROWS_PER_SITE) merchant.representatives.push(row);
     }
   }
   const rankedSites = [...merchants.values()].sort((a, b) => Number(Boolean(b.site.sponsor)) - Number(Boolean(a.site.sponsor))
@@ -51,6 +56,23 @@ export function pinListRows<Row>(rows: Row[], options: {
       || (options.defaultOrder?.(a, b) ?? 0);
     partners.sort(byPoints);
     supporters.sort(byPoints);
+    // Keep each merchant's existing display slots; order its selected products within those slots.
+    if (options.representativeOrder) {
+      for (const group of [partners, supporters]) {
+        const queues = new Map<string | Row, Row[]>();
+        for (const row of group) {
+          const key = selected.get(row)!.id ?? row;
+          const queue = queues.get(key) ?? [];
+          queue.push(row);
+          queues.set(key, queue);
+        }
+        for (const queue of queues.values()) queue.sort(options.representativeOrder);
+        for (let index = 0; index < group.length; index++) {
+          const row = group[index];
+          group[index] = queues.get(selected.get(row)!.id ?? row)!.shift()!;
+        }
+      }
+    }
   }
   const favorites = options.manualSort ? [] : options.favorites?.(remaining) ?? [];
   const favoriteSet = new Set(favorites);

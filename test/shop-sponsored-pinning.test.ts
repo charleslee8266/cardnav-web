@@ -133,3 +133,28 @@ test('手动排序每商家选当前前两件，收藏保持普通排序', () =>
   assert.deepEqual(output.map(row => row.productFavoriteKey), ['partner-cheap', 'partner-next', 'support-cheap', 'support-next', 'ordinary', 'favorite']);
   assert.deepEqual(output.map(row => kinds.get(row.productFavoriteKey)), ['partner', 'partner', 'support', 'support', '', '']);
 });
+
+
+test('商家推荐度只影响默认商业选品及同商家置顶顺序，筛选与手动排序照常生效', () => {
+  const rows = [
+    { ...row('natural'), siteFavoriteKey: 'merchant', supportPoints: 10, score: 100 },
+    { ...row('second'), siteFavoriteKey: 'merchant', supportPoints: 10, score: 90, shopRecommendation: 5 },
+    { ...row('primary'), siteFavoriteKey: 'merchant', supportPoints: 10, score: 10, shopRecommendation: 10 },
+    { ...row('ordinary'), score: 5, shopRecommendation: 100 },
+  ];
+  const favorites = { favoriteProductKeys: new Set<string>(), favoriteSiteKeys: new Set<string>() };
+  const ids = (items: ShopPinnedRow[]) => items.map(item => item.id);
+  assert.deepEqual(ids(prioritizeShopProductRows(rows, favorites)), ['primary', 'second', 'natural', 'ordinary']);
+  assert.deepEqual(ids(prioritizeShopProductRows(rows, favorites, undefined, true)), ids(rows));
+  assert.deepEqual(ids(prioritizeShopProductRows(rows.filter(item => item.id !== 'primary'), favorites)), ['second', 'natural', 'ordinary']);
+  assert.deepEqual(ids(prioritizeShopProductRows(rows, favorites, undefined, false, { pinMerchants: false })), ids(rows));
+});
+
+test('推荐度不改变同积分商家的名额竞争顺序', () => {
+  const rows = Array.from({ length: 11 }, (_, index) => ({ ...row(`row-${index}`, false, 10), score: 100 - index,
+    ...(index === 10 ? { shopRecommendation: 1000 } : {}) }));
+  const kinds = new Map<string, string>();
+  prioritizeShopProductRows(rows, { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set() }, (item, kind) => kinds.set(item.id, kind));
+  assert.equal(kinds.get('row-10'), '');
+  assert.ok(rows.slice(0, 10).every(item => kinds.get(item.id) === 'support'));
+});

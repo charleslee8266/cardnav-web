@@ -105,6 +105,7 @@ export type PublicGatewayModelDetail = {
 };
 
 export type PublicProductRow = {
+  shopRecommendation?: number;
   siteSlug: string;
   sitePlatformName?: string;
   id: string;
@@ -382,6 +383,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         shop_products.stock,
         shop_products.in_stock,
         shop_products.score,
+        shop_products.shop_recommendation,
         shop_products.refreshed_at
       FROM shop_products
       INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
@@ -396,32 +398,44 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         site.support_points AS site_support_points, CASE WHEN site.sponsor THEN 0 ELSE 1 END AS pin_group
       FROM shop_sites site
       CROSS JOIN LATERAL (
-        SELECT id, site_id, score,
-          ROW_NUMBER() OVER (ORDER BY score DESC, id ASC) AS site_position
+        SELECT id, site_id, score, shop_recommendation,
+          FIRST_VALUE(score) OVER (ORDER BY score DESC, id ASC) AS best_score,
+          FIRST_VALUE(id) OVER (ORDER BY score DESC, id ASC) AS best_id,
+          ROW_NUMBER() OVER (ORDER BY shop_recommendation DESC, score DESC, id ASC) AS site_position
         FROM shop_products
         WHERE site_id = site.id AND active = TRUE
           ${options.inStockOnly ? 'AND in_stock = TRUE' : ''}
           ${categoryIds ? `AND auto_category = ANY(${categoryParameter}::text[])` : ''}
-        ORDER BY score DESC, id ASC
+        ORDER BY shop_recommendation DESC, score DESC, id ASC
         LIMIT ${MAX_PINNED_ROWS_PER_SITE}
       ) candidate
       WHERE site.status = 'online' AND site.type = 'cardShop' AND (site.sponsor OR site.support_points > 0)
     ), ranked_pin_sites AS (
       SELECT site_id, ROW_NUMBER() OVER (PARTITION BY pin_group ORDER BY site_support_points DESC,
-        score DESC, product_row_id ASC) AS site_rank
+        best_score DESC, best_id ASC) AS site_rank
       FROM site_pin_candidates WHERE site_position = 1
     ), pin_candidates AS (
-      SELECT candidate.product_row_id, candidate.pin_group, candidate.site_support_points,
+      SELECT candidate.product_row_id, candidate.site_id, candidate.score, candidate.site_position,
+        candidate.pin_group, candidate.site_support_points,
         ROW_NUMBER() OVER (ORDER BY candidate.site_position, candidate.pin_group, ranked.site_rank) AS pin_position
       FROM site_pin_candidates candidate
       INNER JOIN ranked_pin_sites ranked ON ranked.site_id = candidate.site_id
+    ), selected_pin_slots AS (
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY site_id ORDER BY score DESC, product_row_id ASC) AS slot_position
+      FROM pin_candidates WHERE pin_position <= ${MAX_PINNED_COMMERCIAL}
+    ), display_pins AS (
+      SELECT candidate.product_row_id, candidate.pin_group, candidate.site_support_points,
+        slot.score AS display_score, slot.product_row_id AS display_id
+      FROM pin_candidates candidate
+      JOIN selected_pin_slots slot ON slot.site_id = candidate.site_id AND slot.slot_position = candidate.site_position
+      WHERE candidate.pin_position <= ${MAX_PINNED_COMMERCIAL}
     )
     SELECT base_products.*,
-      CASE WHEN pinned.pin_position <= ${MAX_PINNED_COMMERCIAL} THEN pinned.pin_group ELSE 2 END AS display_group,
-      CASE WHEN pinned.pin_position <= ${MAX_PINNED_COMMERCIAL} THEN pinned.site_support_points END AS display_points
+      CASE WHEN pinned.product_row_id IS NOT NULL THEN pinned.pin_group ELSE 2 END AS display_group,
+      pinned.site_support_points AS display_points
     FROM base_products
-    LEFT JOIN pin_candidates AS pinned ON pinned.product_row_id = base_products.product_row_id
-    ORDER BY ${options.siteId ? '' : 'display_group, display_points DESC NULLS LAST,'}
+    LEFT JOIN display_pins AS pinned ON pinned.product_row_id = base_products.product_row_id
+    ORDER BY ${options.siteId ? '' : 'display_group, display_points DESC NULLS LAST, COALESCE(pinned.display_score, base_products.score) DESC, COALESCE(pinned.display_id, base_products.product_row_id) ASC,'}
       base_products.score DESC, base_products.product_row_id ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, productParams);
@@ -454,6 +468,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       siteSupportTotalCents: Number(row.site_support_total_cents) || 0,
       siteSupportPoints: Number(row.site_support_points) || 0,
       score: Number(row.score) || 0,
+      ...(Number(row.shop_recommendation) > 0 ? { shopRecommendation: Number(row.shop_recommendation) } : {}),
     };
   });
 

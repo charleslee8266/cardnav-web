@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   packShopProductsData,
+  shopProductRecommendation,
   shopProductCategoryName,
   shopProductAutoCategory,
   shopProductInStock,
@@ -123,4 +124,14 @@ test('packed shop products accessors read page fields without unpacking long obj
   assert.equal(shopProductPriceUnit(packed, second), '$');
   assert.equal(shopProductInStock(second), false);
   assert.equal(shopProductRefreshTime(first), '2026-07-31 20:30:00');
+});
+
+
+test('推荐度为零时不增加传输项，正值在 JSON 往返后保留', () => {
+  for (const value of [undefined, 0, 10]) {
+    const data = packShopProductsData({ ...fixture, products: [{ ...fixture.products[0], shopRecommendation: value }] });
+    const packed = JSON.parse(JSON.stringify(data));
+    assert.equal(packed.p[0].length, value ? 13 : 12);
+    assert.equal(shopProductRecommendation(packed.p[0]), value ?? 0);
+  }
 });

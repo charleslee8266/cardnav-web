@@ -45,6 +45,7 @@ export type PackedShopProductRow = [
   score: number,
   id: string,
   autoCategory: string,
+  shopRecommendation?: number,
 ];
 
 export type PackedShopProductsData = {
@@ -163,6 +164,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
       Number(product.score) || 0,
       product.id,
       product.autoCategory,
+      ...(Number(product.shopRecommendation) > 0 ? [product.shopRecommendation!] as [number] : [] as []),
     ];
   });
 
@@ -301,3 +303,7 @@ export function shopProductAutoCategory(product: PackedShopProductRow) {
 export function shopSitePlatformName(site: PackedShopSiteRow | null | undefined) { return site?.[8] || ""; }
 
 export function shopSiteSlug(site: PackedShopSiteRow | null | undefined) { return site?.[9] || ""; }
+
+export function shopProductRecommendation(product: PackedShopProductRow) {
+  return product[12] ?? 0;
+}
