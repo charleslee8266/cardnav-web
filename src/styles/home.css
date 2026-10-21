@@ -7,7 +7,9 @@
   .home-brand-domain { font-size: 20px; font-weight: 400; letter-spacing: 0; color: var(--color-muted); }
   .home-tagline { font-size: 23px; font-weight: 650; line-height: 1.5; }
   .home-lead { color: var(--color-muted); font-size: 15px; margin-top: 10px; text-wrap: pretty; }
+  .home-search-tip { margin: 16px 0; color: var(--color-info); font-size: 13px; line-height: 1.6; text-wrap: pretty; }
   .home-search { margin-top: 22px; display: flex; align-items: center; gap: 10px; height: 48px; padding: 5px 5px 5px 12px; border: 1px solid var(--color-line-strong); border-radius: 12px; background: var(--color-base-100); text-align: left; }
+  .home-search-tip + .home-search { margin-top: 0; }
   .home-search:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent); }
   .home-search > svg { color: var(--color-muted); }
   .home-search input { flex: 1; width: 0; min-width: 0; height: 36px; border: 0; outline: none; background: transparent; font-size: 15px; }

@@ -181,6 +181,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
   <section class="home-hero" data-telemetry-block={telemetryBlocks.shared.hero}>
     <h1><span class="home-brand"><img src="/favicon.webp" alt="" width="56" height="56" /><span class="home-brand-name">{t.site.name}</span><span class="home-brand-domain">cardnav.xyz</span></span><span class="home-tagline">{t.site.tagline}</span></h1>
     <p class="home-lead">{Astro.locals.locale === 'zh' ? t.site.heroDescription.split(/(?=还有)/).map((line: string, index: number) => <>{index > 0 && <br />}{line}</>) : t.site.heroDescription}</p>
+    {Astro.locals.locale === 'zh' && <p class="home-search-tip">小知识：卡网是什么？通常是销售卡密、账号等虚拟商品的网站。</p>}
     <form action={linkTo('/market')} method="get" class="home-search" data-home-search-form data-telemetry-block={telemetryBlocks.home.search}>
       <Icon name="search" />
       <input name="q" type="search" placeholder={t.home.searchPlaceholder} aria-label={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
