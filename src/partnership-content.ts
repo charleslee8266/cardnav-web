@@ -1,4 +1,6 @@
-// Public partnership copy, shared by the page and its SEO metadata.
+/**
+ * 文件说明: 维护商务合作页面及 SEO 共用的多语言文案。
+ */
 export const partnershipContent = {
   "zh": {
     "telegramGroupLabel": "官方 TG 群",
@@ -106,8 +108,8 @@ export const partnershipContent = {
       {
         "title": "用户须知",
         "items": [
-          "本站已完成初步审核。合作体现商家的推广意愿，可作为可信度参考，但不代表对其经营、履约或售后作出保证。",
-          "赞赏是商家自发支持本站的行为，本站未做严格审核，不代表对经营、履约或售后作出保证。",
+          "合作体现商家的推广意愿，可作为可信度参考。本站已完成初步审核，但不代表对其经营、履约或售后作出保证。",
+          "赞赏是商家自发支持本站的行为，本站未做严格审核，可作为商家运营活跃度的参考，不代表对经营、履约或售后作出保证。",
           "用户还需自行核对域名、商品、价格、支付、客服和售后。"
         ]
       }

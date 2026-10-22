@@ -740,7 +740,7 @@ export const zhMessages = {
     listDisplayRule: '所有赞赏用户及留言，将展示在当前页面。',
     viewRules: '查看细则',
     badgeLabel: '赞赏',
-    badgeDescription: '该商家已赞赏支持本站。赞赏可作为商家运营活跃度的参考，但不代表对经营、履约或售后作出保证。',
+    badgeDescription: '该商家已赞赏支持本站。赞赏是商家自发支持本站的行为，可作为商家运营活跃度的参考，但不代表对经营、履约或售后作出保证。',
     "submitSite": "点此提交",
     "submitGatewayHint": "还未提交中转站？",
     "submitShopHint": "还未提交卡网？",
@@ -826,7 +826,7 @@ export const zhMessages = {
     becomeSponsor: '成为赞助商',
     partnershipLinkLabel: '了解详情',
     sponsorLabel: '合作',
-    sponsorDescription: '该站点为本站固定合作伙伴。本站已完成初步审核。合作体现商家的推广意愿，可作为可信度参考，但不代表对其经营、履约或售后作出保证。',
+    sponsorDescription: '该站点为本站固定合作伙伴。合作体现商家的推广意愿，可作为可信度参考。本站已完成初步审核，但不代表对其经营、履约或售后作出保证。',
   },
   submit: {
     urlInputHint: "填写商店首页或具体店铺链接。",

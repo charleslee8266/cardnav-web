@@ -1,3 +1,6 @@
+/*
+ * 文件说明: 定义公开页面导航、菜单、公告及页尾的响应式样式。
+ */
 @layer components {
   .public-body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.6; }
   .site-icon { display: inline-block; width: 16px; height: 16px; flex-shrink: 0; vertical-align: -3px; }
@@ -20,6 +23,7 @@
   .shell-icon-button:hover, .shell-text-button:hover { background: var(--color-surface-raised);  }
   .shell-submit-button { @apply submit-button; }
   .shell-menu { position: relative; }
+  .shell-menu[open] { z-index: 1; }
   .shell-menu summary { list-style: none; }
   .shell-menu summary::-webkit-details-marker { display: none; }
   .shell-menu-panel { position: absolute; right: 0; top: calc(100% + 6px); width: max-content; min-width: 200px; max-width: calc(100vw - 24px); padding: 6px; border: 1px solid var(--color-base-300); border-radius: 12px; background: var(--color-base-100); box-shadow: var(--shadow-2); }
