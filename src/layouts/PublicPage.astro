@@ -27,6 +27,7 @@ type Props = {
   availableLocales?: readonly Locale[];
   pageTitle: string;
   description: string;
+  socialDescription?: string;
   canonicalUrl: string;
   robots: string;
   ogUrl: string;
@@ -50,6 +51,7 @@ const {
   availableLocales = supportedLocales,
   pageTitle,
   description,
+  socialDescription = description,
   canonicalUrl,
   robots,
   ogUrl,
@@ -161,7 +163,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   {xDefaultUrl && <link rel="alternate" hreflang="x-default" href={xDefaultUrl} />}
   <meta property="og:type" content={ogType} />
   <meta property="og:title" content={pageTitle} />
-  <meta property="og:description" content={description} />
+  <meta property="og:description" content={socialDescription} />
   <meta property="og:url" content={ogUrl} />
   <meta property="og:site_name" content={ogSiteName} />
   <meta property="og:locale" content={ogLocale} />
@@ -172,7 +174,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   <meta property="og:image:alt" content={ogImageAlt} />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={pageTitle} />
-  <meta name="twitter:description" content={description} />
+  <meta name="twitter:description" content={socialDescription} />
   <meta name="twitter:image" content={ogImageUrl} />
   <meta name="twitter:image:alt" content={ogImageAlt} />
   <title>{pageTitle}</title>

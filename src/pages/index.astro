@@ -1,8 +1,8 @@
 ---
-import { gatewayModelPath } from '../models/routes.js';
 /*
 文件说明: 渲染 CardNav 公开首页，按卡片模块展示模型、订阅价格、热门产品和卡网商家入口。
 */
+import { gatewayModelPath } from '../models/routes.js';
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import PublicPage from '../layouts/PublicPage.astro';
 import ShopPlanGroups from '../components/ShopPlanGroups.astro';
@@ -177,10 +177,10 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
 
 ---
 
-<PublicPage activeNav="home" pageType="home" {...seo}>
+<PublicPage activeNav="home" pageType="home" {...seo} socialDescription={t.site.heroDescription.replaceAll('\n', '')}>
   <section class="home-hero" data-telemetry-block={telemetryBlocks.shared.hero}>
     <h1><span class="home-brand"><img src="/favicon.webp" alt="" width="56" height="56" /><span class="home-brand-name">{t.site.name}</span><span class="home-brand-domain">cardnav.xyz</span></span><span class="home-tagline">{t.site.tagline}</span></h1>
-    <p class="home-lead">{Astro.locals.locale === 'zh' ? t.site.heroDescription.split(/(?=还有)/).map((line: string, index: number) => <>{index > 0 && <br />}{line}</>) : t.site.heroDescription}</p>
+    <p class="home-lead">{t.site.heroDescription.split('\n').map((line: string, index: number) => <>{index > 0 && <br />}{line}</>)}</p>
     {Astro.locals.locale === 'zh' && <p class="home-search-tip">小知识：卡网通常指销售卡密、账号等虚拟商品的网站，本站主要收录 AI 相关卡网。</p>}
     <form action={linkTo('/market')} method="get" class="home-search" data-home-search-form data-telemetry-block={telemetryBlocks.home.search}>
       <Icon name="search" />

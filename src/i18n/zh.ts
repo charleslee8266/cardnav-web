@@ -100,9 +100,9 @@ export const zhMessages = {
   site: {
     name: '卡网大全',
     domain: 'cardnav.xyz',
-    tagline: '一站式 AI 大模型账号购买导航',
+    tagline: '一站式 AI 账号购买导航',
     heroDescription:
-      '不知道 AI 账号去哪买便宜又靠谱？这里聚合 AI 中转站、卡网、官方订阅比价，还有模型排行、使用指南、实用工具，帮你少踩坑，少花钱。',
+      '不知道 AI 账号去哪买便宜又靠谱？这里聚合 AI 中转站、卡网、官方订阅比价，\n还有模型排行、使用指南、实用工具，帮你少踩坑，少花钱。',
   },
   nav: {
     footerResources: '找资源',
@@ -207,9 +207,9 @@ export const zhMessages = {
   home: {
     subscriptionPlans: '官方订阅套餐',
     modelLeaderboard: '模型排行榜',
-    seoTitle: '卡网大全 - 一站式 AI 大模型账号购买导航',
+    seoTitle: '卡网大全 - 一站式 AI 账号购买导航',
     seoDescription:
-      '卡网大全提供 AI 账号购买导航与卡网商品比价，汇集 ChatGPT、Claude、Gemini 等相关商品、API 中转站、官方订阅价格、模型排行和使用指南，帮助你比较方案与购买渠道。',
+      '卡网大全提供 AI 大模型账号购买导航与卡网商品比价，汇集 ChatGPT、Claude、Gemini 等相关商品、API 中转站、官方订阅价格、模型排行和使用指南，帮助你比较方案与购买渠道。',
     guideTitle: '不知道如何开始？点击进入指南',
     guideDescription: '从模型选择、使用方式到实践，先把思路理清楚。',
     guideSteps: [
