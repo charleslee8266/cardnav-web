@@ -114,6 +114,8 @@ const shopsScriptMessages = {
   seoSearchQuery: seoSearchTerm?.query ?? '',
   seoSearchPath: seoSearchTerm ? linkTo(quickPlanSearchSeoPath(seoSearchTerm)) : '',
   searchPlaceholder: t.shops.searchPlaceholder,
+  merchantSearchResults: t.shops.merchantSearchResults,
+  merchantSearchFallback: t.shops.merchantSearchFallback,
   tableLabels: {
     sequence: t.labels.sequence,
     product: t.labels.product,
@@ -203,6 +205,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             <fieldset class="data-filter-group">
               <legend>{t.shops.searchScope}</legend>
               <label><input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.matchCategory}</span></label>
+              {!siteId && <label><input id="matchMerchantFilter" name="matchMerchant" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.matchMerchant}</span></label>}
               <label><input id="fuzzySearchFilter" name="fuzzy" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" checked={initialFuzzySearch} /><span>{t.shops.fuzzySearch}</span></label>
             </fieldset>
             <fieldset class="data-filter-group">

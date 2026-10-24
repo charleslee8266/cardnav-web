@@ -1,10 +1,11 @@
+/** 文件说明: 验证商品与商家筛选、完整计数和增量渲染行为。 */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
 import { buildShopSearchQuery, matchesShopSearchQuery } from '../src/shop-search-query.js';
-import { matchesShopCategory } from '../src/shop-filter-state.js';
+import { matchesShopCategory, searchShopProductRows } from '../src/shop-filter-state.js';
 import { matchesListKinds } from '../src/list-kind-filter.js';
 import { prioritizeShopProductRows } from '../src/shop-sponsored-pinning.js';
 
@@ -93,7 +94,7 @@ test('product filters leave merchant listings independent, including merchants w
   const product = (site: typeof sites[number], autoCategory: string, priceValue: number, stock = 1) => ({ siteId: site.id, siteName: site.name, siteUrl: site.url, siteFavoriteKey: site.id, productFavoriteKey: `${site.id}-${priceValue}`, productName: 'subscription', productTitle: 'subscription', categoryName: '', autoCategory, priceValue, inStock: stock });
   const scope: Record<string, any> = {
     searchFilter: { value: '' }, merchantSearchFilter: { value: '' }, priceMin: { value: '' }, priceMax: { value: '' },
-    showSoldOutFilter: { checked: false }, matchCategoryFilter: { checked: false }, fuzzySearchFilter: { checked: false },
+    showSoldOutFilter: { checked: false }, matchCategoryFilter: { checked: false }, matchMerchantFilter: { checked: false }, fuzzySearchFilter: { checked: false },
     selectedOriginalCategories: () => [], selectedProductKinds: () => [], selectedMerchantKinds: () => [], matchesListKinds,
     shopSiteSponsor: () => false, shopSiteSupportPoints: () => 0,
     favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(),
@@ -103,7 +104,7 @@ test('product filters leave merchant listings independent, including merchants w
     flatRows: [product(sites[0], 'gpt-plus', 20), product(sites[0], 'gpt-plus', 30), product(sites[1], 'claude-pro', 40), product(sites[1], 'gpt-plus', 50, 0)],
     shopProductsData: {}, shopSites: () => sites, shopSiteId: (site: typeof sites[number]) => site.id,
     shopSiteName: (site: typeof sites[number]) => site.name, shopSiteUrl: (site: typeof sites[number]) => site.url,
-    buildShopSearchQuery, matchesShopSearchQuery, prioritizeShopProductRows,
+    buildShopSearchQuery, matchesShopSearchQuery, searchShopProductRows, prioritizeShopProductRows,
   };
   for (const name of ['text', 'normalize', 'currentSearchFieldOptions', 'buildActiveSearchQuery', 'matchesSearchQuery', 'parseBound', 'matchesPriceRange', 'hasActiveProductFilters', 'hasActiveMerchantFilters', 'matchesMerchantFilters', 'prioritizeFavoriteFlatRows', 'searchMatchedFlatRows', 'matchingShopResults']) scope[name] = renderer('src/scripts/index.js', name, scope);
   let result = scope.matchingShopResults();
@@ -353,6 +354,7 @@ test('product load-more appends the next range and preserves existing row elemen
   const first = row(), second = row(), third = row();
   const container = {
     children: [first, second],
+    querySelectorAll() { return this.children; },
     appendChild(fragment: {children: ReturnType<typeof row>[]}) { this.children.push(...fragment.children); },
     replaceChildren(fragment: {children: ReturnType<typeof row>[]}) { this.children = [...fragment.children]; },
   };
@@ -380,6 +382,23 @@ test('product load-more appends the next range and preserves existing row elemen
   append();
   assert.deepEqual(container.children,[third,second]);
   assert.equal((third.dataset as Record<string,string>).sequence,'1');
+});
+
+test('merchant search keeps direct products first while sharing the full-result pin allowance', () => {
+  const rows = Array.from({ length: 32 }, (_, index) => ({
+    id: String(index), productFavoriteKey: String(index), siteFavoriteKey: String(Math.floor(index / 4)),
+    score: index, sponsor: true, merchantSearchMatch: index >= 16, pinKind: '',
+  }));
+  const favorites = { favoriteProductKeys: new Set<string>(), favoriteSiteKeys: new Set<string>() };
+  const expected = prioritizeShopProductRows(rows.map(row => ({ ...row })), favorites, (row, kind) => { row.pinKind = kind; });
+  const prioritize = renderer('src/scripts/index.js', 'prioritizeFavoriteFlatRows', {
+    ...favorites, prioritizeShopProductRows, currentFlatSort: null, shopsMessages: {},
+  }) as unknown as (rows: typeof expected) => typeof expected;
+  const result = prioritize(rows);
+  assert.equal(result.filter(row => row.pinKind === 'partner').length, expected.filter(row => row.pinKind === 'partner').length);
+  assert.equal(new Set(result.map(row => row.id)).size, rows.length);
+  assert.equal(result.slice(0, 16).every(row => !row.merchantSearchMatch), true);
+  assert.equal(result.slice(16).every(row => row.merchantSearchMatch), true);
 });
 
 test('switching product tabs during a shared request shows feedback in both lists without fetching twice', async () => {
