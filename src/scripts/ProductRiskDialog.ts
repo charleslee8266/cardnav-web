@@ -25,10 +25,12 @@ export class ProductRiskDialog {
         }
       }
       this.approvedLink = link;
+      link.dataset.productRiskShown = '1';
       try {
         link.click();
       } finally {
         this.approvedLink = null;
+        delete link.dataset.productRiskShown;
       }
     });
   }

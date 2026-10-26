@@ -19,6 +19,7 @@ import { productIconPath } from '../models/product-icons.js';
 import { autoCategoryLabel } from '../shop-auto-category.js';
 import { pinSiteRows } from '../site-list-pinning.js';
 import ProductMetricTracker from './ProductMetricTracker.js';
+import { ShopClickTracker } from './ShopClickTracker.js';
 import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery, parseStructuredPriceToCny } from '../shop-search-query.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import {
@@ -126,6 +127,8 @@ let favoriteProductKeys = new Set();
 let currentFlatVisibleLimit = scopedShopId ? Infinity : shopProductsInitialLimit(shopProductsData) || DEFAULT_FLAT_PRODUCT_LIMIT;
 let currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
 const productMetricTracker = new ProductMetricTracker();
+const shopClickTracker = new ShopClickTracker(productMetricTracker.visitorId);
+let appliedClickFilters = {};
 let shopProductsDataLoadPromise = null;
 const shopListLoading = {
   products: createListLoading(flatProductView),
@@ -764,7 +767,7 @@ function createFlatProductRow(item) {
     const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle, { sponsor: siteSponsor || shopSiteSupportTotalCents(site) > 0 });
     productLink.dataset.rowPrimary = '';
     productLink.dataset.productClickId = text(shopProductId(item));
-    if (requiresProductRiskConfirmation({ platformName: shopSitePlatformName(site), sponsor: siteSponsor, supportTotalCents: shopSiteSupportTotalCents(site) })) productLink.dataset.productRisk = '';
+    if (requiresProductRiskConfirmation({ platformName: shopSitePlatformName(site) })) productLink.dataset.productRisk = '';
     productTitleRow.appendChild(productLink);
   } else {
     appendTextElement(productTitleRow, 'span', 'product-text', productName);
@@ -959,6 +962,7 @@ function renderMerchantViewModule(module, matchingProducts) {
     shopProductsData,
     matchingProducts,
     shopDataAccessors: {
+      requiresProductRiskConfirmation,
       shopDetailPath,
       shopProductCategoryName,
       shopProductInStock,
@@ -1131,6 +1135,14 @@ async function applyFilters(options = {}) {
     if (priceMinValue) params.set('priceMin', priceMinValue);
     if (priceMaxValue) params.set('priceMax', priceMaxValue);
   }
+  appliedClickFilters = Object.fromEntries([...new Set(params.keys())].map(key => {
+    const values = params.getAll(key);
+    return [key, ['platform', 'originalCategory', 'merchantPlatform', 'kind', 'merchantKind'].includes(key) ? values : values[0]];
+  }));
+  appliedClickFilters.category = selectedQuickCategoryId();
+  appliedClickFilters.quickPlanQuery = currentQuickPlanQuery;
+  appliedClickFilters.scopedShopId = scopedShopId;
+  updateClickContext();
   resetSearchPageMeta();
   const nextPath = !scopedShopId && currentQuickPlanPath && !shouldUseCanonicalShopPath ? currentQuickPlanPath : localizedShopsPath;
   for (const key of ['dialog', 'support-kind', 'support-order']) {
@@ -1139,6 +1151,13 @@ async function applyFilters(options = {}) {
   const serializedParams = params.toString();
   const nextUrl = `${nextPath}${serializedParams ? `?${serializedParams}` : ''}${currentUrl.hash}`;
   history.replaceState(null, '', nextUrl);
+}
+
+function updateClickContext() {
+  shopClickTracker.updateContext({ ...appliedClickFilters,
+    productSort: currentFlatSort ? `${currentFlatSort.key}:${currentFlatSort.direction}` : '',
+    merchantSort: currentMerchantSort ? `${currentMerchantSort.key}:${currentMerchantSort.direction}` : '',
+  });
 }
 
 function sortRows(merchantModule) {
@@ -1174,6 +1193,7 @@ function renderCurrentMerchantRows(reorder = false) {
   let renderedCount = 0;
   currentMerchantRows.forEach(({ element: row }, sortedIndex) => {
       row.dataset.sortedIndex = String(sortedIndex);
+      row.dataset.clickPosition = String(visibleCount + 1);
       if (reorder) rowContainer.appendChild(row);
       const rowVisible = row.dataset.filterVisible === '1';
       if (rowVisible) visibleCount += 1;
@@ -1230,6 +1250,9 @@ function appendCurrentFlatRows(appendOnly = false) {
     }
     const row = ensureFlatRowElement(rowEntry);
     row.dataset.pinKind = rowEntry.pinKind || '';
+    row.dataset.clickPosition = String(index + 1);
+    row.dataset.clickPartner = rowEntry.sponsor ? '1' : '0';
+    row.dataset.clickSupporter = rowEntry.supportTotalCents > 0 ? '1' : '0';
     row.dataset.productMetricId = shopProductId(rowEntry.product);
     row.dataset.productMetricScene = searchFilter?.value.trim() ? 'search' : 'default';
     row.dataset.productMetricDisplayType = favoriteProductKeys.has(rowEntry.productFavoriteKey)
@@ -1504,6 +1527,7 @@ flatSortButtons.forEach(button => {
     if (!await loadShopProductsDataFromApi()) return;
     resetFlatVisibleLimit();
     sortFlatProductRows(button);
+    updateClickContext();
     trackUmamiEvent('sort-change', {
       scope: 'products',
       key: button.dataset.sortKey || '',
@@ -1540,7 +1564,7 @@ shopTabButtons.forEach(button => {
   });
 });
 
-trackProductClicks(productMetricTracker);
+trackProductClicks(shopClickTracker);
 window.addEventListener('popstate', () => { syncFiltersFromUrl(); resetFlatVisibleLimit(); applyFilters(); });
 loadFavorites();
 buildFlatRows();

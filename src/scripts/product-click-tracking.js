@@ -1,18 +1,12 @@
-import { enqueueReport } from './metric-reports.js';
-
-/** Share product click reporting between the market and merchant catalog. */
+/*
+文件说明: 监听商品与商家确认后的外跳，逐次上报点击明细；取消提醒不触发上报。
+*/
 export function trackProductClicks(tracker) {
-  document.addEventListener('click', event => {
-    const target = event.target instanceof Element ? event.target.closest('[data-product-click-id]') : null;
-    if (!(target instanceof HTMLElement)) return;
-    const metricRow = target.closest('[data-product-metric-id]');
-    if (metricRow instanceof HTMLElement) {
-      void tracker.click(metricRow);
-      return;
-    }
-    const productId = target.dataset.productClickId || '';
-    if (tracker.markClick(productId)) {
-      enqueueReport('/api/product-clicks', { productId, visitorId: tracker.visitorId });
-    }
-  });
+  const activate = event => {
+    if (event.defaultPrevented || (event.type === 'auxclick' ? event.button !== 1 : event.button !== 0)) return;
+    const target = event.target instanceof Element ? event.target.closest('[data-product-click-id], [data-merchant-click-id]') : null;
+    if (target instanceof HTMLElement) tracker.click(target);
+  };
+  document.addEventListener('click', activate);
+  document.addEventListener('auxclick', activate);
 }

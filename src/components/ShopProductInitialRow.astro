@@ -14,13 +14,13 @@ const { product, index, scoped } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const commercial = product.siteSponsor || product.siteSupportTotalCents > 0;
-const requiresConfirmation = requiresProductRiskConfirmation({ platformName: product.sitePlatformName, sponsor: product.siteSponsor, supportTotalCents: product.siteSupportTotalCents });
+const requiresConfirmation = requiresProductRiskConfirmation({ platformName: product.sitePlatformName });
 const price = typeof product.priceNumber === 'number' && Number.isFinite(product.priceNumber)
   ? `${product.priceUnit || ''}${product.priceNumber}` : '';
 const stock = typeof product.stock === 'number' && product.stock > 0
   ? String(product.stock) : product.inStock ? t.labels.inStock : t.labels.soldOut;
 ---
-<tr class="flat-product-row">
+<tr class="flat-product-row" data-click-position={index + 1} data-click-partner={product.siteSponsor ? '1' : '0'} data-click-supporter={product.siteSupportTotalCents > 0 ? '1' : '0'}>
   <th scope="row" class="flat-row-index data-table-sequence-cell" data-label={t.labels.sequence}>{index + 1}</th>
   <td class="flat-product-cell" data-label={t.labels.product}>
     <div class="merchant-header"><div class="merchant-header-content">

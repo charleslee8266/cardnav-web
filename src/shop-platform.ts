@@ -7,8 +7,8 @@ export const shopPlatforms = [
   { id: 'catfk', name: '云猫寄售', families: ['platform-catfk'], icon: '/assets/shop-platform-icons/catfk.jpg' },
 ] as const;
 
-export function requiresProductRiskConfirmation(site: { platformName?: string; sponsor: boolean; supportTotalCents: number }): boolean {
-  return !site.platformName && !site.sponsor && site.supportTotalCents <= 0;
+export function requiresProductRiskConfirmation(site: { platformName?: string }): boolean {
+  return !site.platformName;
 }
 
 export function shopPlatformName(family: unknown): string {

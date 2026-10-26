@@ -20,6 +20,13 @@ test('merchant clicks and product metrics accumulate on one Beijing daily row', 
   try {
     await admin.query(`CREATE SCHEMA ${schema}`);
     await admin.query(`
+      CREATE TABLE ${schema}.shop_click_events (
+        event_id UUID PRIMARY KEY, occurred_at TIMESTAMPTZ NOT NULL, received_at TIMESTAMPTZ DEFAULT now(),
+        visitor_id UUID NOT NULL, session_id UUID NOT NULL, context_id UUID NOT NULL,
+        site_id TEXT NOT NULL, product_id TEXT, source_page TEXT NOT NULL, filters JSONB NOT NULL,
+        position INTEGER, region TEXT NOT NULL, pin_reason TEXT NOT NULL,
+        is_partner BOOLEAN NOT NULL, is_supporter BOOLEAN NOT NULL, risk_dialog_shown BOOLEAN NOT NULL
+      );
       CREATE TABLE ${schema}.shop_sites (id TEXT PRIMARY KEY, status TEXT NOT NULL, type TEXT NOT NULL);
       CREATE TABLE ${schema}.shop_products (
         id TEXT PRIMARY KEY, site_id TEXT NOT NULL, product_url TEXT,
@@ -52,7 +59,7 @@ test('merchant clicks and product metrics accumulate on one Beijing daily row', 
       }
     };
 
-    const { recordProductClick, recordProductMetric, recordProductMetrics, recordMerchantProductClicks } = await import('../src/store.js');
+    const { recordProductClick, recordProductMetric, recordProductMetrics, recordMerchantProductClicks, recordShopClicks } = await import('../src/store.js');
     const batchMetric = {
       productId, visitorId: '33333333-3333-4333-8333-333333333333',
       eventType: 'impression' as const, scene: 'default' as const,
@@ -106,10 +113,35 @@ test('merchant clicks and product metrics accumulate on one Beijing daily row', 
     assert.deepEqual(daily.rows[0].metric_groups['search|partner|6-20'], { impressions: 1, clicks: 1 });
     assert.deepEqual(daily.rows[0].metric_groups['merchant|merchant|unknown'], { impressions: 1, clicks: 1 });
 
+    const detail = {
+      eventId: randomUUID(), occurredAt: new Date().toISOString(), visitorId: click.visitorId,
+      sessionId: randomUUID(), contextId: randomUUID(), siteId: 'untrusted-site', productId,
+      sourcePage: '/market', filters: { q: 'Claude', platform: ['ldxp'] }, position: 8,
+      region: 'normal' as const, pinReason: '', isPartner: true, isSupporter: true,
+      riskDialogShown: true, displayType: 'partner' as const,
+    };
+    assert.deepEqual(await recordShopClicks([detail]), { recorded: true });
+    assert.deepEqual(await recordShopClicks([detail]), { recorded: false });
+    assert.deepEqual(await recordShopClicks([{ ...detail, eventId: randomUUID() }]), { recorded: true });
+    const detailRows = await admin.query(`SELECT * FROM ${schema}.shop_click_events`);
+    assert.equal(detailRows.rows.length, 2, 'repeated user clicks remain separate, retries do not');
+    assert.equal(detailRows.rows[0].site_id, 'site-a', 'product determines authoritative merchant');
+    assert.deepEqual(detailRows.rows[0].filters, detail.filters);
+    assert.equal(detailRows.rows[0].risk_dialog_shown, true);
+    assert.equal((await admin.query(`SELECT clicks FROM ${schema}.shop_product_daily`)).rows[0].clicks, 4,
+      'detail events do not inflate daily unique clicks');
+    const { productId: _product, ...merchantDetail } = detail;
+    assert.deepEqual(await recordShopClicks([{ ...merchantDetail, eventId: randomUUID(), siteId: 'site-a' }]), { recorded: true });
+    assert.deepEqual(await recordShopClicks([{ ...merchantDetail, eventId: randomUUID(), siteId: 'unknown' }]), { recorded: false });
+    const fresh = { ...detail, eventId: randomUUID(), visitorId: randomUUID() };
+    assert.deepEqual(await recordShopClicks([fresh]), { recorded: true });
+    assert.equal((await admin.query(`SELECT clicks FROM ${schema}.shop_product_daily`)).rows[0].clicks, 5);
+
     await admin.query(`UPDATE ${schema}.shop_products SET active = false WHERE id = $1`, [productId]);
     assert.deepEqual(await recordProductClick(click), { recorded: false });
     const unchanged = await admin.query(`SELECT clicks FROM ${schema}.shop_product_daily`);
-    assert.equal(unchanged.rows[0].clicks, 4);
+    assert.equal(unchanged.rows[0].clicks, 5);
+    assert.deepEqual(await recordShopClicks([{ ...fresh, eventId: randomUUID() }]), { recorded: false });
   } finally {
     (pg as { Pool: typeof pg.Pool }).Pool = originalPool;
     if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;

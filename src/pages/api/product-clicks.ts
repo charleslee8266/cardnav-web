@@ -1,18 +1,24 @@
-import { readMetricEvents } from '../../metric-request.js';
 /**
- * 文件说明: 记录公开商品链接点击，用于商品热度数据回写。
+ * 文件说明: 校验并记录商品与商家外跳明细，同时回写商品每日去重点击。
  */
 import type { APIRoute } from 'astro';
-import { recordProductClick, recordMerchantProductClicks } from '../../store.js';
+import { readMetricEvents } from '../../metric-request.js';
+import { parseShopClick, type ShopClickEvent } from '../../shop-click.js';
+import { recordProductClick, recordMerchantProductClicks, recordShopClicks } from '../../store.js';
 
 export const POST: APIRoute = async ({ request }) => {
   const events = await readMetricEvents(request, 'productId');
   if (!events) return new Response(null, { status: 400 });
-  const direct = events.filter(body => typeof body.productId === 'string');
+  const detailBodies = events.filter(body => 'eventId' in body);
+  const details = detailBodies.map(parseShopClick);
+  if (details.some(event => !event)) return new Response(null, { status: 400 });
+  const legacy = events.filter(body => !('eventId' in body));
+  const direct = legacy.filter(body => typeof body.productId === 'string');
   if (direct.some(body => typeof body.visitorId !== 'string')) return new Response(null, { status: 400 });
-  let recorded = direct.length ? (await recordMerchantProductClicks(direct as { productId: string; visitorId: string }[])).recorded : false;
+  let recorded = details.length ? (await recordShopClicks(details as ShopClickEvent[])).recorded : false;
+  recorded = (direct.length ? (await recordMerchantProductClicks(direct as { productId: string; visitorId: string }[])).recorded : false) || recorded;
   // Cached clients still identify merchant products by URL or name.
-  for (const body of events.filter(body => !('productId' in body))) {
+  for (const body of legacy.filter(body => !('productId' in body))) {
     const result = await recordProductClick({
       siteId: typeof body.siteId === 'string' ? body.siteId : '',
       productUrl: typeof body.productUrl === 'string' ? body.productUrl : undefined,

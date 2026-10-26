@@ -121,6 +121,7 @@ function createProductChip(item, shopProductsData, shopsMessages, createTrackedL
     chip.dataset.umamiEventName = productTitle;
     chip.dataset.productClickId = text(accessors.shopProductId(item));
     chip.dataset.productClickSource = 'merchant';
+    if (accessors.requiresProductRiskConfirmation({ platformName: accessors.shopSitePlatformName(site) })) chip.dataset.productRisk = '';
   }
 
   appendTextElement(chip, 'span', 'product-name', productName);

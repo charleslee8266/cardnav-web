@@ -1,14 +1,13 @@
-import { enqueueReport } from './metric-reports.js';
 /*
- * 文件说明: 观察商品行可见时长，使用持久匿名访客 ID 上报去重曝光和点击。
+ * 文件说明: 观察商品行可见时长，使用持久匿名访客 ID 上报去重曝光。
  */
+import { enqueueReport } from './metric-reports.js';
 export default class ProductMetricTracker {
   constructor() {
     this.visitorId = this.loadVisitorId();
     this.observedElements = new Set();
     this.timers = new Map();
     this.exposedIds = new Set();
-    this.clickedIds = new Set();
     this.observer = typeof IntersectionObserver === 'function'
       ? new IntersectionObserver(entries => {
         entries.forEach(entry => this.onIntersection(entry));
@@ -59,19 +58,6 @@ export default class ProductMetricTracker {
       this.send('impression', element);
     }, 1000);
     this.timers.set(element, timer);
-  }
-
-  async click(element) {
-    const productId = element.dataset.productMetricId;
-    if (!productId || this.clickedIds.has(productId)) return;
-    this.markClick(productId);
-    await this.send('click', element);
-  }
-
-  markClick(productId) {
-    if (!productId || this.clickedIds.has(productId)) return false;
-    this.clickedIds.add(productId);
-    return true;
   }
 
   send(eventType, element) {

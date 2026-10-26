@@ -6,6 +6,7 @@ import { createFamilyNavigation } from './models/family-navigation.js';
 import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter } from './models/product-catalog.js';
 import 'dotenv/config';
 import pg from 'pg';
+import type { ShopClickEvent } from './shop-click.js';
 import { MAX_PINNED_COMMERCIAL, MAX_PINNED_ROWS_PER_SITE, MAX_SUPPORT_SITES_FOR_SECOND_PIN } from './list-ranking-policy.js';
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
@@ -1058,6 +1059,49 @@ async function recordVisitorProductEvents(inputs: VisitorProductEventInput[]) {
     for (const input of [...inputs].sort((a, b) => a.productId.localeCompare(b.productId) || a.visitorId.localeCompare(b.visitorId))) {
       const result = await writeVisitorProductEvent(client, input);
       recorded ||= result.recorded;
+    }
+    await client.query('COMMIT');
+    return { recorded };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** Store every navigation while retaining visitor/product/day aggregate deduplication. */
+export async function recordShopClicks(inputs: ShopClickEvent[]) {
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    let recorded = false;
+    for (const input of [...inputs].sort((a, b) => (a.productId || '').localeCompare(b.productId || '') || a.visitorId.localeCompare(b.visitorId) || a.eventId.localeCompare(b.eventId))) {
+      const site = input.productId
+        ? await client.query(`SELECT site.id FROM shop_products product JOIN shop_sites site ON site.id = product.site_id
+            WHERE product.id = $1 AND product.active = true AND site.status = 'online' AND site.type = 'cardShop'`, [input.productId])
+        : await client.query(`SELECT id FROM shop_sites WHERE id = $1 AND status = 'online' AND type = 'cardShop'`, [input.siteId]);
+      if (!site.rows[0]) continue;
+      const result = await client.query(`INSERT INTO shop_click_events (
+          event_id, occurred_at, visitor_id, session_id, context_id, site_id, product_id,
+          source_page, filters, position, region, pin_reason, is_partner, is_supporter, risk_dialog_shown
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13, $14, $15)
+        ON CONFLICT (event_id) DO NOTHING RETURNING event_id`, [
+        input.eventId, input.occurredAt, input.visitorId, input.sessionId, input.contextId,
+        site.rows[0].id, input.productId || null, input.sourcePage, JSON.stringify(input.filters),
+        input.position, input.region, input.pinReason, input.isPartner, input.isSupporter, input.riskDialogShown,
+      ]);
+      if (!result.rowCount) continue;
+      recorded = true;
+      if (input.productId) {
+        const merchant = !input.position || input.filters.tab === 'shops';
+        await writeVisitorProductEvent(client, {
+          productId: input.productId, visitorId: input.visitorId, eventType: 'click',
+          scene: merchant ? 'merchant' : input.filters.q ? 'search' : 'default',
+          displayType: merchant ? 'merchant' : input.displayType,
+          positionBucket: merchant || !input.position ? 'unknown' : input.position <= 5 ? '1-5' : input.position <= 20 ? '6-20' : '21+',
+        });
+      }
     }
     await client.query('COMMIT');
     return { recorded };

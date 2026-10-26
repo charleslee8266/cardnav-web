@@ -1,5 +1,7 @@
 ---
-/** Canonical merchant detail page. */
+/*
+文件说明: 展示商家资料和商品目录，自建站商品与店铺外链统一提示交易风险。
+*/
 import ShopExplorer from '../../../components/ShopExplorer.astro';
 import PublicPage from '../../../layouts/PublicPage.astro';
 import PageHero from '../../../components/PageHero.astro';
@@ -15,6 +17,7 @@ import { loadPublicShopDetail } from '../../../public-shops.js';
 import { shopDetailPath } from '../../../shop-routes.js';
 import { buildSeoContext } from '../../../seo.js';
 import { publicSiteUrl } from '../../../site.js';
+import { requiresProductRiskConfirmation } from '../../../shop-platform.js';
 
 const slug = Astro.params.slug || '';
 const linkTo = Astro.locals.localizePath;
@@ -46,7 +49,7 @@ const outboundRel = site.sponsor || (site.supportPoints || 0) > 0 ? 'noopener no
       {(site.supportTotalCents || 0) > 0 && <MerchantBadge kind="support" label={t.support.badgeLabel} description={t.support.badgeDescription} href={linkTo('/supporters')} linkLabel={t.support.amountLinkLabel} />}
     </div>
     <div slot="actions" class="shop-detail-actions">
-      <a href={site.url} target="_blank" rel={outboundRel} class="btn btn-primary btn-sm" data-umami-event="external-link-click" data-umami-event-link-type="merchant" data-umami-event-name={site.name} data-umami-event-url={site.url}>{t.shops.detailOpen} ↗</a>
+      <a href={site.url} data-merchant-click-id={site.id} data-click-partner={site.sponsor ? '1' : '0'} data-click-supporter={site.supportTotalCents > 0 ? '1' : '0'} data-product-risk={requiresProductRiskConfirmation(site) ? '' : undefined} target="_blank" rel={outboundRel} class="btn btn-primary btn-sm" data-umami-event="external-link-click" data-umami-event-link-type="merchant" data-umami-event-name={site.name} data-umami-event-url={site.url}>{t.shops.detailOpen} ↗</a>
       <PlatformLabel name={site.platformName || ''} selfHostedLabel={t.shops.selfHosted} />
       <span class="text-sm text-base-content/65 break-all">{site.url}</span>
     </div>

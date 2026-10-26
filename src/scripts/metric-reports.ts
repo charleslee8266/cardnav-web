@@ -1,3 +1,6 @@
+/*
+文件说明: 缓冲并批量上报公开页面指标，支持外跳前立即发送。
+*/
 import { METRIC_BATCH_LIMIT, METRIC_BATCH_BYTES, METRIC_FLUSH_INTERVAL_MS, packMetricEvents } from '../metric-batch.js';
 
 type ReportEndpoint = '/api/product-metrics' | '/api/product-clicks' | '/api/search-terms' | '/api/events';
@@ -13,7 +16,11 @@ export function enqueueReport(endpoint: ReportEndpoint, payload: Record<string, 
   const key = `${endpoint}:${serialized}`;
   if (pendingKeys.has(key)) return;
   const size = new TextEncoder().encode(serialized).byteLength + 1;
-  if (pending.length >= METRIC_BATCH_LIMIT || bytes + size > METRIC_BATCH_BYTES - 100) return;
+  if (size > METRIC_BATCH_BYTES - 100) return;
+  if (pending.length >= METRIC_BATCH_LIMIT || bytes + size > METRIC_BATCH_BYTES - 100) {
+    if (!payload.eventId) return;
+    flushReports();
+  }
   pendingKeys.add(key);
   pending.push({ endpoint, payload });
   bytes += size;
@@ -25,7 +32,7 @@ export function enqueueReport(endpoint: ReportEndpoint, payload: Record<string, 
   timer ??= setTimeout(flushReports, METRIC_FLUSH_INTERVAL_MS);
 }
 
-function flushReports(): void {
+export function flushReports(): void {
   clearTimeout(timer);
   timer = undefined;
   const batch = pending.splice(0);
@@ -39,7 +46,7 @@ function flushReports(): void {
   }
   for (const { endpoint, events } of groups.values()) {
     const idField = endpoint === '/api/events' ? 'subjectId'
-      : endpoint === '/api/search-terms' ? undefined : 'productId';
+      : endpoint === '/api/search-terms' || events.some(event => event.eventId) ? undefined : 'productId';
     // Clear before sending so visibilitychange + pagehide cannot send twice.
     void fetch(endpoint, {
       method: 'POST', headers: { 'content-type': 'application/json' },
