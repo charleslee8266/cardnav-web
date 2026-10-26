@@ -1,9 +1,9 @@
-import { shopPlatformName } from './shop-platform.js';
-import { createFamilyNavigation } from './models/family-navigation.js';
-import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter } from './models/product-catalog.js';
 /**
  * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
  */
+import { shopPlatformName } from './shop-platform.js';
+import { createFamilyNavigation } from './models/family-navigation.js';
+import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter } from './models/product-catalog.js';
 import 'dotenv/config';
 import pg from 'pg';
 import { MAX_PINNED_COMMERCIAL, MAX_PINNED_ROWS_PER_SITE, MAX_SUPPORT_SITES_FOR_SECOND_PIN } from './list-ranking-policy.js';
@@ -883,6 +883,8 @@ export function normalizeSearchText(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+const resubmittableUrlStatuses = ['deferred', 'needs_review', 'invalid', 'unsupported', 'offline'];
+
 export async function submitSiteUrl(input: string) {
   const validation = validatePublicSubmittedUrl(input);
   if (!validation.ok) {
@@ -894,10 +896,13 @@ export async function submitSiteUrl(input: string) {
     `
       INSERT INTO shop_sites (id, url, status, family, type)
       VALUES (md5(regexp_replace(split_part($1, '#', 1), '/$', '') || $2), $1, 'accepted', 'unknown', 'unknown')
-      ON CONFLICT (url) DO NOTHING
+      ON CONFLICT (url) DO UPDATE SET
+        status = 'accepted', ingest_retry_count = 0, last_ingest_complete_at = NULL,
+        last_ingest_error_type = NULL, last_ingest_error_message = NULL, updated_at = now()
+      WHERE shop_sites.status = ANY($3::text[])
       RETURNING url
     `,
-    [url, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0'],
+    [url, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0', resubmittableUrlStatuses],
   );
   if (result.rows.length === 0) {
     return { ok: false as const, errorKey: 'duplicateUrl' satisfies SubmitSiteUrlErrorKey };
@@ -935,9 +940,6 @@ export async function submitGatewaySite(input: { url: string; apiEndpoint?: stri
   const url = validation.url;
   const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
   const db = getPool();
-  if ((await db.query('SELECT 1 FROM gateway_sites WHERE url = $1 LIMIT 1', [url])).rows.length > 0) {
-    return { ok: false as const, errorKey: 'duplicateUrl' satisfies SubmitSiteUrlErrorKey };
-  }
   const baseSlug = publicGatewaySlug(host);
   let slug = baseSlug;
   for (let index = 2; index <= 1000; index += 1) {
@@ -947,8 +949,12 @@ export async function submitGatewaySite(input: { url: string; apiEndpoint?: stri
   const result = await db.query(
     `INSERT INTO gateway_sites (url, api_endpoint, status, site_id, name, family, type, slug, host, weight, summary, payment_methods)
      VALUES ($1, $2, 'accepted', md5($1 || $3), $4, NULL, 'unknown', $5, $6, 50, $7, $8::text[])
-     ON CONFLICT (url) DO NOTHING RETURNING url`,
-    [url, apiEndpoint, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0', name, slug, host, summary, paymentMethods],
+     ON CONFLICT (url) DO UPDATE SET
+       status = 'accepted', retry_count = 0, last_ingest_complete_at = NULL,
+       last_error_type = NULL, last_error_message = NULL, updated_at = now()
+     WHERE gateway_sites.status = ANY($9::text[])
+     RETURNING url`,
+    [url, apiEndpoint, '2164802aa948726ee717662bcc17f7295e278340d9dcf4f0', name, slug, host, summary, paymentMethods, resubmittableUrlStatuses],
   );
   if (result.rows.length === 0) return { ok: false as const, errorKey: 'duplicateUrl' satisfies SubmitSiteUrlErrorKey };
   return { ok: true as const, url };
