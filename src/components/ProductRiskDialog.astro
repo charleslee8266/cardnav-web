@@ -1,0 +1,26 @@
+---
+/*
+文件说明: 使用共享弹窗展示自建商家的商品访问风险与选购指南。
+*/
+import Dialog from './Dialog.astro';
+import { shopPlatforms } from '../shop-platform.js';
+const t = Astro.locals.messages.shops;
+const platforms = new Intl.ListFormat(Astro.locals.locale).format(shopPlatforms.map(platform => platform.name));
+---
+<Dialog id="productRiskDialog" title={t.productRiskTitle} closeLabel={t.productRiskCancel} aria-describedby="productRiskDescription productRiskCommunity productRiskPlatform">
+  <p id="productRiskDescription" class="form-dialog-description">{t.productRiskDescription}</p>
+  <p id="productRiskCommunity" class="form-dialog-description"><strong>{t.productRiskCommunity}</strong></p>
+  <p id="productRiskPlatform" class="form-dialog-description">{t.productRiskPlatform.replace('{platforms}', platforms)}</p>
+  <a class="link text-sm" href={Astro.locals.localizePath('/guide/choose-reliable-merchant')} target="_blank" rel="noopener noreferrer">{t.guideTitle} ↗</a>
+  <div slot="footer" class="flex w-full flex-wrap items-center justify-end gap-3">
+    <label class="mr-auto flex cursor-pointer items-center gap-2 text-sm">
+      <input type="checkbox" class="checkbox checkbox-sm" data-dismiss-product-risk />
+      {t.productRiskDoNotRemind}
+    </label>
+    <form method="dialog"><button class="btn btn-ghost" type="submit">{t.productRiskCancel}</button></form>
+    <button class="btn btn-primary" type="button" data-confirm-product-risk>{t.productRiskConfirm}</button>
+  </div>
+</Dialog>
+<script>
+  import '../scripts/ProductRiskDialog.js';
+</script>

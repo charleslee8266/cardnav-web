@@ -1,9 +1,15 @@
-/** Public hosting brands; framework and custom installations are self-hosted. */
+/*
+文件说明: 定义公开商家平台、平台标签与自建商家商品访问确认规则。
+*/
 export const shopPlatforms = [
   { id: 'ldxp', name: '链动小铺', families: ['platform-ldxp', 'platform-wzyp'], icon: '/assets/shop-platform-icons/ldxp.ico' },
   { id: '16688', name: '16688', families: ['platform-16688'], icon: '/assets/shop-platform-icons/16688.png' },
   { id: 'catfk', name: '云猫寄售', families: ['platform-catfk'], icon: '/assets/shop-platform-icons/catfk.jpg' },
 ] as const;
+
+export function requiresProductRiskConfirmation(site: { platformName?: string; sponsor: boolean; supportTotalCents: number }): boolean {
+  return !site.platformName && !site.sponsor && site.supportTotalCents <= 0;
+}
 
 export function shopPlatformName(family: unknown): string {
   return shopPlatforms.find(platform => (platform.families as readonly string[]).includes(String(family)))?.name || '';

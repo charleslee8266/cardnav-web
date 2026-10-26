@@ -7,7 +7,7 @@ import { createListLoading } from './list-loading.js';
 import { nextTableSort } from '../table-sort.js';
 import { enqueueReport } from './metric-reports.js';
 import { toggleShopFavorite } from './shop-favorites.js';
-import { createShopPlatformLabel, shopPlatformFromUrl } from '../shop-platform.js';
+import { createShopPlatformLabel, shopPlatformFromUrl, requiresProductRiskConfirmation } from '../shop-platform.js';
 import './refresh-times.js';
 import { renderFilterSummary } from './filter-summary.js';
 import { leaderboardFamilyPath } from '../models/routes.js';
@@ -764,6 +764,7 @@ function createFlatProductRow(item) {
     const productLink = createTrackedProductLink(productUrl, 'product-link', productName, productTitle, { sponsor: siteSponsor || shopSiteSupportTotalCents(site) > 0 });
     productLink.dataset.rowPrimary = '';
     productLink.dataset.productClickId = text(shopProductId(item));
+    if (requiresProductRiskConfirmation({ platformName: shopSitePlatformName(site), sponsor: siteSponsor, supportTotalCents: shopSiteSupportTotalCents(site) })) productLink.dataset.productRisk = '';
     productTitleRow.appendChild(productLink);
   } else {
     appendTextElement(productTitleRow, 'span', 'product-text', productName);

@@ -1,5 +1,8 @@
 ---
-/** Initial product content in the shared table; the explorer adds filtering and favorites. */
+/*
+文件说明: 渲染商品表格的首屏内容、商家标记与商品访问确认状态。
+*/
+import { requiresProductRiskConfirmation } from '../shop-platform.js';
 import type { PublicProductRow } from '../store.js';
 import { shopDetailPath } from '../shop-routes.js';
 import PlatformLabel from './PlatformLabel.astro';
@@ -11,6 +14,7 @@ const { product, index, scoped } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const commercial = product.siteSponsor || product.siteSupportTotalCents > 0;
+const requiresConfirmation = requiresProductRiskConfirmation({ platformName: product.sitePlatformName, sponsor: product.siteSponsor, supportTotalCents: product.siteSupportTotalCents });
 const price = typeof product.priceNumber === 'number' && Number.isFinite(product.priceNumber)
   ? `${product.priceUnit || ''}${product.priceNumber}` : '';
 const stock = typeof product.stock === 'number' && product.stock > 0
@@ -21,7 +25,7 @@ const stock = typeof product.stock === 'number' && product.stock > 0
   <td class="flat-product-cell" data-label={t.labels.product}>
     <div class="merchant-header"><div class="merchant-header-content">
       <div class="merchant-title-row">
-        {product.productUrl ? <a href={product.productUrl} class="product-link" target="_blank" rel={commercial ? 'noopener noreferrer sponsored' : 'noopener noreferrer'} data-row-primary data-product-click-id={product.id} data-umami-event="external-link-click" data-umami-event-link-type="product" data-umami-event-name={product.name} data-umami-event-url={product.productUrl}>{product.name}</a> : <span class="product-text">{product.name}</span>}
+        {product.productUrl ? <a href={product.productUrl} class="product-link" target="_blank" rel={commercial ? 'noopener noreferrer sponsored' : 'noopener noreferrer'} data-product-risk={requiresConfirmation ? '' : undefined} data-row-primary data-product-click-id={product.id} data-umami-event="external-link-click" data-umami-event-link-type="product" data-umami-event-name={product.name} data-umami-event-url={product.productUrl}>{product.name}</a> : <span class="product-text">{product.name}</span>}
         {product.siteSponsor && <MerchantBadge kind="sponsor" label={t.sponsors.sponsorLabel} description={t.sponsors.sponsorDescription} href={linkTo('/partnership')} linkLabel={t.sponsors.partnershipLinkLabel} />}
         {product.siteSupportTotalCents > 0 && <MerchantBadge kind="support" label={t.support.badgeLabel} description={t.support.badgeDescription} href={linkTo('/supporters')} linkLabel={t.support.amountLinkLabel} />}
       </div>
