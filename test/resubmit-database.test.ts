@@ -1,4 +1,6 @@
-/** 文件说明: 验证公开重复提交的状态恢复、历史保留与并发封禁边界。 */
+/**
+ * 文件说明: 验证公开提交来源、重复提交的状态恢复、历史保留与并发封禁边界。
+ */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
@@ -26,6 +28,7 @@ test('public resubmission requeues eligible sites without changing protected sta
     await moderator.query(`SET search_path TO ${schema}`);
     await db.query(`CREATE TABLE shop_sites (
       id text PRIMARY KEY, url text UNIQUE, status text, name text, family text, type text,
+      submission_source text NOT NULL DEFAULT 'unknown',
       ingest_retry_count integer DEFAULT 0, last_ingest_complete_at timestamptz,
       last_ingest_success_at timestamptz, last_ingest_error_type text, last_ingest_error_message text,
       updated_at timestamptz DEFAULT now()
@@ -49,10 +52,14 @@ test('public resubmission requeues eligible sites without changing protected sta
       const freshUrl = `https://new-${kind}.merchant.shop`;
       assert.deepEqual(await submit(freshUrl), { ok: true, url: freshUrl });
       assert.equal((await db.query(`SELECT status FROM ${table} WHERE url=$1`, [freshUrl])).rows[0].status, 'accepted');
+      if (kind === 'shop') {
+        assert.equal((await db.query('SELECT submission_source FROM shop_sites WHERE url=$1', [freshUrl])).rows[0].submission_source, 'webpage');
+      }
 
       for (const status of ['deferred', 'needs_review', 'invalid', 'unsupported', 'offline', 'banned', 'online', 'accepted', 'future-status']) {
         const url = `https://${kind}-${status.replaceAll('_', '-')}.merchant.shop`;
         await submit(url);
+        if (kind === 'shop') await db.query("UPDATE shop_sites SET submission_source='batch' WHERE url=$1", [url]);
         await db.query(`UPDATE ${table} SET status=$2,name='Original name',family='original-family',type='original-type',
           ${retry}=3,last_ingest_complete_at='2026-01-02',last_ingest_success_at='2026-01-01',
           ${errorType}='original-error',${errorMessage}='Original failure',updated_at='2026-01-03' WHERE url=$1`, [url, status]);

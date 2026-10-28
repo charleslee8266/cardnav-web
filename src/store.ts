@@ -895,8 +895,8 @@ export async function submitSiteUrl(input: string) {
 
   const result = await getPool().query(
     `
-      INSERT INTO shop_sites (id, url, status, family, type)
-      VALUES (md5(regexp_replace(split_part($1, '#', 1), '/$', '') || $2), $1, 'accepted', 'unknown', 'unknown')
+      INSERT INTO shop_sites (id, url, status, family, type, submission_source)
+      VALUES (md5(regexp_replace(split_part($1, '#', 1), '/$', '') || $2), $1, 'accepted', 'unknown', 'unknown', 'webpage')
       ON CONFLICT (url) DO UPDATE SET
         status = 'accepted', ingest_retry_count = 0, last_ingest_complete_at = NULL,
         last_ingest_error_type = NULL, last_ingest_error_message = NULL, updated_at = now()
