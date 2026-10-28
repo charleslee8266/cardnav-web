@@ -1,4 +1,5 @@
 ---
+/** 文件说明: 渲染合作商家主入口与附加链接，并标注独立点击采集身份。 */
 import type { Sponsor, SponsorPlacement } from '../sponsor-provider.js';
 type Props = { sponsors: Sponsor[]; placement?: SponsorPlacement; example?: boolean };
 const { sponsors, placement = 'page-bottom', example = false } = Astro.props;
@@ -9,7 +10,7 @@ const MainTag = example ? 'div' : 'a';
     {sponsors.map(sponsor => (
       <li class="sponsor-grid-item">
         <article class="sponsor-card">
-          <MainTag {...(!example ? { href: sponsor.url, target: "_blank", rel: "nofollow sponsored noopener noreferrer", "data-umami-event": "external-link-click", "data-umami-event-link-type": "sponsor", "data-umami-event-name": sponsor.id, "data-umami-event-link-id": sponsor.id, "data-umami-event-url": sponsor.url } : {})} class:list={[sponsor.template === 'grid' ? 'sponsor-plan-main-link' : 'sponsor-main-link', 'group']}>
+          <MainTag {...(!example ? { href: sponsor.url, target: "_blank", rel: "nofollow sponsored noopener noreferrer", "data-sponsor-click-id": sponsor.id, "data-sponsor-link-kind": "main", "data-umami-event": "external-link-click", "data-umami-event-link-type": "sponsor", "data-umami-event-name": sponsor.id, "data-umami-event-link-id": sponsor.id, "data-umami-event-url": sponsor.url } : {})} class:list={[sponsor.template === 'grid' ? 'sponsor-plan-main-link' : 'sponsor-main-link', 'group']}>
             {sponsor.image.src && <span
               class="sponsor-logo-frame"
               style={sponsor.image.padding || sponsor.image.backgroundColor
@@ -39,7 +40,7 @@ const MainTag = example ? 'div' : 'a';
           {sponsor.template === 'grid' && sponsor.links.length > 0 && (
             <div class="sponsor-plan-grid">
               {sponsor.links.map(link => (
-                <a href={link.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="sponsor" data-umami-event-name={sponsor.id} data-umami-event-link-id={sponsor.id} data-umami-event-url={link.url} class="sponsor-plan-link">{link.text}</a>
+                <a href={link.url} data-sponsor-click-id={!example ? sponsor.id : undefined} data-sponsor-link-kind={!example ? "extra" : undefined} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="sponsor" data-umami-event-name={sponsor.id} data-umami-event-link-id={sponsor.id} data-umami-event-url={link.url} class="sponsor-plan-link">{link.text}</a>
               ))}
             </div>
           )}

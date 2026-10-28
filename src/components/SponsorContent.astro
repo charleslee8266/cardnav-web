@@ -19,7 +19,7 @@ const partnershipUrl = Astro.locals.localizePath('/partnership');
 const sectionId = pageType ? `sponsors-${placement}-${pageType}` : `sponsors-${placement}`;
 ---
 
-{sponsors.length > 0 && <section class="sponsor-section" data-placement={placement} data-telemetry-block={telemetryBlocks.sponsors[placement]} aria-labelledby={sectionId}>
+{sponsors.length > 0 && <section class="sponsor-section" data-placement={placement} data-sponsor-page-type={pageType} data-telemetry-block={telemetryBlocks.sponsors[placement]} aria-labelledby={sectionId}>
   <div class="sponsor-header">
     <h2 id={sectionId} class="sponsor-title">{t.sponsors.title}</h2>
     <a href={partnershipUrl} data-umami-event="internal-link-click" data-umami-event-link-type="sponsor-lead" data-umami-event-url={partnershipUrl} data-umami-event-name={t.sponsors.becomeSponsor} class="sponsor-join-link">{t.sponsors.becomeSponsor}</a>

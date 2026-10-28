@@ -1,17 +1,7 @@
+/** 文件说明: 上报中转站详情与外跳的每日访客去重指标。 */
 import { enqueueReport } from './metric-reports.js';
-const uuidPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
-
-function visitorId() {
-  try {
-    const prior = localStorage.getItem('cardnav.visitorId');
-    if (prior && uuidPattern.test(prior)) return prior;
-  } catch { /* Storage may be disabled. */ }
-  const next = crypto.randomUUID();
-  try { localStorage.setItem('cardnav.visitorId', next); } catch { /* Use this page's ID. */ }
-  return next;
-}
-
-const id = visitorId();
+import { anonymousVisitorId } from './anonymous-visitor.js';
+const id = anonymousVisitorId();
 function report(subjectType, subjectId, eventType) {
   if (!subjectId) return;
   enqueueReport('/api/events', { subjectType, subjectId, eventType, visitorId: id });

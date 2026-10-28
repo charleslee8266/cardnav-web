@@ -1,6 +1,7 @@
 /*
  * 文件说明: 观察商品行可见时长，使用持久匿名访客 ID 上报去重曝光。
  */
+import { anonymousVisitorId } from './anonymous-visitor.js';
 import { enqueueReport } from './metric-reports.js';
 export default class ProductMetricTracker {
   constructor() {
@@ -27,14 +28,7 @@ export default class ProductMetricTracker {
   }
 
   loadVisitorId() {
-    const key = 'cardnav.visitorId';
-    try {
-      const stored = localStorage.getItem(key);
-      if (stored && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(stored)) return stored;
-    } catch { /* 浏览器禁用持久存储时仍可在当前页面上报。 */ }
-    const id = crypto.randomUUID();
-    try { localStorage.setItem(key, id); } catch { /* 当前页面仍复用该 ID。 */ }
-    return id;
+    return anonymousVisitorId();
   }
 
   observe(element) {

@@ -3,7 +3,7 @@
 */
 import { METRIC_BATCH_LIMIT, METRIC_BATCH_BYTES, METRIC_FLUSH_INTERVAL_MS, packMetricEvents } from '../metric-batch.js';
 
-type ReportEndpoint = '/api/product-metrics' | '/api/product-clicks' | '/api/search-terms' | '/api/events';
+type ReportEndpoint = '/api/product-metrics' | '/api/product-clicks' | '/api/search-terms' | '/api/events' | '/api/sponsor-clicks';
 const pending: { endpoint: ReportEndpoint; payload: Record<string, unknown> }[] = [];
 const pendingKeys = new Set<string>();
 let bytes = 0;
