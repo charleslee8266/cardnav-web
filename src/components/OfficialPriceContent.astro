@@ -1,11 +1,11 @@
 ---
+/* 文件说明: 渲染官方订阅套餐导航，分别展示官网参考价和 App Store 地区比价。 */
+import OfficialWebPlans from './OfficialWebPlans.astro';
+import { grokWebSubscription } from '../models/product-catalog.js';
 import { leaderboardFamilyPath } from '../models/routes.js';
 import RelatedLink from './RelatedLink.astro';
 import RefreshTime from './RefreshTime.astro';
 import HeroMetric from './HeroMetric.astro';
-/*
-文件说明: 渲染官方订阅比价页的服务端 HTML 内容，包括套餐导航和当前套餐价格表。
-*/
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import './data-workspace.css';
 import PageHero from './PageHero.astro';
@@ -29,6 +29,7 @@ type Props = {
 };
 
 const { pageType, groups, currentGroup, updatedAt } = Astro.props;
+const isWebPlan = grokWebSubscription.plans.some(plan => plan.slug === currentGroup?.urlSlug);
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const relatedShopSearchTerm = quickPlanSearchTermForOfficialPriceSlug(currentGroup?.urlSlug);
@@ -65,7 +66,7 @@ function countryFlag(countryCode: string): CountryFlag {
 
 <PageHero
   title={currentGroup ? `${quickPlanHeroName(relatedShopSearchTerm, currentGroup.displayName)} ${t.officialPrice.titleSuffix}` : t.officialPrice.title}
-  description={t.officialPrice.heroDescription}
+  description={isWebPlan ? t.officialPrice.webPlansNote : t.officialPrice.heroDescription}
 >
   {updatedAt && (
     <div slot="meta" class="hero-metrics"><HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={updatedAt} fallback={t.labels.notRecorded} /></HeroMetric></div>
@@ -73,6 +74,7 @@ function countryFlag(countryCode: string): CountryFlag {
 </PageHero>
 
 <Sponsors placement="after-hero" pageType={pageType} />
+{currentGroup?.appSlug === 'grok' && <OfficialWebPlans activeSlug={currentGroup.urlSlug} />}
 
 {(groups.length > 0 || relatedShopSearchTerm || currentGroup) && (
   <section data-telemetry-block={telemetryBlocks.officialPrices.table} class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden data-workspace">
@@ -90,7 +92,7 @@ function countryFlag(countryCode: string): CountryFlag {
                   {currentProduct.plans.map(group => {
                     const term = quickPlanSearchTermForOfficialPriceSlug(group.urlSlug);
                     return <a href={linkTo(group.pathname)} class="plan-option" aria-current={currentGroup?.key === group.key ? 'page' : undefined} aria-label={group.displayName}>
-                      {term?.slug === group.urlSlug ? quickPlanShortLabel(term, currentProduct.product?.id ?? currentProduct.id) : group.planName}
+                      {term?.slug === group.urlSlug && !group.displayName.includes('· App Store') ? quickPlanShortLabel(term, currentProduct.product?.id ?? currentProduct.id) : group.planName}
                     </a>;
                   })}
                 </div>
@@ -108,8 +110,9 @@ function countryFlag(countryCode: string): CountryFlag {
         </div>
       </div>
     )}
-    {currentGroup && (
+    {currentGroup && !isWebPlan && (
       <>
+        <p class="official-price-record-note">{t.officialPrice.priceRecordNote}</p>
         <div class="official-baseline-summary"><span>{t.officialPrice.baseline}</span>{baseline ? <><strong>{baseline.localizedCountryLabel} {baseline.priceText} {baseline.currencyCode}</strong><span>≈ {baseline.equivalentPriceText}</span></> : <span>{t.officialPrice.baselineUnavailable}</span>}</div>
         <DataTable
           variant="compact"
@@ -131,7 +134,7 @@ function countryFlag(countryCode: string): CountryFlag {
               <tr data-sort-difference={difference ?? ""} class:list={{ 'official-price-baseline': item === baseline }} data-sort-sequence={String(idx + 1)} data-sort-country={item.localizedCountryLabel} data-sort-price={item.priceValue} data-sort-currency={item.currencyCode} data-sort-equivalent-price={item.equivalentPrice}>
                 <DataTableCell label={t.labels.sequence} align="center" sequence>{idx + 1}</DataTableCell>
                 <DataTableCell label={t.officialPrice.countryRegion}>
-                  <span class="official-region"><span class="official-region-flag" aria-hidden="true">{flag.emoji}</span><span><strong class="official-region-name">{item.localizedCountryLabel}{item === baseline && <span class="official-baseline-badge">{t.officialPrice.baseline}</span>}</strong><small class="official-price-secondary">{item.countryCode}</small></span></span>
+                  <span class="official-region"><span class="official-region-flag" aria-hidden="true">{flag.emoji}</span><span><strong class="official-region-name">{item.localizedCountryLabel}{item === baseline && <span class="official-baseline-badge">{t.officialPrice.baseline}</span>}</strong><small class="official-price-secondary">{item.countryCode}</small><small class="official-price-secondary">{t.officialPrice.priceRecordedAt} <RefreshTime timestamp={item.fetchedAt} fallback={t.labels.notRecorded} /></small></span></span>
                 </DataTableCell>
                 <DataTableCell label={t.officialPrice.localPrice} align="right">{item.priceText}</DataTableCell>
                 <DataTableCell label={t.officialPrice.currency}><span class="official-price-secondary">{item.currencyCode}</span></DataTableCell>
@@ -153,6 +156,7 @@ function countryFlag(countryCode: string): CountryFlag {
 )}
 
 <style>
+  .official-price-record-note { padding: 12px 16px 0; font-size: .875rem; }
   .official-plan-groups { display: grid; gap: 12px; min-width: 0; }
   .official-brand-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
 </style>

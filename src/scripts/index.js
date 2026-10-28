@@ -724,6 +724,7 @@ function createTrackedMerchantLink(href, label) {
   link.dataset.umamiEventName = label;
   link.className = 'merchant-link merchant-text';
   link.textContent = label;
+  link.title = label;
   return link;
 }
 
@@ -850,7 +851,7 @@ function createFlatProductRow(item) {
   if (shopSiteSlug(site)) {
     merchantCopy.appendChild(createTrackedMerchantLink(localizedFallbackPath(shopDetailPath(shopSiteSlug(site))), siteName));
   } else {
-    appendTextElement(merchantCopy, 'span', 'merchant-text', siteName);
+    appendTextElement(merchantCopy, 'span', 'merchant-text', siteName).title = siteName;
   }
 
   merchantCell.appendChild(merchantInline);

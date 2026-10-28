@@ -1,3 +1,4 @@
+/** 文件说明: 验证落库商品分类在公开搜索中的精确匹配。 */
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildShopSearchQuery, matchesShopSearchQuery } from '../src/shop-search-query.js';
@@ -27,4 +28,16 @@ test('stored classification controls exact and plain category search', () => {
   assert.equal(matchesShopSearchQuery(row, buildShopSearchQuery('中转站'), options), true);
   assert.equal(matchesShopSearchQuery(row, buildShopSearchQuery('autocat:gpt-plus'), options), false);
   assert.equal(matchesShopSearchQuery({ productName: 'GPT Plus' }, buildShopSearchQuery('autocat:other'), options), true);
+});
+
+
+test('current Grok Plus search stays separate from legacy SuperGrok Plus', () => {
+  const current = { productName: 'Grok Plus 8美元', autoCategory: 'grok-plus' };
+  const legacy = { productName: 'SuperGrok Plus 100美元', autoCategory: 'supergrok-plus' };
+  assert.equal(matchesShopSearchQuery(current, buildShopSearchQuery('autocat:grok-plus'), options), true);
+  assert.equal(matchesShopSearchQuery(legacy, buildShopSearchQuery('autocat:grok-plus'), options), false);
+  assert.equal(matchesShopSearchQuery(current, buildShopSearchQuery('autocat:supergrok-plus'), options), false);
+  assert.equal(matchesShopSearchQuery(legacy, buildShopSearchQuery('autocat:supergrok-plus'), options), true);
+  assert.equal(matchesShopSearchQuery(current, buildShopSearchQuery('autocat:grok'), options), true);
+  assert.equal(matchesShopSearchQuery(legacy, buildShopSearchQuery('autocat:grok'), options), true);
 });

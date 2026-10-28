@@ -1,4 +1,4 @@
-/* V3 data tables: one component owns the table, cells, metrics and merchant rows. */
+/* 文件说明: 统一公开数据表格、指标与商家行的展示样式。 */
 .data-table-frame { display: flex; flex-direction: column; min-width: 0; width: 100%; }
 .product-table-scroll, .gateway-table-scroll { position: relative; width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
 .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; line-height: 1.5; }
@@ -95,6 +95,7 @@
 .merchant-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .merchant-tag-row { display: inline-flex; gap: 4px; align-items: center; }
 .merchant-link, .merchant-text, .product-link, .product-name, .product-text, .merchant-primary-text { color: var(--color-base-content); font-size: 13px; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.merchant-text, .merchant-primary-text { display: -webkit-box; min-width: 0; max-width: 100%; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .merchant-link:not([data-row-primary]):hover, .product-link:not([data-row-primary]):hover { text-decoration: underline; text-underline-offset: 3px; }
 .favorite-toggle { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 20px; width: 20px; height: 24px; padding: 2px; border: 0; background: none; color: color-mix(in srgb, var(--color-base-content) 40%, transparent); cursor: pointer; font-size: 20px; line-height: 1; }
 .favorite-toggle[aria-pressed="true"] { color: var(--color-primary); }

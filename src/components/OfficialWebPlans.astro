@@ -1,0 +1,41 @@
+---
+/*
+文件说明: 单独展示 Grok 官网套餐与美元标准月费，并链接官方结账页面。
+*/
+import { grokWebSubscription } from '../models/product-catalog.js';
+import { autoCategoryLabel } from '../shop-auto-category.js';
+import { officialPricePathname } from '../models/routes.js';
+type Props = { activeSlug?: string };
+const { activeSlug } = Astro.props;
+const t = Astro.locals.messages.officialPrice;
+const linkTo = Astro.locals.localizePath;
+---
+<section class="official-web-plans card" aria-labelledby="grok-web-plans-title">
+  <div class="official-web-plans-header">
+    <h2 id="grok-web-plans-title">{t.webPlansTitle}</h2>
+    <a href={grokWebSubscription.sourceUrl} target="_blank" rel="noopener noreferrer">{t.webPlansSource} ↗</a>
+  </div>
+  <p>{t.webPlansNote} {t.webPlansReviewed} <time datetime={grokWebSubscription.reviewedOn}>{grokWebSubscription.reviewedOn}</time></p>
+  <ol class="official-web-plan-list">
+    {grokWebSubscription.plans.map(plan => <li>
+      <a href={linkTo(officialPricePathname(plan.slug))} aria-current={activeSlug === plan.slug ? 'page' : undefined}>
+        <strong>{autoCategoryLabel(plan.slug, Astro.locals.locale)}</strong>
+        <span><b>${plan.monthlyUsd}</b> {t.webPlansMonthly}</span>
+      </a>
+    </li>)}
+  </ol>
+</section>
+<style>
+  .official-web-plans { padding: 18px; border: 1px solid var(--color-base-300); background: var(--color-base-100); margin-bottom: 16px; }
+  .official-web-plans-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .official-web-plans-header h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+  .official-web-plans-header a { color: var(--color-primary); font-size: .875rem; }
+  .official-web-plans > p { margin: 8px 0 14px; font-size: .875rem; color: var(--color-base-content); }
+  .official-web-plan-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0; }
+  .official-web-plan-list a { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--color-base-300); border-radius: var(--radius-box); }
+  .official-web-plan-list a[aria-current="page"], .official-web-plan-list a:hover { border-color: var(--color-primary); }
+  .official-web-plan-list strong { font-size: .875rem; }
+  .official-web-plan-list span { font-size: .75rem; }
+  .official-web-plan-list b { font-size: 1.125rem; }
+  @media (max-width: 640px) { .official-web-plan-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>

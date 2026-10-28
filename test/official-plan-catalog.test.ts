@@ -1,6 +1,7 @@
+/** 文件说明: 验证官网套餐与 App Store 订阅的独立身份、快捷入口及历史链接。 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { quickPlanProducts, quickProductDefaultPlan, quickProductSearchTerm, canonicalOfficialPriceSlug, officialPlanIdentity, officialPriceStorageSlugs, quickPlanSearchTermForSlug, productForAutoCategory, productForOfficialPrice, quickPlanSearchTermForOfficialPriceSlug } from '../src/models/product-catalog.js';
+import { quickPlanProducts, quickProductDefaultPlan, quickProductSearchTerm, canonicalOfficialPriceSlug, officialPlanIdentity, officialPriceStorageSlugs, quickPlanSearchTermForSlug, productForAutoCategory, productForOfficialPrice, quickPlanSearchTermForOfficialPriceSlug, grokWebSubscription, officialWebPriceCatalog, autoCategoryIdsForFilter, officialPriceDisplayOrder } from '../src/models/product-catalog.js';
 
 test('official plans share category identities and link back to the same product', () => {
   for (const [app, plan, slug, name] of [
@@ -8,8 +9,6 @@ test('official plans share category identities and link back to the same product
     ['gemini', 'ai-plus', 'gemini-plus', 'Gemini Plus'],
     ['gemini', 'advanced', 'gemini-pro', 'Gemini Pro'],
     ['gemini', 'ai-ultra', 'gemini-ultra-5x', 'Gemini Ultra 5x'],
-    ['grok', 'supergrok-lite', 'supergrok-lite', 'SuperGrok Lite'],
-    ['grok', 'supergrok-plus', 'supergrok-plus', 'SuperGrok Plus'],
   ]) {
     const identity = officialPlanIdentity(app, plan)!;
     const term = quickPlanSearchTermForOfficialPriceSlug(identity.urlSlug)!;
@@ -41,7 +40,7 @@ test('official Cursor tiers link to the existing Cursor account category', () =>
 
 
 test('all-product pages default to a standard official plan without replacing specific tier links', () => {
-  for (const [product, slug] of [['gpt','gpt-plus'], ['claude','claude-pro'], ['gemini','gemini-pro'], ['grok','supergrok'], ['cursor','cursor-pro'], ['x','x-premium'], ['copilot','microsoft-365-personal']]) {
+  for (const [product, slug] of [['gpt','gpt-plus'], ['claude','claude-pro'], ['gemini','gemini-pro'], ['grok','grok-plus'], ['cursor','cursor-pro'], ['x','x-premium'], ['copilot','microsoft-365-personal']]) {
     assert.equal(quickPlanSearchTermForSlug(product)?.officialPriceSlug, slug);
   }
   assert.equal(quickPlanSearchTermForOfficialPriceSlug('gpt-plus')?.slug, 'gpt-plus');
@@ -58,7 +57,7 @@ test('product defaults select a concrete category and share its official price d
     assert.equal(quickProductSearchTerm(product).officialPriceSlug, plan.officialPriceSlug);
     if (product.terms.length > 1) assert.notEqual(plan.slug, product.id);
   }
-  for (const [id, slug] of [['gpt', 'gpt-plus'], ['claude', 'claude-pro'], ['gemini', 'gemini-pro'], ['grok', 'supergrok'], ['x', 'x-premium']]) {
+  for (const [id, slug] of [['gpt', 'gpt-plus'], ['claude', 'claude-pro'], ['gemini', 'gemini-pro'], ['grok', 'grok-plus'], ['x', 'x-premium']]) {
     assert.equal(quickProductDefaultPlan(quickPlanProducts.find(product => product.id === id)!).slug, slug);
     assert.equal(quickPlanSearchTermForSlug(id)?.query, `autocat: ${id}`);
   }
@@ -113,4 +112,24 @@ test('official brand destinations use declared defaults even when cheaper plans 
     assert.equal(defaultOfficialPricePlan(plans)?.urlSlug, expected);
     assert.equal(defaultOfficialPricePlan([...plans].reverse())?.urlSlug, expected);
   }
+});
+
+
+test('Grok quick plans follow current website tiers without borrowing legacy App Store prices', () => {
+  const product = quickPlanProducts.find(product => product.id === 'grok')!;
+  assert.deepEqual(product.terms.map(term => term.slug), ['grok-free', 'grok-plus', 'grok-premium', 'grok-super', 'grok-ultra']);
+  assert.deepEqual(grokWebSubscription.plans.map(plan => plan.monthlyUsd), [0, 8, 30, 100, 200]);
+  for (const term of product.terms) {
+    assert.equal(term.officialPriceSlug, term.slug);
+    assert.equal(term.officialPriceSource, undefined);
+    assert.ok(officialWebPriceCatalog().some(plan => plan.urlSlug === term.slug));
+    assert.ok(!officialPriceStorageSlugs(term.slug).some(slug => slug.includes('supergrok')));
+  }
+  assert.equal(officialPlanIdentity('grok', 'supergrok-plus')?.displayName, 'SuperGrok Plus · App Store');
+  assert.equal(officialPlanIdentity('grok', 'supergrok-plus')?.urlSlug, 'supergrok-plus');
+  assert.equal(canonicalOfficialPriceSlug('grok-supergrok-plus'), 'supergrok-plus');
+  assert.ok(autoCategoryIdsForFilter('grok').includes('supergrok-plus'));
+  assert.ok(officialPriceDisplayOrder('grok', 'supergrok-lite', 4001) > officialPriceDisplayOrder('grok', 'grok-ultra', 4004));
+  assert.equal(quickPlanSearchTermForSlug('supergrok-plus')?.query, 'autocat: supergrok-plus');
+  assert.equal(quickPlanSearchTermForSlug('supergrok-plus')?.officialPriceSlug, 'supergrok-plus');
 });

@@ -30,6 +30,9 @@ type QuickPlanProduct = {
   plans: Omit<QuickPlanSearchTerm, 'label' | 'query' | 'gatewayFamily' | 'gatewayFamilyName'>[];
 };
 
+// Apple 的旧订阅仍独立存在，保留搜索与价格链接，不进入新套餐快捷菜单。
+const grokAppStorePlans = ['supergrok-lite', 'supergrok', 'supergrok-plus', 'supergrok-heavy'] as const;
+
 // 产品分组、图标和品牌关联只在这里定义；套餐继承所属产品的中转站入口。
 const products: QuickPlanProduct[] = [
   { id: 'gpt', defaultPlanSlug: 'gpt-plus', label: 'GPT', ...productMark('gpt'), gateway: { id: 'gpt', name: 'GPT' }, symbol: '', plans: [
@@ -55,12 +58,12 @@ const products: QuickPlanProduct[] = [
     { slug: 'gemini-ultra-5x', legacySlugs: ['gemini-ai-ultra', 'gemini-ultra'], officialPriceSource: { app: 'gemini', plan: 'ai-ultra', legacySlugs: ["gemini-ai-ultra"] } },
     { slug: 'gemini-ultra-20x' },
   ] },
-  { id: 'grok', defaultPlanSlug: 'supergrok', label: 'Grok', ...productMark('grok'), gateway: { id: 'grok', name: 'Grok' }, symbol: '', plans: [
-    { slug: 'grok-free' },
-    { slug: 'supergrok-lite', officialPriceSource: { app: 'grok', plan: 'supergrok-lite', legacySlugs: ["grok-supergrok-lite"] } },
-    { slug: 'supergrok', officialPriceSource: { app: 'grok', plan: 'supergrok', legacySlugs: ["grok-supergrok"] } },
-    { slug: 'supergrok-plus', officialPriceSource: { app: 'grok', plan: 'supergrok-plus', legacySlugs: ["grok-supergrok-plus"] } },
-    { slug: 'supergrok-heavy', officialPriceSource: { app: 'grok', plan: 'supergrok-heavy', legacySlugs: ["grok-supergrok-heavy"] } },
+  { id: 'grok', defaultPlanSlug: 'grok-plus', label: 'Grok', ...productMark('grok'), gateway: { id: 'grok', name: 'Grok' }, symbol: '', plans: [
+    { slug: 'grok-free', officialPriceSlug: 'grok-free' },
+    { slug: 'grok-plus', officialPriceSlug: 'grok-plus' },
+    { slug: 'grok-premium', officialPriceSlug: 'grok-premium' },
+    { slug: 'grok-super', officialPriceSlug: 'grok-super' },
+    { slug: 'grok-ultra', officialPriceSlug: 'grok-ultra' },
   ] },
   { id: 'x', defaultPlanSlug: 'x-premium', label: 'X', ...productMark('x'), symbol: '𝕏', plans: [
     { slug: 'x-free' },
@@ -110,14 +113,18 @@ export function quickProductSearchTerm(product: typeof quickPlanProducts[number]
   };
 }
 
-export const quickPlanSearchTerms: QuickPlanSearchTerm[] = quickPlanProducts.flatMap(product =>
-  product.terms.some(term => term.slug === product.id)
-    ? product.terms : [quickProductSearchTerm(product), ...product.terms]);
+export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
+  ...quickPlanProducts.flatMap(product => product.terms.some(term => term.slug === product.id)
+    ? product.terms : [quickProductSearchTerm(product), ...product.terms]),
+  ...grokAppStorePlans.map(slug => ({ slug, label: autoCategoryLabel(slug), query: `autocat: ${slug}`,
+    officialPriceSlug: slug, gatewayFamily: 'grok', gatewayFamilyName: 'Grok' })),
+];
 
 export function productForAutoCategory(categoryId: string) {
   return quickPlanProducts.find(product => product.id === categoryId
     || categoryId.startsWith(`${product.id}-`)
-    || product.terms.some(term => term.slug === categoryId));
+    || product.terms.some(term => term.slug === categoryId)
+    || (product.id === 'grok' && grokAppStorePlans.some(slug => slug === categoryId)));
 }
 
 export function autoCategoryIdsForFilter(id: string): string[] {
@@ -130,9 +137,7 @@ export function quickProductSearchQuery(productId: string) {
 }
 
 export function quickPlanShortLabel(term: QuickPlanSearchTerm, productId: string) {
-  return productId === 'grok'
-    ? term.label.replace(/^Grok /, '').replace(/^SuperGrok$/, 'Standard').replace(/^SuperGrok /, '')
-    : term.label.replace(/^(?:GPT|Claude|Gemini|X) /, '');
+  return term.label.replace(/^(?:GPT|Claude|Gemini|Grok|X) /, '');
 }
 
 export function quickPlanSearchPath(term: QuickPlanSearchTerm) {
@@ -182,6 +187,8 @@ export function quickPlanHeroName(term: QuickPlanSearchTerm | null, name = term?
 
 // Official subscriptions without a matching account tier still live in this product directory.
 const officialOnlyPlans = [
+  ...grokAppStorePlans.map(slug => ({ app: 'grok', plan: slug, appName: 'Grok',
+    planName: `${autoCategoryLabel(slug)} · App Store`, displayName: `${autoCategoryLabel(slug)} · App Store`, urlSlug: slug })),
   { app: 'cursor', plan: 'pro', appName: 'Cursor', planName: 'Pro', displayName: 'Cursor Pro', urlSlug: 'cursor-pro' },
   { app: 'cursor', plan: 'pro-plus', appName: 'Cursor', planName: 'Pro+', displayName: 'Cursor Pro+', urlSlug: 'cursor-pro-plus' },
   { app: 'cursor', plan: 'ultra', appName: 'Cursor', planName: 'Ultra', displayName: 'Cursor Ultra', urlSlug: 'cursor-ultra' },
@@ -204,13 +211,15 @@ export function officialPlanIdentity(app: string, plan: string) {
 
 export function canonicalOfficialPriceSlug(slug: string) {
   const normalized = slug.trim().toLowerCase();
-  return quickPlanSearchTerms.find(term => term.officialPriceSource?.legacySlugs.includes(normalized))?.slug ?? normalized;
+  return quickPlanSearchTerms.find(term => term.officialPriceSource?.legacySlugs.includes(normalized))?.slug
+    ?? officialOnlyPlans.find(plan => `${plan.app}-${plan.plan}` === normalized)?.urlSlug ?? normalized;
 }
 
 export function officialPriceStorageSlugs(slug: string) {
   const canonical = canonicalOfficialPriceSlug(slug);
   const term = quickPlanSearchTermForOfficialPriceSlug(canonical);
-  return [canonical, ...(term?.officialPriceSource?.legacySlugs ?? [])];
+  const standalone = officialOnlyPlans.find(plan => plan.urlSlug === canonical);
+  return [canonical, ...(term?.officialPriceSource?.legacySlugs ?? []), ...(standalone?.app === 'grok' ? [`grok-${standalone.plan}`] : [])];
 }
 
 export function productForOfficialPrice(appSlug: string, urlSlug: string) {
@@ -241,4 +250,34 @@ export function defaultOfficialPricePlan<T extends { urlSlug: string }>(plans: r
   const product = quickPlanProducts.find(item => item.terms.some(term => plans.some(plan => plan.urlSlug === term.officialPriceSlug)));
   const defaultSlug = product && quickProductDefaultPlan(product).officialPriceSlug;
   return plans.find(plan => plan.urlSlug === defaultSlug) ?? plans[0];
+}
+
+/** 官网标准美元月费；独立于 App Store 地区订阅，促销与税费以结账页为准。 */
+export const grokWebSubscription = {
+  sourceUrl: 'https://grok.com/plans',
+  reviewedOn: '2026-10-28',
+  plans: [
+    { slug: 'grok-free', monthlyUsd: 0 },
+    { slug: 'grok-plus', monthlyUsd: 8 },
+    { slug: 'grok-premium', monthlyUsd: 30 },
+    { slug: 'grok-super', monthlyUsd: 100 },
+    { slug: 'grok-ultra', monthlyUsd: 200 },
+  ],
+} as const;
+
+export function officialWebPriceCatalog() {
+  return grokWebSubscription.plans.map((plan, index) => ({
+    appSlug: 'grok', planSlug: plan.slug, urlSlug: plan.slug,
+    appName: 'Grok', planName: autoCategoryLabel(plan.slug).replace(/^Grok /, ''),
+    displayName: autoCategoryLabel(plan.slug), isDefault: plan.slug === 'grok-plus', displayOrder: 4000 + index,
+  }));
+}
+
+/** 官网当前套餐优先，旧 App Store 套餐保持独立且排在其后。 */
+export function officialPriceDisplayOrder(app: string, plan: string, storedOrder: number) {
+  if (app !== 'grok') return storedOrder;
+  const webIndex = grokWebSubscription.plans.findIndex(item => item.slug === plan);
+  if (webIndex >= 0) return 4000 + webIndex;
+  const appStoreIndex = grokAppStorePlans.findIndex(slug => slug === plan);
+  return appStoreIndex >= 0 ? 4101 + appStoreIndex : storedOrder;
 }

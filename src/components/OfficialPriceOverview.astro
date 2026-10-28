@@ -1,4 +1,6 @@
 ---
+/* 文件说明: 展示官网套餐参考与 App Store 各地区订阅比价。 */
+import OfficialWebPlans from './OfficialWebPlans.astro';
 import RefreshTime from './RefreshTime.astro';
 import HeroMetric from './HeroMetric.astro';
 import PageHero from './PageHero.astro';
@@ -19,18 +21,22 @@ type Props = { stats: import('../store.js').PublicOfficialPriceStats; groups: Lo
 const { groups, updatedAt, stats } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const brands = buildOfficialPriceProductGroups(groups);
+const pricedGroups = groups.filter(group => group.prices.length > 0);
+const brands = buildOfficialPriceProductGroups(pricedGroups);
 const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => String.fromCodePoint(0x1F1E6 + char.charCodeAt(0) - 65)).join('') : '';
 ---
 <PageHero title={t.officialPrice.title} description={t.officialPrice.heroDescription}>
   <div slot="meta" class="hero-metrics"><HeroMetric label={t.officialPrice.listedProducts} value={stats.productCount.toLocaleString(Astro.locals.locale)} /><HeroMetric label={t.officialPrice.listedRegions} value={stats.regionCount.toLocaleString(Astro.locals.locale)} /><HeroMetric label={t.labels.latestRefresh}><RefreshTime timestamp={updatedAt} fallback={t.labels.notRecorded} /></HeroMetric></div>
 </PageHero>
 <Sponsors placement="after-hero" pageType="official-price" />
+<OfficialWebPlans />
+<h2 class="text-base font-semibold mb-3">{t.officialPrice.appStorePlans}</h2>
+<p class="text-sm mb-3">{t.officialPrice.priceRecordNote}</p>
 <section class="official-overview card data-workspace" data-telemetry-block={telemetryBlocks.officialPrices.table}>
   <div class="data-workspace-controls"><nav class="official-overview-brands" aria-label={t.officialPrice.navLabel}>
     <OfficialPriceBrandLinks brands={brands} />
   </nav></div>
-  {groups.length > 0 && <div class="official-overview-table">
+  {pricedGroups.length > 0 && <div class="official-overview-table">
     <DataTable variant="compact" >
       <Fragment slot="head">
         <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
@@ -40,7 +46,7 @@ const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => S
         <DataTableHeader label={t.officialPrice.lowestPrice} helpTip={`${t.officialPrice.note} ${t.officialPrice.description}`} sortKey="equivalentPrice" sortType="number" align="right" />
         <DataTableHeader label={t.officialPrice.comparedToBaseline} sortKey="difference" sortType="number" align="right" />
       </Fragment>
-      {groups.map((group, index) => {
+      {pricedGroups.map((group, index) => {
         const price = group.prices[0];
         const product = productForOfficialPrice(group.appSlug, group.urlSlug);
         const baseline = officialPriceBaseline(group.prices);
@@ -50,13 +56,13 @@ const flag = (code: string) => /^[A-Z]{2}$/.test(code) ? [...code].map(char => S
           <DataTableCell label={t.labels.product}><a data-row-primary href={linkTo(group.pathname)} class="official-plan-name merchant-link">{product?.icon ? <img src={productIconPath(product.icon)} width="22" height="22" alt="" class:list={['plan-brand-icon', product.monochrome && 'plan-icon-mono']} /> : product?.symbol && <span class="official-brand-symbol" aria-hidden="true">{product.symbol}</span>}{group.displayName}</a></DataTableCell>
           <DataTableCell label={t.officialPrice.baselinePrice} align="right">{baseline ? <><span class="official-price-value">{baseline.equivalentPriceText}</span><small class="official-price-secondary">{baseline.priceText} {baseline.currencyCode}</small></> : <span title={t.officialPrice.baselineUnavailable}>—</span>}</DataTableCell>
           <DataTableCell label={t.officialPrice.lowestRegion}><span class="official-region"><span aria-hidden="true">{flag(price.countryCode)}</span><span><strong class="official-region-name">{price.localizedCountryLabel}</strong><small class="official-price-secondary">{price.countryCode}</small></span></span></DataTableCell>
-          <DataTableCell label={t.officialPrice.lowestPrice} align="right"><span class="official-price-value">{price.equivalentPriceText}</span><small class="official-price-secondary">{price.priceText} {price.currencyCode}</small></DataTableCell>
+          <DataTableCell label={t.officialPrice.lowestPrice} align="right"><span class="official-price-value">{price.equivalentPriceText}</span><small class="official-price-secondary">{price.priceText} {price.currencyCode}</small><small class="official-price-secondary">{t.officialPrice.priceRecordedAt} <RefreshTime timestamp={price.fetchedAt} fallback={t.labels.notRecorded} /></small></DataTableCell>
           <DataTableCell label={t.officialPrice.comparedToBaseline} align="right"><OfficialPriceComparison percent={difference} /></DataTableCell>
         </tr>;
       })}
     </DataTable>
   </div>}
-  {!groups.length && <p class="data-table-empty-state">{t.officialPrice.empty}</p>}
+  {!pricedGroups.length && <p class="data-table-empty-state">{t.officialPrice.empty}</p>}
 </section>
 
 <style>

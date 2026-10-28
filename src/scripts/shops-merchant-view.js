@@ -77,6 +77,7 @@ function createTrackedMerchantLink(href, siteName) {
   link.href = href;
   link.className = 'merchant-link merchant-text';
   link.textContent = siteName;
+  link.title = siteName;
   link.dataset.rowPrimary = '';
   link.dataset.umamiEvent = 'internal-link-click';
   link.dataset.umamiEventLinkType = 'merchant-detail';
@@ -207,7 +208,7 @@ export function renderMerchantRows({
     if (accessors.shopSiteSlug(site)) {
       merchantTitle.appendChild(createTrackedMerchantLink(localizedFallbackPath(accessors.shopDetailPath(accessors.shopSiteSlug(site))), siteName));
     } else {
-      appendTextElement(merchantTitle, 'span', 'merchant-primary-text', siteName);
+      appendTextElement(merchantTitle, 'span', 'merchant-primary-text', siteName).title = siteName;
     }
     merchantContent.appendChild(merchantTitle);
     const merchantTags = document.createElement('div');

@@ -11,7 +11,7 @@ import { localizeTaskLabel } from './localized-display.js';
 import type { ModelLeaderboardGroup } from './model-leaderboard.js';
 import type { OfficialPriceGroup } from './official-price.js';
 import { loadPageContent } from './page-content.js';
-import { quickPlanSearchSeoPath, quickPlanSearchTerms } from './models/product-catalog.js';
+import { quickPlanSearchSeoPath, quickPlanSearchTerms, grokWebSubscription } from './models/product-catalog.js';
 import { buildShopSearchPageMeta } from './shop-search-page-meta.js';
 import type { PublicGatewayModelRow, PublicGatewaySiteRow, PublicSiteRow } from './store.js';
 
@@ -162,7 +162,8 @@ export function buildOfficialPriceSeoRoutes(groups: OfficialPriceGroup[], locale
   return groups.map(group => ({
     pathname: routePath(group.pathname, locale),
     title: `${group.displayName} ${messages.officialPrice.titleSuffix}`,
-    description: messages.officialPrice.dynamicDescription.replace('{displayName}', group.displayName),
+    description: (grokWebSubscription.plans.some(plan => plan.slug === group.urlSlug)
+      ? messages.officialPrice.webPlanDescription : messages.officialPrice.dynamicDescription).replace('{displayName}', group.displayName),
     changefreq: 'daily' as const,
   }));
 }

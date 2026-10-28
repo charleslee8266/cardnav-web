@@ -1,3 +1,4 @@
+/** 文件说明: 维护商品自动分类的公开标识与展示名称。 */
 import { autoCategoryLabels } from './i18n/auto-categories.js';
 import { isLocale } from './i18n/config.js';
 
@@ -25,8 +26,12 @@ export const autoCategories: readonly { id: string; label: string }[] = [
   { id: 'gemini-pro', label: 'Gemini Pro' },
   { id: 'gemini-plus', label: 'Gemini Plus' },
   { id: 'gemini', label: 'Gemini' },
-  { id: 'supergrok-lite', label: 'SuperGrok Lite' },
   { id: 'grok-free', label: 'Grok Free' },
+  { id: 'grok-plus', label: 'Grok Plus' },
+  { id: 'grok-premium', label: 'Grok Premium' },
+  { id: 'grok-super', label: 'Grok Super' },
+  { id: 'grok-ultra', label: 'Grok Ultra' },
+  { id: 'supergrok-lite', label: 'SuperGrok Lite' },
   { id: 'muse', label: 'Muse' },
   { id: 'supergrok-heavy', label: 'SuperGrok Heavy' },
   { id: 'supergrok-plus', label: 'SuperGrok Plus' },

@@ -3,7 +3,7 @@
  */
 import { shopPlatformName } from './shop-platform.js';
 import { createFamilyNavigation } from './models/family-navigation.js';
-import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter } from './models/product-catalog.js';
+import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter, officialWebPriceCatalog, officialPriceDisplayOrder } from './models/product-catalog.js';
 import 'dotenv/config';
 import pg from 'pg';
 import type { ShopClickEvent } from './shop-click.js';
@@ -1232,7 +1232,7 @@ function mapOfficialPriceRow(row: Record<string, unknown>): PublicOfficialPriceR
     urlSlug: String(row.url_slug),
     ...officialPlanIdentity(String(row.app_slug), String(row.plan_slug)),
     isDefault: Boolean(row.is_default),
-    displayOrder: Number(row.display_order) || 0,
+    displayOrder: officialPriceDisplayOrder(String(row.app_slug), String(row.plan_slug), Number(row.display_order) || 0),
     countryCode: String(row.country_code),
     countryLabel: String(row.country_label),
     currencyCode: String(row.currency_code),
@@ -1262,7 +1262,7 @@ export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCat
       AND trim(display_name) <> ''
     ORDER BY app_slug, plan_slug, display_order ASC
   `);
-  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(row => ({
+  return [...officialWebPriceCatalog(), ...result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(row => ({
     appSlug: String(row.app_slug),
     planSlug: String(row.plan_slug),
     appName: String(row.app_name),
@@ -1271,8 +1271,8 @@ export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCat
     urlSlug: String(row.url_slug),
     ...officialPlanIdentity(String(row.app_slug), String(row.plan_slug)),
     isDefault: Boolean(row.is_default),
-    displayOrder: Number(row.display_order) || 0,
-  }));
+    displayOrder: officialPriceDisplayOrder(String(row.app_slug), String(row.plan_slug), Number(row.display_order) || 0),
+  }))];
 }
 
 export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<PublicOfficialPriceRow[]> {
