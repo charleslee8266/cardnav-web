@@ -353,7 +353,7 @@ export const zhMessages = {
     merchantSearchResults: '商家名匹配的商品',
     merchantSearchFallback: '未找到匹配商品，以下商品来自名称匹配的商家',
     merchantSearchPlaceholder: '搜索商家',
-    showSoldOut: '显示无货商品',
+    inStockOnly: '只看有货商品',
     groupByMerchant: '按商家分组',
     minPrice: '最小',
     maxPrice: '最大',

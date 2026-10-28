@@ -354,7 +354,7 @@ export const ruMessages: Messages = {
     merchantSearchResults: 'Товары найденных магазинов',
     merchantSearchFallback: 'Товары не найдены. Ниже — товары магазинов с подходящим названием.',
     merchantSearchPlaceholder: 'Поиск продавцов',
-    showSoldOut: 'Показывать товары без наличия',
+    inStockOnly: 'Только товары в наличии',
     groupByMerchant: 'Группировать по продавцу',
     minPrice: 'Мин.',
     maxPrice: 'Макс.',

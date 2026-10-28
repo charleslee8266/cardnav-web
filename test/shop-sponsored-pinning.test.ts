@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { prioritizeShopProductRows, type ShopPinnedRow } from '../src/shop-sponsored-pinning.js';
 function row(key: string, sponsor = false, supportPoints = 0): ShopPinnedRow {
-  return { id: key, productFavoriteKey: key, siteFavoriteKey: key, score: 0, sponsor, supportPoints };
+  return { id: key, productFavoriteKey: key, siteFavoriteKey: key, score: 0, inStock: true, sponsor, supportPoints };
 }
 
 test('merchant detail disables merchant pins but preserves individual favorites and partner metadata', () => {
@@ -158,3 +158,22 @@ test('推荐度不改变同积分商家的名额竞争顺序', () => {
   assert.equal(kinds.get('row-20'), '');
   assert.ok(rows.slice(0, 20).every(item => kinds.get(item.id) === 'support'));
 });
+
+for (const manualSort of [false, true]) {
+  test(`有货优先于缺货，缺货的合作、赞赏和收藏商品均不置顶（手动排序：${manualSort}）`, () => {
+    const soldOut = [
+      { ...row('sold-partner', true, 100), inStock: false, shopRecommendation: 1000 },
+      { ...row('sold-support', false, 500), inStock: false },
+      { ...row('sold-favorite'), inStock: false },
+    ];
+    const available = [row('ordinary'), row('available-partner', true)];
+    const favorites = { favoriteProductKeys: new Set(soldOut.map(item => item.id)), favoriteSiteKeys: new Set(soldOut.map(item => item.siteFavoriteKey)) };
+    const kinds = new Map<string, string>();
+    const result = prioritizeShopProductRows([soldOut[0], available[0], ...soldOut.slice(1), available[1]], favorites,
+      (item, kind) => kinds.set(item.id, kind), manualSort);
+    assert.deepEqual(result, [available[1], available[0], ...soldOut]);
+    assert.equal(kinds.get('available-partner'), 'partner');
+    assert.ok(soldOut.every(item => kinds.get(item.id) === ''));
+    assert.deepEqual(prioritizeShopProductRows(soldOut, favorites), soldOut);
+  });
+}

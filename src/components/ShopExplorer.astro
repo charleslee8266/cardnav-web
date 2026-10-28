@@ -39,6 +39,8 @@ const requestUrl = new URL(Astro.request.url);
 const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
 const initialSearchQuery = requestUrl.searchParams.get('q')?.trim() ?? '';
 const initialCategoryQuery = seoSearchTerm?.query ?? (requestUrl.searchParams.get('category') ? `autocat: ${requestUrl.searchParams.get('category')}` : '');
+const initialInStockOnly = requestUrl.searchParams.get('inStockOnly') === '1';
+const initialProducts = data.products.filter(product => !initialInStockOnly || product.inStock);
 const initialFuzzySearch = requestUrl.searchParams.get('fuzzy') === '1';
 const officialPriceCatalog = await loadOfficialPriceCatalog();
 const platformOptions = siteId ? [] : await loadShopPlatformOptions();
@@ -212,7 +214,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             <fieldset class="data-filter-group">
               <legend>{t.shops.displayOptions}</legend>
               {siteId && <div data-multi-filter="kind"><label><input type="checkbox" value="favorite" data-filter-value class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.productFavorite}</span></label></div>}
-              <label><input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.showSoldOut}</span></label>
+              <label><input id="inStockOnlyFilter" name="inStockOnly" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs" checked={initialInStockOnly} /><span>{t.shops.inStockOnly}</span></label>
               {!siteId && <label><input id="onlyPlatformFilter" type="checkbox" class="checkbox checkbox-primary checkbox-xs" /><span>{t.shops.onlyPlatform}</span></label>}
             </fieldset>
           </FilterPopover></div>
@@ -235,7 +237,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
         tbodyId="flatProductRows"
         emptyId="productEmptyState"
         emptyText={t.shops.productEmptyState}
-        emptyHidden={data.products.some(product => product.inStock)}
+        emptyHidden={initialProducts.length > 0}
         loadMoreId="flatProductProgressiveLoad"
         summaryId="flatProductLoadSummary"
         summaryText={t.shops.script.displaySummary}
@@ -262,7 +264,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             />
           ))}
         </Fragment>
-        {data.products.filter(product => product.inStock).slice(0, initialProductLimitValue).map((product, index) => <ShopProductInitialRow product={product} index={index} scoped={Boolean(siteId)} />)}
+        {initialProducts.slice(0, initialProductLimitValue).map((product, index) => <ShopProductInitialRow product={product} index={index} scoped={Boolean(siteId)} />)}
       </DataTable>
     </div>
 

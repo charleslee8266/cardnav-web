@@ -405,7 +405,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
           ROW_NUMBER() OVER (ORDER BY shop_recommendation DESC, score DESC, id ASC) AS site_position
         FROM shop_products
         WHERE site_id = site.id AND active = TRUE
-          ${options.inStockOnly ? 'AND in_stock = TRUE' : ''}
+          AND in_stock = TRUE
           ${categoryIds ? `AND auto_category = ANY(${categoryParameter}::text[])` : ''}
         ORDER BY shop_recommendation DESC, score DESC, id ASC
         LIMIT ${MAX_PINNED_ROWS_PER_SITE}
@@ -438,7 +438,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       pinned.site_support_points AS display_points
     FROM base_products
     LEFT JOIN display_pins AS pinned ON pinned.product_row_id = base_products.product_row_id
-    ORDER BY ${options.siteId ? '' : 'display_group, display_points DESC NULLS LAST, COALESCE(pinned.display_score, base_products.score) DESC, COALESCE(pinned.display_id, base_products.product_row_id) ASC,'}
+    ORDER BY base_products.in_stock DESC, ${options.siteId ? '' : 'display_group, display_points DESC NULLS LAST, COALESCE(pinned.display_score, base_products.score) DESC, COALESCE(pinned.display_id, base_products.product_row_id) ASC,'}
       base_products.score DESC, base_products.product_row_id ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, productParams);

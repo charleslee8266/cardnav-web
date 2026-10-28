@@ -354,7 +354,7 @@ export const enMessages: Messages = {
     merchantSearchResults: 'Products from matching merchants',
     merchantSearchFallback: 'No matching products. Products from merchants with matching names are shown below.',
     merchantSearchPlaceholder: 'Search merchants',
-    showSoldOut: 'Show sold-out products',
+    inStockOnly: 'In-stock products only',
     groupByMerchant: 'Group by merchant',
     minPrice: 'Min',
     maxPrice: 'Max',

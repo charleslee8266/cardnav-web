@@ -9,6 +9,7 @@ export type ShopPinnedRow = {
   id: string;
   productFavoriteKey: string;
   score: number;
+  inStock: boolean | 0 | 1;
   shopRecommendation?: number;
   siteFavoriteKey: string;
   sponsor?: boolean;
@@ -33,7 +34,10 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
   options: { pinMerchants?: boolean } = {},
 ) {
   const pinMerchants = options.pinMerchants !== false;
-  return pinListRows(rowEntries, {
+  const available = rowEntries.filter(row => row.inStock);
+  const soldOut = rowEntries.filter(row => !row.inStock);
+  soldOut.forEach(row => onPin?.(row, ''));
+  const pinned = pinListRows(available, {
     manualSort,
     defaultOrder: compareShopProductRows,
     representativeOrder: (a, b) => (b.shopRecommendation ?? 0) - (a.shopRecommendation ?? 0) || compareShopProductRows(a, b),
@@ -54,4 +58,5 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
       });
     },
   });
+  return [...pinned, ...soldOut];
 }

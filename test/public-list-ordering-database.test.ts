@@ -1,3 +1,4 @@
+/** 文件说明: 验证数据库公开列表排序与浏览器置顶规则一致。 */
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import pg from 'pg';
@@ -57,7 +58,7 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
       assert.deepEqual(pinSiteRows(sites),sites);
     }
 
-    // Full hydration includes sold-out rows; default ties must agree with stock-only SSR.
+    // 完整列表的有货部分与仅看有货的首屏保持一致。
     await db.query('TRUNCATE shop_sites, shop_products');
     const merchants = [
       ['partner-high',0,true,2], ['partner',2,true,0],
@@ -86,14 +87,20 @@ test('SQL首屏、完整列表与共享两轮分配一致，合作和赞赏共�
     assert.deepEqual(actual.map(p=>p.id),stockOnly.products.map(p=>p.id));
     assert.ok(actual.findIndex(p=>p.siteId==='tie-low') < actual.findIndex(p=>p.siteId==='tie-high' && p.score===6));
 
-    // Stock, refresh time and names do not affect the order of equal-score products.
+    const fullRows = full.products.map(p => ({...p, productFavoriteKey:p.id, siteFavoriteKey:p.siteId, sponsor:p.siteSponsor, supportPoints:p.siteSupportPoints}));
+    assert.deepEqual(prioritizeShopProductRows(fullRows, {favoriteProductKeys:new Set(),favoriteSiteKeys:new Set()}).map(p=>p.id), full.products.map(p=>p.id));
+    assert.deepEqual(full.products.slice(0, stockOnly.products.length).map(p=>p.id), stockOnly.products.map(p=>p.id));
+    const partialAll = await loadShopProductsData({queryClient:db,productLimit:9});
+    assert.deepEqual(partialAll.products, full.products.slice(0,9));
+
+    // 库存优先分组，同库存同评分商品按 ID 排列。
     await db.query('TRUNCATE shop_products');
     await db.query(`INSERT INTO shop_products(id,site_id,name,score,in_stock,refreshed_at) VALUES
       ('c','tie-high','Beta',6,true,'2026-10-16'),
       ('a','tie-high','Zulu',6,false,'2020-01-01'),
       ('b','tie-high','Alpha',6,true,'2026-10-16')`);
     const tied = await loadShopProductsData({queryClient:db});
-    assert.deepEqual(tied.products.map(p=>p.id),['a','b','c']);
+    assert.deepEqual(tied.products.map(p=>p.id),['b','c','a']);
     await db.query("UPDATE shop_sites SET slug = id || '.test'");
     const scoped = await loadShopProductsData({ queryClient: db, siteId: 'tie-high' });
     const scopedPartial = await loadShopProductsData({ queryClient: db, siteId: 'tie-high', productLimit: 1 });

@@ -94,7 +94,7 @@ test('product filters leave merchant listings independent, including merchants w
   const product = (site: typeof sites[number], autoCategory: string, priceValue: number, stock = 1) => ({ siteId: site.id, siteName: site.name, siteUrl: site.url, siteFavoriteKey: site.id, productFavoriteKey: `${site.id}-${priceValue}`, productName: 'subscription', productTitle: 'subscription', categoryName: '', autoCategory, priceValue, inStock: stock });
   const scope: Record<string, any> = {
     searchFilter: { value: '' }, merchantSearchFilter: { value: '' }, priceMin: { value: '' }, priceMax: { value: '' },
-    showSoldOutFilter: { checked: false }, matchCategoryFilter: { checked: false }, matchMerchantFilter: { checked: false }, fuzzySearchFilter: { checked: false },
+    inStockOnlyFilter: { checked: true }, matchCategoryFilter: { checked: false }, matchMerchantFilter: { checked: false }, fuzzySearchFilter: { checked: false },
     selectedOriginalCategories: () => [], selectedProductKinds: () => [], selectedMerchantKinds: () => [], matchesListKinds,
     shopSiteSponsor: () => false, shopSiteSupportPoints: () => 0,
     favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(),
@@ -114,7 +114,7 @@ test('product filters leave merchant listings independent, including merchants w
   result = scope.matchingShopResults();
   assert.equal(result.products.length, 2);
   assert.deepEqual(Array.from(result.sites, (site: any) => site.id), ['a', 'b', 'empty']);
-  scope.showSoldOutFilter.checked = true;
+  scope.inStockOnlyFilter.checked = false;
   result = scope.matchingShopResults();
   assert.equal(result.products.length, 3);
   assert.equal(result.sites.length, 3);
@@ -387,7 +387,7 @@ test('product load-more appends the next range and preserves existing row elemen
 test('merchant search keeps direct products first while sharing the full-result pin allowance', () => {
   const rows = Array.from({ length: 32 }, (_, index) => ({
     id: String(index), productFavoriteKey: String(index), siteFavoriteKey: String(Math.floor(index / 4)),
-    score: index, sponsor: true, merchantSearchMatch: index >= 16, pinKind: '',
+    score: index, inStock: 1 as const, sponsor: true, merchantSearchMatch: index >= 16, pinKind: '',
   }));
   const favorites = { favoriteProductKeys: new Set<string>(), favoriteSiteKeys: new Set<string>() };
   const expected = prioritizeShopProductRows(rows.map(row => ({ ...row })), favorites, (row, kind) => { row.pinKind = kind; });
@@ -424,4 +424,18 @@ test('switching product tabs during a shared request shows feedback in both list
   resolve({ ok: true, json: async () => ({ p: [], s: [] }) });
   assert.deepEqual(await Promise.all([products, merchants]), [true, true]);
   assert.deepEqual(pending, { products: 0, shops: 0 });
+});
+
+test('库存分组优先于搜索直接匹配和商家补充结果', () => {
+  const rows = [
+    { id: 'sold-direct', inStock: 0, merchantSearchMatch: false },
+    { id: 'available-merchant', inStock: 1, merchantSearchMatch: true },
+    { id: 'available-direct', inStock: 1, merchantSearchMatch: false },
+    { id: 'sold-merchant', inStock: 0, merchantSearchMatch: true },
+  ].map(item => ({ ...item, score: 0, productFavoriteKey: item.id, siteFavoriteKey: item.id }));
+  const prioritize = renderer('src/scripts/index.js', 'prioritizeFavoriteFlatRows', {
+    favoriteProductKeys: new Set(), favoriteSiteKeys: new Set(), prioritizeShopProductRows,
+    currentFlatSort: null, shopsMessages: {},
+  }) as unknown as (entries: typeof rows) => typeof rows;
+  assert.deepEqual(Array.from(prioritize(rows), item => item.id), ['available-direct', 'available-merchant', 'sold-direct', 'sold-merchant']);
 });

@@ -42,7 +42,7 @@ const heroTitle = seoSearchPageMeta?.heroTitle ?? t.shops.title;
 const heroDescription = seoSearchTerm ? t.shops.searchResultsHeroDescription.replace('{term}', quickPlanHeroName(seoSearchTerm)) : t.shops.heroDescription;
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/market';
 const hasNonCanonicalQuery = requestUrl.search.length > 0;
-const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true, autoCategory: seoSearchTerm?.slug });
+const data = await loadShopProductsData({ productLimit: initialProductLimitValue, autoCategory: seoSearchTerm?.slug });
 const renderedProducts = data.products.map(product => ({
   id: product.id,
   categoryName: product.categoryName,
