@@ -67,7 +67,8 @@ export class SupportStore {
         const table = input.kind === 'shop' ? 'shop_sites' : 'gateway_sites';
         const field = input.kind === 'shop' ? 'id' : 'site_id';
         const type = input.kind === 'shop' ? 'cardShop' : 'gateway';
-        const site = await client.query(`SELECT name, url FROM ${table} WHERE ${field} = $1 AND status = 'online' AND type = $2 FOR SHARE`, [input.siteId, type]);
+        // 读取已提交的公开资料快照，避免后台评分或商品刷新持有的行锁阻塞下单。
+        const site = await client.query(`SELECT name, url FROM ${table} WHERE ${field} = $1 AND status = 'online' AND type = $2`, [input.siteId, type]);
         if (!site.rowCount) throw new SupportError('selectPublicSite');
         siteName = site.rows[0].name?.trim() || site.rows[0].url;
         siteUrl = site.rows[0].url;
