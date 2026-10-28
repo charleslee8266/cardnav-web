@@ -1,7 +1,9 @@
+/** 文件说明: 提供公开模型家族与官方订阅品牌的图标映射。 */
 import { productFamilyMark } from './product-icons.js';
 /** Model-family marks are selected independently from manufacturer logos. */
 const familyIcons: Record<string, { path: string; monochrome: boolean }> = {
   Doubao: { path: '/assets/model-family-icons/doubao.png', monochrome: false },
+  Jimeng: { path: '/assets/model-family-icons/jimeng.jpg', monochrome: false },
   Qwen: { path: '/assets/model-family-icons/qwen.png', monochrome: false },
   Kimi: { path: '/assets/model-family-icons/kimi.png', monochrome: false },
   Hunyuan: { path: '/assets/model-family-icons/hunyuan.png', monochrome: false },
@@ -64,7 +66,7 @@ const familyIcons: Record<string, { path: string; monochrome: boolean }> = {
   "Tripo": { path: '/assets/model-family-icons/tripo.svg', monochrome: false },
   "Vidu": { path: '/assets/model-family-icons/vidu.svg', monochrome: false },
   "Yi": { path: '/assets/model-family-icons/yi.svg', monochrome: false },
-  "Dreamina": { path: '/assets/model-family-icons/dreamina.svg', monochrome: false },
+  "Dreamina": { path: '/assets/model-family-icons/dreamina.jpg', monochrome: false },
   "NovelAI Diffusion": { path: '/assets/model-family-icons/novelai-diffusion.svg', monochrome: true },
   "Fish Speech": { path: '/assets/model-family-icons/fish-speech.svg', monochrome: true },
   "Cogito": { path: '/assets/model-family-icons/cogito.svg', monochrome: false },

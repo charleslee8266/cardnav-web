@@ -3,7 +3,7 @@
  */
 import { shopPlatformName } from './shop-platform.js';
 import { createFamilyNavigation } from './models/family-navigation.js';
-import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter, officialWebPriceCatalog, officialPriceDisplayOrder } from './models/product-catalog.js';
+import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice, autoCategoryIdsForFilter } from './models/product-catalog.js';
 import 'dotenv/config';
 import pg from 'pg';
 import type { ShopClickEvent } from './shop-click.js';
@@ -1185,6 +1185,7 @@ export type PublicOfficialPriceRow = {
   isDefault: boolean;
   displayOrder: number;
   countryCode: string;
+  countryCodes?: string[];
   countryLabel: string;
   currencyCode: string;
   priceText: string;
@@ -1220,6 +1221,7 @@ export type PublicOfficialPriceCatalogRow = {
   urlSlug: string;
   isDefault: boolean;
   displayOrder: number;
+  countryCodes?: string[];
 };
 
 function mapOfficialPriceRow(row: Record<string, unknown>): PublicOfficialPriceRow {
@@ -1232,8 +1234,9 @@ function mapOfficialPriceRow(row: Record<string, unknown>): PublicOfficialPriceR
     urlSlug: String(row.url_slug),
     ...officialPlanIdentity(String(row.app_slug), String(row.plan_slug)),
     isDefault: Boolean(row.is_default),
-    displayOrder: officialPriceDisplayOrder(String(row.app_slug), String(row.plan_slug), Number(row.display_order) || 0),
+    displayOrder: Number(row.display_order) || 0,
     countryCode: String(row.country_code),
+    ...(Array.isArray(row.country_codes) ? { countryCodes: [...new Set(row.country_codes.map(String))] } : {}),
     countryLabel: String(row.country_label),
     currencyCode: String(row.currency_code),
     priceText: String(row.price_text),
@@ -1255,14 +1258,17 @@ export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCat
       display_name,
       url_slug,
       is_default,
-      display_order
+      display_order,
+      ARRAY(SELECT DISTINCT upper(trim(region.country_code)) FROM official_prices region
+        WHERE region.app_slug = official_prices.app_slug AND region.plan_slug = official_prices.plan_slug
+          AND trim(region.country_code) <> '') AS country_codes
     FROM official_prices
     WHERE trim(url_slug) <> ''
       AND lower(trim(url_slug)) NOT IN ('default', 'official-price')
       AND trim(display_name) <> ''
     ORDER BY app_slug, plan_slug, display_order ASC
   `);
-  return [...officialWebPriceCatalog(), ...result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(row => ({
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug), String(row.plan_slug))).map(row => ({
     appSlug: String(row.app_slug),
     planSlug: String(row.plan_slug),
     appName: String(row.app_name),
@@ -1271,8 +1277,9 @@ export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCat
     urlSlug: String(row.url_slug),
     ...officialPlanIdentity(String(row.app_slug), String(row.plan_slug)),
     isDefault: Boolean(row.is_default),
-    displayOrder: officialPriceDisplayOrder(String(row.app_slug), String(row.plan_slug), Number(row.display_order) || 0),
-  }))];
+    displayOrder: Number(row.display_order) || 0,
+    countryCodes: Array.isArray(row.country_codes) ? row.country_codes.map(String) : [],
+  }));
 }
 
 export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<PublicOfficialPriceRow[]> {
@@ -1283,7 +1290,7 @@ export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<Publ
     WHERE lower(trim(url_slug)) = ANY($1::text[])
     ORDER BY cny_price ASC
   `, [officialPriceStorageSlugs(normalizedSlug)]);
-  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(mapOfficialPriceRow);
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug), String(row.plan_slug))).map(mapOfficialPriceRow);
 }
 
 /** Read the three lowest regional prices and the recorded U.S. baseline per subscription. */
@@ -1293,6 +1300,7 @@ export async function loadOfficialPriceHighlights(): Promise<PublicOfficialPrice
       SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug,
         is_default, display_order, country_code, country_label, currency_code,
         price_text, price_value, cny_price, usd_price, rub_price, fetched_at,
+        ARRAY_AGG(upper(trim(country_code))) OVER (PARTITION BY app_slug, plan_slug) AS country_codes,
         ROW_NUMBER() OVER (PARTITION BY app_slug, plan_slug ORDER BY cny_price ASC, country_code ASC) AS position
       FROM official_prices
       WHERE trim(url_slug) <> ''
@@ -1301,11 +1309,11 @@ export async function loadOfficialPriceHighlights(): Promise<PublicOfficialPrice
     )
     SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug,
       is_default, display_order, country_code, country_label, currency_code,
-      price_text, price_value, cny_price, usd_price, rub_price, fetched_at
+      price_text, price_value, cny_price, usd_price, rub_price, fetched_at, country_codes
     FROM ranked_prices WHERE position <= 3 OR country_code = 'US'
     ORDER BY display_order ASC, app_slug ASC, plan_slug ASC, cny_price ASC, country_code ASC
   `);
-  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(mapOfficialPriceRow);
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug), String(row.plan_slug))).map(mapOfficialPriceRow);
 }
 
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
@@ -1315,7 +1323,7 @@ export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
     FROM official_prices
     ORDER BY display_order ASC, cny_price ASC
   `);
-  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(mapOfficialPriceRow);
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug), String(row.plan_slug))).map(mapOfficialPriceRow);
 }
 
 export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {
@@ -1451,14 +1459,9 @@ export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow
 
 export type PublicOfficialPriceStats = { productCount: number; regionCount: number };
 export async function loadOfficialPriceStats(): Promise<PublicOfficialPriceStats> {
-  const result = await getPool().query(`
-    SELECT COUNT(DISTINCT (app_slug, plan_slug)) AS product_count,
-      COUNT(DISTINCT NULLIF(upper(trim(country_code)), '')) AS region_count
-    FROM official_prices
-    WHERE trim(url_slug) <> '' AND lower(trim(url_slug)) NOT IN ('default', 'official-price')
-      AND trim(display_name) <> '' AND app_slug <> 'copilot'
-  `);
-  return { productCount: Number(result.rows[0]?.product_count) || 0, regionCount: Number(result.rows[0]?.region_count) || 0 };
+  const catalog = await loadOfficialPriceCatalog();
+  const countries = new Set(catalog.flatMap(plan => plan.countryCodes ?? []));
+  return { productCount: catalog.length, regionCount: countries.size };
 }
 
 export type PublicModelLeaderboardStats = { scenarioCount: number; modelCount: number };

@@ -1,8 +1,8 @@
-import { officialPricePathname } from './models/routes.js';
-import { defaultOfficialPricePlan, productForOfficialPrice, quickPlanProducts } from './models/product-catalog.js';
 /**
  * 文件说明: 根据数据库里的官方订阅价格元数据构建公开页分组和 URL 解析。
  */
+import { officialPricePathname } from './models/routes.js';
+import { defaultOfficialPricePlan, productForOfficialPrice, quickPlanProducts } from './models/product-catalog.js';
 import type { PublicOfficialPriceCatalogRow, PublicOfficialPriceRow } from './store.js';
 
 export type OfficialPriceGroup<Row extends PublicOfficialPriceRow = PublicOfficialPriceRow> = {
@@ -16,10 +16,24 @@ export type OfficialPriceGroup<Row extends PublicOfficialPriceRow = PublicOffici
   displayName: string;
   isDefault: boolean;
   displayOrder: number;
+  countryCodes?: string[];
   prices: Row[];
 };
 
+function chinaOnlyAppPriorities(groups: OfficialPriceGroup[]) {
+  const countries = new Map<string, Set<string>>();
+  for (const group of groups) {
+    const appCountries = countries.get(group.appSlug) ?? new Set<string>();
+    for (const code of group.countryCodes ?? group.prices.flatMap(price => price.countryCodes ?? [price.countryCode])) {
+      if (code.trim()) appCountries.add(code.trim().toUpperCase());
+    }
+    countries.set(group.appSlug, appCountries);
+  }
+  return new Map([...countries].map(([app, codes]) => [app, codes.size === 1 && codes.has('CN') ? 1 : 0]));
+}
+
 export function buildOfficialPriceProductGroups<Group extends OfficialPriceGroup>(groups: Group[]) {
+  const priority = chinaOnlyAppPriorities(groups);
   const productOrder = (id: string) => {
     const index = quickPlanProducts.findIndex(product => product.id === id);
     return index < 0 ? quickPlanProducts.length : index;
@@ -28,7 +42,7 @@ export function buildOfficialPriceProductGroups<Group extends OfficialPriceGroup
     const plans = groups.filter(group => group.appSlug === app);
     const product = productForOfficialPrice(app, plans[0].urlSlug);
     return { id: app, name: product?.label ?? plans[0].appName, product, plans, defaultPath: defaultOfficialPricePlan(plans)!.pathname };
-  }).sort((a, b) => productOrder(a.product?.id ?? a.id) - productOrder(b.product?.id ?? b.id));
+  }).sort((a, b) => (priority.get(a.id) ?? 0) - (priority.get(b.id) ?? 0) || productOrder(a.product?.id ?? a.id) - productOrder(b.product?.id ?? b.id));
 }
 
 
@@ -47,7 +61,10 @@ export function resolveOfficialPriceSlug<Group extends OfficialPriceGroup>(slug:
 }
 
 export function sortOfficialPriceGroups(groups: OfficialPriceGroup[]) {
+  const priority = chinaOnlyAppPriorities(groups);
   return groups.sort((a, b) => {
+    const coverageDiff = (priority.get(a.appSlug) ?? 0) - (priority.get(b.appSlug) ?? 0);
+    if (coverageDiff) return coverageDiff;
     const orderDiff = a.displayOrder - b.displayOrder;
     if (orderDiff !== 0) return orderDiff;
     return a.displayName.localeCompare(b.displayName, 'zh-Hans-CN', { numeric: true });
@@ -96,6 +113,7 @@ export function buildOfficialPriceGroups(rawPrices: PublicOfficialPriceRow[]): O
       displayName: price.displayName,
       isDefault: price.isDefault,
       displayOrder: price.displayOrder,
+      countryCodes: price.countryCodes,
       prices: [price],
     });
   }
@@ -121,6 +139,7 @@ type OfficialPriceCatalogEntry = {
   displayName: string;
   isDefault: boolean;
   displayOrder: number;
+  countryCodes?: string[];
 };
 
 export function buildOfficialPriceGroupsForActiveSlug(

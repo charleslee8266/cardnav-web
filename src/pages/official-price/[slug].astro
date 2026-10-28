@@ -6,7 +6,7 @@ import OfficialPriceContent from '../../components/OfficialPriceContent.astro';
 import { localizeOfficialPriceGroups } from '../../localized-display.js';
 import PublicPage from '../../layouts/PublicPage.astro';
 import { buildOfficialPriceGroupsForActiveSlug, resolveOfficialPriceSlug } from '../../official-price.js';
-import { canonicalOfficialPriceSlug, grokWebSubscription, quickPlanDisplayName, quickPlanSearchTermForOfficialPriceSlug } from '../../models/product-catalog.js';
+import { canonicalOfficialPriceSlug, quickPlanDisplayName, quickPlanSearchTermForOfficialPriceSlug } from '../../models/product-catalog.js';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 import { loadOfficialPriceCatalog, loadOfficialPricesByUrlSlug } from '../../store.js';
@@ -31,13 +31,12 @@ const latestFetchedAt = activePrices.reduce<string | null>((latest, price) => {
   return new Date(price.fetchedAt).getTime() > new Date(latest).getTime() ? price.fetchedAt : latest;
 }, null);
 
-const isWebPlan = grokWebSubscription.plans.some(plan => plan.slug === currentGroup.urlSlug);
 const seoDisplayName = quickPlanDisplayName(quickPlanSearchTermForOfficialPriceSlug(currentGroup.urlSlug), currentGroup.displayName);
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
   pathname: currentGroup.pathname,
   title: `${seoDisplayName} ${Astro.locals.messages.officialPrice.titleSuffix}`,
-  description: (isWebPlan ? Astro.locals.messages.officialPrice.webPlanDescription : Astro.locals.messages.officialPrice.dynamicDescription).replace('{displayName}', seoDisplayName),
+  description: Astro.locals.messages.officialPrice.dynamicDescription.replace('{displayName}', seoDisplayName),
   imagePath: '/og-cardnav.webp',
   type: 'webpage',
   breadcrumbs: [

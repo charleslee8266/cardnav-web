@@ -4,16 +4,15 @@
 import type { APIRoute } from 'astro';
 import { publicSitemapCacheControl } from '../public-data-cache.js';
 import { supportedLocales } from '../i18n/config.js';
-import { buildOfficialPriceGroups, buildOfficialPriceGroupsForActiveSlug } from '../official-price.js';
+import { buildOfficialPriceGroups } from '../official-price.js';
 import { buildOfficialPriceSeoRoutes, buildSitemapXml, normalizePublicSeoRoutes } from '../seo-routes.js';
 import { publicSiteUrl } from '../site.js';
-import { officialWebPriceCatalog } from '../models/product-catalog.js';
 import { loadOfficialPrices } from '../store.js';
 
 export const GET: APIRoute = async () => {
   const officialPrices = await loadOfficialPrices();
   const officialPriceGroups = buildOfficialPriceGroups(officialPrices);
-  const routes = normalizePublicSeoRoutes(supportedLocales.flatMap(locale => buildOfficialPriceSeoRoutes([...officialPriceGroups, ...buildOfficialPriceGroupsForActiveSlug(officialWebPriceCatalog(), [], '')], locale)));
+  const routes = normalizePublicSeoRoutes(supportedLocales.flatMap(locale => buildOfficialPriceSeoRoutes(officialPriceGroups, locale)));
 
   return new Response(buildSitemapXml(publicSiteUrl, routes), {
     headers: {

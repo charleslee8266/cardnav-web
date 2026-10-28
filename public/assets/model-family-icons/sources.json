@@ -536,15 +536,13 @@
       "familyNames": [
         "Dreamina"
       ],
-      "file": "dreamina.svg",
-      "url": "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.95.1/icons/jimeng-color.svg",
-      "source": "@lobehub/icons-static-svg 1.95.1",
-      "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
-      "retrievedAt": "2026-10-04",
+      "file": "dreamina.jpg",
+      "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2d/50/22/2d5022a9-5b28-b29c-7096-73d1c235b77d/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/512x512bb.jpg",
+      "source": "Official Apple App Store artwork",
+      "license": "Official brand artwork; artwork and trademark rights remain with their respective owners.",
+      "retrievedAt": "2026-10-28",
       "homepage": "https://dreamina.capcut.com/",
-      "sourceCatalog": "https://icons.lobehub.com/",
-      "officialLookup": "The read operation timed out",
-      "sharedBrandNote": "Dreamina is the international product name for the Jimeng product brand; the explicitly selected asset is jimeng-color.svg."
+      "officialLookup": "https://itunes.apple.com/lookup?id=6749606485&country=us"
     },
     "novelai-diffusion": {
       "familyNames": [
@@ -608,6 +606,18 @@
       "license": "MIT; see LICENSE-lobehub.txt. Trademark rights remain with brand owners.",
       "officialLookup": "Official product website request timed out; using the explicitly named Luma product mark.",
       "retrievedAt": "2026-10-04"
+    },
+    "jimeng": {
+      "familyNames": [
+        "Jimeng"
+      ],
+      "file": "jimeng.jpg",
+      "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/a9/37/eb/a937ebdd-6dfd-e100-a8e0-7d7b8c3e2493/AppIcon-0-0-1x_U007ephone-0-1-P3-85-220.png/512x512bb.jpg",
+      "source": "Official Apple App Store artwork",
+      "license": "Official brand artwork; artwork and trademark rights remain with their respective owners.",
+      "retrievedAt": "2026-10-28",
+      "homepage": "https://jimeng.jianying.com/",
+      "officialLookup": "https://itunes.apple.com/lookup?id=6503676563&country=cn"
     }
   }
 }

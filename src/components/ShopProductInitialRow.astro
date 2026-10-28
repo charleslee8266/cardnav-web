@@ -37,7 +37,7 @@ const stock = typeof product.stock === 'number' && product.stock > 0
   <td class="data-table-product-score-cell data-table-cell-align-right" data-label={t.labels.productScore}><ScoreDisplay value={product.score} /></td>
   {!scoped && <>
     <td class="flat-platform-cell" data-label={t.shops.platform}><PlatformLabel name={product.sitePlatformName || ''} selfHostedLabel={t.shops.selfHosted} /></td>
-    <td class="flat-merchant-cell" data-label={t.labels.merchant}>{product.siteSlug ? <a class="merchant-link merchant-text" title={product.siteName} href={linkTo(shopDetailPath(product.siteSlug))}>{product.siteName}</a> : <span class="merchant-text" title={product.siteName}>{product.siteName}</span>}</td>
+    <td class="flat-merchant-cell" data-label={t.labels.merchant}>{product.siteSlug ? <a class="merchant-link merchant-text" href={linkTo(shopDetailPath(product.siteSlug))}>{product.siteName}</a> : <span class="merchant-text">{product.siteName}</span>}</td>
   </>}
   <td class="flat-refresh-cell" data-label={t.labels.latestRefresh}><RefreshTime timestamp={product.refreshedAt} /></td>
 </tr>
