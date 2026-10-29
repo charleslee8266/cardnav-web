@@ -11,9 +11,9 @@ test('hero metrics include all regions and deduplicate models across four scenar
   await db.connect();
   try {
     await db.query(`CREATE SCHEMA ${schema}`);
-    await db.query(`CREATE TABLE ${schema}.official_prices (app_slug text, plan_slug text, country_code text, url_slug text, display_name text)`);
-    for (const country of ['US', 'IN', 'JP', 'GB', 'CA']) await db.query(`INSERT INTO ${schema}.official_prices VALUES ('example','plus',$1,'example-plus','Example Plus')`, [country]);
-    await db.query(`INSERT INTO ${schema}.official_prices VALUES ('example','pro','US','example-pro','Example Pro'), ('copilot','legacy','ZZ','legacy','Retired'), ('invalid','empty','XX','','Hidden')`);
+    await db.query(`CREATE TABLE ${schema}.official_prices (app_slug text, plan_slug text, country_code text, url_slug text, display_name text, app_name text, plan_name text, is_default boolean, display_order integer)`);
+    for (const country of ['US', 'IN', 'JP', 'GB', 'CA']) await db.query(`INSERT INTO ${schema}.official_prices (app_slug, plan_slug, country_code, url_slug, display_name) VALUES ('example','plus',$1,'example-plus','Example Plus')`, [country]);
+    await db.query(`INSERT INTO ${schema}.official_prices (app_slug, plan_slug, country_code, url_slug, display_name) VALUES ('example','pro','US','example-pro','Example Pro'), ('copilot','legacy','ZZ','legacy','Retired'), ('invalid','empty','XX','','Hidden')`);
     await db.query(`CREATE TABLE ${schema}.model_leaderboards (task_slug text, model_name text)`);
     for (const task of ['coding', 'creative-writing', 'math', 'text-to-image']) {
       for (let index = 0; index < 40; index++) await db.query(`INSERT INTO ${schema}.model_leaderboards VALUES ($1,$2)`, [task, `model-${index}`]);
