@@ -258,6 +258,10 @@ test('price bounds are inclusive CNY filters and compose with categories and OR'
   assert.equal(match('(priceMax:5|priceMin:10) GPT'), true);
   assert.equal(match('priceMin: 10 priceMax: 20'), true);
   assert.equal(match('priceMin:14 priceMax:14', { priceNumber: 2, priceUnit: 'USD' }), true);
+  assert.equal(match('priceMin:10 priceMax:10', { priceNumber: 10, priceUnit: 'cny' }), true);
+  assert.equal(match('priceMin:10 priceMax:10', { priceNumber: 10, priceUnit: 'RMB' }), true);
+  assert.equal(match('priceMin:10 priceMax:10', { priceNumber: 10, priceUnit: '' }), true);
+  assert.equal(match('priceMin:10 priceMax:10', { priceNumber: 10, priceUnit: null }), true);
   assert.equal(match('priceMax:100', { priceNumber: null }), false);
   assert.equal(match('priceMax:100', { priceUnit: 'unknown' }), false);
   assert.equal(match('priceMin:nope'), false);

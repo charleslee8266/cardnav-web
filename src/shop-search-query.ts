@@ -198,7 +198,7 @@ export function buildShopSearchQuery(value: string): ShopSearchQuery {
 export function parseStructuredPriceToCny(priceNumber: number | null | undefined, priceUnit: string | null | undefined) {
   if (typeof priceNumber !== 'number' || !Number.isFinite(priceNumber) || priceNumber < 0) return null;
   const unit = (priceUnit ?? '').trim().toLowerCase();
-  if (['¥', '￥', '元'].includes(unit)) return priceNumber;
+  if (!unit || ['¥', '￥', '元', 'cny', 'rmb'].includes(unit)) return priceNumber;
   if (['$', 'usd'].includes(unit)) return priceNumber * 7;
   return null;
 }

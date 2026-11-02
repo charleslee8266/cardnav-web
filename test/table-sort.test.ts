@@ -51,3 +51,28 @@ test('共用表头同步覆盖标准表格和分组列表，取消排序同时�
   assert.equal(button.dataset.sortDirection, '');
   assert.equal(status.textContent, 'click');
 });
+
+test('rowValue correctly parses numeric and missing values and supports kebab-case keys', () => {
+  const source = fs.readFileSync('src/scripts/data-table.js', 'utf8');
+  const match = source.match(/function rowValue\([\s\S]*?\n\}/);
+  assert.ok(match, 'rowValue function must exist in data-table.js');
+  const rowValue = vm.runInNewContext(`${match[0]}; rowValue;`);
+
+  const row = {
+    dataset: {
+      sortPrice: '19.9',
+      sortZero: '0',
+      sortEmpty: '',
+      sortInvalid: 'NaN',
+      sortEquivalentPrice: '142.5',
+    },
+  };
+
+  assert.equal(rowValue(row, 'price', 'number'), 19.9);
+  assert.equal(rowValue(row, 'zero', 'number'), 0);
+  assert.equal(rowValue(row, 'empty', 'number'), null);
+  assert.equal(rowValue(row, 'missing', 'number'), null);
+  assert.equal(rowValue(row, 'invalid', 'number'), null);
+  assert.equal(rowValue(row, 'equivalentPrice', 'number'), 142.5);
+  assert.equal(rowValue(row, 'equivalent-price', 'number'), 142.5);
+});

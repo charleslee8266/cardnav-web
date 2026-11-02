@@ -19,12 +19,17 @@ function ensureOriginalOrder(table) {
 }
 
 function rowValue(row, key, type) {
-  const value = row.dataset[`sort${key.charAt(0).toUpperCase()}${key.slice(1)}`] ?? '';
-  if (type === 'number') {
-    const numberValue = Number(value);
-    return Number.isFinite(numberValue) ? numberValue : Number.NEGATIVE_INFINITY;
+  const camelKey = key.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  const prop = `sort${camelKey.charAt(0).toUpperCase()}${camelKey.slice(1)}`;
+  const raw = row.dataset[prop];
+  if (raw === undefined || raw === null || String(raw).trim() === '') {
+    return type === 'number' ? null : '';
   }
-  return value;
+  if (type === 'number') {
+    const numberValue = Number(raw);
+    return Number.isFinite(numberValue) ? numberValue : null;
+  }
+  return raw;
 }
 
 function stickySortKey(table) {
@@ -34,7 +39,14 @@ function stickySortKey(table) {
 function pinTableRows(table, rows, manualSort = false) {
   const key = stickySortKey(table);
   if (!key) return rows;
-  return pinSiteRows(rows.map(entry => ({ entry, defaultIndex: Number(entry.row.dataset.originalOrder), sponsor: rowValue(entry.row, key, 'number') > 0, supportTotalCents: 0, supportPoints: rowValue(entry.row, 'support', 'number'), favorite: rowValue(entry.row, 'favorite', 'number') > 0 })), (item, kind) => { item.entry.row.dataset.pinKind = kind; }, manualSort).map(row => row.entry);
+  return pinSiteRows(rows.map(entry => ({
+    entry,
+    defaultIndex: Number(entry.row.dataset.originalOrder),
+    sponsor: (Number(rowValue(entry.row, key, 'number')) || 0) > 0,
+    supportTotalCents: 0,
+    supportPoints: Number(rowValue(entry.row, 'support', 'number')) || 0,
+    favorite: (Number(rowValue(entry.row, 'favorite', 'number')) || 0) > 0,
+  })), (item, kind) => { item.entry.row.dataset.pinKind = kind; }, manualSort).map(row => row.entry);
 }
 
 function updateSortButtons(table) {
@@ -128,7 +140,12 @@ function sortTable(table, nextSort) {
   rows.sort((left, right) => {
     const leftValue = rowValue(left.row, currentSort.key, currentSort.type);
     const rightValue = rowValue(right.row, currentSort.key, currentSort.type);
-    if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+    if (currentSort.type === 'number') {
+      const leftMissing = leftValue === null || !Number.isFinite(leftValue);
+      const rightMissing = rightValue === null || !Number.isFinite(rightValue);
+      if (leftMissing && !rightMissing) return 1;
+      if (!leftMissing && rightMissing) return -1;
+      if (leftMissing && rightMissing) return left.index - right.index;
       if (leftValue !== rightValue) return (leftValue - rightValue) * multiplier;
       return left.index - right.index;
     }
